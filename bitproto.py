@@ -12,14 +12,14 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field as dataclass_field
 from collections import OrderedDict
 from typing import (
-    TypeVar,
-    Tuple,
-    Union,
-    Optional,
     Dict,
-    Type as T,
-    List,
     Iterator,
+    List,
+    Optional,
+    Tuple,
+    Type as T,
+    TypeVar,
+    Union,
 )
 
 from ply import lex, yacc
@@ -27,7 +27,6 @@ from ply.lex import LexToken
 from ply.yacc import YaccProduction as P, LRParser as PlyParser
 
 __version__ = "0.1.0"
-__repository__ = "https://github.com/hit9/bitproto"
 
 ###
 # Errors
@@ -53,8 +52,7 @@ class Error(Exception):
 
 @dataclass
 class InternalError(Error):
-    f"""Some internal error occurred in bitproto,
-    please open an issue at {__repository__}"""
+    """Some internal error occurred in bitproto."""
 
 
 @dataclass
@@ -154,6 +152,7 @@ class Importer(Node):
 
 @dataclass
 class Definition(Node):
+    name: str = ""
     scope_stack: Tuple["Scope", ...] = tuple()
     breadth: int = 0
     comment_block: Tuple[Comment, ...] = tuple()
@@ -162,10 +161,15 @@ class Definition(Node):
         """Returns the comment block in string format."""
         return "\n".join(str(c) for c in self.comment_block)
 
+    def set_name(self, name: str) -> None:
+        self.name = name
+
+    def set_comment_block(self, comment_block: Tuple[Comment, ...]) -> None:
+        self.comment_block = comment_block
+
 
 @dataclass
 class Option(Definition):
-
     value: Union[str, int, bool, None] = None
 
 
@@ -235,7 +239,21 @@ class StringConstant(Constant):
 
 @dataclass
 class Scope(Definition):
-    members: OrderedDict[str, Definition] = dataclass_field(default_factory=OrderedDict)
+    members: "OrderedDict[str, Definition]" = dataclass_field(
+        default_factory=OrderedDict
+    )
+
+    def push_member(self, member: Definition) -> None:
+        self.members[member.name] = member
+
+    def options(self) -> List[Option]:
+        pass  # TODO
+
+    def enums(self) -> List["Enum"]:
+        pass  # TODO
+
+    def messages(self) -> List["Message"]:
+        pass  # TODO
 
 
 @dataclass
@@ -334,7 +352,8 @@ class Array(Type):
 
 @dataclass
 class Alias(Type):
-    pass
+    name: str = ""
+    type: Optional[Type] = None
 
 
 @dataclass
@@ -359,18 +378,16 @@ class MessageFiled(Field):
 
 @dataclass
 class Message(Type, Scope):
-    pass
+    name: str = ""
+
+    def __repr__(self) -> str:
+        return f"<message {self.name}>"
 
 
 @dataclass
-class Proto(Type, Scope):
-    name: str = ""
-
-    def set_name(self, name: str) -> None:
-        self.name = name
-
+class Proto(Scope):
     def __repr__(self) -> str:
-        return f"<bitproto (name={self.name})>"
+        return f"<bitproto {self.name}>"
 
 
 class Lexer:
@@ -449,9 +466,8 @@ class Lexer:
         self.lexer = lex.lex(object=self)
         self.filepath: str = ""
 
-    def set_filepath(self, filepath: str) -> str:
+    def set_filepath(self, filepath: str) -> None:
         self.filepath = filepath
-        return self.filepath
 
     def clear_filepath(self) -> None:
         self.filepath = ""
@@ -459,7 +475,8 @@ class Lexer:
     @contextmanager
     def maintain_filepath(self, filepath: str) -> Iterator[str]:
         try:
-            yield self.set_filepath(filepath)
+            self.set_filepath(filepath)
+            yield self.filepath
         finally:
             self.clear_filepath()
 
@@ -605,41 +622,52 @@ class ParserHandle:
     scope_stack: List[Scope] = dataclass_field(default_factory=list)
     comment_block: List[Comment] = dataclass_field(default_factory=list)
 
-    def breadth_up(self) -> int:
+    def breadth_up(self) -> None:
         self.breadth += 1
-        return self.breadth
 
-    def breadth_down(self) -> int:
+    def breadth_down(self) -> None:
         self.breadth -= 1
-        return self.breadth
 
-    def push_scope(self, scope: Scope) -> Scope:
+    def breadth_clear(self) -> None:
+        self.breadth = 0
+
+    @contextmanager
+    def maintain_breadth(self) -> Iterator[int]:
+        try:
+            self.breadth_up()
+            yield self.breadth
+        finally:
+            self.breadth_down()
+
+    def push_scope(self, scope: Scope) -> None:
         self.scope_stack.append(scope)
-        return scope
 
     def pop_scope(self) -> Scope:
         return self.scope_stack.pop()
 
     def current_scope(self) -> Scope:
+        assert len(self.scope_stack) > 0, InternalError("Empty scope_stack")
         return self.scope_stack[-1]
 
     def scope_stack_tuple(self) -> Tuple[Scope, ...]:
         return tuple(self.scope_stack)
 
     def current_proto(self) -> Proto:
+        assert len(self.scope_stack) > 0, InternalError("Empty scope_stack")
         assert isinstance(self.scope_stack[0], Proto), InternalError(
-            "First scope in stack not a Proto instance"
+            "scope_stack[0] not a Proto instance"
         )
         return self.scope_stack[0]
 
-    def push_comment(self, comment: Comment) -> Comment:
+    def push_comment(self, comment: Comment) -> None:
         self.comment_block.append(comment)
-        return comment
 
-    def clear_comment_block(self) -> Tuple[Comment, ...]:
+    def clear_comment_block(self) -> None:
         block = self.comment_block[:]
         self.comment_block = []
-        return tuple(block)
+
+    def comment_block_tuple(self) -> Tuple[Comment, ...]:
+        return tuple(self.comment_block)
 
 
 class Parser:
@@ -647,7 +675,7 @@ class Parser:
 
         >>> parser = Parser()
         >>> parser.parse("path/to/example.bitproto")
-        <bitproto (name="example")>
+        <bitproto example>
 
     """
 
@@ -665,28 +693,53 @@ class Parser:
             module=self, debug=debug, write_tables=write_tables
         )
 
-    def push_handle(self, handle: ParserHandle) -> ParserHandle:
+    def push_handle(self, handle: ParserHandle) -> None:
         self.handle_stack.append(handle)
-        return handle
 
     def pop_handle(self) -> ParserHandle:
         return self.handle_stack.pop()
 
-    def current_handle(self) -> Optional[ParserHandle]:
-        if len(self.handle_stack) > 0:
-            return self.handle_stack[-1]
-        return None
+    def current_handle(self) -> ParserHandle:
+        assert len(self.handle_stack) > 0, InternalError(
+            "ParserHandle is None during parsing"
+        )
+        return self.handle_stack[-1]
 
-    def current_handle_or_raise(self) -> ParserHandle:
-        """Gets not `None` handle during the parsing."""
+    def push_scope(self, scope: Scope) -> None:
+        self.current_handle().push_scope(scope)
+
+    def pop_scope(self) -> Scope:
+        return self.current_handle().pop_scope()
+
+    def current_scope(self) -> Scope:
         handle = self.current_handle()
-        assert handle, InternalError("ParserHandle is None during parsing")
-        return handle
+        return handle.current_scope()
+
+    def current_proto(self) -> Proto:
+        handle = self.current_handle()
+        return handle.current_proto()
+
+    def current_scope_stack(self) -> Tuple[Scope, ...]:
+        handle = self.current_handle()
+        return handle.scope_stack_tuple()
+
+    def current_comment_block(self) -> Tuple[Comment, ...]:
+        handle = self.current_handle()
+        return handle.comment_block_tuple()
+
+    def current_filepath(self) -> str:
+        handle = self.current_handle()
+        return handle.filepath
+
+    def current_breadth(self) -> int:
+        handle = self.current_handle()
+        return handle.breadth
 
     @contextmanager
     def maintain_handle(self, handle: ParserHandle) -> Iterator[ParserHandle]:
         try:
-            yield self.push_handle(handle)
+            self.push_handle(handle)
+            yield handle
         finally:
             self.pop_handle()
 
@@ -695,7 +748,8 @@ class Parser:
         :param filepath: The filepath information if exist.
         """
         with self.lexer.maintain_filepath(filepath):
-            with self.maintain_handle(ParserHandle(filepath)):
+            handle = ParserHandle(filepath)
+            with self.maintain_handle(handle):
                 return self.parser.parse(s)
 
     def parse(self, filepath: str) -> Proto:
@@ -718,36 +772,25 @@ class Parser:
 
     def p_start(self, p: P) -> None:
         """start : open_global_scope global_scope close_global_scope"""
-        p[0] = p[1]
+        p[0] = p[2]
 
     def p_open_global_scope(self, p: P) -> None:
-        """open_global_scope :"""
-        handle = self.current_handle_or_raise()
-        handle.breadth_up()
-        scope = Proto(
-            filepath=handle.filepath,
-            breadth=handle.breadth,
-            scope_stack=handle.scope_stack_tuple(),
-        )
-        handle.push_scope(scope)
-        handle.breadth_down()
-        p[0] = scope
+        """open_global_scope : """
+        proto = Proto(filepath=self.current_filepath())
+        self.push_scope(proto)
 
     def p_close_global_scope(self, p: P) -> None:
         """close_global_scope :"""
-        handle = self.current_handle_or_raise()
-        handle.pop_scope()
-        # FIXME: proto.validate?
+        self.pop_scope()
 
     def p_global_scope(self, p: P) -> None:
-        """global_scope : proto_namer global_scope_definitions"""
-
-    def p_proto_namer(self, p: P) -> None:
-        """proto_namer : PROTO IDENTIFIER optional_semicolon"""
-        p[0] = proto_name = p[2]
-        handle = self.current_handle_or_raise()
-        proto = handle.current_proto()
-        proto.set_name(proto_name)
+        """global_scope : global_scope_definitions"""
+        scope = self.current_scope()
+        # Collect Not None defintions.
+        for d in p[2]:
+            if d is not None:
+                scope.push_member(d)
+        p[0] = scope
 
     def p_global_scope_definitions(self, p: P) -> None:
         """global_scope_definitions : global_scope_definition_unit global_scope_definitions
@@ -763,18 +806,27 @@ class Parser:
                                         | template
                                         | enum
                                         | message
+                                        | proto_namer
                                         | comment
                                         | newline"""
         p[0] = p[1]
 
+    def p_proto_namer(self, p: P) -> None:
+        """proto_namer : PROTO IDENTIFIER optional_semicolon"""
+        proto = self.current_proto()
+        proto.set_name(p[2])
+        proto.set_comment_block(self.current_comment_block())
+        p[0] = None  # drop
+
     def p_comment(self, p: P) -> None:
         """comment : COMMENT NEWLINE"""
-        p[0] = self.current_handle_or_raise().push_comment(p[1])
+        self.current_handle().push_comment(p[1])
+        p[0] = None  # drop
 
     def p_newline(self, p: P) -> None:
         """newline : NEWLINE"""
-        p[0] = p[1]
-        self.current_handle_or_raise().clear_comment_block()  # FIXME: why clear?
+        self.current_handle().clear_comment_block()
+        p[0] = None  # drop
 
     def p_importer(self, p: P) -> None:
         """importer : IMPORT STRING_LITERAL optional_semicolon
@@ -783,7 +835,16 @@ class Parser:
 
     def p_option(self, p: P) -> None:
         """option : OPTION IDENTIFIER '=' option_value optional_semicolon"""
-        pass
+        p[0] = Option(
+            name=p[2],
+            value=p[4],
+            scope_stack=self.current_scope_stack(),
+            breadth=self.current_breadth(),
+            comment_block=self.current_comment_block(),
+            filepath=self.current_filepath(),
+            lineno=p.lineno(2),
+            token="{0} = {1}".format(p[2], p[4]),
+        )
 
     def p_option_value(self, p: P) -> None:
         """option_value : boolean_literal
@@ -793,11 +854,39 @@ class Parser:
 
     def p_alias(self, p: P) -> None:
         """alias : TYPE IDENTIFIER '=' type optional_semicolon"""
-        pass
+        p[0] = Alias(
+            name=p[2],
+            type=p[4],
+            filepath=self.current_filepath(),
+            lineno=p.lineno(2),
+            token=p[2],
+        )
 
     def p_const(self, p: P) -> None:
         """const : CONST IDENTIFIER '=' const_value optional_semicolon"""
-        pass
+
+        value = p[4]
+        constant_cls: Optional[T[Constant]] = None
+
+        if value is True or value is False:
+            constant_cls = BooleanConstant
+        elif isinstance(value, int):
+            constant_cls = IntegerConstant
+        elif isinstance(value, str):
+            constant_cls = StringConstant
+        else:
+            raise InternalError("No constant_cls to use")
+
+        p[0] = constant = constant_cls(
+            name=p[2],
+            value=value,
+            scope_stack=self.current_scope_stack(),
+            comment_block=self.current_comment_block(),
+            breadth=self.current_breadth(),
+            filepath=self.current_filepath(),
+            token="{0} = {1}".format(p[2], value),
+            lineno=p.lineno(2),
+        )
 
     def p_const_value(self, p: P) -> None:
         """const_value : boolean_literal
@@ -843,7 +932,7 @@ class Parser:
         if not isinstance(p[1], IntegerConstant):
             raise CalculationExpressionError(
                 message="Non integer constant referenced to use in calculation expression.",
-                filepath=self.current_handle_or_raise().filepath,
+                filepath=self.current_handle().filepath,
                 token=p[1].name,
                 lineno=p.lineno(1),
             )
@@ -855,7 +944,7 @@ class Parser:
         if not isinstance(p[1], IntegerConstant):
             raise InvalidArrayCap(
                 message="Non integer constant referenced to use as array capacity.",
-                filepath=self.current_handle_or_raise().filepath,
+                filepath=self.current_handle().filepath,
                 token=p[1].name,
                 lineno=p.lineno(1),
             )
@@ -1011,7 +1100,7 @@ class Parser:
         p[0] = p[1]
 
     def p_error(self, p: P) -> None:
-        handle = self.current_handle_or_raise()
+        handle = self.current_handle()
         if p is None:
             raise GrammarError(
                 message="Grammar error at eof.", filepath=handle.filepath
