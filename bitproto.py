@@ -865,3 +865,164 @@ class Parser:
     def p_constant_reference(self, p: P) -> None:
         """constant_reference : IDENTIFIER"""
         # TODO
+
+    def p_type(self, p: P) -> None:
+        """type : single_type
+                | array_type"""
+        p[0] = p[1]
+
+    def p_single_type(self, p: P) -> None:
+        """single_type : base_type
+                       | type_reference"""
+
+    def p_base_type(self, p: P) -> None:
+        """base_type : BOOL_TYPE
+                     | UINT_TYPE
+                     | INT_TYPE
+                     | BYTE_TYPE"""
+        p[0] = p[1]
+
+    def p_type_reference(self, p: P) -> None:
+        """type_reference : type_reference '.' type_reference
+                          | IDENTIFIER"""
+        if len(p) == 4:
+            p[0] = p[1].get_member(p[3])  # FIXME
+        else:
+            pass  # FIXME
+
+    def p_array_type(self, p: P) -> None:
+        """array_type : '[' array_capacity ']' single_type"""
+        pass
+
+    def p_array_capacity(self, p: P) -> None:
+        """array_capacity : INTCONSTANT
+                          | constant_reference_for_array_capacity
+                          | message_field_reference_for_array_capacity"""
+        p[0] = p[1]
+
+    def p_message_field_reference_for_array_capacity(self, p: P) -> None:
+        """message_field_reference_for_array_capacity : IDENTIFIER"""
+        pass
+
+    def p_template(self, p: P) -> None:
+        """template : TEMPLATE IDENTIFIER  open_template_scope template_items close_template_scope"""
+        pass
+
+    def p_open_template_scope(self, p: P) -> None:
+        """open_template_scope : '{'"""
+        pass
+
+    def p_close_template_scope(self, p: P) -> None:
+        """close_template_scope : '}'"""
+        pass
+
+    def p_template_items(self, p: P) -> None:
+        """template_items : template_item template_items
+                          | template_item
+                          |"""
+        self.util_parse_sequence(p)
+
+    def p_template_item(self, p: P) -> None:
+        """template_item : option
+                         | template_line
+                         | comment
+                         | newline
+                         """
+        p[0] = p[1]
+
+    def p_template_line(self, p: P) -> None:
+        """template_line : TEMPLATELINE"""
+        p[0] = p[1]  # FIXME: template.Push
+        pass
+
+    def p_enum(self, p: P) -> None:
+        """enum : open_enum_scope enum_items close_enum_scope"""
+        pass
+
+    def p_open_enum_scope(self, p: P) -> None:
+        """open_enum_scope : ENUM IDENTIFIER '{'"""
+        pass
+
+    def p_close_enum_scope(self, p: P) -> None:
+        """close_enum_scope : '}'"""
+        pass
+
+    def p_enum_items(self, p: P) -> None:
+        """enum_items : enum_item enum_items
+                      | enum_item
+                      |"""
+        self.util_parse_sequence(p)
+
+    def p_enum_item(self, p: P) -> None:
+        """enum_item : option
+                     | enum_field
+                     | comment
+                     | newline"""
+        p[0] = p[1]
+
+    def p_enum_field(self, p: P) -> None:
+        """enum_field : IDENTIFIER '=' INTCONSTANT optional_semicolon"""
+        pass
+
+    def p_message(self, p: P) -> None:
+        """message : open_message_scope message_items close_message_scope"""
+        pass
+
+    def p_open_message_scope(self, p: P) -> None:
+        """open_message_scope : MESSAGE IDENTIFIER '{'"""
+        pass
+
+    def p_close_message_scope(self, p: P) -> None:
+        """close_message_scope : '}'"""
+        pass
+
+    def p_message_items(self, p: P) -> None:
+        """message_items : message_item message_items
+                         | message_item
+                         |"""
+        self.util_parse_sequence(p)
+
+    def p_message_item(self, p: P) -> None:
+        """message_item : option
+                        | message_field
+                        | comment
+                        | newline"""
+        p[0] = p[1]
+
+    def p_message_field(self, p: P) -> None:
+        """message_field : message_field_number ':' IDENTIFIER type optional_semicolon"""
+        pass
+
+    def p_message_field_number(self, p: P) -> None:
+        """message_field_number : INTCONSTANT"""
+        p[0] = p[1]
+
+    def p_boolean_literal(self, p: P) -> None:
+        """boolean_literal : BOOL_LITERAL"""
+        p[0] = p[1]
+
+    def p_integer_literal(self, p: P) -> None:
+        """integer_literal : INT_LITERAL
+                           | HEX_LITERAL"""
+        p[0] = p[1]
+
+    def p_string_literal(self, p: P) -> None:
+        """string_literal : STRING_LITERAL"""
+        p[0] = p[1]
+
+    def p_error(self, p: P) -> None:
+        handle = self.current_handle_or_raise()
+        if p is None:
+            raise GrammarError(
+                message="Grammar error at eof.", filepath=handle.filepath
+            )
+        if isinstance(p, LexToken):
+            raise GrammarError(
+                filepath=handle.filepath, token=str(p.value), lineno=p.lineno
+            )
+        if len(p) <= 1:
+            raise GrammarError()
+        else:
+            raise GrammarError(
+                filepath=handle.filepath, token=p.value(1), lineno=p.lineno(1)
+            )
