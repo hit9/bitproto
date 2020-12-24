@@ -7,7 +7,7 @@ Bit level data interchange format.
 :copyright: (c) 2020 by Chao Wang <hit9@icloud.com>
 """
 
-
+import os
 from contextlib import contextmanager
 from dataclasses import dataclass, field as dataclass_field
 from collections import OrderedDict
@@ -146,11 +146,6 @@ class Comment(Node):
 
 
 @dataclass
-class Importer(Node):
-    pass
-
-
-@dataclass
 class Definition(Node):
     name: str = ""
     scope_stack: Tuple["Scope", ...] = tuple()
@@ -243,17 +238,45 @@ class Scope(Definition):
         default_factory=OrderedDict
     )
 
-    def push_member(self, member: Definition) -> None:
-        self.members[member.name] = member
+    def push_member(self, member: Definition, name: Optional[str] = None) -> None:
+        if name is None:
+            name = member.name
+        self.members[name] = member
 
-    def options(self) -> List[Option]:
-        pass  # TODO
+    def options(self) -> "OrderedDict[str, Option]":
+        d: "OrderedDict[str, Option]" = OrderedDict()
+        for name, member in self.members.items():
+            if isinstance(member, Option):
+                d[name] = member
+        return d
 
-    def enums(self) -> List["Enum"]:
-        pass  # TODO
+    def enums(self) -> "OrderedDict[str, Enum]":
+        d: "OrderedDict[str, Enum]" = OrderedDict()
+        for name, member in self.members.items():
+            if isinstance(member, Enum):
+                d[name] = member
+        return d
 
-    def messages(self) -> List["Message"]:
-        pass  # TODO
+    def messages(self) -> "OrderedDict[str, Message]":
+        d: "OrderedDict[str, Message]" = OrderedDict()
+        for name, member in self.members.items():
+            if isinstance(member, Message):
+                d[name] = member
+        return d
+
+    def constants(self) -> "OrderedDict[str, Constant]":
+        d: "OrderedDict[str, Constant]" = OrderedDict()
+        for name, member in self.members.items():
+            if isinstance(member, Constant):
+                d[name] = member
+        return d
+
+    def protos(self) -> "OrderedDict[str, Proto]":
+        d: "OrderedDict[str, Proto]" = OrderedDict()
+        for name, member in self.members.items():
+            if isinstance(member, Proto):
+                d[name] = member
+        return d
 
 
 @dataclass
@@ -787,9 +810,9 @@ class Parser:
         """global_scope : global_scope_definitions"""
         scope = self.current_scope()
         # Collect Not None defintions.
-        for d in p[2]:
-            if d is not None:
-                scope.push_member(d)
+        for name, defintion in p[2]:
+            if defintion is not None:
+                scope.push_member(defintion, name=name)
         p[0] = scope
 
     def p_global_scope_definitions(self, p: P) -> None:
@@ -816,35 +839,59 @@ class Parser:
         proto = self.current_proto()
         proto.set_name(p[2])
         proto.set_comment_block(self.current_comment_block())
-        p[0] = None  # drop
+        p[0] = (None, None)  # drop
 
     def p_comment(self, p: P) -> None:
         """comment : COMMENT NEWLINE"""
         self.current_handle().push_comment(p[1])
-        p[0] = None  # drop
+        p[0] = (None, None)  # drop
 
     def p_newline(self, p: P) -> None:
         """newline : NEWLINE"""
         self.current_handle().clear_comment_block()
-        p[0] = None  # drop
+        p[0] = (None, None)  # drop
+
+    def _get_child_filepath(self, importing_path: str) -> str:
+        """Gets the filepath for the importing path.
+        If the `importing_path` is an absolute path, using it directly.
+        Otherwise, use it as a relative path to current parsing file.
+        """
+        if os.path.isabs(importing_path):
+            return importing_path
+        base_filepath = self.current_filepath()
+        if base_filepath:  # We are parsing a file
+            current_proto_dir = os.path.dirname(base_filepath)
+        else:
+            # We are parsing from a string, using cwd instead.
+            current_proto_dir = os.getcwd()
+        return os.path.join(current_proto_dir, importing_path)
 
     def p_importer(self, p: P) -> None:
         """importer : IMPORT STRING_LITERAL optional_semicolon
                     | IMPORT IDENTIFIER STRING_LITERAL optional_semicolon"""
-        pass  # TODO
+        importing_path = p[len(p) - 2]
+        filepath = self._get_child_filepath(importing_path)
+        parser = Parser()
+        child = parser.parse(filepath)
+        name = child.name
+        if len(p) == 5:  # Importing as
+            name = p[2]
+        p[0] = (name, child)
 
     def p_option(self, p: P) -> None:
         """option : OPTION IDENTIFIER '=' option_value optional_semicolon"""
-        p[0] = Option(
-            name=p[2],
-            value=p[4],
+        name, value = p[2], p[4]
+        option = Option(
+            name=name,
+            value=value,
             scope_stack=self.current_scope_stack(),
             breadth=self.current_breadth(),
             comment_block=self.current_comment_block(),
             filepath=self.current_filepath(),
             lineno=p.lineno(2),
-            token="{0} = {1}".format(p[2], p[4]),
+            token="{0} = {1}".format(name, value),
         )
+        p[0] = (name, option)
 
     def p_option_value(self, p: P) -> None:
         """option_value : boolean_literal
@@ -854,18 +901,20 @@ class Parser:
 
     def p_alias(self, p: P) -> None:
         """alias : TYPE IDENTIFIER '=' type optional_semicolon"""
-        p[0] = Alias(
-            name=p[2],
-            type=p[4],
+        name, type = p[2], p[4]
+        alias = Alias(
+            name=name,
+            type=type,
             filepath=self.current_filepath(),
             lineno=p.lineno(2),
-            token=p[2],
+            token=name,
         )
+        p[0] = (name, alias)
 
     def p_const(self, p: P) -> None:
         """const : CONST IDENTIFIER '=' const_value optional_semicolon"""
 
-        value = p[4]
+        name, value = p[2], p[4]
         constant_cls: Optional[T[Constant]] = None
 
         if value is True or value is False:
@@ -877,8 +926,8 @@ class Parser:
         else:
             raise InternalError("No constant_cls to use")
 
-        p[0] = constant = constant_cls(
-            name=p[2],
+        constant = constant_cls(
+            name=name,
             value=value,
             scope_stack=self.current_scope_stack(),
             comment_block=self.current_comment_block(),
@@ -887,6 +936,7 @@ class Parser:
             token="{0} = {1}".format(p[2], value),
             lineno=p.lineno(2),
         )
+        p[0] = (name, constant)
 
     def p_const_value(self, p: P) -> None:
         """const_value : boolean_literal
@@ -952,7 +1002,8 @@ class Parser:
         p[0] = int(p[1])
 
     def p_constant_reference(self, p: P) -> None:
-        """constant_reference : IDENTIFIER"""
+        """constant_reference : constant_reference '.' constant_reference
+                              | IDENTIFIER"""
         # TODO
 
     def p_type(self, p: P) -> None:
@@ -963,6 +1014,7 @@ class Parser:
     def p_single_type(self, p: P) -> None:
         """single_type : base_type
                        | type_reference"""
+        p[0] = p[1]
 
     def p_base_type(self, p: P) -> None:
         """base_type : BOOL_TYPE
