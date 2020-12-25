@@ -51,7 +51,7 @@ logger = getLogger(__name__)
 class ParserHandle:
     """Parsing context holder."""
 
-    filepath: str
+    filepath: str = ""
     scope_stack: List[Scope] = dataclass_field(default_factory=list)
     comment_block: List[Comment] = dataclass_field(default_factory=list)
 
@@ -160,13 +160,13 @@ class Parser:
         :param filepath: The filepath information if exist.
         """
         with self.lexer.maintain_handle(LexerHandle(filepath=filepath)):
-            with self.maintain_handle(ParserHandle(filepath)):
+            with self.maintain_handle(ParserHandle(filepath=filepath)):
                 return self.parser.parse(s)
 
     def parse(self, filepath: str) -> Proto:
         """Parse a bitproto from given file."""
         with open(filepath) as f:
-            return self.parse_string(f.read())
+            return self.parse_string(f.read(), filepath=filepath)
 
     def util_parse_sequence(self, p: P) -> None:
         if len(p) == 3:

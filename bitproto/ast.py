@@ -89,7 +89,7 @@ class Comment(Node):
         return self.content()
 
     def __repr__(self) -> str:
-        return "<comment // {0}..>".format(self.token[:3])
+        return "<comment {0}..>".format(self.token[:5])
 
 
 @dataclass
@@ -242,7 +242,7 @@ class Scope(Definition):
     def enum_fields(self) -> "dict_[str, EnumField]":
         return self.filter(EnumField)
 
-    def message_field(self) -> "dict_[str, MessageField]":
+    def message_fields(self) -> "dict_[str, MessageField]":
         return self.filter(MessageField)
 
 
@@ -400,7 +400,7 @@ class Enum(Type, Scope):
     type: Uint = _UINT_MISSING
 
     def __repr__(self) -> str:
-        return f"<enum {self.name}"
+        return f"<enum {self.name}>"
 
     def nbits(self) -> int:
         return self.type.nbits()
