@@ -29,7 +29,6 @@ Abstraction syntax tree.
       |    |    |- EnumField            :Field:Definition:Node
       |    |    |- MessageField         :Field:Definition:Node
       |    |- Scope                     :Definition:Node
-      |    |    |- Template             :Scope:Definition:Node
       |    |    |- Enum                 :Scope:Definition:Node
       |    |    |- Message              :Scope:Definition:Node
       |    |    |- Proto                :Scope:Definition:Node
@@ -153,6 +152,9 @@ class IntegerConstant(Constant):
     def __int__(self) -> int:
         return self.value
 
+    def __repr__(self) -> str:
+        return "<integer-constant {0}>".format(self.name)
+
 
 @dataclass
 class BooleanConstant(Constant):
@@ -161,6 +163,9 @@ class BooleanConstant(Constant):
     def __bool__(self) -> bool:
         return self.value
 
+    def __repr__(self) -> str:
+        return "<boolean-constant {0}>".format(self.name)
+
 
 @dataclass
 class StringConstant(Constant):
@@ -168,6 +173,9 @@ class StringConstant(Constant):
 
     def __str__(self) -> str:
         return self.value
+
+    def __repr__(self) -> str:
+        return "<str-constant {0}>".format(self.name)
 
 
 @dataclass
