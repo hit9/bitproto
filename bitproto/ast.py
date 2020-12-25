@@ -453,6 +453,9 @@ class MessageField(Field):
 class Message(Type, Scope):
     name: str = ""
 
+    def nbits(self) -> int:
+        return sum(field.type.nbits() for field in self.message_fields().values())
+
     def __repr__(self) -> str:
         return f"<message {self.name}>"
 
