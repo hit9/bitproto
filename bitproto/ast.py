@@ -37,8 +37,8 @@ Abstraction syntax tree.
 """
 
 from dataclasses import dataclass, field as dataclass_field
-from collections import OrderedDict
-from typing import Tuple, Union, Optional, Type as T
+from collections import OrderedDict as dict_
+from typing import Tuple, Union, Optional, Type as T, TypeVar
 
 from bitproto.errors import (
     InternalError,
@@ -49,10 +49,22 @@ from bitproto.errors import (
     InvalidUintCap,
 )
 
+T_Definition = TypeVar(
+    "T_Definition",
+    "Definition",
+    "Option",
+    " Enum",
+    "Message",
+    "Constant",
+    "Proto",
+    "EnumField",
+    "MessageField",
+    "Alias",
+)
+
 
 @dataclass
 class Node:
-
     token: str = ""
     lineno: int = 0
     filepath: str = ""
@@ -72,7 +84,7 @@ class Newline(Node):
 @dataclass
 class Comment(Node):
     def content(self) -> str:
-        """Returns the stripped content of this comment, without the starting slashes."""
+        """Returns the stripped content of this comment."""
         return self.token[2:].strip()
 
     def __str__(self) -> str:
@@ -147,9 +159,7 @@ class StringConstant(Constant):
 
 @dataclass
 class Scope(Definition):
-    members: "OrderedDict[str, Definition]" = dataclass_field(
-        default_factory=OrderedDict
-    )
+    members: "dict_[str, Definition]" = dataclass_field(default_factory=dict_)
 
     def validate_post_push_member(
         self, member: Definition, name: Optional[str] = None
@@ -169,41 +179,6 @@ class Scope(Definition):
             )
         self.members[name] = member
         self.validate_post_push_member(member, name)
-
-    def options(self) -> "OrderedDict[str, Option]":
-        return OrderedDict(
-            (name, member)
-            for name, member in self.members.items()
-            if isinstance(member, Option)
-        )
-
-    def enums(self) -> "OrderedDict[str, Enum]":
-        return OrderedDict(
-            (name, member)
-            for name, member in self.members.items()
-            if isinstance(member, Enum)
-        )
-
-    def messages(self) -> "OrderedDict[str, Message]":
-        return OrderedDict(
-            (name, member)
-            for name, member in self.members.items()
-            if isinstance(member, Message)
-        )
-
-    def constants(self) -> "OrderedDict[str, Constant]":
-        return OrderedDict(
-            (name, member)
-            for name, member in self.members.items()
-            if isinstance(member, Constant)
-        )
-
-    def protos(self) -> "OrderedDict[str, Proto]":
-        return OrderedDict(
-            (name, member)
-            for name, member in self.members.items()
-            if isinstance(member, Proto)
-        )
 
     def get_member(self, *names: str) -> Optional[Definition]:
         """Gets member by names recursively.
@@ -225,6 +200,34 @@ class Scope(Definition):
         if not isinstance(member, Scope):
             return None
         return member.get_member(*remain)
+
+    def filter(self, t: T[T_Definition]) -> "dict_[str, T_Definition]":
+        return dict_(
+            (name, member)
+            for name, member in self.members.items()
+            if isinstance(member, t)
+        )
+
+    def options(self) -> "dict_[str, Option]":
+        return self.filter(Option)
+
+    def enums(self) -> "dict_[str, Enum]":
+        return self.filter(Enum)
+
+    def messages(self) -> "dict_[str, Message]":
+        return self.filter(Message)
+
+    def constants(self) -> "dict_[str, Constant]":
+        return self.filter(Constant)
+
+    def protos(self) -> "dict_[str, Proto]":
+        return self.filter(Proto)
+
+    def enum_fields(self) -> "dict_[str, EnumField]":
+        return self.filter(EnumField)
+
+    def message_field(self) -> "dict_[str, MessageField]":
+        return self.filter(MessageField)
 
 
 @dataclass
@@ -362,7 +365,7 @@ class Enum(Type, Scope):
 
 
 @dataclass
-class MessageFiled(Field):
+class MessageField(Field):
     type: Optional[Type] = None
 
     def validate(self) -> None:

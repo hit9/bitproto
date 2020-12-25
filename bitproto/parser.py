@@ -26,7 +26,7 @@ from bitproto.ast import (
     IntegerConstant,
     StringConstant,
     Message,
-    MessageFiled,
+    MessageField,
     Type,
     Option,
     Scope,
@@ -596,7 +596,7 @@ class Parser:
         """message_field : type IDENTIFIER optional_message_field_number optional_semicolon"""
         name = p[2]
         type = p[1]
-        message_field = MessageFiled(
+        message_field = MessageField(
             name=name,
             type=type,
             token=p[2],
