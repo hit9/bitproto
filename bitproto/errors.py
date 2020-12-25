@@ -97,3 +97,8 @@ class ReferencedConstantNotDefined(GrammarError):
 @dataclass
 class ReferencedTypeNotDefined(GrammarError):
     """Referenced type not defined."""
+
+
+@dataclass
+class InvalidEnumField(GrammarError):
+    """Invalid enum field."""

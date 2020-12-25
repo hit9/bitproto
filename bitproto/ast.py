@@ -47,19 +47,20 @@ from bitproto.errors import (
     InvalidArrayCap,
     InvalidIntCap,
     InvalidUintCap,
+    InvalidEnumField,
 )
 
 T_Definition = TypeVar(
     "T_Definition",
     "Definition",
-    "Option",
-    " Enum",
-    "Message",
+    "Alias",
     "Constant",
-    "Proto",
+    "Enum",
+    "Message",
+    "Option",
     "EnumField",
     "MessageField",
-    "Alias",
+    "Proto",
 )
 
 
@@ -249,6 +250,9 @@ class Type(Node):
         return int(nbits / 8) + 1
 
 
+_TYPE_MISSING = Type()
+
+
 @dataclass
 class Bool(Type):
     def nbits(self) -> int:
@@ -284,6 +288,9 @@ class Uint(Type):
         return "uint{0}".format(self.cap)
 
 
+_UINT_MISSING = Uint(cap=0)
+
+
 @dataclass
 class Int(Type):
     cap: int = 0
@@ -303,7 +310,7 @@ class Int(Type):
 
 @dataclass
 class Array(Type):
-    type: Optional[Type] = None
+    type: Type = _TYPE_MISSING
     cap: int = 0
 
     @property
@@ -311,8 +318,6 @@ class Array(Type):
         return (Bool, Byte, Int, Uint, Enum, Message, Alias)
 
     def validate(self) -> None:
-        if self.type is None:
-            raise InternalError(description="No type to construct an array type")
         if not isinstance(self.type, self.supported_types):
             raise UnsupportedArrayType(
                 filepath=self.filepath, token=self.token, lineno=self.lineno
@@ -329,13 +334,12 @@ class Array(Type):
 
 @dataclass
 class Alias(Type, Definition):
-    type: Optional[Type] = None
+    type: Type = _TYPE_MISSING
 
     def validate(self) -> None:
         pass  # TODO: Supported aliasable type check
 
     def nbits(self) -> int:
-        assert self.type is not None, InternalError("Alias type is None")
         return self.type.nbits()
 
 
@@ -349,24 +353,32 @@ class EnumField(Field):
     value: int = 0
 
     def validate(self) -> None:
-        # TODO: Check value uint and overflow
-        pass
+        if self.value < 0:
+            raise InvalidEnumField(
+                message="Enum field value < 0",
+                filepath=self.filepath,
+                token=self.token,
+                lineno=self.lineno,
+            )
 
 
 @dataclass
 class Enum(Type, Scope):
-    type: Optional[Uint] = None
+    type: Uint = _UINT_MISSING
+
+    def nbits(self) -> int:
+        return self.type.nbits()
 
     def validate_post_push_member(
         self, member: Definition, name: Optional[str] = None
     ) -> None:
-        # TODO: Check field
+        # TODO: Check field overflow and unique
         pass
 
 
 @dataclass
 class MessageField(Field):
-    type: Optional[Type] = None
+    type: Type = Type()
 
     def validate(self) -> None:
         pass
