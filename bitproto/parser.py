@@ -176,14 +176,6 @@ class Parser:
         elif len(p) == 1:
             p[0] = []
 
-    def _collect_scope_members(
-        self, scope: Scope, defintion_items: List[Tuple[str, Definition]]
-    ) -> None:
-        """Collects given `defintion_items` to given scope."""
-        for name, defintion in defintion_items:
-            if defintion is not None:  # Ignore dropped
-                scope.push_member(defintion, name=name)
-
     def p_optional_semicolon(self, p: P) -> None:
         """optional_semicolon : ';'
                               |"""
@@ -205,7 +197,6 @@ class Parser:
     def p_global_scope(self, p: P) -> None:
         """global_scope : global_scope_definitions"""
         p[0] = scope = self.current_scope()
-        self._collect_scope_members(scope, p[2])
 
     def p_global_scope_definitions(self, p: P) -> None:
         """global_scope_definitions : global_scope_definition_unit global_scope_definitions
@@ -268,8 +259,10 @@ class Parser:
     def p_import(self, p: P) -> None:
         """import : IMPORT STRING_LITERAL optional_semicolon
                   | IMPORT IDENTIFIER STRING_LITERAL optional_semicolon"""
+        # Get filepath to import.
         importing_path = p[len(p) - 2]
         filepath = self._get_child_filepath(importing_path)
+        # Check if this filepath already in parsing.
         if self._check_parsing_file(filepath):
             raise CyclicImport(
                 message=f"cyclic importing {filepath}",
@@ -277,11 +270,13 @@ class Parser:
                 token=importing_path,
                 lineno=p.lineno(2),
             )
+        # Parse.
         child = Parser().parse(filepath)
         name = child.name
         if len(p) == 5:  # Importing as `name`
             name = p[2]
-        p[0] = (name, child)
+        # Push to current scope
+        self.current_scope().push_member(child, name)
 
     def p_option(self, p: P) -> None:
         """option : OPTION IDENTIFIER '=' option_value optional_semicolon"""
@@ -295,7 +290,7 @@ class Parser:
             lineno=p.lineno(2),
             token=p[2],
         )
-        p[0] = (name, option)
+        self.current_scope().push_member(option)
 
     def p_option_value(self, p: P) -> None:
         """option_value : boolean_literal
@@ -315,7 +310,7 @@ class Parser:
             scope_stack=self.current_scope_stack(),
             comment_block=self.current_comment_block(),
         )
-        p[0] = (name, alias)
+        self.current_scope().push_member(alias)
 
     def p_const(self, p: P) -> None:
         """const : CONST IDENTIFIER '=' const_value optional_semicolon"""
@@ -346,7 +341,7 @@ class Parser:
             token=p[2],
             lineno=p.lineno(2),
         )
-        p[0] = (name, constant)
+        self.current_scope().push_member(constant)
 
     def p_const_value(self, p: P) -> None:
         """const_value : boolean_literal
@@ -486,7 +481,7 @@ class Parser:
     def p_enum(self, p: P) -> None:
         """enum : open_enum_scope enum_scope close_enum_scope"""
         enum = p[2]
-        p[0] = (enum.name, enum)
+        self.current_scope().push_member(enum)
 
     def p_open_enum_scope(self, p: P) -> None:
         """open_enum_scope : ENUM IDENTIFIER ':' UINT_TYPE '{'"""
@@ -504,7 +499,6 @@ class Parser:
     def p_enum_scope(self, p: P) -> None:
         """enum_scope : enum_items"""
         p[0] = scope = self.current_scope()
-        self._collect_scope_members(scope, p[1])
 
     def p_close_enum_scope(self, p: P) -> None:
         """close_enum_scope : '}'"""
@@ -536,12 +530,12 @@ class Parser:
             scope_stack=self.current_scope_stack(),
             comment_block=self.current_comment_block(),
         )
-        p[0] = (name, field)
+        self.current_scope().push_member(field)
 
     def p_message(self, p: P) -> None:
         """message : open_message_scope message_scope close_message_scope"""
         message = p[2]
-        p[0] = (message.name, message)
+        self.current_scope().push_member(message)
 
     def p_open_message_scope(self, p: P) -> None:
         """open_message_scope : MESSAGE IDENTIFIER '{'"""
@@ -562,7 +556,6 @@ class Parser:
     def p_message_scope(self, p: P) -> None:
         """message_scope : message_items"""
         p[0] = scope = self.current_scope()
-        self._collect_scope_members(scope, p[1])
 
     def p_message_items(self, p: P) -> None:
         """message_items : message_item message_items
@@ -572,7 +565,9 @@ class Parser:
 
     def p_message_item(self, p: P) -> None:
         """message_item : option
+                        | enum
                         | message_field
+                        | message
                         | comment
                         | newline"""
         p[0] = p[1]
@@ -590,7 +585,7 @@ class Parser:
             comment_block=self.current_comment_block(),
             scope_stack=self.current_scope_stack(),
         )
-        p[0] = (name, type)
+        self.current_scope().push_member(message_field)
 
     def p_optional_message_field_number(self, p: P) -> None:
         """optional_message_field_number : '=' INT_LITERAL

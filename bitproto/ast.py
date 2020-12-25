@@ -88,6 +88,9 @@ class Comment(Node):
     def __str__(self) -> str:
         return self.content()
 
+    def __repr__(self) -> str:
+        return "<comment // {0}..>".format(self.token[:3])
+
 
 @dataclass
 class Definition(Node):
@@ -105,6 +108,9 @@ class Definition(Node):
     def set_comment_block(self, comment_block: Tuple[Comment, ...]) -> None:
         self.comment_block = comment_block
 
+    def __repr__(self) -> str:
+        return "<definition {0}>".format(self.name)
+
 
 @dataclass
 class Option(Definition):
@@ -112,6 +118,9 @@ class Option(Definition):
 
     def validate(self) -> None:
         assert self.value is not None, InternalError("Init Option with value None")
+
+    def __repr__(self) -> str:
+        return "<option {0}={1}>".format(self.name, self.value)
 
 
 @dataclass
@@ -132,6 +141,9 @@ class StringOption(Option):
 @dataclass
 class Constant(Definition):
     value: Union[str, int, bool, None] = None
+
+    def __repr__(self) -> str:
+        return "<constant {0}={1}>".format(self.name, self.value)
 
 
 @dataclass
@@ -161,6 +173,9 @@ class StringConstant(Constant):
 @dataclass
 class Scope(Definition):
     members: "dict_[str, Definition]" = dataclass_field(default_factory=dict_)
+
+    def __repr__(self) -> str:
+        return f"<scope {self.name}"
 
     def validate_member_on_push(
         self, member: Definition, name: Optional[str] = None
@@ -234,6 +249,9 @@ class Scope(Definition):
 @dataclass
 class Type(Node):
     _is_missing: bool = False
+
+    def __repr__(self) -> str:
+        return "<type base>"
 
     def nbits(self) -> int:
         raise NotImplementedError
@@ -333,6 +351,9 @@ class Array(Type):
 class Alias(Type, Definition):
     type: Type = _TYPE_MISSING
 
+    def __repr__(self) -> str:
+        return f"<alias {self.name}>"
+
     def validate(self) -> None:
         # TODO: Should we check this?
         t = (Bool, Uint, Int, Byte)
@@ -361,6 +382,9 @@ class Field(Definition):
 class EnumField(Field):
     value: int = 0
 
+    def __repr__(self) -> str:
+        return f"<enum-field {self.name}={self.value}>"
+
     def validate(self) -> None:
         if self.value < 0:
             raise InvalidEnumField(
@@ -374,6 +398,9 @@ class EnumField(Field):
 @dataclass
 class Enum(Type, Scope):
     type: Uint = _UINT_MISSING
+
+    def __repr__(self) -> str:
+        return f"<enum {self.name}"
 
     def nbits(self) -> int:
         return self.type.nbits()
@@ -406,6 +433,9 @@ class Enum(Type, Scope):
 @dataclass
 class MessageField(Field):
     type: Type = Type()
+
+    def __repr__(self) -> str:
+        return f"<message-field {self.name}>"
 
     def validate(self) -> None:
         pass
