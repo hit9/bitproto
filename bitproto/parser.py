@@ -42,6 +42,9 @@ from bitproto.errors import (
     CyclicImport,
 )
 from bitproto.lexer import Lexer, LexerHandle
+from bitproto.utils import getLogger
+
+logger = getLogger(__name__)
 
 
 @dataclass
@@ -275,8 +278,7 @@ class Parser:
                 token=importing_path,
                 lineno=p.lineno(2),
             )
-        parser = Parser()
-        child = parser.parse(filepath)
+        child = Parser().parse(filepath)
         name = child.name
         if len(p) == 5:  # Importing as `name`
             name = p[2]
@@ -625,7 +627,8 @@ class Parser:
     def p_optional_message_field_number(self, p: P) -> None:
         """optional_message_field_number : '=' INTCONSTANT
                                          |"""
-        pass  # TODO: Warning message
+        if len(p) == 3:
+            logger.warning("Message field number is going to be deprecated, ignored")
 
     def p_boolean_literal(self, p: P) -> None:
         """boolean_literal : BOOL_LITERAL"""

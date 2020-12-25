@@ -38,7 +38,7 @@ Abstraction syntax tree.
 
 from dataclasses import dataclass, field as dataclass_field
 from collections import OrderedDict as dict_
-from typing import Tuple, Union, Optional, Type as T, TypeVar
+from typing import Tuple, Union, Optional, Type as T, TypeVar, cast
 
 from bitproto.errors import (
     InternalError,
@@ -50,6 +50,7 @@ from bitproto.errors import (
     InvalidEnumField,
     EnumFieldValueOverflow,
     DuplicatedEnumFieldValue,
+    InvalidAliasedType,
 )
 
 T_Definition = TypeVar(
@@ -114,6 +115,9 @@ class Definition(Node):
 @dataclass
 class Option(Definition):
     value: Union[str, int, bool, None] = None
+
+    def validate(self) -> None:
+        assert self.value is not None, InternalError("Init Option with value None")
 
 
 @dataclass
@@ -343,7 +347,19 @@ class Alias(Type, Definition):
     type: Type = _TYPE_MISSING
 
     def validate(self) -> None:
-        pass  # TODO: Supported aliasable type check
+        # TODO: Should we check this?
+        t = (Bool, Uint, Int, Byte)
+        allow = False
+        if isinstance(self.type, t):  # Alias to base types
+            allow = True
+        elif isinstance(self.type, Array):
+            array = cast(Array, self.type)
+            if isinstance(array.type, t):  # Alias to array of base types
+                allow = True
+            if isinstance(array.type, Alias):  # Alias to array of alias
+                allow = True
+        if not allow:
+            raise InvalidAliasedType
 
     def nbits(self) -> int:
         return self.type.nbits()
@@ -388,10 +404,12 @@ class Enum(Type, Scope):
             self.validate_enum_field_on_push(member)
 
     def validate_enum_field_on_push(self, field: EnumField) -> None:
+        # Value overflows?
         if field.value.bit_length() > self.nbits():
             raise EnumFieldValueOverflow(
                 filepath=field.filepath, lineno=field.lineno, token=field.token,
             )
+        # Value already defined?
         if field.value in self.value_to_names():
             raise DuplicatedEnumFieldValue(
                 filepath=field.filepath, lineno=field.lineno, token=field.token,

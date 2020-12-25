@@ -117,3 +117,8 @@ class DuplicatedEnumFieldValue(GrammarError):
 @dataclass
 class CyclicImport(GrammarError):
     """Cyclic proto import."""
+
+
+@dataclass
+class InvalidAliasedType(GrammarError):
+    """Invalid type to alias, only bool,byte,uint,int and array of them can be aliased."""
