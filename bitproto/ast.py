@@ -151,6 +151,12 @@ class Scope(Definition):
         default_factory=OrderedDict
     )
 
+    def validate_post_push_member(
+        self, member: Definition, name: Optional[str] = None
+    ) -> None:
+        """Invoked after given member pushed as name into this scope."""
+        pass
+
     def push_member(self, member: Definition, name: Optional[str] = None) -> None:
         if name is None:
             name = member.name
@@ -162,6 +168,7 @@ class Scope(Definition):
                 lineno=member.lineno,
             )
         self.members[name] = member
+        self.validate_post_push_member(member, name)
 
     def options(self) -> "OrderedDict[str, Option]":
         return OrderedDict(
@@ -321,6 +328,13 @@ class Array(Type):
 class Alias(Type, Definition):
     type: Optional[Type] = None
 
+    def validate(self) -> None:
+        pass  # TODO: Supported aliasable type check
+
+    def nbits(self) -> int:
+        assert self.type is not None, InternalError("Alias type is None")
+        return self.type.nbits()
+
 
 @dataclass
 class Field(Definition):
@@ -329,17 +343,30 @@ class Field(Definition):
 
 @dataclass
 class EnumField(Field):
-    pass
+    value: int = 0
+
+    def validate(self) -> None:
+        # TODO: Check value uint and overflow
+        pass
 
 
 @dataclass
 class Enum(Type, Scope):
     type: Optional[Uint] = None
 
+    def validate_post_push_member(
+        self, member: Definition, name: Optional[str] = None
+    ) -> None:
+        # TODO: Check field
+        pass
+
 
 @dataclass
 class MessageFiled(Field):
-    pass
+    type: Optional[Type] = None
+
+    def validate(self) -> None:
+        pass
 
 
 @dataclass

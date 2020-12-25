@@ -20,10 +20,14 @@ from bitproto.ast import (
     Comment,
     Definition,
     Enum,
+    EnumField,
     Constant,
     BooleanConstant,
     IntegerConstant,
     StringConstant,
+    Message,
+    MessageFiled,
+    Type,
     Option,
     Scope,
     Proto,
@@ -169,6 +173,14 @@ class Parser:
         elif len(p) == 1:
             p[0] = []
 
+    def _collect_scope_members(
+        self, scope: Scope, defintion_items: List[Tuple[str, Definition]]
+    ) -> None:
+        """Collects given defintion_items to given scope."""
+        for name, defintion in defintion_items:
+            if defintion is not None:  # Ignore dropped
+                scope.push_member(defintion, name=name)
+
     def p_optional_semicolon(self, p: P) -> None:
         """optional_semicolon : ';'
                               |"""
@@ -189,12 +201,8 @@ class Parser:
 
     def p_global_scope(self, p: P) -> None:
         """global_scope : global_scope_definitions"""
-        scope = self.current_scope()
-        # Collect Not None defintions.
-        for name, defintion in p[2]:
-            if defintion is not None:  # Ignore drops
-                scope.push_member(defintion, name=name)
-        p[0] = scope
+        p[0] = scope = self.current_scope()
+        self._collect_scope_members(scope, p[2])
 
     def p_global_scope_definitions(self, p: P) -> None:
         """global_scope_definitions : global_scope_definition_unit global_scope_definitions
@@ -288,6 +296,8 @@ class Parser:
             filepath=self.current_filepath(),
             lineno=p.lineno(2),
             token=p[2],
+            scope_stack=self.current_scope_stack(),
+            comment_block=self.current_comment_block(),
         )
         p[0] = (name, alias)
 
@@ -489,19 +499,27 @@ class Parser:
         pass
 
     def p_enum(self, p: P) -> None:
-        """enum : open_enum_scope enum_items close_enum_scope"""
-        p[0] = p[1]
+        """enum : open_enum_scope enum_scope close_enum_scope"""
+        enum = p[2]
+        p[0] = (enum.name, enum)
 
     def p_open_enum_scope(self, p: P) -> None:
         """open_enum_scope : ENUM IDENTIFIER ':' UINT_TYPE '{'"""
-        p[0] = enum = Enum(
+        enum = Enum(
             name=p[2],
             type=p[4],
             token=p[2],
             lineno=p.lineno(2),
             filepath=self.current_filepath(),
+            comment_block=self.current_comment_block(),
+            scope_stack=self.current_scope_stack(),
         )
         self.push_scope(enum)
+
+    def p_enum_scope(self, p: P) -> None:
+        """enum_scope : enum_items"""
+        p[0] = scope = self.current_scope()
+        self._collect_scope_members(scope, p[1])
 
     def p_close_enum_scope(self, p: P) -> None:
         """close_enum_scope : '}'"""
@@ -522,19 +540,44 @@ class Parser:
 
     def p_enum_field(self, p: P) -> None:
         """enum_field : IDENTIFIER '=' INTCONSTANT optional_semicolon"""
-        pass
+        name = p[1]
+        value = p[3]
+        field = EnumField(
+            name=name,
+            value=value,
+            token=p[1],
+            lineno=p.lineno(1),
+            filepath=self.current_filepath(),
+            scope_stack=self.current_scope_stack(),
+            comment_block=self.current_comment_block(),
+        )
+        p[0] = (name, field)
 
     def p_message(self, p: P) -> None:
-        """message : open_message_scope message_items close_message_scope"""
-        pass
+        """message : open_message_scope message_scope close_message_scope"""
+        message = p[2]
+        p[0] = (message.name, message)
 
     def p_open_message_scope(self, p: P) -> None:
         """open_message_scope : MESSAGE IDENTIFIER '{'"""
-        pass
+        message = Message(
+            name=p[2],
+            token=p[2],
+            lineno=p.lineno(2),
+            filepath=self.current_filepath(),
+            comment_block=self.current_comment_block(),
+            scope_stack=self.current_scope_stack(),
+        )
+        self.push_scope(message)
 
     def p_close_message_scope(self, p: P) -> None:
         """close_message_scope : '}'"""
-        pass
+        self.pop_scope()
+
+    def p_message_scope(self, p: P) -> None:
+        """message_scope : message_items"""
+        p[0] = scope = self.current_scope()
+        self._collect_scope_members(scope, p[1])
 
     def p_message_items(self, p: P) -> None:
         """message_items : message_item message_items
@@ -550,12 +593,24 @@ class Parser:
         p[0] = p[1]
 
     def p_message_field(self, p: P) -> None:
-        """message_field : message_field_number ':' IDENTIFIER type optional_semicolon"""
-        pass
+        """message_field : type IDENTIFIER optional_message_field_number optional_semicolon"""
+        name = p[2]
+        type = p[1]
+        message_field = MessageFiled(
+            name=name,
+            type=type,
+            token=p[2],
+            lineno=p.lineno(2),
+            filepath=self.current_filepath(),
+            comment_block=self.current_comment_block(),
+            scope_stack=self.current_scope_stack(),
+        )
+        p[0] = (name, type)
 
-    def p_message_field_number(self, p: P) -> None:
-        """message_field_number : INTCONSTANT"""
-        p[0] = p[1]
+    def p_optional_message_field_number(self, p: P) -> None:
+        """optional_message_field_number : '=' INTCONSTANT
+                                         |"""
+        pass  # TODO: Warning message
 
     def p_boolean_literal(self, p: P) -> None:
         """boolean_literal : BOOL_LITERAL"""
