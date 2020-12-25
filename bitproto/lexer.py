@@ -6,13 +6,19 @@ Lexer for bitproto.
 """
 
 from contextlib import contextmanager
-from typing import Tuple, Dict, Iterator, Optional
+from dataclasses import dataclass
+from typing import Tuple, Dict, Iterator, Optional, List
 
 from ply import lex
 from ply.lex import LexToken
 
-from bitproto.errors import LexerError, InvalidEscapingChar
+from bitproto.errors import LexerError, InvalidEscapingChar, InternalError
 from bitproto.ast import Newline, Comment, Bool, Uint, Int, Byte
+
+
+@dataclass
+class LexerHandle:
+    filepath: str = ""
 
 
 class Lexer:
@@ -89,21 +95,28 @@ class Lexer:
 
     def __init__(self) -> None:
         self.lexer = lex.lex(object=self)
-        self.filepath: str = ""
+        self.handle_stack: List[LexerHandle] = []
 
-    def set_filepath(self, filepath: str) -> None:
-        self.filepath = filepath
+    def push_handle(self, handle: LexerHandle) -> None:
+        self.handle_stack.append(handle)
 
-    def clear_filepath(self) -> None:
-        self.filepath = ""
+    def pop_handle(self) -> LexerHandle:
+        return self.handle_stack.pop()
+
+    def current_handle(self) -> LexerHandle:
+        assert len(self.handle_stack) > 0, InternalError("Lexer handle_stack empty")
+        return self.handle_stack[-1]
+
+    def current_filepath(self) -> str:
+        return self.current_handle().filepath
 
     @contextmanager
-    def maintain_filepath(self, filepath: str) -> Iterator[str]:
+    def maintain_handle(self, handle: LexerHandle) -> Iterator[LexerHandle]:
         try:
-            self.set_filepath(filepath)
-            yield self.filepath
+            self.push_handle(handle)
+            yield handle
         finally:
-            self.clear_filepath()
+            self.pop_handle()
 
     def token(self) -> Optional[LexToken]:
         """Returns the next token lexed.
@@ -117,7 +130,7 @@ class Lexer:
     def t_error(self, t: LexToken) -> None:
         raise LexerError(
             message="Invalid token",
-            filepath=self.filepath,
+            filepath=self.current_filepath(),
             token=t.value[0],
             lineno=t.lexer.lineno,
         )
@@ -126,12 +139,16 @@ class Lexer:
         r"\n"
         t.lexer.lineno += 1
         t.type = "NEWLINE"
-        t.value = Newline(token=t.value, lineno=t.lineno, filepath=self.filepath)
+        t.value = Newline(
+            token=t.value, lineno=t.lineno, filepath=self.current_filepath()
+        )
         return t
 
     def t_COMMENT(self, t: LexToken) -> LexToken:
         r"\/\/[^\n]*"
-        t.value = Comment(token=t.value, lineno=t.lineno, filepath=self.filepath)
+        t.value = Comment(
+            token=t.value, lineno=t.lineno, filepath=self.current_filepath()
+        )
         return t
 
     def t_TEMPLATELINE(self, t: LexToken) -> LexToken:
@@ -141,13 +158,15 @@ class Lexer:
 
     def t_BOOL_TYPE(self, t: LexToken) -> LexToken:
         r"\bbool\b"
-        t.value = Bool(token=t.value, lineno=t.lineno, filepath=self.filepath)
+        t.value = Bool(token=t.value, lineno=t.lineno, filepath=self.current_filepath())
         return t
 
     def t_UINT_TYPE(self, t: LexToken) -> LexToken:
         r"\buint[0-9]+\b"
         cap: int = int(t.value[4:])  # uint{n}
-        t.value = Uint(cap=cap, token=t.value, lineno=t.lineno, filepath=self.filepath,)
+        t.value = Uint(
+            cap=cap, token=t.value, lineno=t.lineno, filepath=self.current_filepath()
+        )
         return t
 
     def t_INT_TYPE(self, t: LexToken) -> LexToken:
@@ -156,12 +175,14 @@ class Lexer:
         # We want the unsupported cases like `int0`, `int3` to raise an error instead of
         # lexing into identifiers.
         cap: int = int(t.value[3:])
-        t.value = Int(cap=cap, token=t.value, lineno=t.lineno, filepath=self.filepath,)
+        t.value = Int(
+            cap=cap, token=t.value, lineno=t.lineno, filepath=self.current_filepath()
+        )
         return t
 
     def t_BYTE_TYPE(self, t: LexToken) -> LexToken:
         r"\bbyte\b"
-        t.value = Byte(token=t.value, lineno=t.lineno, filepath=self.filepath)
+        t.value = Byte(token=t.value, lineno=t.lineno, filepath=self.current_filepath())
         return t
 
     def t_HEX_LITERAL(self, t: LexToken) -> LexToken:
@@ -204,7 +225,9 @@ class Lexer:
                     val += Lexer.escaping_chars[s[i]]
                 else:
                     raise InvalidEscapingChar(
-                        token=t.value, filepath=self.filepath, lineno=t.lexer.lineno
+                        token=t.value,
+                        filepath=self.current_filepath(),
+                        lineno=t.lexer.lineno,
                     )
             else:
                 val += s[i]

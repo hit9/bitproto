@@ -40,7 +40,7 @@ from bitproto.errors import (
     ReferencedConstantNotDefined,
     ReferencedTypeNotDefined,
 )
-from bitproto.lexer import Lexer
+from bitproto.lexer import Lexer, LexerHandle
 
 
 @dataclass
@@ -155,7 +155,7 @@ class Parser:
         """Parse a bitproto from given string `s`.
         :param filepath: The filepath information if exist.
         """
-        with self.lexer.maintain_filepath(filepath):
+        with self.lexer.maintain_handle(LexerHandle(filepath=filepath)):
             handle = ParserHandle(filepath)
             with self.maintain_handle(handle):
                 return self.parser.parse(s)
@@ -176,7 +176,7 @@ class Parser:
     def _collect_scope_members(
         self, scope: Scope, defintion_items: List[Tuple[str, Definition]]
     ) -> None:
-        """Collects given defintion_items to given scope."""
+        """Collects given `defintion_items` to given scope."""
         for name, defintion in defintion_items:
             if defintion is not None:  # Ignore dropped
                 scope.push_member(defintion, name=name)
