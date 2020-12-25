@@ -218,7 +218,6 @@ class Parser:
                                         | option
                                         | alias
                                         | const
-                                        | template
                                         | enum
                                         | message
                                         | proto_namer
@@ -483,37 +482,6 @@ class Parser:
                 lineno=p.lineno(1),
             )
         p[0] = int(p[1])  # Using int format
-
-    def p_template(self, p: P) -> None:
-        """template : TEMPLATE IDENTIFIER  open_template_scope template_items close_template_scope"""
-        pass
-
-    def p_open_template_scope(self, p: P) -> None:
-        """open_template_scope : '{'"""
-        pass
-
-    def p_close_template_scope(self, p: P) -> None:
-        """close_template_scope : '}'"""
-        pass
-
-    def p_template_items(self, p: P) -> None:
-        """template_items : template_item template_items
-                          | template_item
-                          |"""
-        self.util_parse_sequence(p)
-
-    def p_template_item(self, p: P) -> None:
-        """template_item : option
-                         | template_line
-                         | comment
-                         | newline
-                         """
-        p[0] = p[1]
-
-    def p_template_line(self, p: P) -> None:
-        """template_line : TEMPLATELINE"""
-        p[0] = p[1]  # FIXME: template.Push
-        pass
 
     def p_enum(self, p: P) -> None:
         """enum : open_enum_scope enum_scope close_enum_scope"""

@@ -238,13 +238,6 @@ class Scope(Definition):
 
 
 @dataclass
-class Template(Scope):
-    name: str = ""
-    lang: str = ""
-    content: str = ""
-
-
-@dataclass
 class Type(Node):
     _is_missing: bool = False
 

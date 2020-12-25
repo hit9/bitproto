@@ -46,8 +46,6 @@ class Lexer:
         "const",
         "enum",
         "message",
-        "template",
-        "render",
     )
     keywords_tokens = tuple(map(lambda keyword: keyword.upper(), keywords))
 
@@ -56,8 +54,6 @@ class Lexer:
         # Misc
         "NEWLINE",
         "COMMENT",
-        # Template
-        "TEMPLATELINE",
         # Operators
         "PLUS",
         "MINUS",
@@ -149,11 +145,6 @@ class Lexer:
         t.value = Comment(
             token=t.value, lineno=t.lineno, filepath=self.current_filepath()
         )
-        return t
-
-    def t_TEMPLATELINE(self, t: LexToken) -> LexToken:
-        r"\\[^\n]*"
-        t.value = t.value[1:]
         return t
 
     def t_BOOL_TYPE(self, t: LexToken) -> LexToken:
