@@ -82,8 +82,10 @@ class ParserHandle:
         block = self.comment_block[:]
         self.comment_block = []
 
-    def comment_block_tuple(self) -> Tuple[Comment, ...]:
-        return tuple(self.comment_block)
+    def collect_comment_block(self) -> Tuple[Comment, ...]:
+        comment_block = tuple(self.comment_block)
+        self.clear_comment_block()
+        return comment_block
 
 
 class Parser:
@@ -139,9 +141,17 @@ class Parser:
         handle = self.current_handle()
         return handle.scope_stack_tuple()
 
-    def current_comment_block(self) -> Tuple[Comment, ...]:
+    def collect_comment_block(self) -> Tuple[Comment, ...]:
         handle = self.current_handle()
-        return handle.comment_block_tuple()
+        return handle.collect_comment_block()
+
+    def clear_comment_block(self) -> None:
+        handle = self.current_handle()
+        return handle.clear_comment_block()
+
+    def push_comment(self, comment: Comment) -> None:
+        handle = self.current_handle()
+        handle.push_comment(comment)
 
     def current_filepath(self) -> str:
         handle = self.current_handle()
@@ -220,18 +230,15 @@ class Parser:
         """proto : PROTO IDENTIFIER optional_semicolon"""
         proto = self.current_proto()
         proto.set_name(p[2])
-        proto.set_comment_block(self.current_comment_block())
-        p[0] = (None, None)  # drop
+        proto.set_comment_block(self.collect_comment_block())
 
     def p_comment(self, p: P) -> None:
         """comment : COMMENT NEWLINE"""
-        self.current_handle().push_comment(p[1])
-        p[0] = (None, None)  # drop
+        self.push_comment(p[1])
 
     def p_newline(self, p: P) -> None:
         """newline : NEWLINE"""
-        self.current_handle().clear_comment_block()
-        p[0] = (None, None)  # drop
+        self.clear_comment_block()
 
     def _get_child_filepath(self, importing_path: str) -> str:
         """Gets the filepath for the importing path.
@@ -285,7 +292,7 @@ class Parser:
             name=name,
             value=value,
             scope_stack=self.current_scope_stack(),
-            comment_block=self.current_comment_block(),
+            comment_block=self.collect_comment_block(),
             filepath=self.current_filepath(),
             lineno=p.lineno(2),
             token=p[2],
@@ -308,7 +315,7 @@ class Parser:
             lineno=p.lineno(2),
             token=p[2],
             scope_stack=self.current_scope_stack(),
-            comment_block=self.current_comment_block(),
+            comment_block=self.collect_comment_block(),
         )
         self.current_scope().push_member(alias)
 
@@ -336,7 +343,7 @@ class Parser:
             name=name,
             value=value,
             scope_stack=self.current_scope_stack(),
-            comment_block=self.current_comment_block(),
+            comment_block=self.collect_comment_block(),
             filepath=self.current_filepath(),
             token=p[2],
             lineno=p.lineno(2),
@@ -491,7 +498,7 @@ class Parser:
             token=p[2],
             lineno=p.lineno(2),
             filepath=self.current_filepath(),
-            comment_block=self.current_comment_block(),
+            comment_block=self.collect_comment_block(),
             scope_stack=self.current_scope_stack(),
         )
         self.push_scope(enum)
@@ -528,7 +535,7 @@ class Parser:
             lineno=p.lineno(1),
             filepath=self.current_filepath(),
             scope_stack=self.current_scope_stack(),
-            comment_block=self.current_comment_block(),
+            comment_block=self.collect_comment_block(),
         )
         self.current_scope().push_member(field)
 
@@ -544,7 +551,7 @@ class Parser:
             token=p[2],
             lineno=p.lineno(2),
             filepath=self.current_filepath(),
-            comment_block=self.current_comment_block(),
+            comment_block=self.collect_comment_block(),
             scope_stack=self.current_scope_stack(),
         )
         self.push_scope(message)
@@ -582,7 +589,7 @@ class Parser:
             token=p[2],
             lineno=p.lineno(2),
             filepath=self.current_filepath(),
-            comment_block=self.current_comment_block(),
+            comment_block=self.collect_comment_block(),
             scope_stack=self.current_scope_stack(),
         )
         self.current_scope().push_member(message_field)
