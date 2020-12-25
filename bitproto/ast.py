@@ -48,6 +48,8 @@ from bitproto.errors import (
     InvalidIntCap,
     InvalidUintCap,
     InvalidEnumField,
+    EnumFieldValueOverflow,
+    DuplicatedEnumFieldValue,
 )
 
 T_Definition = TypeVar(
@@ -162,10 +164,10 @@ class StringConstant(Constant):
 class Scope(Definition):
     members: "dict_[str, Definition]" = dataclass_field(default_factory=dict_)
 
-    def validate_post_push_member(
+    def validate_member_on_push(
         self, member: Definition, name: Optional[str] = None
     ) -> None:
-        """Invoked after given member pushed as name into this scope."""
+        """Invoked on given member going to push as given name into this scope."""
         pass
 
     def push_member(self, member: Definition, name: Optional[str] = None) -> None:
@@ -178,8 +180,8 @@ class Scope(Definition):
                 token=member.token,
                 lineno=member.lineno,
             )
+        self.validate_member_on_push(member, name)
         self.members[name] = member
-        self.validate_post_push_member(member, name)
 
     def get_member(self, *names: str) -> Optional[Definition]:
         """Gets member by names recursively.
@@ -369,11 +371,27 @@ class Enum(Type, Scope):
     def nbits(self) -> int:
         return self.type.nbits()
 
-    def validate_post_push_member(
+    def name_to_values(self) -> "dict_[str, int]":
+        return dict_((name, field.value) for name, field in self.enum_fields().items())
+
+    def value_to_names(self) -> "dict_[int, str]":
+        return dict_((field.value, name) for name, field in self.enum_fields().items())
+
+    def validate_member_on_push(
         self, member: Definition, name: Optional[str] = None
     ) -> None:
-        # TODO: Check field overflow and unique
-        pass
+        if isinstance(member, EnumField):
+            self.validate_enum_field_on_push(member)
+
+    def validate_enum_field_on_push(self, field: EnumField) -> None:
+        if field.value.bit_length() > self.nbits():
+            raise EnumFieldValueOverflow(
+                filepath=field.filepath, lineno=field.lineno, token=field.token,
+            )
+        if field.value in self.value_to_names():
+            raise DuplicatedEnumFieldValue(
+                filepath=field.filepath, lineno=field.lineno, token=field.token,
+            )
 
 
 @dataclass

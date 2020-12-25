@@ -102,3 +102,13 @@ class ReferencedTypeNotDefined(GrammarError):
 @dataclass
 class InvalidEnumField(GrammarError):
     """Invalid enum field."""
+
+
+@dataclass
+class EnumFieldValueOverflow(GrammarError):
+    """Enum field value overflows type constraint."""
+
+
+@dataclass
+class DuplicatedEnumFieldValue(GrammarError):
+    """Duplicated enum field value."""
