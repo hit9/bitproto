@@ -9,8 +9,8 @@ Bit level data interchange format.
 
 import os
 from contextlib import contextmanager
-from dataclasses import dataclass, field as dataclass_field
 from collections import OrderedDict
+from dataclasses import dataclass, field as dataclass_field
 from typing import (
     Dict,
     Iterator,
@@ -109,6 +109,21 @@ class InvalidArrayCap(GrammarError):
     """Invalid array capacity."""
 
 
+@dataclass
+class DuplicatedDefinition(GrammarError):
+    """Duplicated definition."""
+
+
+@dataclass
+class ReferencedConstantNotDefined(GrammarError):
+    """Referenced constant not defined."""
+
+
+@dataclass
+class ReferencedTypeNotDefined(GrammarError):
+    """Referenced type not defined."""
+
+
 ###
 # AST
 ###
@@ -119,7 +134,6 @@ class Node:
 
     token: str = ""
     lineno: int = 0
-    position: int = 0
     filepath: str = ""
 
     def __post_init__(self) -> None:
@@ -149,7 +163,6 @@ class Comment(Node):
 class Definition(Node):
     name: str = ""
     scope_stack: Tuple["Scope", ...] = tuple()
-    breadth: int = 0
     comment_block: Tuple[Comment, ...] = tuple()
 
     def docstring(self) -> str:
@@ -187,26 +200,10 @@ class StringOption(Option):
 class Constant(Definition):
     value: Union[str, int, bool, None] = None
 
-    def __eq__(self, o: object) -> bool:
-        if not isinstance(o, Constant):
-            return False
-        return self.value == o.value
-
-    def __ne__(self, o: object) -> bool:
-        return not (self == o)
-
-    def __hash__(self) -> int:
-        return hash(self.value)
-
 
 @dataclass
 class IntegerConstant(Constant):
     value: int = 0
-
-    def __eq__(self, o: object) -> bool:
-        if not isinstance(o, IntegerConstant):
-            return False
-        return self.value == o.value
 
     def __int__(self) -> int:
         return self.value
@@ -216,20 +213,16 @@ class IntegerConstant(Constant):
 class BooleanConstant(Constant):
     value: bool = False
 
-    def __eq__(self, o: object) -> bool:
-        if not isinstance(o, BooleanConstant):
-            return False
-        return self.value == o.value
+    def __bool__(self) -> bool:
+        return self.value
 
 
 @dataclass
 class StringConstant(Constant):
     value: str = ""
 
-    def __eq__(self, o: object) -> bool:
-        if not isinstance(o, StringConstant):
-            return False
-        return self.value == o.value
+    def __str__(self) -> str:
+        return self.value
 
 
 @dataclass
@@ -241,42 +234,66 @@ class Scope(Definition):
     def push_member(self, member: Definition, name: Optional[str] = None) -> None:
         if name is None:
             name = member.name
+        if name in self.members:
+            raise DuplicatedDefinition(
+                message="Duplicated definition",
+                filepath=member.filepath,
+                token=member.token,
+                lineno=member.lineno,
+            )
         self.members[name] = member
 
     def options(self) -> "OrderedDict[str, Option]":
-        d: "OrderedDict[str, Option]" = OrderedDict()
-        for name, member in self.members.items():
-            if isinstance(member, Option):
-                d[name] = member
-        return d
+        return OrderedDict(
+            (name, member)
+            for name, member in self.members.items()
+            if isinstance(member, Option)
+        )
 
     def enums(self) -> "OrderedDict[str, Enum]":
-        d: "OrderedDict[str, Enum]" = OrderedDict()
-        for name, member in self.members.items():
-            if isinstance(member, Enum):
-                d[name] = member
-        return d
+        return OrderedDict(
+            (name, member)
+            for name, member in self.members.items()
+            if isinstance(member, Enum)
+        )
 
     def messages(self) -> "OrderedDict[str, Message]":
-        d: "OrderedDict[str, Message]" = OrderedDict()
-        for name, member in self.members.items():
-            if isinstance(member, Message):
-                d[name] = member
-        return d
+        return OrderedDict(
+            (name, member)
+            for name, member in self.members.items()
+            if isinstance(member, Message)
+        )
 
     def constants(self) -> "OrderedDict[str, Constant]":
-        d: "OrderedDict[str, Constant]" = OrderedDict()
-        for name, member in self.members.items():
-            if isinstance(member, Constant):
-                d[name] = member
-        return d
+        return OrderedDict(
+            (name, member)
+            for name, member in self.members.items()
+            if isinstance(member, Constant)
+        )
 
     def protos(self) -> "OrderedDict[str, Proto]":
-        d: "OrderedDict[str, Proto]" = OrderedDict()
-        for name, member in self.members.items():
-            if isinstance(member, Proto):
-                d[name] = member
-        return d
+        return OrderedDict(
+            (name, member)
+            for name, member in self.members.items()
+            if isinstance(member, Proto)
+        )
+
+    def get_member(self, *names: str) -> Optional[Definition]:
+        """Gets member by names recursively.
+        Returns `None` if not found.
+        The recursivion continues only if current node is a scope.
+        """
+        if not names:
+            return None
+        first, remain = names[0], names[1:]
+        member = self.members.get(first, None)
+        if member is None:
+            return None
+        if not remain:
+            return member
+        if not isinstance(member, Scope):
+            return None
+        return member.get_member(*remain)
 
 
 @dataclass
@@ -372,10 +389,12 @@ class Array(Type):
             return 0
         return self.cap * self.type.nbits()
 
+    def __repr__(self) -> str:
+        return "{0}[{1}]".format(self.type, self.cap)
+
 
 @dataclass
-class Alias(Type):
-    name: str = ""
+class Alias(Type, Definition):
     type: Optional[Type] = None
 
 
@@ -391,7 +410,7 @@ class EnumField(Field):
 
 @dataclass
 class Enum(Type, Scope):
-    pass
+    type: Optional[Uint] = None
 
 
 @dataclass
@@ -427,7 +446,7 @@ class Lexer:
     t_ignore: str = " \t\r"
 
     # Literal symbols
-    literals: str = ":;{}[]()=\\."
+    literals: str = ":;{}[]()=\\"
 
     # Reversed keywords
     keywords: Tuple[str, ...] = (
@@ -524,16 +543,12 @@ class Lexer:
         r"\n"
         t.lexer.lineno += 1
         t.type = "NEWLINE"
-        t.value = Newline(
-            token=t.value, lineno=t.lineno, position=t.lexpos, filepath=self.filepath
-        )
+        t.value = Newline(token=t.value, lineno=t.lineno, filepath=self.filepath)
         return t
 
     def t_COMMENT(self, t: LexToken) -> LexToken:
         r"\/\/[^\n]*"
-        t.value = Comment(
-            token=t.value, position=t.lexpos, lineno=t.lineno, filepath=self.filepath
-        )
+        t.value = Comment(token=t.value, lineno=t.lineno, filepath=self.filepath)
         return t
 
     def t_TEMPLATELINE(self, t: LexToken) -> LexToken:
@@ -543,21 +558,13 @@ class Lexer:
 
     def t_BOOL_TYPE(self, t: LexToken) -> LexToken:
         r"\bbool\b"
-        t.value = Bool(
-            token=t.value, position=t.lexpos, lineno=t.lineno, filepath=self.filepath
-        )
+        t.value = Bool(token=t.value, lineno=t.lineno, filepath=self.filepath)
         return t
 
     def t_UINT_TYPE(self, t: LexToken) -> LexToken:
         r"\buint[0-9]+\b"
         cap: int = int(t.value[4:])  # uint{n}
-        t.value = Uint(
-            cap=cap,
-            token=t.value,
-            position=t.lexpos,
-            lineno=t.lineno,
-            filepath=self.filepath,
-        )
+        t.value = Uint(cap=cap, token=t.value, lineno=t.lineno, filepath=self.filepath,)
         return t
 
     def t_INT_TYPE(self, t: LexToken) -> LexToken:
@@ -566,20 +573,12 @@ class Lexer:
         # We want the unsupported cases like `int0`, `int3` to raise an error instead of
         # lexing into identifiers.
         cap: int = int(t.value[3:])
-        t.value = Int(
-            cap=cap,
-            token=t.value,
-            position=t.lexpos,
-            lineno=t.lineno,
-            filepath=self.filepath,
-        )
+        t.value = Int(cap=cap, token=t.value, lineno=t.lineno, filepath=self.filepath,)
         return t
 
     def t_BYTE_TYPE(self, t: LexToken) -> LexToken:
         r"\bbyte\b"
-        t.value = Byte(
-            token=t.value, position=t.lexpos, lineno=t.lineno, filepath=self.filepath
-        )
+        t.value = Byte(token=t.value, lineno=t.lineno, filepath=self.filepath)
         return t
 
     def t_HEX_LITERAL(self, t: LexToken) -> LexToken:
@@ -600,7 +599,7 @@ class Lexer:
         return t
 
     def t_IDENTIFIER(self, t: LexToken) -> LexToken:
-        r"\b[a-zA-Z_]([a-zA-Z_0-9])*\b"
+        r"\b[a-zA-Z_](\.[a-zA-Z_0-9])*\b"
         # This rule may match a keyword.
         if t.value in Lexer.keywords:
             # Converts the matched token to the keyword type
@@ -641,26 +640,8 @@ class ParserHandle:
     """Parsing context holder."""
 
     filepath: str
-    breadth: int = 0  # Current walking breadth in the current scope.
     scope_stack: List[Scope] = dataclass_field(default_factory=list)
     comment_block: List[Comment] = dataclass_field(default_factory=list)
-
-    def breadth_up(self) -> None:
-        self.breadth += 1
-
-    def breadth_down(self) -> None:
-        self.breadth -= 1
-
-    def breadth_clear(self) -> None:
-        self.breadth = 0
-
-    @contextmanager
-    def maintain_breadth(self) -> Iterator[int]:
-        try:
-            self.breadth_up()
-            yield self.breadth
-        finally:
-            self.breadth_down()
 
     def push_scope(self, scope: Scope) -> None:
         self.scope_stack.append(scope)
@@ -754,10 +735,6 @@ class Parser:
         handle = self.current_handle()
         return handle.filepath
 
-    def current_breadth(self) -> int:
-        handle = self.current_handle()
-        return handle.breadth
-
     @contextmanager
     def maintain_handle(self, handle: ParserHandle) -> Iterator[ParserHandle]:
         try:
@@ -811,7 +788,7 @@ class Parser:
         scope = self.current_scope()
         # Collect Not None defintions.
         for name, defintion in p[2]:
-            if defintion is not None:
+            if defintion is not None:  # Ignore drops
                 scope.push_member(defintion, name=name)
         p[0] = scope
 
@@ -822,7 +799,7 @@ class Parser:
         self.util_parse_sequence(p)
 
     def p_global_scope_definition_unit(self, p: P) -> None:
-        """global_scope_definition_unit : importer
+        """global_scope_definition_unit : import
                                         | option
                                         | alias
                                         | const
@@ -866,15 +843,15 @@ class Parser:
             current_proto_dir = os.getcwd()
         return os.path.join(current_proto_dir, importing_path)
 
-    def p_importer(self, p: P) -> None:
-        """importer : IMPORT STRING_LITERAL optional_semicolon
-                    | IMPORT IDENTIFIER STRING_LITERAL optional_semicolon"""
+    def p_import(self, p: P) -> None:
+        """import : IMPORT STRING_LITERAL optional_semicolon
+                  | IMPORT IDENTIFIER STRING_LITERAL optional_semicolon"""
         importing_path = p[len(p) - 2]
         filepath = self._get_child_filepath(importing_path)
         parser = Parser()
         child = parser.parse(filepath)
         name = child.name
-        if len(p) == 5:  # Importing as
+        if len(p) == 5:  # Importing as `name`
             name = p[2]
         p[0] = (name, child)
 
@@ -885,11 +862,10 @@ class Parser:
             name=name,
             value=value,
             scope_stack=self.current_scope_stack(),
-            breadth=self.current_breadth(),
             comment_block=self.current_comment_block(),
             filepath=self.current_filepath(),
             lineno=p.lineno(2),
-            token="{0} = {1}".format(name, value),
+            token=p[2],
         )
         p[0] = (name, option)
 
@@ -907,7 +883,7 @@ class Parser:
             type=type,
             filepath=self.current_filepath(),
             lineno=p.lineno(2),
-            token=name,
+            token=p[2],
         )
         p[0] = (name, alias)
 
@@ -915,14 +891,19 @@ class Parser:
         """const : CONST IDENTIFIER '=' const_value optional_semicolon"""
 
         name, value = p[2], p[4]
+
         constant_cls: Optional[T[Constant]] = None
 
-        if value is True or value is False:
+        if value is True or value is False or isinstance(value, BooleanConstant):
+            # Avoid isinstance(True, int)
             constant_cls = BooleanConstant
-        elif isinstance(value, int):
+            value = bool(value)
+        elif isinstance(value, (int, IntegerConstant)):
             constant_cls = IntegerConstant
-        elif isinstance(value, str):
+            value = int(value)
+        elif isinstance(value, (str, StringConstant)):
             constant_cls = StringConstant
+            value = str(value)
         else:
             raise InternalError("No constant_cls to use")
 
@@ -931,9 +912,8 @@ class Parser:
             value=value,
             scope_stack=self.current_scope_stack(),
             comment_block=self.current_comment_block(),
-            breadth=self.current_breadth(),
             filepath=self.current_filepath(),
-            token="{0} = {1}".format(p[2], value),
+            token=p[2],
             lineno=p.lineno(2),
         )
         p[0] = (name, constant)
@@ -982,29 +962,40 @@ class Parser:
         if not isinstance(p[1], IntegerConstant):
             raise CalculationExpressionError(
                 message="Non integer constant referenced to use in calculation expression.",
-                filepath=self.current_handle().filepath,
+                filepath=self.current_filepath(),
                 token=p[1].name,
                 lineno=p.lineno(1),
             )
-        # Using int format version of this IntegerConstant.
-        p[0] = int(p[1])
+        p[0] = int(p[1])  # Using int format
 
-    def p_constant_reference_for_array_capacity(self, p: P) -> None:
-        """constant_reference_for_array_capacity : constant_reference"""
-        if not isinstance(p[1], IntegerConstant):
-            raise InvalidArrayCap(
-                message="Non integer constant referenced to use as array capacity.",
-                filepath=self.current_handle().filepath,
-                token=p[1].name,
-                lineno=p.lineno(1),
-            )
-        # Using int format version of this IntegerConstant.
-        p[0] = int(p[1])
+    def _lookup_referenced_member(self, identifier: str) -> Optional[Definition]:
+        """Lookup referenced defintion member in current bitproto.
+          * When `identifier` contains dots: lookup from the root bitproto.
+          * Otherwise, lookup from the scope stack reversively.
+        """
+        names = identifier.split(".")
+        if len(names) > 1:  # Contains dots
+            proto = self.current_proto()
+            return proto.get_member(*names)
+        else:  # No dot.
+            for scope in self.current_scope_stack()[::-1]:
+                d = scope.get_member(identifier)
+                if d is not None:
+                    return d
+            return None
 
     def p_constant_reference(self, p: P) -> None:
-        """constant_reference : constant_reference '.' constant_reference
-                              | IDENTIFIER"""
-        # TODO
+        """constant_reference : IDENTIFIER"""
+        d = self._lookup_referenced_member(p[1])
+        if d and isinstance(d, Constant):
+            p[0] = d
+        else:
+            raise ReferencedConstantNotDefined(
+                message="referenced constant {0} not defined".format(p[1]),
+                filepath=self.current_filepath(),
+                token=p[1],
+                lineno=p.lineno(1),
+            )
 
     def p_type(self, p: P) -> None:
         """type : single_type
@@ -1024,26 +1015,43 @@ class Parser:
         p[0] = p[1]
 
     def p_type_reference(self, p: P) -> None:
-        """type_reference : type_reference '.' type_reference
-                          | IDENTIFIER"""
-        if len(p) == 4:
-            p[0] = p[1].get_member(p[3])  # FIXME
+        """type_reference : IDENTIFIER"""
+        d = self._lookup_referenced_member(p[1])
+        if d and isinstance(d, Type):
+            p[0] = d
         else:
-            pass  # FIXME
+            raise ReferencedTypeNotDefined(
+                message="referenced type {0} not defined".format(p[1]),
+                filepath=self.current_filepath(),
+                token=p[1],
+                lineno=p.lineno(1),
+            )
 
     def p_array_type(self, p: P) -> None:
-        """array_type : '[' array_capacity ']' single_type"""
-        pass
+        """array_type : single_type '[' array_capacity ']' """
+        p[0] = Array(
+            type=p[1],
+            cap=p[3],
+            token="{0}[{1}]".format(p[1], p[3]),
+            lineno=p.lineno(1),
+            filepath=self.current_filepath(),
+        )
 
     def p_array_capacity(self, p: P) -> None:
         """array_capacity : INTCONSTANT
-                          | constant_reference_for_array_capacity
-                          | message_field_reference_for_array_capacity"""
+                          | constant_reference_for_array_capacity"""
         p[0] = p[1]
 
-    def p_message_field_reference_for_array_capacity(self, p: P) -> None:
-        """message_field_reference_for_array_capacity : IDENTIFIER"""
-        pass
+    def p_constant_reference_for_array_capacity(self, p: P) -> None:
+        """constant_reference_for_array_capacity : constant_reference"""
+        if not isinstance(p[1], IntegerConstant):
+            raise InvalidArrayCap(
+                message="Non integer constant referenced to use as array capacity.",
+                filepath=self.current_filepath(),
+                token=p[1].name,
+                lineno=p.lineno(1),
+            )
+        p[0] = int(p[1])  # Using int format
 
     def p_template(self, p: P) -> None:
         """template : TEMPLATE IDENTIFIER  open_template_scope template_items close_template_scope"""
@@ -1078,15 +1086,22 @@ class Parser:
 
     def p_enum(self, p: P) -> None:
         """enum : open_enum_scope enum_items close_enum_scope"""
-        pass
+        p[0] = p[1]
 
     def p_open_enum_scope(self, p: P) -> None:
-        """open_enum_scope : ENUM IDENTIFIER '{'"""
-        pass
+        """open_enum_scope : ENUM IDENTIFIER ':' UINT_TYPE '{'"""
+        p[0] = enum = Enum(
+            name=p[2],
+            type=p[4],
+            token=p[2],
+            lineno=p.lineno(2),
+            filepath=self.current_filepath(),
+        )
+        self.push_scope(enum)
 
     def p_close_enum_scope(self, p: P) -> None:
         """close_enum_scope : '}'"""
-        pass
+        self.pop_scope()
 
     def p_enum_items(self, p: P) -> None:
         """enum_items : enum_item enum_items
