@@ -242,6 +242,8 @@ class Template(Scope):
 
 @dataclass
 class Type(Node):
+    _is_missing: bool = False
+
     def nbits(self) -> int:
         raise NotImplementedError
 
@@ -252,7 +254,7 @@ class Type(Node):
         return int(nbits / 8) + 1
 
 
-_TYPE_MISSING = Type()
+_TYPE_MISSING = Type(_is_missing=True)
 
 
 @dataclass
@@ -278,6 +280,8 @@ class Uint(Type):
     cap: int = 0
 
     def validate(self) -> None:
+        if self._is_missing:
+            return
         if self.cap <= 0 or self.cap > 64:
             raise InvalidUintCap(
                 filepath=self.filepath, token=self.token, lineno=self.lineno
@@ -290,7 +294,7 @@ class Uint(Type):
         return "uint{0}".format(self.cap)
 
 
-_UINT_MISSING = Uint(cap=0)
+_UINT_MISSING = Uint(_is_missing=True)
 
 
 @dataclass

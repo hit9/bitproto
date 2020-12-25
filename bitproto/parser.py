@@ -39,6 +39,7 @@ from bitproto.errors import (
     GrammarError,
     ReferencedConstantNotDefined,
     ReferencedTypeNotDefined,
+    CyclicImport,
 )
 from bitproto.lexer import Lexer, LexerHandle
 
@@ -156,8 +157,7 @@ class Parser:
         :param filepath: The filepath information if exist.
         """
         with self.lexer.maintain_handle(LexerHandle(filepath=filepath)):
-            handle = ParserHandle(filepath)
-            with self.maintain_handle(handle):
+            with self.maintain_handle(ParserHandle(filepath)):
                 return self.parser.parse(s)
 
     def parse(self, filepath: str) -> Proto:
@@ -255,11 +255,26 @@ class Parser:
             current_proto_dir = os.getcwd()
         return os.path.join(current_proto_dir, importing_path)
 
+    def _check_parsing_file(self, filepath: str) -> bool:
+        """Checks if given filepath existing in parsing stack.
+        """
+        for handle in self.handle_stack:
+            if os.path.samefile(handle.filepath, filepath):
+                return True
+        return False
+
     def p_import(self, p: P) -> None:
         """import : IMPORT STRING_LITERAL optional_semicolon
                   | IMPORT IDENTIFIER STRING_LITERAL optional_semicolon"""
         importing_path = p[len(p) - 2]
         filepath = self._get_child_filepath(importing_path)
+        if self._check_parsing_file(filepath):
+            raise CyclicImport(
+                message=f"cyclic importing {filepath}",
+                filepath=self.current_filepath(),
+                token=importing_path,
+                lineno=p.lineno(2),
+            )
         parser = Parser()
         child = parser.parse(filepath)
         name = child.name

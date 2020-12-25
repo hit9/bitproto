@@ -112,3 +112,8 @@ class EnumFieldValueOverflow(GrammarError):
 @dataclass
 class DuplicatedEnumFieldValue(GrammarError):
     """Duplicated enum field value."""
+
+
+@dataclass
+class CyclicImport(GrammarError):
+    """Cyclic proto import."""
