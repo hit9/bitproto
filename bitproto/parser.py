@@ -2,7 +2,7 @@
 bitproto.parser
 ~~~~~~~~~~~~~~~
 
-Parser for bitproto.
+Grammar parser for bitproto.
 """
 
 import os
@@ -106,7 +106,7 @@ class Parser:
         self.handle_stack: List[ParserHandle] = []
         self.lexer: Lexer = Lexer()
         self.parser: PlyParser = yacc.yacc(
-            module=self, debug=debug, write_tables=write_tables
+            module=self, start="start", debug=debug, write_tables=write_tables
         )
 
     def push_handle(self, handle: ParserHandle) -> None:
@@ -220,13 +220,13 @@ class Parser:
                                         | const
                                         | enum
                                         | message
-                                        | proto_namer
+                                        | proto
                                         | comment
                                         | newline"""
         p[0] = p[1]
 
-    def p_proto_namer(self, p: P) -> None:
-        """proto_namer : PROTO IDENTIFIER optional_semicolon"""
+    def p_proto(self, p: P) -> None:
+        """proto : PROTO IDENTIFIER optional_semicolon"""
         proto = self.current_proto()
         proto.set_name(p[2])
         proto.set_comment_block(self.current_comment_block())
@@ -468,7 +468,7 @@ class Parser:
         )
 
     def p_array_capacity(self, p: P) -> None:
-        """array_capacity : INTCONSTANT
+        """array_capacity : INT_LITERAL
                           | constant_reference_for_array_capacity"""
         p[0] = p[1]
 
@@ -524,7 +524,7 @@ class Parser:
         p[0] = p[1]
 
     def p_enum_field(self, p: P) -> None:
-        """enum_field : IDENTIFIER '=' INTCONSTANT optional_semicolon"""
+        """enum_field : IDENTIFIER '=' INT_LITERAL optional_semicolon"""
         name = p[1]
         value = p[3]
         field = EnumField(
@@ -593,7 +593,7 @@ class Parser:
         p[0] = (name, type)
 
     def p_optional_message_field_number(self, p: P) -> None:
-        """optional_message_field_number : '=' INTCONSTANT
+        """optional_message_field_number : '=' INT_LITERAL
                                          |"""
         if len(p) == 3:
             logger.warning("Message field number is going to be deprecated, ignored")
@@ -627,3 +627,8 @@ class Parser:
             raise GrammarError(
                 filepath=handle.filepath, token=p.value(1), lineno=p.lineno(1)
             )
+
+
+def parse(filepath: str) -> Proto:
+    """Parse a bitproto from given filepath."""
+    return Parser().parse(filepath)

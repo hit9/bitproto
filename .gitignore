@@ -1,3 +1,7 @@
 .*.sw[opnm]
 __pycache__
 *.pyc
+parser.out
+*.egg-info
+build
+dist

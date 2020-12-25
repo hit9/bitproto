@@ -2,7 +2,7 @@
 bitproto.lexer
 ~~~~~~~~~~~~~~
 
-Lexer for bitproto.
+Token lexer for bitproto.
 """
 
 from contextlib import contextmanager
@@ -13,7 +13,7 @@ from ply import lex
 from ply.lex import LexToken
 
 from bitproto.errors import LexerError, InvalidEscapingChar, InternalError
-from bitproto.ast import Newline, Comment, Bool, Uint, Int, Byte
+from bitproto.ast import Comment, Bool, Uint, Int, Byte
 
 
 @dataclass
@@ -35,9 +35,9 @@ class Lexer:
     t_ignore: str = " \t\r"
 
     # Literal symbols
-    literals: str = ":;{}[]()=\\"
+    literals: str = ":;{}[]()/=\\"
 
-    # Reversed keywords
+    # Keywords
     keywords: Tuple[str, ...] = (
         "proto",
         "import",
@@ -47,7 +47,7 @@ class Lexer:
         "enum",
         "message",
     )
-    keywords_tokens = tuple(map(lambda keyword: keyword.upper(), keywords))
+    keywords_tokens = tuple(map(lambda k: k.upper(), keywords))
 
     # Tokens
     tokens: Tuple[str, ...] = (
@@ -69,9 +69,9 @@ class Lexer:
         "INT_LITERAL",
         "BOOL_LITERAL",
         "STRING_LITERAL",
-        # IDENTIFIER
+        # Indentifer
         "IDENTIFIER",
-    ) + keywords_tokens
+    ) + keywords_tokens  # Keywords
 
     # Supported escaping characters in strings.
     escaping_chars: Dict[str, str] = {
@@ -104,7 +104,9 @@ class Lexer:
         return self.handle_stack[-1]
 
     def current_filepath(self) -> str:
-        return self.current_handle().filepath
+        if self.handle_stack:
+            return self.current_handle().filepath
+        return ""
 
     @contextmanager
     def maintain_handle(self, handle: LexerHandle) -> Iterator[LexerHandle]:
@@ -128,16 +130,13 @@ class Lexer:
             message="Invalid token",
             filepath=self.current_filepath(),
             token=t.value[0],
-            lineno=t.lexer.lineno,
+            lineno=t.lineno,
         )
 
     def t_newline(self, t: LexToken) -> LexToken:
         r"\n"
         t.lexer.lineno += 1
         t.type = "NEWLINE"
-        t.value = Newline(
-            token=t.value, lineno=t.lineno, filepath=self.current_filepath()
-        )
         return t
 
     def t_COMMENT(self, t: LexToken) -> LexToken:
@@ -194,10 +193,9 @@ class Lexer:
         return t
 
     def t_IDENTIFIER(self, t: LexToken) -> LexToken:
-        r"\b[a-zA-Z_](\.[a-zA-Z_0-9])*\b"
-        # This rule may match a keyword.
-        if t.value in Lexer.keywords:
-            # Converts the matched token to the keyword type
+        r"[a-zA-Z_](\.[a-zA-Z_0-9]|[a-zA-Z_0-9])*"
+        if t.value in self.keywords:
+            # May match keywords.
             t.type = t.value.upper()
             return t
         return t

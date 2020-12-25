@@ -41,7 +41,9 @@ class ParserError(Error):
 
     def format_default_description(self) -> str:
         message = self.message or self.__doc__
-        return f"{self.filepath}:L{self.lineno}:{self.token}: {message}"
+        if self.filepath:
+            return f"{self.filepath}:L{self.lineno}: {self.token} => {message}"
+        return f"L{self.lineno}: {self.token} => {message}"
 
 
 @dataclass

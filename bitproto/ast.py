@@ -5,7 +5,6 @@ bitproto.ast
 Abstraction syntax tree.
 
     Node
-      |- Newline                        :Node
       |- Comment                        :Node
       |- Type                           :Node
       |    |- Bool                      :Type:Node
@@ -78,11 +77,6 @@ class Node:
 
     def validate(self) -> None:
         pass
-
-
-@dataclass
-class Newline(Node):
-    pass
 
 
 @dataclass
