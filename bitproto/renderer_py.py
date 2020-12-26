@@ -5,7 +5,7 @@ bitproto.renderer_py
 Renderer for Python.
 """
 
-from bitproto.renderer_base import Renderer
+from bitproto.renderer import Renderer
 
 
 class RendererPy(Renderer):

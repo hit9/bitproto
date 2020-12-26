@@ -9,7 +9,8 @@ import argparse
 
 from bitproto.__version__ import __version__, __description__
 from bitproto.parser import parse
-from bitproto.errors import ParserError
+from bitproto.renderer import render, get_renderer_registry
+from bitproto.errors import ParserError, RendererError
 
 EPILOG = """
 example usage:
@@ -23,6 +24,7 @@ example usage:
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
+    supported_languages = list(get_renderer_registry().keys())
     args_parser = argparse.ArgumentParser(
         description=__description__,
         epilog=EPILOG,
@@ -32,9 +34,9 @@ def build_arg_parser() -> argparse.ArgumentParser:
         "language",
         metavar="lang",
         type=str,
-        choices=["c", "go", "py"],
+        choices=supported_languages,
         nargs="?",
-        help="one of: c, go, py",
+        help="one of: {0}".format(", ".join(supported_languages)),
     )
     args_parser.add_argument(
         "filepath", metavar="file", type=str, help="proto file path"
@@ -62,7 +64,7 @@ def run_bitproto() -> None:
     args_parser = build_arg_parser()
     args = args_parser.parse_args()
 
-    # Parse:
+    # Parse
     try:
         proto = parse(args.filepath)
     except ParserError as error:
@@ -70,6 +72,12 @@ def run_bitproto() -> None:
 
     if args.check:  #  Checks only.
         args_parser.exit(0, message="syntax ok")
+
+    # Render
+    try:
+        render(proto, args.language, outdir=args.outdir)
+    except RendererError as error:
+        args_parser.exit(1, message=str(error))
 
 
 if __name__ == "__main__":
