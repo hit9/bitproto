@@ -70,6 +70,11 @@ class GrammarError(ParserError):
 
 
 @dataclass
+class RendererError(Error):
+    """Some renderer error occurred during bitproto rendering."""
+
+
+@dataclass
 class InvalidUintCap(LexerError):
     """Invalid bits capacity for a uint type, should between [1, 64]"""
 
@@ -142,3 +147,8 @@ class InvalidAliasedType(GrammarError):
 @dataclass
 class InvalidMessageFieldNumber(GrammarError):
     """Invalid message field number, should between [1, 255]."""
+
+
+@dataclass
+class UnsupportedLanguageToRender(RendererError):
+    """Unsupported language to render."""
