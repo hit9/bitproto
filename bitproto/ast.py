@@ -45,24 +45,14 @@ from bitproto.errors import (
     InvalidArrayCap,
     InvalidIntCap,
     InvalidUintCap,
-    InvalidEnumField,
+    InvalidEnumFieldValue,
     EnumFieldValueOverflow,
     DuplicatedEnumFieldValue,
     InvalidAliasedType,
+    InvalidMessageFieldNumber,
 )
 
-T_Definition = TypeVar(
-    "T_Definition",
-    "Definition",
-    "Alias",
-    "Constant",
-    "Enum",
-    "Message",
-    "Option",
-    "EnumField",
-    "MessageField",
-    "Proto",
-)
+T_Definition = TypeVar("T_Definition", bound="Definition")
 
 
 @dataclass
@@ -195,12 +185,7 @@ class Scope(Definition):
         if name is None:
             name = member.name
         if name in self.members:
-            raise DuplicatedDefinition(
-                message="Duplicated definition",
-                filepath=member.filepath,
-                token=member.token,
-                lineno=member.lineno,
-            )
+            raise DuplicatedDefinition.from_token(token=member)
         self.validate_member_on_push(member, name)
         self.members[name] = member
 
@@ -299,10 +284,8 @@ class Uint(Type):
     def validate(self) -> None:
         if self._is_missing:
             return
-        if self.cap <= 0 or self.cap > 64:
-            raise InvalidUintCap(
-                filepath=self.filepath, token=self.token, lineno=self.lineno
-            )
+        if not (0 < self.cap <= 64):
+            raise InvalidUintCap.from_token(token=self)
 
     def nbits(self) -> int:
         return self.cap
@@ -320,9 +303,7 @@ class Int(Type):
 
     def validate(self) -> None:
         if self.cap not in (8, 16, 32, 64):
-            raise InvalidIntCap(
-                filepath=self.filepath, token=self.token, lineno=self.lineno
-            )
+            raise InvalidIntCap.from_token(token=self)
 
     def nbits(self) -> int:
         return self.cap
@@ -341,10 +322,10 @@ class Array(Type):
         return (Bool, Byte, Int, Uint, Enum, Message, Alias)
 
     def validate(self) -> None:
+        if not (0 < self.cap < 1024):
+            raise InvalidArrayCap.from_token(token=self)
         if not isinstance(self.type, self.supported_types):
-            raise UnsupportedArrayType(
-                filepath=self.filepath, token=self.token, lineno=self.lineno
-            )
+            raise UnsupportedArrayType.from_token(token=self)
 
     def nbits(self) -> int:
         if self.type is None:
@@ -363,7 +344,7 @@ class Alias(Type, Definition):
         return f"<alias {self.name}>"
 
     def validate(self) -> None:
-        # TODO: Should we check this?
+        # TODO: Should we check this? FIXME
         t = (Bool, Uint, Int, Byte)
         allow = False
         if isinstance(self.type, t):  # Alias to base types
@@ -375,7 +356,7 @@ class Alias(Type, Definition):
             if isinstance(array.type, Alias):  # Alias to array of alias
                 allow = True
         if not allow:
-            raise InvalidAliasedType
+            raise InvalidAliasedType.from_token(token=self)
 
     def nbits(self) -> int:
         return self.type.nbits()
@@ -395,12 +376,7 @@ class EnumField(Field):
 
     def validate(self) -> None:
         if self.value < 0:
-            raise InvalidEnumField(
-                message="Enum field value < 0",
-                filepath=self.filepath,
-                token=self.token,
-                lineno=self.lineno,
-            )
+            raise InvalidEnumFieldValue.from_token(token=self)
 
 
 @dataclass
@@ -428,25 +404,23 @@ class Enum(Type, Scope):
     def validate_enum_field_on_push(self, field: EnumField) -> None:
         # Value overflows?
         if field.value.bit_length() > self.nbits():
-            raise EnumFieldValueOverflow(
-                filepath=field.filepath, lineno=field.lineno, token=field.token,
-            )
+            raise EnumFieldValueOverflow.from_token(token=field)
         # Value already defined?
         if field.value in self.value_to_names():
-            raise DuplicatedEnumFieldValue(
-                filepath=field.filepath, lineno=field.lineno, token=field.token,
-            )
+            raise DuplicatedEnumFieldValue.from_token(token=field)
 
 
 @dataclass
 class MessageField(Field):
     type: Type = Type()
+    number: int = 0
 
     def __repr__(self) -> str:
-        return f"<message-field {self.name}>"
+        return f"<message-field {self.name}={self.number}>"
 
     def validate(self) -> None:
-        pass
+        if not (0 < self.number < 256):
+            raise InvalidMessageFieldNumber.from_token(token=self)
 
 
 @dataclass

@@ -64,7 +64,7 @@ def run_bitproto() -> None:
 
     # Parse:
     try:
-        parse(args.filepath)
+        proto = parse(args.filepath)
     except ParserError as error:
         args_parser.exit(1, message=str(error))
 

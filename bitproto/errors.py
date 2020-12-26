@@ -7,6 +7,13 @@ Errors.
 
 from dataclasses import dataclass
 
+from typing import TypeVar, Type as T, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from bitproto.ast import Node
+
+T_ParserError = TypeVar("T_ParserError", bound="ParserError")
+
 
 @dataclass
 class Error(Exception):
@@ -45,6 +52,17 @@ class ParserError(Error):
             return f"{self.filepath}:L{self.lineno}: {self.token} => {message}"
         return f"L{self.lineno}: {self.token} => {message}"
 
+    @classmethod
+    def from_token(
+        cls: T[T_ParserError], token: "Node", message: str = ""
+    ) -> T_ParserError:
+        return cls(
+            filepath=token.token,
+            token=token.token,
+            lineno=token.lineno,
+            message=message,
+        )
+
 
 @dataclass
 class LexerError(ParserError):
@@ -58,12 +76,12 @@ class GrammarError(ParserError):
 
 @dataclass
 class InvalidUintCap(LexerError):
-    """Invalid bits capacity for a uint type."""
+    """Invalid bits capacity for a uint type, should between [1, 64]"""
 
 
 @dataclass
 class InvalidIntCap(LexerError):
-    """Invalid bits capacity for a int type, only 8,16,32,64 are supported."""
+    """Invalid bits capacity for a int type, should be one of 8,16,32,64."""
 
 
 @dataclass
@@ -83,7 +101,7 @@ class CalculationExpressionError(GrammarError):
 
 @dataclass
 class InvalidArrayCap(GrammarError):
-    """Invalid array capacity."""
+    """Invalid array capacity, should between (0, 1024)."""
 
 
 @dataclass
@@ -102,8 +120,8 @@ class ReferencedTypeNotDefined(GrammarError):
 
 
 @dataclass
-class InvalidEnumField(GrammarError):
-    """Invalid enum field."""
+class InvalidEnumFieldValue(GrammarError):
+    """Invalid enum field, should >=0."""
 
 
 @dataclass
@@ -124,3 +142,8 @@ class CyclicImport(GrammarError):
 @dataclass
 class InvalidAliasedType(GrammarError):
     """Invalid type to alias, only bool,byte,uint,int and array of them can be aliased."""
+
+
+@dataclass
+class InvalidMessageFieldNumber(GrammarError):
+    """Invalid message field number, should between [1, 255]."""
