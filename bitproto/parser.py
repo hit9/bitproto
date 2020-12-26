@@ -42,9 +42,6 @@ from bitproto.errors import (
     CyclicImport,
 )
 from bitproto.lexer import Lexer, LexerHandle
-from bitproto.utils import getLogger
-
-logger = getLogger(__name__)
 
 
 @dataclass
@@ -580,12 +577,14 @@ class Parser:
         p[0] = p[1]
 
     def p_message_field(self, p: P) -> None:
-        """message_field : type IDENTIFIER optional_message_field_number optional_semicolon"""
+        """message_field : type IDENTIFIER '=' INT_LITERAL optional_semicolon"""
         name = p[2]
         type = p[1]
+        field_number = p[4]
         message_field = MessageField(
             name=name,
             type=type,
+            number=field_number,
             token=p[2],
             lineno=p.lineno(2),
             filepath=self.current_filepath(),
@@ -593,12 +592,6 @@ class Parser:
             scope_stack=self.current_scope_stack(),
         )
         self.current_scope().push_member(message_field)
-
-    def p_optional_message_field_number(self, p: P) -> None:
-        """optional_message_field_number : '=' INT_LITERAL
-                                         |"""
-        if len(p) == 3:
-            logger.warning("Message field number is going to be deprecated, ignored")
 
     def p_boolean_literal(self, p: P) -> None:
         """boolean_literal : BOOL_LITERAL"""
