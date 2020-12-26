@@ -462,7 +462,7 @@ class Parser:
             type=p[1],
             cap=p[3],
             token="{0}[{1}]".format(p[1], p[3]),
-            lineno=p.lineno(1),
+            lineno=p.lineno(2),
             filepath=self.current_filepath(),
         )
 

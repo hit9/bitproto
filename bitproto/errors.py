@@ -7,7 +7,7 @@ Errors.
 
 from dataclasses import dataclass
 
-from typing import TypeVar, Type as T, TYPE_CHECKING
+from typing import TypeVar, Type as T, TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from bitproto.ast import Node
@@ -53,14 +53,9 @@ class ParserError(Error):
         return f"L{self.lineno}: {self.token} => {message}"
 
     @classmethod
-    def from_token(
-        cls: T[T_ParserError], token: "Node", message: str = ""
-    ) -> T_ParserError:
+    def from_token(cls: T[T_ParserError], token: "Node", **kwds: Any,) -> T_ParserError:
         return cls(
-            filepath=token.token,
-            token=token.token,
-            lineno=token.lineno,
-            message=message,
+            filepath=token.filepath, token=token.token, lineno=token.lineno, **kwds
         )
 
 
