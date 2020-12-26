@@ -50,6 +50,7 @@ from bitproto.errors import (
     DuplicatedEnumFieldValue,
     InvalidAliasedType,
     InvalidMessageFieldNumber,
+    DuplicatedMessageFieldNumber,
 )
 
 T_Definition = TypeVar("T_Definition", bound="Definition")
@@ -432,6 +433,24 @@ class Message(Type, Scope):
 
     def __repr__(self) -> str:
         return f"<message {self.name}>"
+
+    def number_to_field(self) -> "dict_[int, MessageField]":
+        return dict_((field.number, field) for field in self.message_fields().values())
+
+    def number_to_field_sorted(self) -> "dict_[int, MessageField]":
+        fields = sorted(self.message_fields().values(), key=lambda field: field.number)
+        return dict_((field.number, field) for field in fields)
+
+    def validate_member_on_push(
+        self, member: Definition, name: Optional[str] = None
+    ) -> None:
+        if isinstance(member, MessageField):
+            self.validate_message_field_on_push(member)
+
+    def validate_message_field_on_push(self, field: MessageField) -> None:
+        # Field number already defined?
+        if field.number in self.number_to_field():
+            raise DuplicatedMessageFieldNumber.from_token(token=field)
 
 
 @dataclass

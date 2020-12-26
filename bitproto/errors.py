@@ -150,5 +150,10 @@ class InvalidMessageFieldNumber(GrammarError):
 
 
 @dataclass
+class DuplicatedMessageFieldNumber(GrammarError):
+    """Duplicated message field number."""
+
+
+@dataclass
 class UnsupportedLanguageToRender(RendererError):
     """Unsupported language to render."""
