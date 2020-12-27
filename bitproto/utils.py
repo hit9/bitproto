@@ -1,4 +1,4 @@
-from typing import Callable, Optional, TypeVar, Type, Union, cast, TYPE_CHECKING
+from typing import Callable, Optional, TypeVar, Type, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from functools import lru_cache as cache
@@ -22,9 +22,9 @@ class cached_property:
         self.__doc__ = func.__doc__
         self.func = func
 
-    def __get__(self, obj: Optional[T], cls: Type[T]) -> Union[T, R]:
+    def __get__(self, obj: Optional[T], cls: Type[T]) -> R:
         if obj is None:
-            return cast(T, self)
+            return self  # type: ignore
         value = obj.__dict__[self.func.__name__] = self.func(obj)
         return value
 
