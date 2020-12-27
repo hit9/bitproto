@@ -15,14 +15,15 @@ Structure of XXX_bp.h:
     //
     // {proto_docstrings}
 
-    {includes}
-
     {header_declaration_begin}
+    {includes}
+    {extern_begin}
     {macro_defines}
     {constants}
     {aliases}
     {enums}
     {message_decalrations}
+    {extern_end}
     {header_declaration_end}
 
 
@@ -69,11 +70,26 @@ class RendererC(Renderer):
 
     def render_h(self) -> None:
         self.render_bitproto_declaration()
-        self.push_line()
+
         self.render_proto_docstring()
+        self.render_header_declaration_begin()
         self.push_line()
+
         self.render_includes()
+        self.push_line()
+
+        self.render_extern_begin()
+        self.push_line()
+
+        self.render_macro_defines()
+        self.push_line()
+
         # TODO
+
+        self.render_extern_end()
+        self.push_line()
+        self.render_header_declaration_end()
+
         write_file(self.h_out_filepath(), self.collect())
 
     def render_c(self) -> None:
@@ -82,14 +98,25 @@ class RendererC(Renderer):
         self.render_proto_docstring()
         self.push_line()
         self.render_include_proto_header()
+        self.push_line()
         # TODO
         write_file(self.c_out_filepath(), self.collect())
 
     def render_bitproto_declaration(self) -> None:
+        """block {bitproto_declaration}"""
+        self.block_begin()
         self.push_line("// {0}".format(self.bitproto_declaration()))
 
     def render_proto_docstring(self) -> None:
         self.push_lines(self.format_proto_docstring())
+
+    def render_header_declaration_begin(self) -> None:
+        header_macro = self.format_header_macro()
+        self.push_line(f"#ifndef {header_macro}")
+        self.push_line(f"#define {header_macro} 1")
+
+    def render_header_declaration_end(self) -> None:
+        self.push_line("#endif")
 
     def render_includes(self) -> None:
         self.push_line(self.format_include("<inttypes.h>"))
@@ -99,6 +126,19 @@ class RendererC(Renderer):
 
     def render_include_proto_header(self) -> None:
         self.push_line(self.format_include('"{0}"'.format(self.h_out_filename())))
+
+    def render_extern_begin(self) -> None:
+        self.push_line("#if defined(__cplusplus)")
+        self.push_line('extern "C" {')
+        self.push_line("#endif")
+
+    def render_extern_end(self) -> None:
+        self.push_line("#if defined(__cplusplus)")
+        self.push_line("}")
+        self.push_line("#endif")
+
+    def render_macro_defines(self) -> None:
+        self.push_line(self.format_define('btoa(x) ((x) ? "true" : "false")'))
 
     def format_proto_docstring(self) -> List[str]:
         lines: List[str] = []
@@ -112,3 +152,6 @@ class RendererC(Renderer):
 
     def format_include(self, file: str) -> str:
         return f"#include {file}"
+
+    def format_define(self, macro: str) -> str:
+        return f"#define {macro}"

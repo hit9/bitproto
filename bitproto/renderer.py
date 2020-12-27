@@ -15,6 +15,7 @@ RendererClass = T["Renderer"]
 
 
 def get_renderer_registry() -> Dict[str, RendererClass]:
+    """Returns the registry of language strings to renderer classes."""
     from bitproto.renderer_c import RendererC
     from bitproto.renderer_go import RendererGo
     from bitproto.renderer_py import RendererPy
@@ -53,24 +54,24 @@ class Renderer:
         self.proto = proto
         self.outdir = outdir
 
-        self._strings: List[str] = []
+        self._blocks: List[List[str]] = []
+
+    def block_begin(self) -> None:
+        self._blocks.append([])
 
     def push(self, s: str) -> None:
-        self._strings.append(s)
+        self._blocks[-1].append(s)
 
     def push_line(self, s: str = "") -> None:
-        self._strings.append(s + "\n")
+        self.push(s + "\n")
 
     def push_lines(self, lines: List[str]) -> None:
         for line in lines:
             self.push_line(line)
 
-    def clear(self) -> None:
-        self._strings = []
-
     def collect(self) -> str:
-        s = "".join(self._strings)
-        self.clear()
+        s = "\n".join(map(lambda b: "".join(b), self._blocks))
+        self._blocks = []
         return s
 
     def format_out_filename(self, extension: str) -> str:
