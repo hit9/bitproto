@@ -6,7 +6,7 @@ Renderer for C.
 """
 
 import os
-from typing import List
+from typing import List, Optional, cast
 
 from bitproto.renderer import (
     Renderer,
@@ -15,7 +15,8 @@ from bitproto.renderer import (
     Formatter,
     BITPROTO_DECLARATION,
 )
-from bitproto.ast import Proto, Constant, Alias, Uint, Int
+from bitproto.errors import InternalError
+from bitproto.ast import Proto, Constant, Alias, Uint, Int, Array
 from bitproto.utils import write_file
 
 
@@ -34,6 +35,10 @@ class CFormatter(Formatter):
     def format_int_literal(self, value: int) -> str:
         return "{0}".format(value)
 
+    def format_constant_name(self, v: Constant) -> str:
+        """Overrides super method to use upper case."""
+        return super(CFormatter, self).format_constant_name(v).upper()
+
     def format_bool_type(self) -> str:
         return "bool"
 
@@ -45,6 +50,12 @@ class CFormatter(Formatter):
 
     def format_int_type(self, t: Int) -> str:
         return "int{0}_t".format(self.nbits_from_integer_type(t))
+
+    def format_array_type(self, t: Array, name: Optional[str] = None) -> str:
+        assert name is not None, InternalError("format_array_type got name=None")
+        return "{type} {name}[{capacity}]".format(
+            type=self.format_type(t.type), name=name, capacity=t.cap
+        )
 
 
 class BitprotoDeclaration(Block):
@@ -130,8 +141,9 @@ class HeaderBuiltinMacroDefines(Block):
 
 class ConstantBlock(BlockForDefinition):
     def render_constant_define(self) -> None:
+        name = self.formatter.format_constant_name(self.definition_as_constant)
         value = self.formatter.format_literal(self.definition_as_constant.value)
-        self.push(f"#define {self.definition_name} {value}")
+        self.push(f"#define {name} {value}")
 
     def render(self) -> None:
         self.render_doc()
@@ -139,9 +151,24 @@ class ConstantBlock(BlockForDefinition):
 
 
 class AliasBlock(BlockForDefinition):
+    def render_alias_typedef_to_array(self) -> None:
+        array_type = cast(Array, self.definition_as_alias.type)
+        aliased_type = self.formatter.format_type(array_type.type)
+        name = self.formatter.format_alias_name(self.definition_as_alias)
+        capacity = array_type.cap
+        self.push(f"typedef {aliased_type} {name}[{capacity}];")
+
+    def render_alias_typedef_to_common(self) -> None:
+        aliased_type = self.formatter.format_type(self.definition_as_alias.type)
+        name = self.formatter.format_alias_name(self.definition_as_alias)
+        self.push(f"typedef {aliased_type} {name};")
+
     def render_alias_typedef(self) -> None:
-        # TODO
-        self.push("")
+        if isinstance(self.definition_as_alias.type, Array):
+            self.render_alias_typedef_to_array()
+        else:
+            self.render_alias_typedef_to_common()
+        self.push_location_doc()
 
     def render(self) -> None:
         self.render_doc()

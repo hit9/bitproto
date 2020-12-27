@@ -9,7 +9,22 @@ import abc
 import os
 from typing import Dict, List, Optional, Type as T, Tuple, Union, cast
 
-from bitproto.ast import Proto, Definition, Constant, Alias, Uint, Int, Integer
+from bitproto.ast import (
+    Proto,
+    Definition,
+    Constant,
+    Alias,
+    Bool,
+    Byte,
+    Uint,
+    Int,
+    Integer,
+    Type,
+    Array,
+    Node,
+    Enum,
+    Message,
+)
 from bitproto.errors import UnsupportedLanguageToRender, InternalError
 
 RendererClass = T["Renderer"]
@@ -56,6 +71,9 @@ def render(proto: Proto, lang: str, outdir: Optional[str] = None) -> List[str]:
 class Formatter:
     """Generic language specific formatter."""
 
+    def format_token_location(self, node: Node) -> str:
+        return f"@@L{node.lineno}"
+
     def format_literal(self, value: Union[str, bool, int]) -> str:
         if value is True or value is False:
             return self.format_bool_literal(value)
@@ -64,11 +82,11 @@ class Formatter:
         elif isinstance(value, int):
             return self.format_int_literal(value)
 
-    def nbits_from_integer_type(self, type: Integer) -> int:
+    def nbits_from_integer_type(self, t: Integer) -> int:
         """Get number of bits to occupy for an given integer type in a language.
         Below is a default implementation. Special language may override this.
         """
-        nbytes = type.nbytes()
+        nbytes = t.nbytes()
         if nbytes == 1:
             return 8
         elif nbytes == 2:
@@ -78,6 +96,67 @@ class Formatter:
         elif nbytes in (5, 6, 7, 8):
             return 64
         return nbytes * 8
+
+    def format_definition_name(
+        self, definition: Definition, delimer: str = "_", definition_name: str = ""
+    ) -> str:
+        """Formats the declaration name for given definition. Target languages may
+        disallow nested declarations (such as structs, enums, constants, typedefs).
+        Example output format: "Scope1_Scope2_{definition.name}".
+
+        :param definition_name: Uses over `definition.name` to concat if provided.
+
+        This is a default implementation, subclass may override this.
+        """
+        definition_name = definition_name or definition.name
+        if len(definition.scope_stack) <= 1:  # At the top scope.
+            return definition_name
+        # Note: skips the first scope (the bitproto itself)
+        names = [scope.name for scope in definition.scope_stack[1:]]
+        names.append(definition_name)
+        return delimer.join(names)
+
+    def format_enum_name(self, t: Enum) -> str:
+        """Formats the declaration name of given enum,
+        with nested-declaration concern."""
+        return self.format_definition_name(t)
+
+    def format_message_name(self, t: Message) -> str:
+        """Formats the declaration name of given message,
+        with nested-declaration concern."""
+        return self.format_definition_name(t)
+
+    def format_alias_name(self, t: Alias) -> str:
+        """Formats the declaration name of given alias,
+        with nested-declaration concern."""
+        return self.format_definition_name(t)
+
+    def format_constant_name(self, v: Constant) -> str:
+        """Formats the declaration name of given constant,
+        with nested-declaration concern."""
+        return self.format_definition_name(v)
+
+    def format_type(self, t: Type) -> str:
+        """Formats the string representation for given type.
+        This is a default implementation.
+        """
+        if isinstance(t, Bool):
+            return self.format_bool_type()
+        elif isinstance(t, Byte):
+            return self.format_byte_type()
+        elif isinstance(t, Uint):
+            return self.format_uint_type(t)
+        elif isinstance(t, Int):
+            return self.format_int_type(t)
+        elif isinstance(t, Array):
+            return self.format_array_type(t)
+        elif isinstance(t, Enum):
+            return self.format_enum_type(t)
+        elif isinstance(t, Message):
+            return self.format_message_type(t)
+        elif isinstance(t, Alias):
+            return self.format_alias_type(t)
+        return "_unknown_type"
 
     @abc.abstractmethod
     def format_comment(self, content: str) -> str:
@@ -112,12 +191,18 @@ class Formatter:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def format_enum_type(self) -> str:
+    def format_array_type(self, t: Array, name: Optional[str] = None) -> str:
+        """Note: `name` may be language specific requirement."""
         raise NotImplementedError
 
-    @abc.abstractmethod
-    def format_message_type(self) -> str:
-        raise NotImplementedError
+    def format_enum_type(self, t: Enum) -> str:
+        return self.format_definition_name(t)
+
+    def format_message_type(self, t: Message) -> str:
+        return self.format_message_name(t)
+
+    def format_alias_type(self, t: Alias) -> str:
+        return self.format_alias_name(t)
 
 
 class Block:
@@ -137,6 +222,9 @@ class Block:
 
     def __str__(self) -> str:
         return "\n".join(self.strings)
+
+    def push_string(self, s: str, separator: str = "") -> None:
+        self.strings[-1] = separator.join([self.strings[-1], s])
 
     def push(self, line: str) -> None:
         self.strings.append(line)
@@ -179,6 +267,11 @@ class BlockForDefinition(Block):
     def render_doc(self) -> None:
         for comment in self.definition.comment_block:
             self.push(self.formatter.format_comment(comment.content()))
+
+    def push_location_doc(self) -> None:
+        """Push current definition source location as an inline-comment to current line."""
+        location_string = self.formatter.format_token_location(self.definition)
+        self.push_string(self.formatter.format_comment(location_string), separator=" ")
 
 
 class Renderer:
