@@ -102,12 +102,12 @@ class Definition(Node):
         return "<definition {0}>".format(self.name)
 
 
+_VALUE_MISSING = "_VALUE_MISSING"  # FIXME: how to represent value missing?
+
+
 @dataclass
 class Option(Definition):
-    value: Union[str, int, bool, None] = None
-
-    def validate(self) -> None:
-        assert self.value is not None, InternalError("Init Option with value None")
+    value: Union[str, int, bool] = _VALUE_MISSING
 
     def __repr__(self) -> str:
         return "<option {0}={1}>".format(self.name, self.value)
@@ -130,7 +130,7 @@ class StringOption(Option):
 
 @dataclass
 class Constant(Definition):
-    value: Union[str, int, bool, None] = None
+    value: Union[str, int, bool] = _VALUE_MISSING
 
     def __repr__(self) -> str:
         return "<constant {0}={1}>".format(self.name, self.value)
@@ -230,6 +230,9 @@ class Scope(Definition):
     def constants(self) -> "dict_[str, Constant]":
         return self.filter(Constant)
 
+    def aliases(self) -> "dict_[str, Alias]":
+        return self.filter(Alias)
+
     def protos(self) -> "dict_[str, Proto]":
         return self.filter(Proto)
 
@@ -279,7 +282,12 @@ class Byte(Type):
 
 
 @dataclass
-class Uint(Type):
+class Integer(Type):
+    pass
+
+
+@dataclass
+class Uint(Integer):
     cap: int = 0
 
     def validate(self) -> None:
@@ -299,7 +307,7 @@ _UINT_MISSING = Uint(_is_missing=True)
 
 
 @dataclass
-class Int(Type):
+class Int(Integer):
     cap: int = 0
 
     def validate(self) -> None:

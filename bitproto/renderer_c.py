@@ -3,155 +3,174 @@ bitproto.renderer_c
 ~~~~~~~~~~~~~~~~~~~~
 
 Renderer for C.
-
-Produces:
-
-  {proto_filename}_bp.h
-  {proto_filename}_bp.c
-
-Structure of XXX_bp.h:
-
-    // {bitproto_declaration}
-    //
-    // {proto_docstrings}
-
-    {header_declaration_begin}
-    {includes}
-    {extern_begin}
-    {macro_defines}
-    {constants}
-    {aliases}
-    {enums}
-    {message_decalrations}
-    {extern_end}
-    {header_declaration_end}
-
-
-Structure of XXX_bp.c:
-
-    // {bitproto_declaration}
-    //
-    // {proto_docstrings}
-    //
-    // {}
-
 """
 
 import os
 from typing import List
 
-from bitproto.renderer import Renderer
+from bitproto.renderer import (
+    Renderer,
+    Block,
+    BlockForDefinition,
+    Formatter,
+    BITPROTO_DECLARATION,
+)
+from bitproto.ast import Proto, Constant, Alias, Uint, Int
 from bitproto.utils import write_file
 
 
-class RendererC(Renderer):
-    """Renderer for C language.
+class CFormatter(Formatter):
+    def format_comment(self, content: str) -> str:
+        return f"// {content}"
 
-    Produces:
-        {proto_filename}_bp.h
-        {proto_filename}_bp.c
-    """
+    def format_bool_literal(self, value: bool) -> str:
+        if value:
+            return "true"
+        return "false"
 
-    def h_out_filename(self) -> str:
-        return self.format_out_filename(".h")
+    def format_str_literal(self, value: str) -> str:
+        return '"{0}"'.format(value)
 
-    def c_out_filename(self) -> str:
-        return self.format_out_filename(".c")
+    def format_int_literal(self, value: int) -> str:
+        return "{0}".format(value)
 
-    def h_out_filepath(self) -> str:
-        return self.format_out_filepath(".h")
+    def format_bool_type(self) -> str:
+        return "bool"
 
-    def c_out_filepath(self) -> str:
-        return self.format_out_filepath(".c")
+    def format_byte_type(self) -> str:
+        return "unsigned char"
+
+    def format_uint_type(self, t: Uint) -> str:
+        return "uint{0}_t".format(self.nbits_from_integer_type(t))
+
+    def format_int_type(self, t: Int) -> str:
+        return "int{0}_t".format(self.nbits_from_integer_type(t))
+
+
+class BitprotoDeclaration(Block):
+    def render(self) -> None:
+        self.push(self.formatter.format_comment(BITPROTO_DECLARATION))
+
+
+class IncludeHeaderFile(Block):
+    def __init__(self, header_filename: str) -> None:
+        super(IncludeHeaderFile, self).__init__()
+        self.header_filename = header_filename
 
     def render(self) -> None:
-        self.render_h()
-        self.render_c()
+        self.push(f'#include "{self.header_filename}"')
 
-    def render_h(self) -> None:
-        self.render_bitproto_declaration()
 
-        self.render_proto_docstring()
-        self.render_header_declaration_begin()
-        self.push_line()
+class RendererC(Renderer):
+    """Renderer for C language (c file)."""
 
-        self.render_includes()
-        self.push_line()
+    def file_extension(self) -> str:
+        return ".c"
 
-        self.render_extern_begin()
-        self.push_line()
+    def formatter(self) -> Formatter:
+        return CFormatter()
 
-        self.render_macro_defines()
-        self.push_line()
+    def blocks(self) -> List[Block]:
+        header_filename = RendererCHeader(self.proto, self.outdir).out_filename
+        return [BitprotoDeclaration(), IncludeHeaderFile(header_filename)]
 
-        # TODO
 
-        self.render_extern_end()
-        self.push_line()
-        self.render_header_declaration_end()
+class HeaderDeclaration(Block):
+    def __init__(self, proto: Proto) -> None:
+        super(HeaderDeclaration, self).__init__()
+        self.proto = proto
 
-        write_file(self.h_out_filepath(), self.collect())
-
-    def render_c(self) -> None:
-        self.render_bitproto_declaration()
-        self.push_line()
-        self.render_proto_docstring()
-        self.push_line()
-        self.render_include_proto_header()
-        self.push_line()
-        # TODO
-        write_file(self.c_out_filepath(), self.collect())
-
-    def render_bitproto_declaration(self) -> None:
-        """block {bitproto_declaration}"""
-        self.block_begin()
-        self.push_line("// {0}".format(self.bitproto_declaration()))
-
-    def render_proto_docstring(self) -> None:
-        self.push_lines(self.format_proto_docstring())
-
-    def render_header_declaration_begin(self) -> None:
-        header_macro = self.format_header_macro()
-        self.push_line(f"#ifndef {header_macro}")
-        self.push_line(f"#define {header_macro} 1")
-
-    def render_header_declaration_end(self) -> None:
-        self.push_line("#endif")
-
-    def render_includes(self) -> None:
-        self.push_line(self.format_include("<inttypes.h>"))
-        self.push_line(self.format_include("<stdbool.h>"))
-        self.push_line(self.format_include("<stdint.h>"))
-        self.push_line(self.format_include("<stdio.h>"))
-
-    def render_include_proto_header(self) -> None:
-        self.push_line(self.format_include('"{0}"'.format(self.h_out_filename())))
-
-    def render_extern_begin(self) -> None:
-        self.push_line("#if defined(__cplusplus)")
-        self.push_line('extern "C" {')
-        self.push_line("#endif")
-
-    def render_extern_end(self) -> None:
-        self.push_line("#if defined(__cplusplus)")
-        self.push_line("}")
-        self.push_line("#endif")
-
-    def render_macro_defines(self) -> None:
-        self.push_line(self.format_define('btoa(x) ((x) ? "true" : "false")'))
-
-    def format_proto_docstring(self) -> List[str]:
-        lines: List[str] = []
+    def render_proto_doc(self) -> None:
         for comment in self.proto.comment_block:
-            lines.append("// {0}".format(comment.content()))
-        return lines
+            self.push("// {0}".format(comment.content()))
 
-    def format_header_macro(self) -> str:
-        proto_name_upper = self.proto.name.upper()
-        return f"__BITPROTO__{proto_name_upper}_H__"
+    def format_proto_macro_name(self) -> str:
+        return "__BITPROTO__{0}_H".format(self.proto.name.upper())
 
-    def format_include(self, file: str) -> str:
-        return f"#include {file}"
+    def render_declaration_begin(self) -> None:
+        macro_name = self.format_proto_macro_name()
+        self.push(f"#ifndef  {macro_name}")
+        self.push(f"#define  {macro_name} 1")
 
-    def format_define(self, macro: str) -> str:
-        return f"#define {macro}"
+    def render_declaration_end(self) -> None:
+        self.push(f"#endif")
+
+    def render(self) -> None:
+        self.render_proto_doc()
+        self.render_declaration_begin()
+
+    def defer(self) -> None:
+        self.render_declaration_end()
+
+
+class HeaderIncludes(Block):
+    def render(self) -> None:
+        self.push("#include <inttypes.h>")
+        self.push("#include <stdbool.h>")
+        self.push("#include <stdint.h>")
+        self.push("#include <stdio.h>")
+
+
+class HeaderExternDeclaration(Block):
+    def render(self) -> None:
+        self.push("#if defined(__cplusplus)")
+        self.push('extern "C"')
+        self.push("#endif")
+
+    def defer(self) -> None:
+        self.push("#if defined(__cplusplus)")
+        self.push("}")
+        self.push("#endif")
+
+
+class HeaderBuiltinMacroDefines(Block):
+    def render(self) -> None:
+        self.push('#define btoa(x) ((x) ? "true" : "false")')
+
+
+class ConstantBlock(BlockForDefinition):
+    def render_constant_define(self) -> None:
+        value = self.formatter.format_literal(self.definition_as_constant.value)
+        self.push(f"#define {self.definition_name} {value}")
+
+    def render(self) -> None:
+        self.render_doc()
+        self.render_constant_define()
+
+
+class AliasBlock(BlockForDefinition):
+    def render_alias_typedef(self) -> None:
+        # TODO
+        self.push("")
+
+    def render(self) -> None:
+        self.render_doc()
+        self.render_alias_typedef()
+
+
+class RendererCHeader(Renderer):
+    """Renderer for C language (header)."""
+
+    def file_extension(self) -> str:
+        return ".h"
+
+    def formatter(self) -> Formatter:
+        return CFormatter()
+
+    def blocks(self) -> List[Block]:
+        blocks = [
+            BitprotoDeclaration(),
+            HeaderDeclaration(self.proto),
+            HeaderIncludes(),
+            HeaderExternDeclaration(),
+            HeaderBuiltinMacroDefines(),
+        ]
+
+        # Constants
+        for name, constant in self.proto.constants().items():
+            blocks.append(ConstantBlock(constant, name=name))
+
+        # Alias
+        for name, alias in self.proto.aliases().items():
+            blocks.append(AliasBlock(alias, name=name))
+        return blocks
