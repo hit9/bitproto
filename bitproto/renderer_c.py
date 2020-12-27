@@ -141,8 +141,8 @@ class HeaderBuiltinMacroDefines(Block):
 
 class ConstantBlock(BlockForDefinition):
     def render_constant_define(self) -> None:
-        name = self.formatter.format_constant_name(self.definition_as_constant)
-        value = self.formatter.format_literal(self.definition_as_constant.value)
+        name = self.formatter.format_constant_name(self.as_constant)
+        value = self.formatter.format_literal(self.as_constant.value)
         self.push(f"#define {name} {value}")
 
     def render(self) -> None:
@@ -152,19 +152,19 @@ class ConstantBlock(BlockForDefinition):
 
 class AliasBlock(BlockForDefinition):
     def render_alias_typedef_to_array(self) -> None:
-        array_type = cast(Array, self.definition_as_alias.type)
+        array_type = cast(Array, self.as_alias.type)
         aliased_type = self.formatter.format_type(array_type.type)
-        name = self.formatter.format_alias_name(self.definition_as_alias)
+        name = self.formatter.format_alias_name(self.as_alias)
         capacity = array_type.cap
         self.push(f"typedef {aliased_type} {name}[{capacity}];")
 
     def render_alias_typedef_to_common(self) -> None:
-        aliased_type = self.formatter.format_type(self.definition_as_alias.type)
-        name = self.formatter.format_alias_name(self.definition_as_alias)
+        aliased_type = self.formatter.format_type(self.as_alias.type)
+        name = self.formatter.format_alias_name(self.as_alias)
         self.push(f"typedef {aliased_type} {name};")
 
     def render_alias_typedef(self) -> None:
-        if isinstance(self.definition_as_alias.type, Array):
+        if isinstance(self.as_alias.type, Array):
             self.render_alias_typedef_to_array()
         else:
             self.render_alias_typedef_to_common()

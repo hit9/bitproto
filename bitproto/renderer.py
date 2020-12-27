@@ -257,11 +257,11 @@ class BlockForDefinition(Block):
         self.definition_name: str = name or definition.name
 
     @property
-    def definition_as_constant(self) -> Constant:
+    def as_constant(self) -> Constant:
         return cast(Constant, self.definition)
 
     @property
-    def definition_as_alias(self) -> Alias:
+    def as_alias(self) -> Alias:
         return cast(Alias, self.definition)
 
     def render_doc(self) -> None:
