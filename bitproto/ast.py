@@ -274,7 +274,12 @@ _TYPE_MISSING = Type(_is_missing=True)
 
 
 @dataclass
-class Bool(Type):
+class BaseType(Type):
+    pass
+
+
+@dataclass
+class Bool(BaseType):
     def nbits(self) -> int:
         return 1
 
@@ -283,7 +288,7 @@ class Bool(Type):
 
 
 @dataclass
-class Byte(Type):
+class Byte(BaseType):
     def nbits(self) -> int:
         return 8
 
@@ -292,7 +297,7 @@ class Byte(Type):
 
 
 @dataclass
-class Integer(Type):
+class Integer(BaseType):
     pass
 
 
@@ -332,7 +337,12 @@ class Int(Integer):
 
 
 @dataclass
-class Array(Type):
+class ExtensibleType(Type):
+    extensible: bool = False
+
+
+@dataclass
+class Array(ExtensibleType):
     type: Type = _TYPE_MISSING
     cap: int = 0
 
@@ -362,24 +372,37 @@ class Alias(Type, Definition):
     def __repr__(self) -> str:
         return f"<alias {self.name}>"
 
-    def validate(self) -> None:
-        """It's allowed to alias to base types (bool, uint, int, byte)
-        and array of them or array of alias to them."""
-        t = (Bool, Uint, Int, Byte)
-        allow = False
-        if isinstance(self.type, t):  # Alias to base types
-            allow = True
-        elif isinstance(self.type, Array):
+    def validate_type(self) -> bool:
+        """It's allowed to alias to:
+            * base types (bool, uint, int, byte)
+            * array of base types
+            * array of alias to base types
+        """
+        if isinstance(self.type, BaseType):
+            return True
+        if isinstance(self.type, Array):
             array = cast(Array, self.type)
-            if isinstance(array.type, t):  # Alias to array of base types
-                allow = True
-            if isinstance(array.type, Alias):  # Alias to array of alias
-                allow = True
-        if not allow:
+            if isinstance(array.type, BaseType):
+                return True
+            if isinstance(array.type, Alias):
+                alias = cast(Alias, array.type)
+                if isinstance(alias.type, BaseType):
+                    return True
+        return False
+
+    def validate(self) -> None:
+        if not self.validate_type():
             raise InvalidAliasedType.from_token(token=self)
 
     def nbits(self) -> int:
         return self.type.nbits()
+
+    @property
+    def extensible(self) -> bool:
+        if isinstance(self.type, ExtensibleType):
+            extensible_type = cast(ExtensibleType, self.type)
+            return extensible_type.extensible
+        return False
 
 
 @dataclass
@@ -400,7 +423,7 @@ class EnumField(Field):
 
 
 @dataclass
-class Enum(Type, Scope):
+class Enum(ExtensibleType, Scope):
     type: Uint = _UINT_MISSING
 
     def __repr__(self) -> str:
@@ -448,7 +471,7 @@ class MessageField(Field):
 
 
 @dataclass
-class Message(Type, Scope):
+class Message(ExtensibleType, Scope):
     name: str = ""
 
     @property

@@ -456,11 +456,17 @@ class Parser:
                 lineno=p.lineno(1),
             )
 
+    def p_optional_extensible_flag(self, p: P) -> None:
+        """optional_extensible_flag : '*'
+                                    |"""
+        p[0] = len(p) == 2
+
     def p_array_type(self, p: P) -> None:
-        """array_type : single_type '[' array_capacity ']' """
+        """array_type : single_type '[' array_capacity ']' optional_extensible_flag"""
         p[0] = Array(
             type=p[1],
             cap=p[3],
+            extensible=p[5],
             token="{0}[{1}]".format(p[1], p[3]),
             lineno=p.lineno(2),
             filepath=self.current_filepath(),
@@ -488,10 +494,11 @@ class Parser:
         self.current_scope().push_member(enum)
 
     def p_open_enum_scope(self, p: P) -> None:
-        """open_enum_scope : ENUM IDENTIFIER ':' UINT_TYPE '{'"""
+        """open_enum_scope : ENUM IDENTIFIER optional_extensible_flag ':' UINT_TYPE '{'"""
         enum = Enum(
             name=p[2],
-            type=p[4],
+            type=p[5],
+            extensible=p[3],
             token=p[2],
             lineno=p.lineno(2),
             filepath=self.current_filepath(),
@@ -542,9 +549,10 @@ class Parser:
         self.current_scope().push_member(message)
 
     def p_open_message_scope(self, p: P) -> None:
-        """open_message_scope : MESSAGE IDENTIFIER '{'"""
+        """open_message_scope : MESSAGE IDENTIFIER optional_extensible_flag '{'"""
         message = Message(
             name=p[2],
+            extensible=p[3],
             token=p[2],
             lineno=p.lineno(2),
             filepath=self.current_filepath(),
