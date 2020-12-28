@@ -23,8 +23,9 @@ from bitproto.ast import (
     Array,
     Node,
     Enum,
-    Message,
     EnumField,
+    Message,
+    MessageField,
 )
 from bitproto.errors import UnsupportedLanguageToRender, InternalError
 
@@ -165,6 +166,10 @@ class Formatter:
         return "_unknown_type"
 
     @abc.abstractmethod
+    def ident_character(self) -> str:
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def format_comment(self, content: str) -> str:
         raise NotImplementedError
 
@@ -214,9 +219,10 @@ class Formatter:
 class Block:
     """Renderer block."""
 
-    def __init__(self, formatter: Optional[Formatter] = None) -> None:
+    def __init__(self, formatter: Optional[Formatter] = None, ident: int = 0) -> None:
         self.strings: List[str] = []
         self._formatter: Optional[Formatter] = formatter
+        self.ident = ident
 
     @property
     def formatter(self) -> Formatter:
@@ -230,10 +236,18 @@ class Block:
         return "\n".join(self.strings)
 
     def push_string(self, s: str, separator: str = "") -> None:
+        """Append a string onto current string."""
         self.strings[-1] = separator.join([self.strings[-1], s])
 
-    def push(self, line: str) -> None:
+    def push(self, line: str, ident: Optional[int] = None) -> None:
+        """Append a line of string."""
+        ident = self.ident if ident is None else ident
+        if ident > 0:
+            line = ident * self.formatter.ident_character() + line
         self.strings.append(line)
+
+    def push_empty_line(self) -> None:
+        self.push("")
 
     def clear(self) -> None:
         self.strings = []
@@ -261,8 +275,9 @@ class BlockForDefinition(Block):
         definition: Definition,
         name: Optional[str] = None,
         formatter: Optional[Formatter] = None,
+        ident: int = 0,
     ) -> None:
-        super(BlockForDefinition, self).__init__(formatter=formatter)
+        super(BlockForDefinition, self).__init__(formatter=formatter, ident=ident)
 
         self.definition = definition
         self.definition_name: str = name or definition.name
@@ -286,6 +301,10 @@ class BlockForDefinition(Block):
     @property
     def as_message(self) -> Message:
         return cast(Message, self.definition)
+
+    @property
+    def as_message_field(self) -> MessageField:
+        return cast(MessageField, self.definition)
 
     def render_doc(self) -> None:
         for comment in self.definition.comment_block:

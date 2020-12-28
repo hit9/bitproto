@@ -183,7 +183,6 @@ class Scope(Definition):
         pass
 
     def push_member(self, member: Definition, name: Optional[str] = None) -> None:
-        # TODO: Validate member of name.
         if name is None:
             name = member.name
         if name in self.members:

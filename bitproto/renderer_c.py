@@ -21,6 +21,9 @@ from bitproto.utils import write_file
 
 
 class CFormatter(Formatter):
+    def ident_character(self) -> str:
+        return " "
+
     def format_comment(self, content: str) -> str:
         return f"// {content}"
 
@@ -199,8 +202,8 @@ class EnumBlock(BlockForDefinition):
         self.push_location_doc()
 
     def render_enum_fields(self) -> None:
-        for name, field in self.as_enum.enum_fields():
-            block = EnumFieldBlock(field, name=name, formatter=self.formatter)
+        for field in self.as_enum.fields:
+            block = EnumFieldBlock(field, formatter=self.formatter)
             block.render()
             self.push(block.collect())
 
@@ -210,10 +213,40 @@ class EnumBlock(BlockForDefinition):
         self.render_enum_fields()
 
 
+class MessageFieldBlock(BlockForDefinition):
+    def render_field_declaration_array(self) -> None:
+        field_type = self.as_message_field.type
+        field_name = self.as_message_field.name
+        array_type = cast(Array, field_type)
+        field_definition = self.formatter.format_array_type(array_type, field_name)
+        self.push(f"{field_definition};")
+
+    def render_field_declaration_common(self) -> None:
+        field_type = self.as_message_field.type
+        field_name = self.as_message_field.name
+        type_string = self.formatter.format_type(field_type)
+        self.push(f"{type_string} {field_name};")
+
+    def render_field_declaration(self) -> None:
+        if isinstance(self.as_message_field.type, Array):
+            self.render_field_declaration_array()
+        else:
+            self.render_field_declaration_common()
+        self.push_location_doc()
+
+    def render(self) -> None:
+        self.render_doc()
+        self.render_field_declaration()
+
+
 class MessageBlock(BlockForDefinition):
+    @property
+    def struct_name(self) -> str:
+        return self.formatter.format_message_name(self.as_message)
+
     def render_message_length_macro(self) -> None:
         message = self.as_message
-        struct_name = self.formatter.format_message_name(message)
+        struct_name: str = self.struct_name
         comment = self.formatter.format_comment(
             f"Number of bytes to encode struct {struct_name}"
         )
@@ -222,8 +255,19 @@ class MessageBlock(BlockForDefinition):
         macro_string = f"#define BytesLength{struct_name} {nbytes}"
         self.push(macro_string)
 
+    def render_message_struct_fields(self) -> None:
+        for field in self.as_message.fields:
+            block = MessageFieldBlock(field, formatter=self.formatter, ident=4)
+            block.render()
+            self.push(block.collect())
+
     def render_message_struct(self) -> None:
-        pass  # TODO
+        struct_name: str = self.struct_name
+        self.push(f"struct {struct_name} {{")
+        self.push_location_doc()
+        self.render_message_struct_fields()
+        self.push("}")
+        # TODO: __attribute__((packed, aligned(1)));
 
     def render_encoder_function_declaration(self) -> None:
         pass  # TODO
