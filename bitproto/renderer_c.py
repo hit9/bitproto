@@ -16,7 +16,7 @@ from bitproto.renderer import (
     BITPROTO_DECLARATION,
 )
 from bitproto.errors import InternalError
-from bitproto.ast import Proto, Constant, Alias, Uint, Int, Array, EnumField
+from bitproto.ast import Proto, Constant, Alias, Uint, Int, Array, EnumField, Message
 from bitproto.utils import write_file
 
 
@@ -63,6 +63,9 @@ class CFormatter(Formatter):
         return "{type} {name}[{capacity}]".format(
             type=self.format_type(t.type), name=name, capacity=t.cap
         )
+
+    def format_message_type(self, t: Message) -> str:
+        return "struct {0}".format(self.format_message_name(t))
 
 
 class BitprotoDeclaration(Block):
@@ -270,16 +273,33 @@ class MessageBlock(BlockForDefinition):
         # TODO: __attribute__((packed, aligned(1)));
 
     def render_encoder_function_declaration(self) -> None:
-        pass  # TODO
+        struct_name: str = self.struct_name
+        comment = self.formatter.format_comment(
+            f"Encode struct {struct_name} to given buffer s"
+        )
+        self.push(comment)
+        struct_type = self.formatter.format_message_type(self.as_message)
+        declaration = f"int Encode{struct_name}({struct_type} *m, unsigned char *s);"
+        self.push(declaration)
 
     def render_decoder_function_declaration(self) -> None:
-        pass  # TODO
+        struct_name: str = self.struct_name
+        comment = self.formatter.format_comment(
+            f"Decode struct {struct_name} from given buffer s"
+        )
+        self.push(comment)
+        struct_type = self.formatter.format_message_type(self.as_message)
+        declaration = f"int Decode{struct_name}({struct_type} *m, unsigned char *s);"
+        self.push(declaration)
 
     def render(self) -> None:
         self.render_message_length_macro()
+        self.push_empty_line()
         self.render_doc()
         self.render_message_struct()
+        self.push_empty_line()
         self.render_encoder_function_declaration()
+        self.push_empty_line()
         self.render_decoder_function_declaration()
         # TODO: render json formatter
 
