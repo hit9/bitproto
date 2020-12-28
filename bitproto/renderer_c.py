@@ -199,7 +199,7 @@ class EnumBlock(BlockForDefinition):
         self.push_location_doc()
 
     def render_enum_fields(self) -> None:
-        for name, field in self.as_enum.enum_fields().items():
+        for name, field in self.as_enum.enum_fields():
             block = EnumFieldBlock(field, name=name, formatter=self.formatter)
             block.render()
             self.push(block.collect())
@@ -208,6 +208,36 @@ class EnumBlock(BlockForDefinition):
         self.render_doc()
         self.render_enum_typedef()
         self.render_enum_fields()
+
+
+class MessageBlock(BlockForDefinition):
+    def render_message_length_macro(self) -> None:
+        message = self.as_message
+        struct_name = self.formatter.format_message_name(message)
+        comment = self.formatter.format_comment(
+            f"Number of bytes to encode struct {struct_name}"
+        )
+        self.push(comment)
+        nbytes = message.nbytes()
+        macro_string = f"#define BytesLength{struct_name} {nbytes}"
+        self.push(macro_string)
+
+    def render_message_struct(self) -> None:
+        pass  # TODO
+
+    def render_encoder_function_declaration(self) -> None:
+        pass  # TODO
+
+    def render_decoder_function_declaration(self) -> None:
+        pass  # TODO
+
+    def render(self) -> None:
+        self.render_message_length_macro()
+        self.render_doc()
+        self.render_message_struct()
+        self.render_encoder_function_declaration()
+        self.render_decoder_function_declaration()
+        # TODO: render json formatter
 
 
 class RendererCHeader(Renderer):
@@ -228,16 +258,22 @@ class RendererCHeader(Renderer):
             HeaderBuiltinMacroDefines(),
         ]
 
+        # TODO: imports
+
         # Constants
-        for name, constant in self.proto.constants().items():
+        for name, constant in self.proto.constants(recursive=True):
             blocks.append(ConstantBlock(constant, name=name))
 
         # Alias
-        for name, alias in self.proto.aliases().items():
+        for name, alias in self.proto.aliases(recursive=True):
             blocks.append(AliasBlock(alias, name=name))
 
         # Enum
-        for name, enum in self.proto.enums().items():
+        for name, enum in self.proto.enums(recursive=True):
             blocks.append(EnumBlock(enum, name=name))
+
+        # Message
+        for name, message in self.proto.messages(recursive=True):
+            blocks.append(MessageBlock(message, name=name))
 
         return blocks

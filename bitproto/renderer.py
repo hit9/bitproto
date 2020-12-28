@@ -283,6 +283,10 @@ class BlockForDefinition(Block):
     def as_enum_field(self) -> EnumField:
         return cast(EnumField, self.definition)
 
+    @property
+    def as_message(self) -> Message:
+        return cast(Message, self.definition)
+
     def render_doc(self) -> None:
         for comment in self.definition.comment_block:
             self.push(self.formatter.format_comment(comment.content()))

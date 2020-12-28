@@ -36,7 +36,7 @@ Abstraction syntax tree.
 
 from dataclasses import dataclass, field as dataclass_field
 from collections import OrderedDict as dict_
-from typing import Tuple, Union, Optional, Type as T, TypeVar, cast
+from typing import List, Tuple, Union, Optional, Type as T, TypeVar, cast
 
 from bitproto.errors import (
     InternalError,
@@ -183,6 +183,7 @@ class Scope(Definition):
         pass
 
     def push_member(self, member: Definition, name: Optional[str] = None) -> None:
+        # TODO: Validate member of name.
         if name is None:
             name = member.name
         if name in self.members:
@@ -211,36 +212,46 @@ class Scope(Definition):
             return None
         return member.get_member(*remain)
 
-    def filter(self, t: T[T_Definition]) -> "dict_[str, T_Definition]":
-        return dict_(
-            (name, member)
-            for name, member in self.members.items()
-            if isinstance(member, t)
-        )
+    def filter(
+        self, t: T[T_Definition], recursive: bool = False,
+    ) -> List[Tuple[str, T_Definition]]:
+        """Filter member by given type. (dfs)"""
+        items: List[Tuple[str, T_Definition]] = []
+        for item in self.members.items():
+            name, member = item
+            if recursive:  # Child first
+                if isinstance(member, Scope):
+                    scope = cast(Scope, member)
+                    items.extend(scope.filter(t, recursive=recursive))
+            if isinstance(member, t):
+                items.append((name, member))
+        return items
 
-    def options(self) -> "dict_[str, Option]":
-        return self.filter(Option)
+    def options(self, recursive: bool = False) -> List[Tuple[str, "Option"]]:
+        return self.filter(Option, recursive=recursive)
 
-    def enums(self) -> "dict_[str, Enum]":
-        return self.filter(Enum)
+    def enums(self, recursive: bool = False) -> List[Tuple[str, "Enum"]]:
+        return self.filter(Enum, recursive=recursive)
 
-    def messages(self) -> "dict_[str, Message]":
-        return self.filter(Message)
+    def messages(self, recursive: bool = False) -> List[Tuple[str, "Message"]]:
+        return self.filter(Message, recursive=recursive)
 
-    def constants(self) -> "dict_[str, Constant]":
-        return self.filter(Constant)
+    def constants(self, recursive: bool = False) -> List[Tuple[str, "Constant"]]:
+        return self.filter(Constant, recursive=recursive)
 
-    def aliases(self) -> "dict_[str, Alias]":
-        return self.filter(Alias)
+    def aliases(self, recursive: bool = False) -> List[Tuple[str, "Alias"]]:
+        return self.filter(Alias, recursive=recursive)
 
-    def protos(self) -> "dict_[str, Proto]":
-        return self.filter(Proto)
+    def protos(self, recursive: bool = False) -> List[Tuple[str, "Proto"]]:
+        return self.filter(Proto, recursive=recursive)
 
-    def enum_fields(self) -> "dict_[str, EnumField]":
-        return self.filter(EnumField)
+    def enum_fields(self, recursive: bool = False) -> List[Tuple[str, "EnumField"]]:
+        return self.filter(EnumField, recursive=recursive)
 
-    def message_fields(self) -> "dict_[str, MessageField]":
-        return self.filter(MessageField)
+    def message_fields(
+        self, recursive: bool = False
+    ) -> List[Tuple[str, "MessageField"]]:
+        return self.filter(MessageField, recursive=recursive)
 
 
 @dataclass
@@ -399,11 +410,15 @@ class Enum(Type, Scope):
     def nbits(self) -> int:
         return self.type.nbits()
 
+    @property
+    def fields(self) -> List[EnumField]:
+        return [field for _, field in self.enum_fields(recursive=False)]
+
     def name_to_values(self) -> "dict_[str, int]":
-        return dict_((name, field.value) for name, field in self.enum_fields().items())
+        return dict_((field.name, field.value) for field in self.fields)
 
     def value_to_names(self) -> "dict_[int, str]":
-        return dict_((field.value, name) for name, field in self.enum_fields().items())
+        return dict_((field.value, field.name) for field in self.fields)
 
     def validate_member_on_push(
         self, member: Definition, name: Optional[str] = None
@@ -437,17 +452,21 @@ class MessageField(Field):
 class Message(Type, Scope):
     name: str = ""
 
+    @property
+    def fields(self) -> List[MessageField]:
+        return [field for _, field in self.message_fields(recursive=False)]
+
     def nbits(self) -> int:
-        return sum(field.type.nbits() for field in self.message_fields().values())
+        return sum(field.type.nbits() for field in self.fields)
 
     def __repr__(self) -> str:
         return f"<message {self.name}>"
 
     def number_to_field(self) -> "dict_[int, MessageField]":
-        return dict_((field.number, field) for field in self.message_fields().values())
+        return dict_((field.number, field) for field in self.fields)
 
     def number_to_field_sorted(self) -> "dict_[int, MessageField]":
-        fields = sorted(self.message_fields().values(), key=lambda field: field.number)
+        fields = sorted(self.fields, key=lambda field: field.number)
         return dict_((field.number, field) for field in fields)
 
     def validate_member_on_push(
