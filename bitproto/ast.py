@@ -353,7 +353,8 @@ class Alias(Type, Definition):
         return f"<alias {self.name}>"
 
     def validate(self) -> None:
-        # TODO: Should we check this? FIXME
+        """It's allowed to alias to base types (bool, uint, int, byte)
+        and array of them or array of alias to them."""
         t = (Bool, Uint, Int, Byte)
         allow = False
         if isinstance(self.type, t):  # Alias to base types

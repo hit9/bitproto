@@ -16,7 +16,7 @@ from bitproto.renderer import (
     BITPROTO_DECLARATION,
 )
 from bitproto.errors import InternalError
-from bitproto.ast import Proto, Constant, Alias, Uint, Int, Array
+from bitproto.ast import Proto, Constant, Alias, Uint, Int, Array, EnumField
 from bitproto.utils import write_file
 
 
@@ -38,6 +38,10 @@ class CFormatter(Formatter):
     def format_constant_name(self, v: Constant) -> str:
         """Overrides super method to use upper case."""
         return super(CFormatter, self).format_constant_name(v).upper()
+
+    def format_enum_field_name(self, f: EnumField) -> str:
+        """Overrides super method to use upper case."""
+        return super(CFormatter, self).format_enum_field_name(f).upper()
 
     def format_bool_type(self) -> str:
         return "bool"
@@ -175,6 +179,37 @@ class AliasBlock(BlockForDefinition):
         self.render_alias_typedef()
 
 
+class EnumFieldBlock(BlockForDefinition):
+    def render_define_macro(self) -> None:
+        field = self.as_enum_field
+        name = self.formatter.format_enum_field_name(field)
+        value = self.formatter.format_int_literal(field.value)
+        self.push(f"#define {name} {value}")
+
+    def render(self) -> None:
+        self.render_doc()
+        self.render_define_macro()
+
+
+class EnumBlock(BlockForDefinition):
+    def render_enum_typedef(self) -> None:
+        name = self.formatter.format_enum_name(self.as_enum)
+        uint_type = self.formatter.format_uint_type(self.as_enum.type)
+        self.push(f"typedef {uint_type} {name}")
+        self.push_location_doc()
+
+    def render_enum_fields(self) -> None:
+        for name, field in self.as_enum.enum_fields().items():
+            block = EnumFieldBlock(field, name=name, formatter=self.formatter)
+            block.render()
+            self.push(block.collect())
+
+    def render(self) -> None:
+        self.render_doc()
+        self.render_enum_typedef()
+        self.render_enum_fields()
+
+
 class RendererCHeader(Renderer):
     """Renderer for C language (header)."""
 
@@ -200,4 +235,9 @@ class RendererCHeader(Renderer):
         # Alias
         for name, alias in self.proto.aliases().items():
             blocks.append(AliasBlock(alias, name=name))
+
+        # Enum
+        for name, enum in self.proto.enums().items():
+            blocks.append(EnumBlock(enum, name=name))
+
         return blocks

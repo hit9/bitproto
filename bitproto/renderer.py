@@ -24,6 +24,7 @@ from bitproto.ast import (
     Node,
     Enum,
     Message,
+    EnumField,
 )
 from bitproto.errors import UnsupportedLanguageToRender, InternalError
 
@@ -136,6 +137,11 @@ class Formatter:
         with nested-declaration concern."""
         return self.format_definition_name(v)
 
+    def format_enum_field_name(self, f: EnumField) -> str:
+        """Formats the declaration name of given enum field,
+        with nested-declaration concern."""
+        return self.format_definition_name(f)
+
     def format_type(self, t: Type) -> str:
         """Formats the string representation for given type.
         This is a default implementation.
@@ -208,9 +214,9 @@ class Formatter:
 class Block:
     """Renderer block."""
 
-    def __init__(self) -> None:
+    def __init__(self, formatter: Optional[Formatter] = None) -> None:
         self.strings: List[str] = []
-        self._formatter: Optional[Formatter] = None
+        self._formatter: Optional[Formatter] = formatter
 
     @property
     def formatter(self) -> Formatter:
@@ -250,8 +256,13 @@ class Block:
 class BlockForDefinition(Block):
     """Block for definition."""
 
-    def __init__(self, definition: Definition, name: Optional[str] = None) -> None:
-        super(BlockForDefinition, self).__init__()
+    def __init__(
+        self,
+        definition: Definition,
+        name: Optional[str] = None,
+        formatter: Optional[Formatter] = None,
+    ) -> None:
+        super(BlockForDefinition, self).__init__(formatter=formatter)
 
         self.definition = definition
         self.definition_name: str = name or definition.name
@@ -263,6 +274,14 @@ class BlockForDefinition(Block):
     @property
     def as_alias(self) -> Alias:
         return cast(Alias, self.definition)
+
+    @property
+    def as_enum(self) -> Enum:
+        return cast(Enum, self.definition)
+
+    @property
+    def as_enum_field(self) -> EnumField:
+        return cast(EnumField, self.definition)
 
     def render_doc(self) -> None:
         for comment in self.definition.comment_block:
