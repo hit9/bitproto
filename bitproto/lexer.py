@@ -35,7 +35,7 @@ class Lexer:
     t_ignore: str = " \t\r"
 
     # Literal symbols
-    literals: str = ":;{}[]()/=\\'"
+    literals: str = ":;{}[]()/=\\'."
 
     # Keywords
     keywords: Tuple[str, ...] = (
@@ -193,7 +193,7 @@ class Lexer:
         return t
 
     def t_IDENTIFIER(self, t: LexToken) -> LexToken:
-        r"[a-zA-Z_](\.[a-zA-Z_0-9]|[a-zA-Z_0-9])*"
+        r"[a-zA-Z_][a-zA-Z0-9_]*"
         if t.value in self.keywords:
             # May match keywords.
             t.type = t.value.upper()

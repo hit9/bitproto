@@ -414,7 +414,7 @@ class Parser:
             return None
 
     def p_constant_reference(self, p: P) -> None:
-        """constant_reference : IDENTIFIER"""
+        """constant_reference : dotted_identifier"""
         d = self._lookup_referenced_member(p[1])
         if d and isinstance(d, Constant):
             p[0] = d
@@ -444,7 +444,7 @@ class Parser:
         p[0] = p[1]
 
     def p_type_reference(self, p: P) -> None:
-        """type_reference : IDENTIFIER"""
+        """type_reference : dotted_identifier"""
         d = self._lookup_referenced_member(p[1])
         if d and isinstance(d, Type):
             p[0] = d
@@ -613,6 +613,15 @@ class Parser:
     def p_string_literal(self, p: P) -> None:
         """string_literal : STRING_LITERAL"""
         p[0] = p[1]
+
+    def p_dotted_identifier(self, p: P) -> None:
+        """dotted_identifier : IDENTIFIER '.' dotted_identifier
+                             | IDENTIFIER"""
+
+        if len(p) == 4:
+            p[0] = ".".join([p[1], p[3]])
+        elif len(p) == 2:
+            p[0] = p[1]
 
     def p_error(self, p: P) -> None:
         handle = self.current_handle()
