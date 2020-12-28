@@ -193,7 +193,7 @@ class Scope(Definition):
     def get_member(self, *names: str) -> Optional[Definition]:
         """Gets member by names recursively.
         Returns `None` if not found.
-        The recursivion continues only if current node is a scope.
+        The recursion continues only if current node is a scope.
         """
         if not names:
             return None
