@@ -457,7 +457,7 @@ class Parser:
             )
 
     def p_optional_extensible_flag(self, p: P) -> None:
-        """optional_extensible_flag : '*'
+        """optional_extensible_flag : "'"
                                     |"""
         p[0] = len(p) == 2
 

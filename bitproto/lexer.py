@@ -35,7 +35,7 @@ class Lexer:
     t_ignore: str = " \t\r"
 
     # Literal symbols
-    literals: str = ":;{}[]()/=\\"
+    literals: str = ":;{}[]()/=\\'"
 
     # Keywords
     keywords: Tuple[str, ...] = (
