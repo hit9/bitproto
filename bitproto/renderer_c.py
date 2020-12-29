@@ -8,16 +8,16 @@ Renderer for C.
 import os
 from typing import List, Optional, cast
 
+from bitproto.ast import Alias, Array, Constant, EnumField, Int, Message, Proto, Uint
+from bitproto.errors import InternalError
 from bitproto.renderer import (
-    Renderer,
+    BITPROTO_DECLARATION,
     Block,
     BlockForDefinition,
     Formatter,
-    BITPROTO_DECLARATION,
+    Renderer,
 )
-from bitproto.errors import InternalError
-from bitproto.ast import Proto, Constant, Alias, Uint, Int, Array, EnumField, Message
-from bitproto.utils import write_file, snake_case
+from bitproto.utils import snake_case, write_file
 
 
 class CFormatter(Formatter):
@@ -76,6 +76,9 @@ class CFormatter(Formatter):
 
     def format_message_type(self, t: Message) -> str:
         return "struct {0}".format(self.format_message_name(t))
+
+    def format_import_statement(self, t: Proto, as_name: Optional[str] = None) -> str:
+        return '#include "{0}_bp.h"'.format(t.name)
 
 
 class BitprotoDeclaration(Block):
@@ -153,6 +156,11 @@ class HeaderIncludeGuard(Block):
         self.push("#if defined(__cplusplus)")
         self.push("}")
         self.push("#endif")
+
+
+class HeaderImportBlock(BlockForDefinition):
+    def render(self) -> None:
+        self.push(self.formatter.format_import_statement(self.as_proto))
 
 
 class HeaderBuiltinMacroDefines(Block):
@@ -330,24 +338,23 @@ class RendererCHeader(Renderer):
             BitprotoDeclaration(),
             HeaderDeclaration(self.proto),
             HeaderIncludes(),
-            HeaderIncludeGuard(),
-            HeaderBuiltinMacroDefines(),
         ]
+        # Imports
+        for name, proto in self.proto.protos(recursive=False):
+            blocks.append(HeaderImportBlock(proto, name=name))
 
-        # TODO: imports
-
+        blocks.extend(
+            [HeaderIncludeGuard(), HeaderBuiltinMacroDefines(),]
+        )
         # Constants
         for name, constant in self.proto.constants(recursive=True):
             blocks.append(ConstantBlock(constant, name=name))
-
         # Alias
         for name, alias in self.proto.aliases(recursive=True):
             blocks.append(AliasBlock(alias, name=name))
-
         # Enum
         for name, enum in self.proto.enums(recursive=True):
             blocks.append(EnumBlock(enum, name=name))
-
         # Message
         for name, message in self.proto.messages(recursive=True):
             blocks.append(MessageBlock(message, name=name))

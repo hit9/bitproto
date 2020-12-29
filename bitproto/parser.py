@@ -7,39 +7,43 @@ Grammar parser for bitproto.
 
 import os
 from contextlib import contextmanager
-from dataclasses import dataclass, field as dataclass_field
-from typing import List, Tuple, Iterator, Optional, Type as T, cast
+from dataclasses import dataclass
+from dataclasses import field as dataclass_field
+from typing import Iterator, List, Optional, Tuple
+from typing import Type as T
+from typing import cast
 
 from ply import yacc  # type: ignore
 from ply.lex import LexToken  # type: ignore
-from ply.yacc import YaccProduction as P, LRParser as PlyParser  # type: ignore
+from ply.yacc import LRParser as PlyParser
+from ply.yacc import YaccProduction as P  # type: ignore
 
 from bitproto.ast import (
     Alias,
     Array,
+    BooleanConstant,
     Comment,
+    Constant,
     Definition,
     Enum,
     EnumField,
-    Constant,
-    BooleanConstant,
     IntegerConstant,
-    StringConstant,
     Message,
     MessageField,
-    Type,
     Option,
-    Scope,
     Proto,
+    Scope,
+    StringConstant,
+    Type,
 )
 from bitproto.errors import (
-    InternalError,
     CalculationExpressionError,
-    InvalidArrayCap,
+    CyclicImport,
     GrammarError,
+    InternalError,
+    InvalidArrayCap,
     ReferencedConstantNotDefined,
     ReferencedTypeNotDefined,
-    CyclicImport,
 )
 from bitproto.lexer import Lexer
 
@@ -73,6 +77,7 @@ class Parser:
         self.scope_stack: List[Scope] = scope_stack or []
         self.filepath_stack: List[str] = filepath_stack or []
         self.comment_block: List[Comment] = comment_block or []
+        self.scope_stack_init_length: int = len(self.scope_stack)
 
     def push_scope(self, scope: Scope) -> None:
         self.scope_stack.append(scope)
@@ -85,13 +90,11 @@ class Parser:
         return self.scope_stack[-1]
 
     def current_proto(self) -> Proto:
-        proto: Optional[Proto] = None
-        for scope in self.scope_stack[::-1]:
-            if isinstance(scope, Proto):
-                proto = cast(Proto, scope)
-                break
-        assert proto is not None, InternalError("Can't determine current_proto")
-        return proto
+        index = self.scope_stack_init_length
+        assert index < len(self.scope_stack), InternalError(
+            "Can't determine current_proto"
+        )
+        return cast(Proto, self.scope_stack[index])
 
     def current_scope_stack(self) -> Tuple[Scope, ...]:
         return tuple(self.scope_stack)
@@ -137,6 +140,16 @@ class Parser:
         """Parse a bitproto from given file."""
         with open(filepath) as f:
             return self.parse_string(f.read(), filepath=filepath)
+
+    def parse_child(self, filepath: str) -> Proto:
+        """Parse a child bitproto from given file.
+        Child parsing references current parser's internal states.
+        """
+        return Parser(
+            scope_stack=self.scope_stack,
+            filepath_stack=self.filepath_stack,
+            comment_block=self.comment_block,
+        ).parse(filepath)
 
     def util_parse_sequence(self, p: P) -> None:
         if len(p) == 3:
@@ -238,11 +251,7 @@ class Parser:
                 lineno=p.lineno(2),
             )
         # Parse.
-        parser = Parser()
-        parser.scope_stack = self.scope_stack
-        parser.filepath_stack = self.filepath_stack
-        parser.comment_block = self.comment_block
-        child = parser.parse(filepath)
+        child = self.parse_child(filepath)
         name = child.name
         if len(p) == 5:  # Importing as `name`
             name = p[2]

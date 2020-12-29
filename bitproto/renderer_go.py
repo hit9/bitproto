@@ -5,11 +5,11 @@ bitproto.renderer_go
 Renderer for Go.
 """
 
-from typing import Optional, List
+from typing import List, Optional
 
-from bitproto.renderer import Renderer, Formatter, Block
-from bitproto.ast import Constant, EnumField, Uint, Int, Array
+from bitproto.ast import Array, Constant, EnumField, Int, Uint
 from bitproto.errors import InternalError
+from bitproto.renderer import Block, Formatter, Renderer
 
 
 class GoFormatter(Formatter):

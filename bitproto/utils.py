@@ -1,5 +1,5 @@
 import re
-from typing import Callable, List, Optional, TypeVar, Type, TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable, List, Optional, Type, TypeVar
 
 if TYPE_CHECKING:
     from functools import lru_cache as cache

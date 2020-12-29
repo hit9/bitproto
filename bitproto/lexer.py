@@ -7,13 +7,13 @@ Token lexer for bitproto.
 
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Tuple, Dict, Iterator, Optional, List
+from typing import Dict, Iterator, List, Optional, Tuple
 
 from ply import lex  # type: ignore
 from ply.lex import LexToken  # type: ignore
 
-from bitproto.errors import LexerError, InvalidEscapingChar
-from bitproto.ast import Comment, Bool, Uint, Int, Byte
+from bitproto.ast import Bool, Byte, Comment, Int, Uint
+from bitproto.errors import InvalidEscapingChar, LexerError
 
 
 class Lexer:

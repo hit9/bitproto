@@ -34,22 +34,25 @@ Abstraction syntax tree.
       |    |    |- Proto                :Scope:Definition:Node
 """
 
-from dataclasses import dataclass, field as dataclass_field
 from collections import OrderedDict as dict_
-from typing import List, Tuple, Union, Optional, Type as T, TypeVar, cast
+from dataclasses import dataclass
+from dataclasses import field as dataclass_field
+from typing import List, Optional, Tuple
+from typing import Type as T
+from typing import TypeVar, Union, cast
 
 from bitproto.errors import (
-    UnsupportedArrayType,
     DuplicatedDefinition,
-    InvalidArrayCap,
-    InvalidIntCap,
-    InvalidUintCap,
-    InvalidEnumFieldValue,
-    EnumFieldValueOverflow,
     DuplicatedEnumFieldValue,
-    InvalidAliasedType,
-    InvalidMessageFieldNumber,
     DuplicatedMessageFieldNumber,
+    EnumFieldValueOverflow,
+    InvalidAliasedType,
+    InvalidArrayCap,
+    InvalidEnumFieldValue,
+    InvalidIntCap,
+    InvalidMessageFieldNumber,
+    InvalidUintCap,
+    UnsupportedArrayType,
 )
 
 T_Definition = TypeVar("T_Definition", bound="Definition")
@@ -216,7 +219,11 @@ class Scope(Definition):
     def filter(
         self, t: T[T_Definition], recursive: bool = False,
     ) -> List[Tuple[str, T_Definition]]:
-        """Filter member by given type. (dfs)"""
+        """Filter member by given type. (dfs)
+
+        :param t: The type to filter.
+        :param recursive: Whether filter recursively.
+        """
         items: List[Tuple[str, T_Definition]] = []
         for item in self.members.items():
             name, member = item

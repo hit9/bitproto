@@ -6,8 +6,9 @@ Errors.
 """
 
 from dataclasses import dataclass
-
-from typing import TypeVar, Type as T, TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any
+from typing import Type as T
+from typing import TypeVar
 
 if TYPE_CHECKING:
     from bitproto.ast import Node

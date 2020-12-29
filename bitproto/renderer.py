@@ -7,27 +7,29 @@ Renderer base class and utils.
 
 import abc
 import os
-from typing import Dict, List, Optional, Type as T, Tuple, Union, cast
+from typing import Dict, List, Optional, Tuple
+from typing import Type as T
+from typing import Union, cast
 
 from bitproto.ast import (
-    Proto,
-    Definition,
-    Constant,
     Alias,
+    Array,
     Bool,
     Byte,
-    Uint,
-    Int,
-    Integer,
-    Type,
-    Array,
-    Node,
+    Constant,
+    Definition,
     Enum,
     EnumField,
+    Int,
+    Integer,
     Message,
     MessageField,
+    Node,
+    Proto,
+    Type,
+    Uint,
 )
-from bitproto.errors import UnsupportedLanguageToRender, InternalError
+from bitproto.errors import InternalError, UnsupportedLanguageToRender
 
 RendererClass = T["Renderer"]
 
@@ -257,6 +259,10 @@ class Formatter:
         Normally the alias name, without extra declaration statements."""
         return self.format_alias_name(t)
 
+    @abc.abstractmethod
+    def format_import_statement(self, t: Proto, as_name: Optional[str] = None) -> str:
+        raise NotImplementedError
+
 
 class Block:
     """Renderer block."""
@@ -347,6 +353,10 @@ class BlockForDefinition(Block):
     @property
     def as_message_field(self) -> MessageField:
         return cast(MessageField, self.definition)
+
+    @property
+    def as_proto(self) -> Proto:
+        return cast(Proto, self.definition)
 
     def render_doc(self) -> None:
         for comment in self.definition.comment_block:
