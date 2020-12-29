@@ -211,6 +211,13 @@ class Scope(Definition):
             return None
         return member.get_member(*remain)
 
+    def get_name_by_member(self, member: Definition) -> Optional[str]:
+        """Get name in this scope by member."""
+        for name, member_ in self.members.items():
+            if member_ is member:
+                return name
+        return None
+
     def filter(
         self, t: T[T_Definition], recursive: bool = False,
     ) -> List[Tuple[str, T_Definition]]:

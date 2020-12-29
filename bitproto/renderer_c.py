@@ -24,6 +24,15 @@ class CFormatter(Formatter):
     def ident_character(self) -> str:
         return " "
 
+    def support_import(self) -> bool:
+        return False
+
+    def delimer_cross_proto(self) -> str:
+        return ""
+
+    def delimer_inner_proto(self) -> str:
+        return "_"
+
     def format_comment(self, content: str) -> str:
         return f"// {content}"
 
@@ -132,7 +141,7 @@ class HeaderIncludes(Block):
         self.push("#include <stdio.h>")
 
 
-class HeaderExternDeclaration(Block):
+class HeaderIncludeGuard(Block):
     def render(self) -> None:
         self.push("#if defined(__cplusplus)")
         self.push('extern "C"')
@@ -201,7 +210,7 @@ class EnumBlock(BlockForDefinition):
     def render_enum_typedef(self) -> None:
         name = self.formatter.format_enum_name(self.as_enum)
         uint_type = self.formatter.format_uint_type(self.as_enum.type)
-        self.push(f"typedef {uint_type} {name}")
+        self.push(f"typedef {uint_type} {name};")
         self.push_location_doc()
 
     def render_enum_fields(self) -> None:
@@ -269,7 +278,7 @@ class MessageBlock(BlockForDefinition):
         self.push(f"struct {struct_name} {{")
         self.push_location_doc()
         self.render_message_struct_fields()
-        self.push("}")
+        self.push("};")
         # TODO: __attribute__((packed, aligned(1)));
 
     def render_encoder_function_declaration(self) -> None:
@@ -318,7 +327,7 @@ class RendererCHeader(Renderer):
             BitprotoDeclaration(),
             HeaderDeclaration(self.proto),
             HeaderIncludes(),
-            HeaderExternDeclaration(),
+            HeaderIncludeGuard(),
             HeaderBuiltinMacroDefines(),
         ]
 

@@ -99,24 +99,31 @@ class Formatter:
             return 64
         return nbytes * 8
 
-    def format_definition_name(
-        self, definition: Definition, delimer: str = "_", definition_name: str = ""
-    ) -> str:
-        """Formats the declaration name for given definition. Target languages may
-        disallow nested declarations (such as structs, enums, constants, typedefs).
-        Example output format: "Scope1_Scope2_{definition.name}".
-
-        :param definition_name: Uses over `definition.name` to concat if provided.
+    def format_definition_name(self, d: Definition) -> str:
+        """Formats the declaration name for given definition in target language.
+        Target languages may disallow nested declarations (such as structs, enums,
+        constants, typedefs).
+        Example output format: "Scope1_Scope2_{definition_name}".
 
         This is a default implementation, subclass may override this.
         """
-        definition_name = definition_name or definition.name
-        if len(definition.scope_stack) <= 1:  # At the top scope.
-            return definition_name
-        # Note: skips the first scope (the bitproto itself)
-        names = [scope.name for scope in definition.scope_stack[1:]]
-        names.append(definition_name)
-        return delimer.join(names)
+        if len(d.scope_stack) == 0:
+            return d.name  # Current bitproto.
+
+        scope = d.scope_stack[-1]
+        definition_name = scope.get_name_by_member(d) or d.name
+
+        if len(d.scope_stack) <= 1:
+            return definition_name  # Global definition.
+
+        if isinstance(scope, Proto):  # Cross proto
+            if not self.support_import():
+                return definition_name
+            items = [self.format_definition_name(scope), definition_name]
+            return self.delimer_cross_proto().join(items)
+        else:
+            items = [self.format_definition_name(scope), definition_name]
+            return self.delimer_inner_proto().join(items)
 
     def format_enum_name(self, t: Enum) -> str:
         """Formats the declaration name of given enum,
@@ -167,52 +174,87 @@ class Formatter:
 
     @abc.abstractmethod
     def ident_character(self) -> str:
+        """Ident character of target language, e.g. ' ', '\t'
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def support_import(self) -> bool:
+        """Dose target language support proto import?"""
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def delimer_cross_proto(self) -> str:
+        """Delimer character between definitions across protos, e.g. '.'
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def delimer_inner_proto(self) -> str:
+        """Delimer character between definitions inner a single proto, e.g. '_'
+        """
         raise NotImplementedError
 
     @abc.abstractmethod
     def format_comment(self, content: str) -> str:
+        """Format given content into a line of comment in target language."""
         raise NotImplementedError
 
     @abc.abstractmethod
     def format_bool_literal(self, value: bool) -> str:
+        """Boolean literal representation in target language."""
         raise NotImplementedError
 
     @abc.abstractmethod
     def format_str_literal(self, value: str) -> str:
+        """String literal representation in target language."""
         raise NotImplementedError
 
     @abc.abstractmethod
     def format_int_literal(self, value: int) -> str:
+        """Integer literal representation in target language."""
         raise NotImplementedError
 
     @abc.abstractmethod
     def format_bool_type(self) -> str:
+        """Bool type representation in target language."""
         raise NotImplementedError
 
     @abc.abstractmethod
     def format_byte_type(self) -> str:
+        """Byte type representation in target language."""
         raise NotImplementedError
 
     @abc.abstractmethod
     def format_uint_type(self, t: Uint) -> str:
+        """Unsigned integer type representation in target language."""
         raise NotImplementedError
 
     @abc.abstractmethod
     def format_int_type(self, t: Int) -> str:
+        """Signed integer type representation in target language."""
         raise NotImplementedError
 
     @abc.abstractmethod
     def format_array_type(self, t: Array, name: Optional[str] = None) -> str:
-        """Note: `name` may be language specific requirement."""
+        """Array type representation in target language.
+        :param name: Target language (like C) may require a name for array declaration.
+        """
         raise NotImplementedError
 
     def format_enum_type(self, t: Enum) -> str:
+        """Enum type representation in target language.
+        Normally the enum name, without extra declaration statements."""
         return self.format_definition_name(t)
 
     def format_message_type(self, t: Message) -> str:
+        """Message type representation in target language.
+        Normally the message name, without extra declaration statements."""
         return self.format_message_name(t)
 
     def format_alias_type(self, t: Alias) -> str:
+        """Alias type representation in target language.
+        Normally the alias name, without extra declaration statements."""
         return self.format_alias_name(t)
 
 
