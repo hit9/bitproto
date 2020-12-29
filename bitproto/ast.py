@@ -37,7 +37,7 @@ Abstraction syntax tree.
 from collections import OrderedDict as dict_
 from dataclasses import dataclass
 from dataclasses import field as dataclass_field
-from typing import Any, List, Optional, Tuple
+from typing import Any, Callable, List, Optional, Tuple
 from typing import Type as T
 from typing import TypeVar, Union, cast
 
@@ -52,8 +52,10 @@ from bitproto.errors import (
     InvalidEnumFieldValue,
     InvalidIntCap,
     InvalidMessageFieldNumber,
+    InvalidOptionValue,
     InvalidUintCap,
     UnsupportedArrayType,
+    UnsupportedOption,
 )
 
 T_Definition = TypeVar("T_Definition", bound="Definition")
@@ -159,6 +161,8 @@ class OptionDescriptor:
     name: str
     type: T[Option]
     default: OptionValue
+    validator: Optional[Callable[..., bool]] = None
+    description: Optional[str] = None
 
 
 @dataclass
@@ -230,11 +234,18 @@ class Scope(Definition):
         pass
 
     def push_member(self, member: Definition, name: Optional[str] = None) -> None:
+        """Push a definition `member`, and run hook functions around."""
         if name is None:
             name = member.name
         if name in self.members:
             raise DuplicatedDefinition.from_token(token=member)
+
         self.validate_member_on_push(member, name)
+
+        if isinstance(member, Option):
+            option = cast(Option, member)
+            self.validate_option_on_push(option, name)
+
         self.members[name] = member
 
     def get_member(self, *names: str) -> Optional[Definition]:
@@ -333,13 +344,45 @@ class Scope(Definition):
         """Subclasses may override this."""
         return []
 
-    def option(self, name: str) -> Option:
-        """Obtain an option, returns default if not defined."""
-        # TODO: Validate option?
+    def get_option_descriptor(self, name: str) -> Optional[OptionDescriptor]:
+        for descriptor in self.option_descriptors():
+            if name == descriptor.name:
+                return descriptor
+        return None
+
+    def option(self, name: str) -> Optional[Option]:
+        """Obtain an option.
+        Returns a default option if not defined.
+        Returns None if not described.
+        """
         options = dict_(self.options(recursive=False))
         if name in options:
             return options[name]
-        # TODO: Default
+
+        descriptor = self.get_option_descriptor(name)
+        if not descriptor:
+            return None
+
+        default = descriptor.type(value=descriptor.default, name=name)
+        return default
+
+    def validate_option_on_push(
+        self, option: Option, name: Optional[str] = None
+    ) -> None:
+        """Validate option on parser pushes."""
+        name = name or option.name
+
+        descriptor = self.get_option_descriptor(name)
+        if not descriptor:
+            raise UnsupportedOption.from_token(option)
+
+        validator = descriptor.validator
+        description = descriptor.description
+
+        if validator is not None:
+            if not validator(option.value):
+                message = f"invalid option value (description => {description})" or ""
+                raise InvalidOptionValue.from_token(option, message=message)
 
 
 @dataclass
@@ -591,6 +634,16 @@ class Message(ExtensibleType, Scope):
         if field.number in self.number_to_field():
             raise DuplicatedMessageFieldNumber.from_token(token=field)
 
+    def option_descriptors(self) -> List[OptionDescriptor]:
+        return [
+            OptionDescriptor(
+                name="max_bytes",
+                type=IntegerOption,
+                default=0,
+                validator=lambda v: v >= 0,
+            ),
+        ]
+
 
 @dataclass
 class Proto(Scope):
@@ -599,8 +652,32 @@ class Proto(Scope):
 
     def option_descriptors(self) -> List[OptionDescriptor]:
         return [
-            OptionDescriptor("c.target_32bit", BooleanOption, True),
-            OptionDescriptor("c.struct_packed_align", IntegerOption, 1),
-            OptionDescriptor("c.enable_render_json_formatter", BooleanOption, False),
-            OptionDescriptor("go.package_path", StringOption, ""),
+            OptionDescriptor(
+                "c.target_platform_bits",
+                IntegerOption,
+                32,
+                lambda v: v in (32, 64),
+                "C language target machine bits, 32 or 64",
+            ),
+            OptionDescriptor(
+                "c.struct_packing_alignment",
+                IntegerOption,
+                1,
+                lambda v: 0 <= v <= 8,
+                "C language struct packing alignment, defaults to 1",
+            ),
+            OptionDescriptor(
+                "c.enable_render_json_formatter",
+                BooleanOption,
+                False,
+                None,
+                "Whether render json formatter function for structs in C language, defaults to false",
+            ),
+            OptionDescriptor(
+                "go.package_path",
+                StringOption,
+                "",
+                None,
+                "Package path of current golang package, to be imported, e.g. github.com/path/to/shared_bp",
+            ),
         ]

@@ -158,3 +158,13 @@ class DuplicatedMessageFieldNumber(GrammarError):
 @dataclass
 class UnsupportedLanguageToRender(RendererError):
     """Unsupported language to render."""
+
+
+@dataclass
+class UnsupportedOption(GrammarError):
+    """Unsupported option."""
+
+
+@dataclass
+class InvalidOptionValue(GrammarError):
+    """Invalid option value."""
