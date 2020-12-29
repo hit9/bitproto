@@ -46,6 +46,7 @@ from bitproto.errors import (
     DuplicatedEnumFieldValue,
     DuplicatedMessageFieldNumber,
     EnumFieldValueOverflow,
+    InternalError,
     InvalidAliasedType,
     InvalidArrayCap,
     InvalidEnumFieldValue,
@@ -89,12 +90,26 @@ class Definition(Node):
     name: str = ""
     scope_stack: Tuple["Scope", ...] = tuple()
     comment_block: Tuple[Comment, ...] = tuple()
+    _bound: Optional["Proto"] = None
 
     def set_name(self, name: str) -> None:
         self.name = name
 
     def set_comment_block(self, comment_block: Tuple[Comment, ...]) -> None:
         self.comment_block = comment_block
+
+    @property
+    def bound(self) -> Optional["Proto"]:
+        """Returns the proto this definition bound."""
+        if self._bound:
+            return self._bound  # Parser helps collected.
+        if isinstance(self, Proto):
+            return None
+        # Parser sucks, or lookup scope_stack reversely.
+        for scope in self.scope_stack[::-1]:
+            if isinstance(scope, Proto):
+                return cast(Proto, scope)
+        raise InternalError("non-proto definition has no bound")
 
     def __repr__(self) -> str:
         return "<definition {0}>".format(self.name)
@@ -217,16 +232,23 @@ class Scope(Definition):
         return None
 
     def filter(
-        self, t: T[T_Definition], recursive: bool = False,
+        self,
+        t: T[T_Definition],
+        recursive: bool = False,
+        bound: Optional["Proto"] = None,
     ) -> List[Tuple[str, T_Definition]]:
         """Filter member by given type. (dfs)
 
         :param t: The type to filter.
         :param recursive: Whether filter recursively.
+        :param bound: Filter definitions bound to given proto if provided.
         """
         items: List[Tuple[str, T_Definition]] = []
         for item in self.members.items():
             name, member = item
+            if bound:
+                if member.bound is not bound:
+                    continue
             if recursive:  # Child first
                 if isinstance(member, Scope):
                     scope = cast(Scope, member)
@@ -235,31 +257,43 @@ class Scope(Definition):
                 items.append((name, member))
         return items
 
-    def options(self, recursive: bool = False) -> List[Tuple[str, "Option"]]:
-        return self.filter(Option, recursive=recursive)
+    def options(
+        self, recursive: bool = False, bound: Optional["Proto"] = None
+    ) -> List[Tuple[str, "Option"]]:
+        return self.filter(Option, recursive=recursive, bound=bound)
 
-    def enums(self, recursive: bool = False) -> List[Tuple[str, "Enum"]]:
-        return self.filter(Enum, recursive=recursive)
+    def enums(
+        self, recursive: bool = False, bound: Optional["Proto"] = None
+    ) -> List[Tuple[str, "Enum"]]:
+        return self.filter(Enum, recursive=recursive, bound=bound)
 
-    def messages(self, recursive: bool = False) -> List[Tuple[str, "Message"]]:
-        return self.filter(Message, recursive=recursive)
+    def messages(
+        self, recursive: bool = False, bound: Optional["Proto"] = None
+    ) -> List[Tuple[str, "Message"]]:
+        return self.filter(Message, recursive=recursive, bound=bound)
 
-    def constants(self, recursive: bool = False) -> List[Tuple[str, "Constant"]]:
-        return self.filter(Constant, recursive=recursive)
+    def constants(
+        self, recursive: bool = False, bound: Optional["Proto"] = None
+    ) -> List[Tuple[str, "Constant"]]:
+        return self.filter(Constant, recursive=recursive, bound=bound)
 
-    def aliases(self, recursive: bool = False) -> List[Tuple[str, "Alias"]]:
-        return self.filter(Alias, recursive=recursive)
+    def aliases(
+        self, recursive: bool = False, bound: Optional["Proto"] = None
+    ) -> List[Tuple[str, "Alias"]]:
+        return self.filter(Alias, recursive=recursive, bound=bound)
 
-    def protos(self, recursive: bool = False) -> List[Tuple[str, "Proto"]]:
-        return self.filter(Proto, recursive=recursive)
-
-    def enum_fields(self, recursive: bool = False) -> List[Tuple[str, "EnumField"]]:
-        return self.filter(EnumField, recursive=recursive)
+    def enum_fields(
+        self, recursive: bool = False, bound: Optional["Proto"] = None
+    ) -> List[Tuple[str, "EnumField"]]:
+        return self.filter(EnumField, recursive=recursive, bound=bound)
 
     def message_fields(
-        self, recursive: bool = False
+        self, recursive: bool = False, bound: Optional["Proto"] = None
     ) -> List[Tuple[str, "MessageField"]]:
-        return self.filter(MessageField, recursive=recursive)
+        return self.filter(MessageField, recursive=recursive, bound=bound)
+
+    def protos(self, recursive: bool = False) -> List[Tuple[str, "Proto"]]:
+        return self.filter(Proto, recursive=recursive, bound=None)  # proto has no bound
 
 
 @dataclass

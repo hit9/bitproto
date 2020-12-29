@@ -347,16 +347,16 @@ class RendererCHeader(Renderer):
             [HeaderIncludeGuard(), HeaderBuiltinMacroDefines(),]
         )
         # Constants
-        for name, constant in self.proto.constants(recursive=True):
+        for name, constant in self.proto.constants(recursive=True, bound=self.proto):
             blocks.append(ConstantBlock(constant, name=name))
         # Alias
-        for name, alias in self.proto.aliases(recursive=True):
+        for name, alias in self.proto.aliases(recursive=True, bound=self.proto):
             blocks.append(AliasBlock(alias, name=name))
         # Enum
-        for name, enum in self.proto.enums(recursive=True):
+        for name, enum in self.proto.enums(recursive=True, bound=self.proto):
             blocks.append(EnumBlock(enum, name=name))
         # Message
-        for name, message in self.proto.messages(recursive=True):
+        for name, message in self.proto.messages(recursive=True, bound=self.proto):
             blocks.append(MessageBlock(message, name=name))
 
         return blocks

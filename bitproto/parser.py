@@ -91,13 +91,15 @@ class Parser:
 
     def current_proto(self) -> Proto:
         index = self.scope_stack_init_length
-        assert index < len(self.scope_stack), InternalError(
-            "Can't determine current_proto"
-        )
+        assert index < len(self.scope_stack), InternalError("Determining current_proto")
         return cast(Proto, self.scope_stack[index])
 
     def current_scope_stack(self) -> Tuple[Scope, ...]:
         return tuple(self.scope_stack)
+
+    def scope_stack_in_current_proto(self) -> Tuple[Scope, ...]:
+        start = self.scope_stack_init_length
+        return tuple(self.scope_stack[start:])
 
     def clear_comment_block(self) -> None:
         self.comment_block = []
@@ -170,7 +172,7 @@ class Parser:
 
     def p_open_global_scope(self, p: P) -> None:
         """open_global_scope : """
-        proto = Proto(filepath=self.current_filepath())
+        proto = Proto(filepath=self.current_filepath(), _bound=None)
         self.push_scope(proto)
 
     def p_close_global_scope(self, p: P) -> None:
@@ -266,6 +268,7 @@ class Parser:
             value=value,
             scope_stack=self.current_scope_stack(),
             comment_block=self.collect_comment_block(),
+            _bound=self.current_proto(),
             filepath=self.current_filepath(),
             lineno=p.lineno(2),
             token=p[2],
@@ -289,6 +292,7 @@ class Parser:
             token=p[2],
             scope_stack=self.current_scope_stack(),
             comment_block=self.collect_comment_block(),
+            _bound=self.current_proto(),
         )
         self.current_scope().push_member(alias)
 
@@ -317,6 +321,7 @@ class Parser:
             value=value,
             scope_stack=self.current_scope_stack(),
             comment_block=self.collect_comment_block(),
+            _bound=self.current_proto(),
             filepath=self.current_filepath(),
             token=p[2],
             lineno=p.lineno(2),
@@ -376,14 +381,14 @@ class Parser:
     def _lookup_referenced_member(self, identifier: str) -> Optional[Definition]:
         """Lookup referenced defintion member in current bitproto.
           * When `identifier` contains dots: lookup from its bitproto.
-          * Otherwise, lookup from the scope stack reversively.
+          * Otherwise, lookup from the scope stack reversively (in current proto).
         """
         names = identifier.split(".")
         if len(names) > 1:  # Contains dots
             proto = self.current_proto()
             return proto.get_member(*names)
         else:  # No dot.
-            for scope in self.current_scope_stack()[::-1]:
+            for scope in self.scope_stack_in_current_proto()[::-1]:
                 d = scope.get_member(identifier)
                 if d is not None:
                     return d
@@ -480,6 +485,7 @@ class Parser:
             filepath=self.current_filepath(),
             comment_block=self.collect_comment_block(),
             scope_stack=self.current_scope_stack(),
+            _bound=self.current_proto(),
         )
         self.push_scope(enum)
 
@@ -516,6 +522,7 @@ class Parser:
             filepath=self.current_filepath(),
             scope_stack=self.current_scope_stack(),
             comment_block=self.collect_comment_block(),
+            _bound=self.current_proto(),
         )
         self.current_scope().push_member(field)
 
@@ -534,6 +541,7 @@ class Parser:
             filepath=self.current_filepath(),
             comment_block=self.collect_comment_block(),
             scope_stack=self.current_scope_stack(),
+            _bound=self.current_proto(),
         )
         self.push_scope(message)
 
@@ -574,6 +582,7 @@ class Parser:
             filepath=self.current_filepath(),
             comment_block=self.collect_comment_block(),
             scope_stack=self.current_scope_stack(),
+            _bound=self.current_proto(),
         )
         self.current_scope().push_member(message_field)
 
