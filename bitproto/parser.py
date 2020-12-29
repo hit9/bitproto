@@ -15,7 +15,7 @@ from typing import cast
 
 from ply import yacc  # type: ignore
 from ply.lex import LexToken  # type: ignore
-from ply.yacc import LRParser as PlyParser
+from ply.yacc import LRParser as PlyParser  # type: ignore
 from ply.yacc import YaccProduction as P  # type: ignore
 
 from bitproto.ast import (
@@ -30,11 +30,12 @@ from bitproto.ast import (
     IntegerConstant,
     Message,
     MessageField,
-    Option,
     Proto,
     Scope,
     StringConstant,
     Type,
+    make_option_from_value,
+    make_constant_from_value,
 )
 from bitproto.errors import (
     CalculationExpressionError,
@@ -261,11 +262,11 @@ class Parser:
         self.current_scope().push_member(child, name)
 
     def p_option(self, p: P) -> None:
-        """option : OPTION IDENTIFIER '=' option_value optional_semicolon"""
+        """option : OPTION dotted_identifier '=' option_value optional_semicolon"""
         name, value = p[2], p[4]
-        option = Option(
-            name=name,
+        option = make_option_from_value(
             value=value,
+            name=name,
             scope_stack=self.current_scope_stack(),
             comment_block=self.collect_comment_block(),
             _bound=self.current_proto(),
@@ -303,22 +304,13 @@ class Parser:
 
         constant_cls: Optional[T[Constant]] = None
 
-        if value is True or value is False or isinstance(value, BooleanConstant):
-            # Avoid isinstance(True, int)
-            constant_cls = BooleanConstant
-            value = bool(value)
-        elif isinstance(value, (int, IntegerConstant)):
-            constant_cls = IntegerConstant
-            value = int(value)
-        elif isinstance(value, (str, StringConstant)):
-            constant_cls = StringConstant
-            value = str(value)
-        else:
-            raise InternalError("No constant_cls to use")
+        if isinstance(value, Constant):
+            # Unwrap if value is a referenced constant.
+            value = value.unwrap()
 
-        constant = constant_cls(
-            name=name,
+        constant = make_constant_from_value(
             value=value,
+            name=name,
             scope_stack=self.current_scope_stack(),
             comment_block=self.collect_comment_block(),
             _bound=self.current_proto(),

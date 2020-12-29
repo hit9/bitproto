@@ -37,7 +37,7 @@ Abstraction syntax tree.
 from collections import OrderedDict as dict_
 from dataclasses import dataclass
 from dataclasses import field as dataclass_field
-from typing import List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 from typing import Type as T
 from typing import TypeVar, Union, cast
 
@@ -57,6 +57,8 @@ from bitproto.errors import (
 )
 
 T_Definition = TypeVar("T_Definition", bound="Definition")
+OptionValue = Union[str, int, bool]
+ConstantValue = Union[str, int, bool]
 
 
 @dataclass
@@ -120,7 +122,7 @@ _VALUE_MISSING = "_VALUE_MISSING"  # FIXME: how to represent value missing?
 
 @dataclass
 class Option(Definition):
-    value: Union[str, int, bool] = _VALUE_MISSING
+    value: OptionValue = _VALUE_MISSING
 
     def __repr__(self) -> str:
         return "<option {0}={1}>".format(self.name, self.value)
@@ -141,12 +143,33 @@ class StringOption(Option):
     value: str = ""
 
 
+def make_option_from_value(value: OptionValue, **kwds: Any) -> Option:
+    """Creates an option from value with a right class."""
+    if value is True or value is False:  # Avoid isinstance(True, int)
+        return BooleanOption(value=value, **kwds)
+    elif isinstance(value, int):
+        return IntegerOption(value=value, **kwds)
+    elif isinstance(value, str):
+        return StringOption(value=value, **kwds)
+    return Option(value=value, **kwds)
+
+
+@dataclass
+class OptionDescriptor:
+    name: str
+    type: T[Option]
+    default: OptionValue
+
+
 @dataclass
 class Constant(Definition):
-    value: Union[str, int, bool] = _VALUE_MISSING
+    value: ConstantValue = _VALUE_MISSING
 
     def __repr__(self) -> str:
         return "<constant {0}={1}>".format(self.name, self.value)
+
+    def unwrap(self) -> ConstantValue:
+        return self.value
 
 
 @dataclass
@@ -180,6 +203,17 @@ class StringConstant(Constant):
 
     def __repr__(self) -> str:
         return "<str-constant {0}>".format(self.name)
+
+
+def make_constant_from_value(value: ConstantValue, **kwds: Any) -> Constant:
+    """Creates a constant from value with a right class."""
+    if value is True or value is False:  # Avoid isinstance(True, int)
+        return BooleanConstant(value=value, **kwds)
+    elif isinstance(value, int):
+        return IntegerConstant(value=value, **kwds)
+    elif isinstance(value, str):
+        return StringConstant(value=value, **kwds)
+    return Constant(value=value, **kwds)
 
 
 @dataclass
@@ -294,6 +328,18 @@ class Scope(Definition):
 
     def protos(self, recursive: bool = False) -> List[Tuple[str, "Proto"]]:
         return self.filter(Proto, recursive=recursive, bound=None)  # proto has no bound
+
+    def option_descriptors(self) -> List[OptionDescriptor]:
+        """Subclasses may override this."""
+        return []
+
+    def option(self, name: str) -> Option:
+        """Obtain an option, returns default if not defined."""
+        # TODO: Validate option?
+        options = dict_(self.options(recursive=False))
+        if name in options:
+            return options[name]
+        # TODO: Default
 
 
 @dataclass
@@ -550,3 +596,11 @@ class Message(ExtensibleType, Scope):
 class Proto(Scope):
     def __repr__(self) -> str:
         return f"<bitproto {self.name}>"
+
+    def option_descriptors(self) -> List[OptionDescriptor]:
+        return [
+            OptionDescriptor("c.target_32bit", BooleanOption, True),
+            OptionDescriptor("c.struct_packed_align", IntegerOption, 1),
+            OptionDescriptor("c.enable_render_json_formatter", BooleanOption, False),
+            OptionDescriptor("go.package_path", StringOption, ""),
+        ]
