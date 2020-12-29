@@ -290,12 +290,16 @@ class MessageBlock(BlockForDefinition):
 
     def render_message_struct(self) -> None:
         struct_name: str = self.struct_name
+
         self.push(f"struct {struct_name} {{")
         self.push_location_doc()
         self.render_message_struct_fields()
-        self.push("};")
-        alignment_option = self.proto.get_option_or_raise("c.struct_packing_alignment")
-        # TODO: __attribute__((packed, aligned(1)));
+        self.push("}")
+
+        alignment = self.proto.get_option_as_int_or_raise("c.struct_packing_alignment")
+        if alignment > 0:
+            self.push_string(f"__attribute__((packed, aligned({alignment})))")
+        self.push_string(";")
 
     def render_encoder_function_declaration(self) -> None:
         struct_name: str = self.struct_name
@@ -317,6 +321,21 @@ class MessageBlock(BlockForDefinition):
         declaration = f"int Decode{struct_name}({struct_type} *m, unsigned char *s);"
         self.push(declaration)
 
+    def render_json_formatter_function_declaration(self) -> None:
+        enabled = self.proto.get_option_as_bool_or_raise(
+            "c.enable_render_json_formatter"
+        )
+        if not enabled:
+            return
+        struct_name: str = self.struct_name
+        comment = self.formatter.format_comment(
+            f"Format struct {struct_name} to a json format string."
+        )
+        self.push(comment)
+        struct_type = self.formatter.format_message_type(self.as_message)
+        declaration = f"int Json{struct_name}({struct_type} *m, char *s);"
+        self.push(declaration)
+
     def render(self) -> None:
         self.render_message_length_macro()
         self.push_empty_line()
@@ -326,7 +345,8 @@ class MessageBlock(BlockForDefinition):
         self.render_encoder_function_declaration()
         self.push_empty_line()
         self.render_decoder_function_declaration()
-        # TODO: render json formatter
+        self.push_empty_line()
+        self.render_json_formatter_function_declaration()
 
 
 class RendererCHeader(Renderer):

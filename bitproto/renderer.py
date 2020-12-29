@@ -283,7 +283,7 @@ class Block:
     def __str__(self) -> str:
         return "\n".join(self.strings)
 
-    def push_string(self, s: str, separator: str = "") -> None:
+    def push_string(self, s: str, separator: str = " ") -> None:
         """Append a string onto current string."""
         self.strings[-1] = separator.join([self.strings[-1], s])
 

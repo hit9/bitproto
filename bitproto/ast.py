@@ -378,6 +378,12 @@ class Scope(Definition):
             return cast(StringOption, option).value
         raise InternalError("option not string")
 
+    def get_option_as_bool_or_raise(self, name: str) -> bool:
+        option = self.get_option_or_raise(name)
+        if isinstance(option, BooleanOption):
+            return cast(BooleanOption, option).value
+        raise InternalError("option not boolean")
+
     def validate_option_on_push(
         self, option: Option, name: Optional[str] = None
     ) -> None:
@@ -682,7 +688,7 @@ class Proto(Scope):
         OptionDescriptor(
             "c.enable_render_json_formatter",
             BooleanOption,
-            False,
+            True,
             None,
             "Whether render json formatter function for structs in C language, defaults to false",
         ),
