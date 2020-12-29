@@ -8,7 +8,7 @@ Grammar parser for bitproto.
 import os
 from contextlib import contextmanager
 from dataclasses import dataclass, field as dataclass_field
-from typing import List, Tuple, Iterator, Optional, Type as T
+from typing import List, Tuple, Iterator, Optional, Type as T, cast
 
 from ply import yacc
 from ply.lex import LexToken
@@ -41,48 +41,7 @@ from bitproto.errors import (
     ReferencedTypeNotDefined,
     CyclicImport,
 )
-from bitproto.lexer import Lexer, LexerHandle
-
-
-@dataclass
-class ParserHandle:
-    """Parsing context holder."""
-
-    filepath: str = ""
-    scope_stack: List[Scope] = dataclass_field(default_factory=list)
-    comment_block: List[Comment] = dataclass_field(default_factory=list)
-
-    def push_scope(self, scope: Scope) -> None:
-        self.scope_stack.append(scope)
-
-    def pop_scope(self) -> Scope:
-        return self.scope_stack.pop()
-
-    def current_scope(self) -> Scope:
-        assert len(self.scope_stack) > 0, InternalError("Empty scope_stack")
-        return self.scope_stack[-1]
-
-    def scope_stack_tuple(self) -> Tuple[Scope, ...]:
-        return tuple(self.scope_stack)
-
-    def current_proto(self) -> Proto:
-        assert len(self.scope_stack) > 0, InternalError("Empty scope_stack")
-        assert isinstance(self.scope_stack[0], Proto), InternalError(
-            "scope_stack[0] not a Proto instance"
-        )
-        return self.scope_stack[0]
-
-    def push_comment(self, comment: Comment) -> None:
-        self.comment_block.append(comment)
-
-    def clear_comment_block(self) -> None:
-        block = self.comment_block[:]
-        self.comment_block = []
-
-    def collect_comment_block(self) -> Tuple[Comment, ...]:
-        comment_block = tuple(self.comment_block)
-        self.clear_comment_block()
-        return comment_block
+from bitproto.lexer import Lexer
 
 
 class Parser:
@@ -101,73 +60,77 @@ class Parser:
         ("left", "TIMES", "DIVIDE"),
     )
 
-    def __init__(self, debug: bool = False, write_tables: bool = False) -> None:
-        self.handle_stack: List[ParserHandle] = []
-        self.lexer: Lexer = Lexer()
+    def __init__(
+        self,
+        scope_stack: Optional[List[Scope]] = None,
+        filepath_stack: Optional[List[str]] = None,
+        comment_block: Optional[List[Comment]] = None,
+    ) -> None:
+        self.lexer: Lexer = Lexer(filepath_stack=filepath_stack)
         self.parser: PlyParser = yacc.yacc(
-            module=self, start="start", debug=debug, write_tables=write_tables
+            module=self, start="start", debug=False, write_tables=False
         )
-
-    def push_handle(self, handle: ParserHandle) -> None:
-        self.handle_stack.append(handle)
-
-    def pop_handle(self) -> ParserHandle:
-        return self.handle_stack.pop()
-
-    def current_handle(self) -> ParserHandle:
-        assert len(self.handle_stack) > 0, InternalError(
-            "ParserHandle is None during parsing"
-        )
-        return self.handle_stack[-1]
+        self.scope_stack: List[Scope] = scope_stack or []
+        self.filepath_stack: List[str] = filepath_stack or []
+        self.comment_block: List[Comment] = comment_block or []
 
     def push_scope(self, scope: Scope) -> None:
-        self.current_handle().push_scope(scope)
+        self.scope_stack.append(scope)
 
     def pop_scope(self) -> Scope:
-        return self.current_handle().pop_scope()
+        return self.scope_stack.pop()
 
     def current_scope(self) -> Scope:
-        handle = self.current_handle()
-        return handle.current_scope()
+        assert self.scope_stack, InternalError("Empty scope_stack")
+        return self.scope_stack[-1]
 
     def current_proto(self) -> Proto:
-        handle = self.current_handle()
-        return handle.current_proto()
+        proto: Optional[Proto] = None
+        for scope in self.scope_stack[::-1]:
+            if isinstance(scope, Proto):
+                proto = cast(Proto, scope)
+                break
+        assert proto is not None, InternalError("Can't determine current_proto")
+        return proto
 
     def current_scope_stack(self) -> Tuple[Scope, ...]:
-        handle = self.current_handle()
-        return handle.scope_stack_tuple()
-
-    def collect_comment_block(self) -> Tuple[Comment, ...]:
-        handle = self.current_handle()
-        return handle.collect_comment_block()
+        return tuple(self.scope_stack)
 
     def clear_comment_block(self) -> None:
-        handle = self.current_handle()
-        return handle.clear_comment_block()
+        self.comment_block = []
 
     def push_comment(self, comment: Comment) -> None:
-        handle = self.current_handle()
-        handle.push_comment(comment)
+        self.comment_block.append(comment)
+
+    def collect_comment_block(self) -> Tuple[Comment, ...]:
+        comment_block = tuple(self.comment_block)
+        self.clear_comment_block()
+        return comment_block
 
     def current_filepath(self) -> str:
-        handle = self.current_handle()
-        return handle.filepath
+        assert self.filepath_stack, InternalError("Empty filepath_stack")
+        return self.filepath_stack[-1]
+
+    def push_filepath(self, filepath: str) -> None:
+        self.filepath_stack.append(filepath)
+
+    def pop_filepath(self) -> str:
+        return self.filepath_stack.pop()
 
     @contextmanager
-    def maintain_handle(self, handle: ParserHandle) -> Iterator[ParserHandle]:
+    def maintain_filepath(self, filepath: str) -> Iterator[str]:
         try:
-            self.push_handle(handle)
-            yield handle
+            self.push_filepath(filepath)
+            yield filepath
         finally:
-            self.pop_handle()
+            self.pop_filepath()
 
     def parse_string(self, s: str, filepath: str = "") -> Proto:
         """Parse a bitproto from given string `s`.
         :param filepath: The filepath information if exist.
         """
-        with self.lexer.maintain_handle(LexerHandle(filepath=filepath)):
-            with self.maintain_handle(ParserHandle(filepath=filepath)):
+        with self.lexer.maintain_filepath(filepath):
+            with self.maintain_filepath(filepath):
                 return self.parser.parse(s)
 
     def parse(self, filepath: str) -> Proto:
@@ -225,7 +188,7 @@ class Parser:
 
     def p_proto(self, p: P) -> None:
         """proto : PROTO IDENTIFIER optional_semicolon"""
-        proto = self.current_proto()
+        proto = cast(Proto, self.current_scope())
         proto.set_name(p[2])
         proto.set_comment_block(self.collect_comment_block())
 
@@ -255,8 +218,8 @@ class Parser:
     def _check_parsing_file(self, filepath: str) -> bool:
         """Checks if given filepath existing in parsing stack.
         """
-        for handle in self.handle_stack:
-            if os.path.samefile(handle.filepath, filepath):
+        for filepath_ in self.filepath_stack:
+            if os.path.samefile(filepath, filepath_):
                 return True
         return False
 
@@ -275,7 +238,11 @@ class Parser:
                 lineno=p.lineno(2),
             )
         # Parse.
-        child = Parser().parse(filepath)
+        parser = Parser()
+        parser.scope_stack = self.scope_stack
+        parser.filepath_stack = self.filepath_stack
+        parser.comment_block = self.comment_block
+        child = parser.parse(filepath)
         name = child.name
         if len(p) == 5:  # Importing as `name`
             name = p[2]
@@ -399,7 +366,7 @@ class Parser:
 
     def _lookup_referenced_member(self, identifier: str) -> Optional[Definition]:
         """Lookup referenced defintion member in current bitproto.
-          * When `identifier` contains dots: lookup from the root bitproto.
+          * When `identifier` contains dots: lookup from its bitproto.
           * Otherwise, lookup from the scope stack reversively.
         """
         names = identifier.split(".")
@@ -624,21 +591,14 @@ class Parser:
             p[0] = p[1]
 
     def p_error(self, p: P) -> None:
-        handle = self.current_handle()
+        filepath = self.current_filepath()
         if p is None:
-            raise GrammarError(
-                message="Grammar error at eof.", filepath=handle.filepath
-            )
+            raise GrammarError(message="Grammar error at eof.", filepath=filepath)
         if isinstance(p, LexToken):
-            raise GrammarError(
-                filepath=handle.filepath, token=str(p.value), lineno=p.lineno
-            )
-        if len(p) <= 1:
-            raise GrammarError()
-        else:
-            raise GrammarError(
-                filepath=handle.filepath, token=p.value(1), lineno=p.lineno(1)
-            )
+            raise GrammarError(filepath=filepath, token=str(p.value), lineno=p.lineno)
+        if len(p) > 1:
+            raise GrammarError(filepath=filepath, token=p.value(1), lineno=p.lineno(1))
+        raise GrammarError()
 
 
 def parse(filepath: str) -> Proto:

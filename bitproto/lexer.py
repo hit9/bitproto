@@ -12,13 +12,8 @@ from typing import Tuple, Dict, Iterator, Optional, List
 from ply import lex
 from ply.lex import LexToken
 
-from bitproto.errors import LexerError, InvalidEscapingChar, InternalError
+from bitproto.errors import LexerError, InvalidEscapingChar
 from bitproto.ast import Comment, Bool, Uint, Int, Byte
-
-
-@dataclass
-class LexerHandle:
-    filepath: str = ""
 
 
 class Lexer:
@@ -89,32 +84,28 @@ class Lexer:
     t_TIMES: str = r"\*"
     t_DIVIDE: str = r"/"
 
-    def __init__(self) -> None:
+    def __init__(self, filepath_stack: Optional[List[str]] = None) -> None:
         self.lexer = lex.lex(object=self)
-        self.handle_stack: List[LexerHandle] = []
+        self.filepath_stack: List[str] = filepath_stack or []
 
-    def push_handle(self, handle: LexerHandle) -> None:
-        self.handle_stack.append(handle)
+    def push_filepath(self, filepath: str) -> None:
+        self.filepath_stack.append(filepath)
 
-    def pop_handle(self) -> LexerHandle:
-        return self.handle_stack.pop()
-
-    def current_handle(self) -> LexerHandle:
-        assert len(self.handle_stack) > 0, InternalError("Lexer handle_stack empty")
-        return self.handle_stack[-1]
+    def pop_filepath(self) -> str:
+        return self.filepath_stack.pop()
 
     def current_filepath(self) -> str:
-        if self.handle_stack:
-            return self.current_handle().filepath
+        if self.filepath_stack:
+            return self.filepath_stack[-1]
         return ""
 
     @contextmanager
-    def maintain_handle(self, handle: LexerHandle) -> Iterator[LexerHandle]:
+    def maintain_filepath(self, filepath: str) -> Iterator[str]:
         try:
-            self.push_handle(handle)
-            yield handle
+            self.push_filepath(filepath)
+            yield filepath
         finally:
-            self.pop_handle()
+            self.pop_filepath()
 
     def token(self) -> Optional[LexToken]:
         """Returns the next token lexed.
