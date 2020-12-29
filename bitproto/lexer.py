@@ -9,8 +9,8 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Tuple, Dict, Iterator, Optional, List
 
-from ply import lex
-from ply.lex import LexToken
+from ply import lex  # type: ignore
+from ply.lex import LexToken  # type: ignore
 
 from bitproto.errors import LexerError, InvalidEscapingChar
 from bitproto.ast import Comment, Bool, Uint, Int, Byte

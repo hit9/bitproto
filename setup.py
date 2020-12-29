@@ -1,5 +1,5 @@
 from os.path import dirname, join
-from setuptools import setup
+from setuptools import setup  # type: ignore
 
 about = {"__name__": "bitproto"}
 with open(join(dirname(__file__), "bitproto", "__version__.py"), "r") as f:

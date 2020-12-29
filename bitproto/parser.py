@@ -10,9 +10,9 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field as dataclass_field
 from typing import List, Tuple, Iterator, Optional, Type as T, cast
 
-from ply import yacc
-from ply.lex import LexToken
-from ply.yacc import YaccProduction as P, LRParser as PlyParser
+from ply import yacc  # type: ignore
+from ply.lex import LexToken  # type: ignore
+from ply.yacc import YaccProduction as P, LRParser as PlyParser  # type: ignore
 
 from bitproto.ast import (
     Alias,

@@ -88,10 +88,6 @@ class Definition(Node):
     scope_stack: Tuple["Scope", ...] = tuple()
     comment_block: Tuple[Comment, ...] = tuple()
 
-    def docstring(self) -> str:
-        """Returns the comment block in string format."""
-        return "\n".join(str(c) for c in self.comment_block)
-
     def set_name(self, name: str) -> None:
         self.name = name
 
