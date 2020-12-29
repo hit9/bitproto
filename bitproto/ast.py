@@ -135,6 +135,18 @@ class Option(Definition):
     def __repr__(self) -> str:
         return "<option {0}={1}>".format(self.name, self.value)
 
+    @classmethod
+    def from_value(cls, value: OptionValue, **kwds: Any) -> "Option":
+        """Creates an option from value with a right subclass."""
+        if value is True or value is False:
+            # Avoid isinstance(True, int)
+            return BooleanOption(value=value, **kwds)
+        elif isinstance(value, int):
+            return IntegerOption(value=value, **kwds)
+        elif isinstance(value, str):
+            return StringOption(value=value, **kwds)
+        return Option(value=value, **kwds)
+
 
 @dataclass
 class IntegerOption(Option):
@@ -149,17 +161,6 @@ class BooleanOption(Option):
 @dataclass
 class StringOption(Option):
     value: str = ""
-
-
-def make_option_from_value(value: OptionValue, **kwds: Any) -> Option:
-    """Creates an option from value with a right class."""
-    if value is True or value is False:  # Avoid isinstance(True, int)
-        return BooleanOption(value=value, **kwds)
-    elif isinstance(value, int):
-        return IntegerOption(value=value, **kwds)
-    elif isinstance(value, str):
-        return StringOption(value=value, **kwds)
-    return Option(value=value, **kwds)
 
 
 @dataclass
@@ -180,6 +181,18 @@ class Constant(Definition):
 
     def unwrap(self) -> ConstantValue:
         return self.value
+
+    @classmethod
+    def from_value(cls, value: ConstantValue, **kwds: Any) -> "Constant":
+        """Creates a constant from value with a right subclass."""
+        if value is True or value is False:
+            # Avoid isinstance(True, int)
+            return BooleanConstant(value=value, **kwds)
+        elif isinstance(value, int):
+            return IntegerConstant(value=value, **kwds)
+        elif isinstance(value, str):
+            return StringConstant(value=value, **kwds)
+        return Constant(value=value, **kwds)
 
 
 @dataclass
@@ -204,17 +217,6 @@ class StringConstant(Constant):
 
     def __str__(self) -> str:
         return self.value
-
-
-def make_constant_from_value(value: ConstantValue, **kwds: Any) -> Constant:
-    """Creates a constant from value with a right class."""
-    if value is True or value is False:  # Avoid isinstance(True, int)
-        return BooleanConstant(value=value, **kwds)
-    elif isinstance(value, int):
-        return IntegerConstant(value=value, **kwds)
-    elif isinstance(value, str):
-        return StringConstant(value=value, **kwds)
-    return Constant(value=value, **kwds)
 
 
 @dataclass

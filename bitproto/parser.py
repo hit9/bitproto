@@ -30,12 +30,11 @@ from bitproto.ast import (
     IntegerConstant,
     Message,
     MessageField,
+    Option,
     Proto,
     Scope,
     StringConstant,
     Type,
-    make_option_from_value,
-    make_constant_from_value,
 )
 from bitproto.errors import (
     CalculationExpressionError,
@@ -264,7 +263,7 @@ class Parser:
     def p_option(self, p: P) -> None:
         """option : OPTION dotted_identifier '=' option_value optional_semicolon"""
         name, value = p[2], p[4]
-        option = make_option_from_value(
+        option = Option.from_value(
             value=value,
             name=name,
             scope_stack=self.current_scope_stack(),
@@ -308,7 +307,7 @@ class Parser:
             # Unwrap if value is a referenced constant.
             value = value.unwrap()
 
-        constant = make_constant_from_value(
+        constant = Constant.from_value(
             value=value,
             name=name,
             scope_stack=self.current_scope_stack(),
