@@ -518,7 +518,10 @@ class Array(ExtensibleType):
         return self.cap * self.type.nbits()
 
     def __repr__(self) -> str:
-        return "<type array ({0} cap={1})>".format(self.type, self.cap)
+        extensible_flag = "'" if self.extensible else ""
+        return "<type array ({0}, cap={1}){2}>".format(
+            self.type, self.cap, extensible_flag
+        )
 
 
 @dataclass
@@ -583,7 +586,8 @@ class Enum(ExtensibleType, Scope):
     type: Uint = _UINT_MISSING
 
     def __repr__(self) -> str:
-        return f"<enum {self.name}>"
+        extensible_flag = "'" if self.extensible else ""
+        return f"<enum {self.name}{extensible_flag}>"
 
     def nbits(self) -> int:
         return self.type.nbits()
@@ -648,7 +652,8 @@ class Message(ExtensibleType, Scope):
         return sum(field.type.nbits() for field in self.fields)
 
     def __repr__(self) -> str:
-        return f"<message {self.name}>"
+        extensible_flag = "'" if self.extensible else ""
+        return f"<message {self.name}{extensible_flag}>"
 
     def number_to_field(self) -> "dict_[int, MessageField]":
         return dict_((field.number, field) for field in self.fields)

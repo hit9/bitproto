@@ -1,5 +1,6 @@
 import re
-from typing import TYPE_CHECKING, Callable, List, Optional, Type, TypeVar
+from typing import Callable, List, Optional, Type, TypeVar
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from functools import lru_cache as cache
@@ -50,6 +51,16 @@ def pascal_case(word: str) -> str:
     return "".join(items)
 
 
+_snake_case_regex_head = r"[A-Z0-9]"
+_snake_case_regex_tail = r"[^A-Z0-9]"
+_snake_case_regex_capital_match = re.compile(
+    rf"({_snake_case_regex_head}+{_snake_case_regex_tail}*)"
+)
+_snake_case_regex_m_capital_match = re.compile(
+    rf"^({_snake_case_regex_head}{{1,}})({_snake_case_regex_head}+{_snake_case_regex_tail}+)$"
+)
+
+
 def snake_case(word: str) -> str:
     """Converts given word to snake case.
 
@@ -59,16 +70,12 @@ def snake_case(word: str) -> str:
     """
     underscore = "_"
     no_underscore_words = word.split(underscore)
-    regex_head = r"[A-Z0-9]"
-    regex_tail = r"[^A-Z0-9]"
-    capital_match = re.compile(rf"({regex_head}+{regex_tail}*)")
-    m_capital_match = re.compile(rf"^({regex_head}{{1,}})({regex_head}+{regex_tail}+)$")
     no_underscore_cases: List[str] = []
 
     for w in no_underscore_words:
-        cases = filter(None, capital_match.split(w))
+        cases = filter(None, _snake_case_regex_capital_match.split(w))
         for case in cases:
-            subcases = filter(None, m_capital_match.split(case))
+            subcases = filter(None, _snake_case_regex_m_capital_match.split(case))
             if subcases:
                 for subcase in subcases:
                     no_underscore_cases.append(subcase)
