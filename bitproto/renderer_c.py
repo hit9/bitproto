@@ -6,7 +6,7 @@ Renderer for C.
 """
 
 import os
-from typing import List, Optional, cast
+from typing import Any, List, Optional, cast
 
 from bitproto.ast import Alias, Array, Constant, EnumField, Int, Message, Proto, Uint
 from bitproto.errors import InternalError
@@ -262,6 +262,10 @@ class MessageFieldBlock(BlockForDefinition):
 
 
 class MessageBlock(BlockForDefinition):
+    def __init__(self, proto: Proto, *args: Any, **kwds: Any) -> None:
+        super(MessageBlock, self).__init__(*args, **kwds)
+        self.proto = proto
+
     @property
     def struct_name(self) -> str:
         return self.formatter.format_message_name(self.as_message)
@@ -290,6 +294,7 @@ class MessageBlock(BlockForDefinition):
         self.push_location_doc()
         self.render_message_struct_fields()
         self.push("};")
+        alignment_option = self.proto.get_option_or_raise("c.struct_packing_alignment")
         # TODO: __attribute__((packed, aligned(1)));
 
     def render_encoder_function_declaration(self) -> None:
@@ -357,6 +362,6 @@ class RendererCHeader(Renderer):
             blocks.append(EnumBlock(enum, name=name))
         # Message
         for name, message in self.proto.messages(recursive=True, bound=self.proto):
-            blocks.append(MessageBlock(message, name=name))
+            blocks.append(MessageBlock(self.proto, message, name=name))
 
         return blocks

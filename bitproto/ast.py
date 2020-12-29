@@ -37,7 +37,7 @@ Abstraction syntax tree.
 from collections import OrderedDict as dict_
 from dataclasses import dataclass
 from dataclasses import field as dataclass_field
-from typing import Any, Callable, List, Optional, Tuple
+from typing import Any, Callable, ClassVar, List, Optional, Tuple, Dict
 from typing import Type as T
 from typing import TypeVar, Union, cast
 
@@ -63,8 +63,13 @@ OptionValue = Union[str, int, bool]
 ConstantValue = Union[str, int, bool]
 
 
+class _Meta(type):
+    def __repr__(self) -> str:
+        return getattr(self, "__repr_name__", self.__name__)
+
+
 @dataclass
-class Node:
+class Node(metaclass=_Meta):
     token: str = ""
     lineno: int = 0
     filepath: str = ""
@@ -75,6 +80,9 @@ class Node:
     def validate(self) -> None:
         pass
 
+    def __repr__(self) -> str:
+        return "<{0}>".format(repr(type(self)))
+
 
 @dataclass
 class Comment(Node):
@@ -84,9 +92,6 @@ class Comment(Node):
 
     def __str__(self) -> str:
         return self.content()
-
-    def __repr__(self) -> str:
-        return "<comment {0}..>".format(self.token[:5])
 
 
 @dataclass
@@ -116,7 +121,8 @@ class Definition(Node):
         raise InternalError("non-proto definition has no bound")
 
     def __repr__(self) -> str:
-        return "<definition {0}>".format(self.name)
+        class_repr = repr(type(self))
+        return f"<{class_repr} {self.name}>"
 
 
 _VALUE_MISSING = "_VALUE_MISSING"  # FIXME: how to represent value missing?
@@ -183,9 +189,6 @@ class IntegerConstant(Constant):
     def __int__(self) -> int:
         return self.value
 
-    def __repr__(self) -> str:
-        return "<integer-constant {0}>".format(self.name)
-
 
 @dataclass
 class BooleanConstant(Constant):
@@ -194,9 +197,6 @@ class BooleanConstant(Constant):
     def __bool__(self) -> bool:
         return self.value
 
-    def __repr__(self) -> str:
-        return "<boolean-constant {0}>".format(self.name)
-
 
 @dataclass
 class StringConstant(Constant):
@@ -204,9 +204,6 @@ class StringConstant(Constant):
 
     def __str__(self) -> str:
         return self.value
-
-    def __repr__(self) -> str:
-        return "<str-constant {0}>".format(self.name)
 
 
 def make_constant_from_value(value: ConstantValue, **kwds: Any) -> Constant:
@@ -223,9 +220,6 @@ def make_constant_from_value(value: ConstantValue, **kwds: Any) -> Constant:
 @dataclass
 class Scope(Definition):
     members: "dict_[str, Definition]" = dataclass_field(default_factory=dict_)
-
-    def __repr__(self) -> str:
-        return f"<scope {self.name}"
 
     def validate_member_on_push(
         self, member: Definition, name: Optional[str] = None
@@ -340,15 +334,14 @@ class Scope(Definition):
     def protos(self, recursive: bool = False) -> List[Tuple[str, "Proto"]]:
         return self.filter(Proto, recursive=recursive, bound=None)  # proto has no bound
 
-    def option_descriptors(self) -> List[OptionDescriptor]:
-        """Subclasses may override this."""
-        return []
+    def option_descriptors(self) -> Dict[str, OptionDescriptor]:
+        """Subclasses may override this.
+        The default implementation assuming attribute `_option_descriptors` is defined."""
+        descriptors = getattr(self, "_option_descriptors", [])
+        return dict((d.name, d) for d in descriptors)
 
     def get_option_descriptor(self, name: str) -> Optional[OptionDescriptor]:
-        for descriptor in self.option_descriptors():
-            if name == descriptor.name:
-                return descriptor
-        return None
+        return self.option_descriptors().get(name, None)
 
     def option(self, name: str) -> Optional[Option]:
         """Obtain an option.
@@ -366,16 +359,42 @@ class Scope(Definition):
         default = descriptor.type(value=descriptor.default, name=name)
         return default
 
+    def get_option_or_raise(self, name: str) -> Option:
+        """Obtain an option, or raise on invalid name."""
+        option = self.option(name)
+        if option:
+            return option
+        raise UnsupportedOption(message=f"get_option_or_raise({name}) got None")
+
+    def get_option_as_int_or_raise(self, name: str) -> int:
+        option = self.get_option_or_raise(name)
+        if isinstance(option, IntegerOption):
+            return cast(IntegerOption, option).value
+        raise InternalError("option not integer")
+
+    def get_option_as_string_or_raise(self, name: str) -> str:
+        option = self.get_option_or_raise(name)
+        if isinstance(option, StringOption):
+            return cast(StringOption, option).value
+        raise InternalError("option not string")
+
     def validate_option_on_push(
         self, option: Option, name: Optional[str] = None
     ) -> None:
         """Validate option on parser pushes."""
         name = name or option.name
 
+        # Is this option described?
         descriptor = self.get_option_descriptor(name)
         if not descriptor:
             raise UnsupportedOption.from_token(option)
 
+        # Validate type
+        if not isinstance(option, descriptor.type):
+            message = f"invalid option type, requires {descriptor.type}"
+            raise InvalidOptionValue.from_token(message=message, token=option)
+
+        # Validate value
         validator = descriptor.validator
         description = descriptor.description
 
@@ -388,9 +407,6 @@ class Scope(Definition):
 @dataclass
 class Type(Node):
     _is_missing: bool = False
-
-    def __repr__(self) -> str:
-        return "<type base>"
 
     def nbits(self) -> int:
         raise NotImplementedError
@@ -416,7 +432,7 @@ class Bool(BaseType):
         return 1
 
     def __repr__(self) -> str:
-        return "bool"
+        return "<type bool>"
 
 
 @dataclass
@@ -425,7 +441,7 @@ class Byte(BaseType):
         return 8
 
     def __repr__(self) -> str:
-        return "byte"
+        return "<byte>"
 
 
 @dataclass
@@ -447,7 +463,7 @@ class Uint(Integer):
         return self.cap
 
     def __repr__(self) -> str:
-        return "uint{0}".format(self.cap)
+        return "<type uint{0}>".format(self.cap)
 
 
 _UINT_MISSING = Uint(_is_missing=True)
@@ -465,7 +481,7 @@ class Int(Integer):
         return self.cap
 
     def __repr__(self) -> str:
-        return "int{0}".format(self.cap)
+        return "<type int{0}>".format(self.cap)
 
 
 @dataclass
@@ -494,7 +510,7 @@ class Array(ExtensibleType):
         return self.cap * self.type.nbits()
 
     def __repr__(self) -> str:
-        return "{0}[{1}]".format(self.type, self.cap)
+        return "<type array ({0} cap={1})>".format(self.type, self.cap)
 
 
 @dataclass
@@ -606,6 +622,16 @@ class MessageField(Field):
 class Message(ExtensibleType, Scope):
     name: str = ""
 
+    _option_descriptors: ClassVar[List[OptionDescriptor]] = [
+        OptionDescriptor(
+            "max_bytes",
+            IntegerOption,
+            0,
+            lambda v: v >= 0,
+            "Setting the maximum limit of number of bytes for target message.",
+        ),
+    ]
+
     @property
     def fields(self) -> List[MessageField]:
         return [field for _, field in self.message_fields(recursive=False)]
@@ -634,50 +660,40 @@ class Message(ExtensibleType, Scope):
         if field.number in self.number_to_field():
             raise DuplicatedMessageFieldNumber.from_token(token=field)
 
-    def option_descriptors(self) -> List[OptionDescriptor]:
-        return [
-            OptionDescriptor(
-                name="max_bytes",
-                type=IntegerOption,
-                default=0,
-                validator=lambda v: v >= 0,
-            ),
-        ]
-
 
 @dataclass
 class Proto(Scope):
+    __repr_name__: ClassVar[str] = "bitproto"
+    _option_descriptors: ClassVar[List[OptionDescriptor]] = [
+        OptionDescriptor(
+            "c.target_platform_bits",
+            IntegerOption,
+            32,
+            lambda v: v in (32, 64),
+            "C language target machine bits, 32 or 64",
+        ),
+        OptionDescriptor(
+            "c.struct_packing_alignment",
+            IntegerOption,
+            1,
+            lambda v: 0 <= v <= 8,
+            "C language struct packing alignment, defaults to 1",
+        ),
+        OptionDescriptor(
+            "c.enable_render_json_formatter",
+            BooleanOption,
+            False,
+            None,
+            "Whether render json formatter function for structs in C language, defaults to false",
+        ),
+        OptionDescriptor(
+            "go.package_path",
+            StringOption,
+            "",
+            None,
+            "Package path of current golang package, to be imported, e.g. github.com/path/to/shared_bp",
+        ),
+    ]
+
     def __repr__(self) -> str:
         return f"<bitproto {self.name}>"
-
-    def option_descriptors(self) -> List[OptionDescriptor]:
-        return [
-            OptionDescriptor(
-                "c.target_platform_bits",
-                IntegerOption,
-                32,
-                lambda v: v in (32, 64),
-                "C language target machine bits, 32 or 64",
-            ),
-            OptionDescriptor(
-                "c.struct_packing_alignment",
-                IntegerOption,
-                1,
-                lambda v: 0 <= v <= 8,
-                "C language struct packing alignment, defaults to 1",
-            ),
-            OptionDescriptor(
-                "c.enable_render_json_formatter",
-                BooleanOption,
-                False,
-                None,
-                "Whether render json formatter function for structs in C language, defaults to false",
-            ),
-            OptionDescriptor(
-                "go.package_path",
-                StringOption,
-                "",
-                None,
-                "Package path of current golang package, to be imported, e.g. github.com/path/to/shared_bp",
-            ),
-        ]
