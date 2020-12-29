@@ -17,7 +17,7 @@ from bitproto.renderer import (
 )
 from bitproto.errors import InternalError
 from bitproto.ast import Proto, Constant, Alias, Uint, Int, Array, EnumField, Message
-from bitproto.utils import write_file
+from bitproto.utils import write_file, snake_case
 
 
 class CFormatter(Formatter):
@@ -52,8 +52,9 @@ class CFormatter(Formatter):
         return super(CFormatter, self).format_constant_name(v).upper()
 
     def format_enum_field_name(self, f: EnumField) -> str:
-        """Overrides super method to use upper case."""
-        return super(CFormatter, self).format_enum_field_name(f).upper()
+        """Overrides super method to use upper case (of snake_case)."""
+        name = super(CFormatter, self).format_enum_field_name(f)
+        return snake_case(name).upper()
 
     def format_bool_type(self) -> str:
         return "bool"
@@ -115,7 +116,8 @@ class HeaderDeclaration(Block):
             self.push("// {0}".format(comment.content()))
 
     def format_proto_macro_name(self) -> str:
-        return "__BITPROTO__{0}_H".format(self.proto.name.upper())
+        proto_name = snake_case(self.proto.name).upper()
+        return f"__BITPROTO__{proto_name}_H__"
 
     def render_declaration_begin(self) -> None:
         macro_name = self.format_proto_macro_name()
@@ -259,12 +261,13 @@ class MessageBlock(BlockForDefinition):
     def render_message_length_macro(self) -> None:
         message = self.as_message
         struct_name: str = self.struct_name
+        struct_name_upper = snake_case(struct_name).upper()
         comment = self.formatter.format_comment(
             f"Number of bytes to encode struct {struct_name}"
         )
         self.push(comment)
         nbytes = message.nbytes()
-        macro_string = f"#define BytesLength{struct_name} {nbytes}"
+        macro_string = f"#define BYTES_LENGTH_{struct_name_upper} {nbytes}"
         self.push(macro_string)
 
     def render_message_struct_fields(self) -> None:

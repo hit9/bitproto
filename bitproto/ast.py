@@ -39,7 +39,6 @@ from collections import OrderedDict as dict_
 from typing import List, Tuple, Union, Optional, Type as T, TypeVar, cast
 
 from bitproto.errors import (
-    InternalError,
     UnsupportedArrayType,
     DuplicatedDefinition,
     InvalidArrayCap,
