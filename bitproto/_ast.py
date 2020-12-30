@@ -53,7 +53,6 @@ from bitproto.errors import (
     DuplicatedDefinition,
     DuplicatedEnumFieldValue,
     DuplicatedMessageFieldNumber,
-    DuplicatedOption,
     EnumFieldValueOverflow,
     InternalError,
     InvalidAliasedType,

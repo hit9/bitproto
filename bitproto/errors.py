@@ -4,17 +4,19 @@ bitproto.errors
 
 Errors.
 
-    Error
-      |- InternalError          -> Error
-      |- ParserError            -> Error
-      |    |- LexerError
-      |    |- GrammarError
-      |- LintWarning            -> Warning
-      |- RendererError          -> Error
+    Base
+      |- Error
+      |    |- InternalError
+      |    |- ParserError
+      |    |    |- LexerError
+      |    |    |- GrammarError
+      |    |- RendererError
+      |- Warning
+      |    |- LintWarning
 """
 
+import sys
 from dataclasses import dataclass
-from enum import unique, IntEnum
 from typing import TYPE_CHECKING, Any
 from typing import Type as T
 from typing import TypeVar, ClassVar
@@ -25,24 +27,9 @@ if TYPE_CHECKING:
 T_ParserError = TypeVar("T_ParserError", bound="ParserError")
 
 
-@unique
-class ErrorLevel(IntEnum):
-    """Error level.
-    Warning: continues, leaving a warning message.
-    Error: have to shutdown processing.
-    """
-
-    WARNING = 1
-    ERROR = 2
-
-
 @dataclass
-class Error(Exception):
-    """Some error occurred during bitproto handling."""
-
+class Base:
     description: str = ""
-
-    level: ClassVar[ErrorLevel] = ErrorLevel.ERROR
 
     def __post_init__(self) -> None:
         if not self.description:
@@ -51,8 +38,31 @@ class Error(Exception):
     def format_default_description(self) -> str:
         return self.__doc__ or ""
 
+    def _message_prefix(self) -> str:
+        return "[ error ]"
+
     def __str__(self) -> str:
-        return self.description
+        description = self.description
+        prefix = self._message_prefix()
+        return "\n".join(map(lambda l: prefix + " " + l, description.splitlines()))
+
+
+@dataclass
+class Error(Base, Exception):
+    """Some error occurred during bitproto handling."""
+
+
+@dataclass
+class Warning(Base):
+    """Warning continues processing and leaves a message."""
+
+    def _message_prefix(self) -> str:
+        return "[ warning ] (skipped)"
+
+
+def warning(warning: "Warning") -> None:
+    """Logs a warning to stderr."""
+    sys.stderr.write(str(warning))
 
 
 @dataclass
@@ -72,8 +82,8 @@ class ParserError(Error):
     def format_default_description(self) -> str:
         message = self.message or self.__doc__
         if self.filepath:
-            return f"{self.filepath}:L{self.lineno}: {self.token} => {message}"
-        return f"L{self.lineno}: {self.token} => {message}"
+            return f"{self.filepath}:L{self.lineno} {self.token} => {message}"
+        return f"L{self.lineno} {self.token} => {message}"
 
     @classmethod
     def from_token(cls: T[T_ParserError], token: "Node", **kwds: Any,) -> T_ParserError:
@@ -190,8 +200,3 @@ class UnsupportedOption(GrammarError):
 @dataclass
 class InvalidOptionValue(GrammarError):
     """Invalid option value."""
-
-
-@dataclass
-class DuplicatedOption(GrammarError):
-    """Duplicated option."""
