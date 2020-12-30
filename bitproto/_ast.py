@@ -131,20 +131,11 @@ def final(frozener: Callable[[S], S]) -> Callable[[S], S]:
     return decorator
 
 
-def abstract(node_class_: S) -> S:
-    """Decorator to mark a node class to be an abstract node.
-    To distinguish from final node:
-    An abstract node has no need to be frozen etc.
-    """
-    return node_class_
-
-
 class _Meta(type):
     def __repr__(self) -> str:
         return getattr(self, "__repr_name__", self.__name__)
 
 
-@abstract
 @dataclass
 class Node(metaclass=_Meta):
     token: str = ""
@@ -184,7 +175,6 @@ class Comment(Node):
         return self.content()
 
 
-@abstract
 @dataclass
 class Definition(Node):
     name: str = ""
@@ -203,7 +193,6 @@ class Definition(Node):
         return f"<{class_repr} {self.name}>"
 
 
-@abstract
 @dataclass
 class _NormalDefinition(Definition):
     "_NormalDefinition distinguishs from Proto."
@@ -218,7 +207,6 @@ class _NormalDefinition(Definition):
 _VALUE_MISSING = "_value_missing"
 
 
-@abstract
 @dataclass
 class Option(_NormalDefinition):
     value: OptionValue = _VALUE_MISSING
@@ -292,7 +280,6 @@ class OptionDescriptor_:
         )
 
 
-@abstract
 @dataclass
 class Constant(_NormalDefinition):
     value: ConstantValue = _VALUE_MISSING
@@ -345,7 +332,6 @@ class StringConstant(Constant):
     value: str = ""
 
 
-@abstract
 @dataclass
 class Scope(Definition):
     members: "dict_[str, Definition]" = dataclass_field(default_factory=dict_)
@@ -460,14 +446,12 @@ class Scope(Definition):
         return self.filter(Proto, recursive=recursive, bound=None)  # proto has no bound
 
 
-@abstract
 @dataclass
 class _NormalScope(Scope, _NormalDefinition):
     "_NormalScope distinguishs from Proto."
     pass
 
 
-@abstract
 @dataclass
 class ScopeWithOptions(Scope):
     """Scope with options described."""
@@ -568,7 +552,6 @@ class ScopeWithOptions(Scope):
                 raise InvalidOptionValue.from_token(option, message=message)
 
 
-@abstract
 @dataclass
 class Type(Node):
     _is_missing: bool = False
@@ -587,7 +570,6 @@ class Type(Node):
 _TYPE_MISSING = Type(_is_missing=True)
 
 
-@abstract
 @dataclass
 class BaseType(Type):
     pass
@@ -613,7 +595,6 @@ class Byte(BaseType):
         return "<byte>"
 
 
-@abstract
 @dataclass
 class Integer(BaseType):
     pass
@@ -656,7 +637,6 @@ class Int(Integer):
         return "<type int{0}>".format(self.cap)
 
 
-@abstract
 @dataclass
 class ExtensibleType(Type):
     extensible: bool = False
@@ -738,7 +718,6 @@ class Alias(Type, _NormalDefinition):
         return False
 
 
-@abstract
 @dataclass
 class Field(_NormalDefinition):
     pass

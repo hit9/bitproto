@@ -1,5 +1,5 @@
 import re
-from typing import Any, Callable, List, Optional, Type as T, TypeVar
+from typing import Any, Callable, List, Optional, Type as T, TypeVar, cast
 from typing import TYPE_CHECKING
 from functools import wraps
 
@@ -7,6 +7,7 @@ I = TypeVar("I")  # Any Input
 O = TypeVar("O")  # Ant Output
 C = TypeVar("C", bound=T)  # Any Class
 F = TypeVar("F", bound=Callable[..., Any])  # Any Function
+
 
 if TYPE_CHECKING:
     # Cheat mypy, which just won't let "try import" goes on.
@@ -33,7 +34,7 @@ else:
         return class_
 
 
-def conditional_cache(condition):
+def conditional_cache(condition: Callable[..., bool]) -> Callable[[F], F]:
     """Cache given function until condition function returns True.
 
         >>> @conditional_cache(lambda fn, args, kwds: ...)
@@ -41,22 +42,19 @@ def conditional_cache(condition):
                 pass
     """
 
-    def decorator(user_function):
+    def decorator(user_function: F) -> F:
         """The decorator focus on given condition."""
-        cache_decorated_function = None
+        cache_decorated_function = cast(F, cache(user_function))
 
         @wraps(user_function)
-        def decorated(*args, **kwargs):
+        def decorated(*args: Any, **kwargs: Any) -> Any:
             """The decorated user function."""
             if not condition(user_function, args, kwargs):
                 # Execute directly.
                 return user_function(*args, **kwargs)
-            nonlocal cache_decorated_function
-            if cache_decorated_function is None:
-                cache_decorated_function = cache(user_function)
             return cache_decorated_function(*args, **kwargs)
 
-        return decorated
+        return cast(F, decorated)
 
     return decorator
 
