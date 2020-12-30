@@ -11,7 +11,7 @@ from typing import Dict, List, Optional, Tuple
 from typing import Type as T
 from typing import Union, cast
 
-from bitproto.ast import (
+from bitproto._ast import (
     Alias,
     Array,
     Bool,

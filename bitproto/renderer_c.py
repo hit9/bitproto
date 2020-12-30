@@ -8,7 +8,7 @@ Renderer for C.
 import os
 from typing import Any, List, Optional, cast
 
-from bitproto.ast import Alias, Array, Constant, EnumField, Int, Message, Proto, Uint
+from bitproto._ast import Alias, Array, Constant, EnumField, Int, Message, Proto, Uint
 from bitproto.errors import InternalError
 from bitproto.renderer import (
     BITPROTO_DECLARATION,

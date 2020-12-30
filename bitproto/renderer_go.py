@@ -7,7 +7,7 @@ Renderer for Go.
 
 from typing import List, Optional
 
-from bitproto.ast import Array, Constant, EnumField, Int, Uint, Proto
+from bitproto._ast import Array, Constant, EnumField, Int, Uint, Proto
 from bitproto.errors import InternalError
 from bitproto.renderer import Block, Formatter, Renderer
 

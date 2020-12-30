@@ -18,7 +18,7 @@ from ply.lex import LexToken  # type: ignore
 from ply.yacc import LRParser as PlyParser  # type: ignore
 from ply.yacc import YaccProduction as P  # type: ignore
 
-from bitproto.ast import (
+from bitproto._ast import (
     Alias,
     Array,
     BooleanConstant,
