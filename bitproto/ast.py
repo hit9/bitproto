@@ -7,14 +7,16 @@ Abstraction syntax tree.
     Node
       |- Comment                        :Node
       |- Type                           :Node
-      |    |- Bool                      :Type:Node
-      |    |- Byte                      :Type:Node
-      |    |- Int                       :Type:Node
-      |    |- Uint                      :Type:Node
-      |    |- Array                     :Type:Node
+      |    |- BaseType                  :Type:Node
+      |    |    |- Bool                 :BaseType:Type:Node
+      |    |    |- Byte                 :BaseType:Type:Node
+      |    |    |- Int                  :BaseType:Type:Node
+      |    |    |- Uint                 :BaseType:Type:Node
+      |    |- ExtensibleType            :Type:Node
+      |    |    |- Array                :ExtensibleType:Type:Node
+      |    |    |- Enum                 :ExtensibleType:Type:Node
+      |    |    |- Message              :ExtensibleType:Type:Node
       |    |- Alias                     :Type:Node
-      |    |- Enum                      :Type:Node
-      |    |- Message                   :Type:Node
       |- Definition                     :Node
       |    |- Alias                     :Definition:Node
       |    |- Option                    :Definition:Node
@@ -41,6 +43,7 @@ from typing import Any, Callable, ClassVar, List, Optional, Tuple, Dict
 from typing import Type as T
 from typing import TypeVar, Union, cast
 
+from bitproto.utils import conditional_cache, cache, frozen
 from bitproto.errors import (
     DuplicatedDefinition,
     DuplicatedEnumFieldValue,
@@ -62,6 +65,29 @@ T_Definition = TypeVar("T_Definition", bound="Definition")
 OptionValue = Union[str, int, bool]
 ConstantValue = Union[str, int, bool]
 
+_ENABLE_CACHE_ON_AST_FROZEN = True
+
+
+def cache_if_frozen_condition(
+    func: Callable, args: List[Any], kwargs: Dict[str, Any]
+) -> bool:
+    """Condition that cache given function if related node is frozen.
+    """
+    if not _ENABLE_CACHE_ON_AST_FROZEN:
+        return False
+    if not args:
+        return False
+    self = args[0]
+    if not self:
+        return False
+    if not isinstance(self, Node):
+        return False
+    node_self = cast(Node, self)
+    return node_self.__frozen__
+
+
+cache_if_frozen = conditional_cache(cache_if_frozen_condition)
+
 
 class _Meta(type):
     def __repr__(self) -> str:
@@ -74,24 +100,36 @@ class Node(metaclass=_Meta):
     lineno: int = 0
     filepath: str = ""
 
+    __frozen__: ClassVar[bool] = False  # cheat mypy
+
     def __post_init__(self) -> None:
         self.validate()
 
     def validate(self) -> None:
         pass
 
+    def freeze(self) -> None:
+        """Makes mypy happy.
+        @frozen.later overloads this."""
+        pass
+
     def __repr__(self) -> str:
         return "<{0}>".format(repr(type(self)))
 
 
+@frozen.post_init
 @dataclass
 class Comment(Node):
+    @cache_if_frozen
     def content(self) -> str:
         """Returns the stripped content of this comment."""
         return self.token[2:].strip()
 
     def __str__(self) -> str:
         return self.content()
+
+    def __hash__(self) -> int:
+        return id(self)
 
 
 @dataclass
@@ -134,31 +172,44 @@ class Option(_NormalDefinition):
     @classmethod
     def from_value(cls, value: OptionValue, **kwds: Any) -> "Option":
         """Creates an option from value with a right subclass."""
+        class_: T[Option] = Option
         if value is True or value is False:
-            # Avoid isinstance(True, int)
-            return BooleanOption(value=value, **kwds)
+            class_ = BooleanOption
         elif isinstance(value, int):
-            return IntegerOption(value=value, **kwds)
+            class_ = IntegerOption
         elif isinstance(value, str):
-            return StringOption(value=value, **kwds)
-        return Option(value=value, **kwds)
+            class_ = StringOption
+        return class_(value=value, **kwds)
 
 
+@frozen.post_init
 @dataclass
 class IntegerOption(Option):
     value: int = 0
 
+    def __hash__(self) -> int:
+        return id(self)
 
+
+@frozen.post_init
 @dataclass
 class BooleanOption(Option):
     value: bool = False
 
+    def __hash__(self) -> int:
+        return id(self)
 
+
+@frozen.post_init
 @dataclass
 class StringOption(Option):
     value: str = ""
 
+    def __hash__(self) -> int:
+        return id(self)
 
+
+@frozen.post_init
 @dataclass
 class OptionDescriptor:
     name: str
@@ -181,52 +232,52 @@ class Constant(_NormalDefinition):
     @classmethod
     def from_value(cls, value: ConstantValue, **kwds: Any) -> "Constant":
         """Creates a constant from value with a right subclass."""
+        class_: T[Constant] = Constant
         if value is True or value is False:
-            # Avoid isinstance(True, int)
-            return BooleanConstant(value=value, **kwds)
+            class_ = BooleanConstant
         elif isinstance(value, int):
-            return IntegerConstant(value=value, **kwds)
+            class_ = IntegerConstant
         elif isinstance(value, str):
-            return StringConstant(value=value, **kwds)
-        return Constant(value=value, **kwds)
+            class_ = StringConstant
+        return class_(value=value, **kwds)
 
 
+@frozen.post_init
 @dataclass
 class IntegerConstant(Constant):
     value: int = 0
 
-    def __int__(self) -> int:
-        return self.value
+    def __hash__(self) -> int:
+        return id(self)
 
 
+@frozen.post_init
 @dataclass
 class BooleanConstant(Constant):
     value: bool = False
 
-    def __bool__(self) -> bool:
-        return self.value
+    def __hash__(self) -> int:
+        return id(self)
 
 
+@frozen.post_init
 @dataclass
 class StringConstant(Constant):
     value: str = ""
 
-    def __str__(self) -> str:
-        return self.value
+    def __hash__(self) -> int:
+        return id(self)
 
 
 @dataclass
 class Scope(Definition):
     members: "dict_[str, Definition]" = dataclass_field(default_factory=dict_)
 
-    def validate_member_on_push(
-        self, member: Definition, name: Optional[str] = None
-    ) -> None:
-        """Invoked on given member going to push as given name into this scope."""
-        pass
-
     def push_member(self, member: Definition, name: Optional[str] = None) -> None:
         """Push a definition `member`, and run hook functions around."""
+        if self.__frozen__:
+            raise InternalError("push on frozen scope.")
+
         if name is None:
             name = member.name
         if name in self.members:
@@ -240,6 +291,14 @@ class Scope(Definition):
 
         self.members[name] = member
 
+    def validate_member_on_push(
+        self, member: Definition, name: Optional[str] = None
+    ) -> None:
+        """Invoked on given member going to push as given name into this scope.
+        Subclasses may override this."""
+        pass
+
+    @cache_if_frozen
     def get_member(self, *names: str) -> Optional[Definition]:
         """Gets member by names recursively.
         Returns `None` if not found.
@@ -261,6 +320,7 @@ class Scope(Definition):
             return None
         return member.get_member(*remain)
 
+    @cache_if_frozen
     def get_name_by_member(self, member: Definition) -> Optional[str]:
         """Get name in this scope by member."""
         for name, member_ in self.members.items():
@@ -268,6 +328,7 @@ class Scope(Definition):
                 return name
         return None
 
+    @cache_if_frozen
     def filter(
         self,
         t: T[T_Definition],
@@ -333,6 +394,7 @@ class Scope(Definition):
     def protos(self, recursive: bool = False) -> List[Tuple[str, "Proto"]]:
         return self.filter(Proto, recursive=recursive, bound=None)  # proto has no bound
 
+    @cache
     def option_descriptors(self) -> Dict[str, OptionDescriptor]:
         """Subclasses may override this.
         The default implementation assuming attribute `__option_descriptors__` is defined."""
@@ -342,6 +404,7 @@ class Scope(Definition):
     def get_option_descriptor(self, name: str) -> Optional[OptionDescriptor]:
         return self.option_descriptors().get(name, None)
 
+    @cache_if_frozen
     def option(self, name: str) -> Optional[Option]:
         """Obtain an option.
         Returns a default option if not defined.
@@ -358,6 +421,7 @@ class Scope(Definition):
         default = descriptor.type(value=descriptor.default, name=name)
         return default
 
+    @cache_if_frozen
     def get_option_or_raise(self, name: str) -> Option:
         """Obtain an option, or raise on invalid name."""
         option = self.option(name)
@@ -421,6 +485,7 @@ class Type(Node):
     def nbits(self) -> int:
         raise NotImplementedError
 
+    @cache_if_frozen
     def nbytes(self) -> int:
         nbits = self.nbits()
         if nbits % 8 == 0:
@@ -436,6 +501,7 @@ class BaseType(Type):
     pass
 
 
+@frozen.post_init
 @dataclass
 class Bool(BaseType):
     def nbits(self) -> int:
@@ -444,7 +510,11 @@ class Bool(BaseType):
     def __repr__(self) -> str:
         return "<type bool>"
 
+    def __hash__(self) -> int:
+        return id(self)
 
+
+@frozen.post_init
 @dataclass
 class Byte(BaseType):
     def nbits(self) -> int:
@@ -453,12 +523,16 @@ class Byte(BaseType):
     def __repr__(self) -> str:
         return "<byte>"
 
+    def __hash__(self) -> int:
+        return id(self)
+
 
 @dataclass
 class Integer(BaseType):
     pass
 
 
+@frozen.post_init
 @dataclass
 class Uint(Integer):
     cap: int = 0
@@ -475,10 +549,14 @@ class Uint(Integer):
     def __repr__(self) -> str:
         return "<type uint{0}>".format(self.cap)
 
+    def __hash__(self) -> int:
+        return id(self)
+
 
 _UINT_MISSING = Uint(_is_missing=True)
 
 
+@frozen.post_init
 @dataclass
 class Int(Integer):
     cap: int = 0
@@ -493,12 +571,16 @@ class Int(Integer):
     def __repr__(self) -> str:
         return "<type int{0}>".format(self.cap)
 
+    def __hash__(self) -> int:
+        return id(self)
+
 
 @dataclass
 class ExtensibleType(Type):
     extensible: bool = False
 
 
+@frozen.post_init
 @dataclass
 class Array(ExtensibleType):
     type: Type = _TYPE_MISSING
@@ -509,11 +591,18 @@ class Array(ExtensibleType):
         return (Bool, Byte, Int, Uint, Enum, Message, Alias)
 
     def validate(self) -> None:
+        self.validate_array_cap()
+        self.validate_array_type()
+
+    def validate_array_cap(self) -> None:
         if not (0 < self.cap < 1024):
             raise InvalidArrayCap.from_token(token=self)
+
+    def validate_array_type(self) -> None:
         if not isinstance(self.type, self.supported_types):
             raise UnsupportedArrayType.from_token(token=self)
 
+    @cache_if_frozen
     def nbits(self) -> int:
         if self.type is None:
             return 0
@@ -525,7 +614,11 @@ class Array(ExtensibleType):
             self.type, self.cap, extensible_flag
         )
 
+    def __hash__(self) -> int:
+        return id(self)
 
+
+@frozen.post_init
 @dataclass
 class Alias(Type, _NormalDefinition):
     type: Type = _TYPE_MISSING
@@ -565,12 +658,17 @@ class Alias(Type, _NormalDefinition):
             return extensible_type.extensible
         return False
 
+    def __hash__(self) -> int:
+        return id(self)
 
+
+@frozen.post_init
 @dataclass
 class Field(_NormalDefinition):
     pass
 
 
+@frozen.post_init
 @dataclass
 class EnumField(Field):
     value: int = 0
@@ -582,7 +680,11 @@ class EnumField(Field):
         if self.value < 0:
             raise InvalidEnumFieldValue.from_token(token=self)
 
+    def __hash__(self) -> int:
+        return id(self)
 
+
+@frozen.later
 @dataclass
 class Enum(ExtensibleType, _NormalScope):
     type: Uint = _UINT_MISSING
@@ -618,7 +720,11 @@ class Enum(ExtensibleType, _NormalScope):
         if field.value in self.value_to_names():
             raise DuplicatedEnumFieldValue.from_token(token=field)
 
+    def __hash__(self) -> int:
+        return id(self)
 
+
+@frozen.post_init
 @dataclass
 class MessageField(Field):
     type: Type = Type()
@@ -632,6 +738,7 @@ class MessageField(Field):
             raise InvalidMessageFieldNumber.from_token(token=self)
 
 
+@frozen.later
 @dataclass
 class Message(ExtensibleType, _NormalScope):
     name: str = ""
@@ -675,7 +782,11 @@ class Message(ExtensibleType, _NormalScope):
         if field.number in self.number_to_field():
             raise DuplicatedMessageFieldNumber.from_token(token=field)
 
+    def __hash__(self) -> int:
+        return id(self)
 
+
+@frozen.later
 @dataclass
 class Proto(Scope):
     __repr_name__: ClassVar[str] = "bitproto"
@@ -712,3 +823,6 @@ class Proto(Scope):
 
     def __repr__(self) -> str:
         return f"<bitproto {self.name}>"
+
+    def __hash__(self) -> int:
+        return id(self)

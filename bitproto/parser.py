@@ -177,7 +177,7 @@ class Parser:
 
     def p_close_global_scope(self, p: P) -> None:
         """close_global_scope :"""
-        self.pop_scope()
+        self.pop_scope().freeze()
 
     def p_global_scope(self, p: P) -> None:
         """global_scope : global_scope_definitions"""
@@ -304,8 +304,9 @@ class Parser:
         constant_cls: Optional[T[Constant]] = None
 
         if isinstance(value, Constant):
+            constant_ = cast(Constant, value)
             # Unwrap if value is a referenced constant.
-            value = value.unwrap()
+            value = constant_.unwrap()
 
         constant = Constant.from_value(
             value=value,
@@ -360,14 +361,17 @@ class Parser:
 
     def p_constant_reference_for_calculation(self, p: P) -> None:
         """constant_reference_for_calculation : constant_reference"""
-        if not isinstance(p[1], IntegerConstant):
+        referenced = p[1]
+        if isinstance(referenced, IntegerConstant):
+            integer_constant = cast(IntegerConstant, referenced)
+            p[0] = integer_constant.unwrap()
+        else:
             raise CalculationExpressionError(
                 message="Non integer constant referenced to use in calculation expression.",
                 filepath=self.current_filepath(),
                 token=p[1].name,
                 lineno=p.lineno(1),
             )
-        p[0] = int(p[1])  # Using int format
 
     def _lookup_referenced_member(self, identifier: str) -> Optional[Definition]:
         """Lookup referenced defintion member in current bitproto.
@@ -388,7 +392,7 @@ class Parser:
     def p_constant_reference(self, p: P) -> None:
         """constant_reference : dotted_identifier"""
         d = self._lookup_referenced_member(p[1])
-        if d and isinstance(d, Constant):
+        if d is not None and isinstance(d, Constant):
             p[0] = d
         else:
             raise ReferencedConstantNotDefined(
@@ -418,7 +422,7 @@ class Parser:
     def p_type_reference(self, p: P) -> None:
         """type_reference : dotted_identifier"""
         d = self._lookup_referenced_member(p[1])
-        if d and isinstance(d, Type):
+        if d is not None and isinstance(d, Type):
             p[0] = d
         else:
             raise ReferencedTypeNotDefined(
@@ -451,14 +455,17 @@ class Parser:
 
     def p_constant_reference_for_array_capacity(self, p: P) -> None:
         """constant_reference_for_array_capacity : constant_reference"""
-        if not isinstance(p[1], IntegerConstant):
+        referenced = p[1]
+        if isinstance(referenced, IntegerConstant):
+            integer_constant = cast(IntegerConstant, referenced)
+            p[0] = integer_constant.unwrap()  # Using int format
+        else:
             raise InvalidArrayCap(
                 message="Non integer constant referenced to use as array capacity.",
                 filepath=self.current_filepath(),
                 token=p[1].name,
                 lineno=p.lineno(1),
             )
-        p[0] = int(p[1])  # Using int format
 
     def p_enum(self, p: P) -> None:
         """enum : open_enum_scope enum_scope close_enum_scope"""
@@ -486,7 +493,7 @@ class Parser:
 
     def p_close_enum_scope(self, p: P) -> None:
         """close_enum_scope : '}'"""
-        self.pop_scope()
+        self.pop_scope().freeze()
 
     def p_enum_items(self, p: P) -> None:
         """enum_items : enum_item enum_items
@@ -538,7 +545,7 @@ class Parser:
 
     def p_close_message_scope(self, p: P) -> None:
         """close_message_scope : '}'"""
-        self.pop_scope()
+        self.pop_scope().freeze()
 
     def p_message_scope(self, p: P) -> None:
         """message_scope : message_items"""

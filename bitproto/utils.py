@@ -1,6 +1,7 @@
 import re
-from typing import Callable, List, Optional, Type, TypeVar
+from typing import Any, Callable, List, Optional, Type, TypeVar
 from typing import TYPE_CHECKING
+from functools import wraps
 
 if TYPE_CHECKING:
     from functools import lru_cache as cache
@@ -14,10 +15,42 @@ T = TypeVar("T")
 R = TypeVar("R")
 
 
+def conditional_cache(condition):
+    """Cache given function until condition function returns True.
+
+        @conditional_cache(lambda fn, args, kwds: ...)
+        def get_attr(self, *args, **kwds):
+            pass
+    """
+
+    def decorator(user_function):
+        """The decorator focus on given condition."""
+        cache_decorated_function = None
+
+        @wraps(user_function)
+        def decorated(*args, **kwargs):
+            """The decorated user function."""
+            if not condition(user_function, args, kwargs):
+                # Execute directly.
+                return user_function(*args, **kwargs)
+            nonlocal cache_decorated_function
+            if cache_decorated_function is None:
+                cache_decorated_function = cache(user_function)
+            return cache_decorated_function(*args, **kwargs)
+
+        return decorated
+
+    return decorator
+
+
 class cached_property:
     """The famous cached_property:
     Original from:
     https://github.com/bottlepy/bottle/commit/fa7733e075da0d790d809aa3d2f53071897e6f76
+
+        @cached_property
+        def name(self) -> str:
+            return "cached!"
     """
 
     def __init__(self, func: Callable[[T], R]) -> None:
@@ -29,6 +62,82 @@ class cached_property:
             return self  # type: ignore
         value = obj.__dict__[self.func.__name__] = self.func(obj)
         return value
+
+
+class frozen:
+    """Freeze a class on its inition or later."""
+
+    @classmethod
+    def _create_setattr_func(cls):
+        def __setattr__(self, name, value):
+            if getattr(self, "__frozen__", False):
+                raise AttributeError("Cant setattr on frozen instance")
+            else:
+                object.__setattr__(self, name, value)
+
+        return __setattr__
+
+    @classmethod
+    def _create_delattr_func(cls):
+        def __delattr__(self, name):
+            if getattr(self, "__frozen__", False):
+                raise AttributeError("Cant delattr on frozen instance")
+            else:
+                object.__delattr__(self, name)
+
+        return __delattr__
+
+    @classmethod
+    def later(cls, class_):
+        """Decorates given class to freeze on demand later init.
+
+        @frozen.later
+        class MyClass:
+            pass
+
+        inst = MyClass()
+        inst.name = "ha" // => ok
+        inst.freeze()
+        inst.name = "but" // => AttributeError
+        inst.is_frozen() // => True
+        """
+
+        def freeze(class_self) -> None:
+            setattr(class_self, "__frozen__", True)
+
+        setattr(class_, "__frozen__", False)
+        setattr(class_, "freeze", freeze)
+        setattr(class_, "__setattr__", cls._create_setattr_func())
+        setattr(class_, "__delattr__", cls._create_delattr_func())
+        return class_
+
+    @classmethod
+    def post_init(cls, class_):
+        """Decorates given class to freeze post init.
+
+        @frozen.post_init
+        class MyClass:
+            def __init__(self, name):
+                self.name = name
+
+        inst = MyClass("sweet")
+        inst.name = "ha" // => AttributeError
+        """
+        func = getattr(class_, "__init__")
+
+        def decorate_init(func):
+            @wraps(func)
+            def decorated(class_self, *args, **kwargs):
+                ret = func(class_self, *args, **kwargs)
+                setattr(class_self, "__frozen__", True)
+                return ret
+
+            return decorated
+
+        setattr(class_, "__init__", decorate_init(func))
+        setattr(class_, "__setattr__", cls._create_setattr_func())
+        setattr(class_, "__delattr__", cls._create_delattr_func())
+        return class_
 
 
 def write_file(filepath: str, s: str) -> None:
