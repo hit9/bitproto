@@ -107,29 +107,25 @@ class Definition(Node):
     def set_comment_block(self, comment_block: Tuple[Comment, ...]) -> None:
         self.comment_block = comment_block
 
-    @property
-    def bound(self) -> Optional["Proto"]:
-        """Returns the proto this definition bound."""
-        if self._bound:
-            return self._bound  # Parser helps collected.
-        if isinstance(self, Proto):
-            return None
-        # Parser sucks, or lookup scope_stack reversely.
-        for scope in self.scope_stack[::-1]:
-            if isinstance(scope, Proto):
-                return cast(Proto, scope)
-        raise InternalError("non-proto definition has no bound")
-
     def __repr__(self) -> str:
         class_repr = repr(type(self))
         return f"<{class_repr} {self.name}>"
 
 
-_VALUE_MISSING = "_VALUE_MISSING"  # FIXME: how to represent value missing?
+@dataclass
+class _NormalDefinition(Definition):
+    @property
+    def bound(self) -> "Proto":
+        if self._bound:
+            return self._bound
+        raise InternalError("_NormalDefinition got bound None")
+
+
+_VALUE_MISSING = "_value_missing"
 
 
 @dataclass
-class Option(Definition):
+class Option(_NormalDefinition):
     value: OptionValue = _VALUE_MISSING
 
     def __repr__(self) -> str:
@@ -173,7 +169,7 @@ class OptionDescriptor:
 
 
 @dataclass
-class Constant(Definition):
+class Constant(_NormalDefinition):
     value: ConstantValue = _VALUE_MISSING
 
     def __repr__(self) -> str:
@@ -288,8 +284,9 @@ class Scope(Definition):
         for item in self.members.items():
             name, member = item
             if bound:
-                if member.bound is not bound:
-                    continue
+                if isinstance(member, _NormalDefinition):
+                    if member.bound is not bound:
+                        continue
             if recursive:  # Child first
                 if isinstance(member, Scope):
                     scope = cast(Scope, member)
@@ -338,8 +335,8 @@ class Scope(Definition):
 
     def option_descriptors(self) -> Dict[str, OptionDescriptor]:
         """Subclasses may override this.
-        The default implementation assuming attribute `_option_descriptors` is defined."""
-        descriptors = getattr(self, "_option_descriptors", [])
+        The default implementation assuming attribute `__option_descriptors__` is defined."""
+        descriptors = getattr(self, "__option_descriptors__", [])
         return dict((d.name, d) for d in descriptors)
 
     def get_option_descriptor(self, name: str) -> Optional[OptionDescriptor]:
@@ -410,6 +407,11 @@ class Scope(Definition):
             if not validator(option.value):
                 message = f"invalid option value (description => {description})" or ""
                 raise InvalidOptionValue.from_token(option, message=message)
+
+
+@dataclass
+class _NormalScope(Scope, _NormalDefinition):
+    pass
 
 
 @dataclass
@@ -525,7 +527,7 @@ class Array(ExtensibleType):
 
 
 @dataclass
-class Alias(Type, Definition):
+class Alias(Type, _NormalDefinition):
     type: Type = _TYPE_MISSING
 
     def __repr__(self) -> str:
@@ -565,7 +567,7 @@ class Alias(Type, Definition):
 
 
 @dataclass
-class Field(Definition):
+class Field(_NormalDefinition):
     pass
 
 
@@ -582,7 +584,7 @@ class EnumField(Field):
 
 
 @dataclass
-class Enum(ExtensibleType, Scope):
+class Enum(ExtensibleType, _NormalScope):
     type: Uint = _UINT_MISSING
 
     def __repr__(self) -> str:
@@ -631,10 +633,10 @@ class MessageField(Field):
 
 
 @dataclass
-class Message(ExtensibleType, Scope):
+class Message(ExtensibleType, _NormalScope):
     name: str = ""
 
-    _option_descriptors: ClassVar[List[OptionDescriptor]] = [
+    __option_descriptors__: ClassVar[List[OptionDescriptor]] = [
         OptionDescriptor(
             "max_bytes",
             IntegerOption,
@@ -677,7 +679,7 @@ class Message(ExtensibleType, Scope):
 @dataclass
 class Proto(Scope):
     __repr_name__: ClassVar[str] = "bitproto"
-    _option_descriptors: ClassVar[List[OptionDescriptor]] = [
+    __option_descriptors__: ClassVar[List[OptionDescriptor]] = [
         OptionDescriptor(
             "c.target_platform_bits",
             IntegerOption,

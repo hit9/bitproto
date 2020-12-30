@@ -149,7 +149,7 @@ class HeaderIncludes(Block):
 class HeaderIncludeGuard(Block):
     def render(self) -> None:
         self.push("#if defined(__cplusplus)")
-        self.push('extern "C"')
+        self.push('extern "C" {')
         self.push("#endif")
 
     def defer(self) -> None:

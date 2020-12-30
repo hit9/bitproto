@@ -7,7 +7,7 @@ Renderer for Go.
 
 from typing import List, Optional
 
-from bitproto.ast import Array, Constant, EnumField, Int, Uint
+from bitproto.ast import Array, Constant, EnumField, Int, Uint, Proto
 from bitproto.errors import InternalError
 from bitproto.renderer import Block, Formatter, Renderer
 
@@ -63,6 +63,12 @@ class GoFormatter(Formatter):
 
     def format_array_type(self, t: Array, name: Optional[str] = None) -> str:
         return "[{cap}]{type}".format(type=self.format_type(t.type), cap=t.cap)
+
+    def format_import_statement(self, t: Proto, as_name: Optional[str] = None) -> str:
+        path = t.get_option_as_string_or_raise("go.package_path") or f"{t.name}_bp"
+        if as_name:
+            return f'import {as_name} "{path}"'
+        return f'import "{path}"'
 
 
 class RendererGo(Renderer):
