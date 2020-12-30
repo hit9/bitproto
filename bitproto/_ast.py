@@ -76,7 +76,7 @@ from bitproto.options import (
 
 N = TypeVar("N", bound="Node")  # Node
 D = TypeVar("D", bound="Definition")  # Definition
-S = T[N]  # Type of Node.
+S = T[N]  # Type of Node, Super N
 
 
 ConstantValue = Union[bool, int, str]

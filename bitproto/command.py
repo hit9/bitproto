@@ -9,6 +9,7 @@ import argparse
 
 from bitproto import __description__, __version__
 from bitproto.errors import ParserError, RendererError
+from bitproto.linter import lint
 from bitproto.parser import parse
 from bitproto.renderer import get_renderer_registry, render
 
@@ -20,6 +21,7 @@ example usage:
   bitproto py example.bitproto      build python language file
   bitproto -c example.bitproto      validate bitproto file syntax
   bitproto c example.bitproto out   build c language file to directory out
+  bitproto c example.bitproto -q    option -q to disable builtin linter
 """
 
 
@@ -43,6 +45,13 @@ def build_arg_parser() -> argparse.ArgumentParser:
     )
     args_parser.add_argument(
         "-c", "--check", dest="check", action="store_true", help="check proto syntax"
+    )
+    args_parser.add_argument(
+        "-q",
+        "--disable-lint",
+        dest="disable_linter",
+        action="store_true",
+        help="disable linter",
     )
     args_parser.add_argument(
         "outdir", metavar="out", type=str, nargs="?", help="output directory"
@@ -69,6 +78,9 @@ def run_bitproto() -> None:
         proto = parse(args.filepath)
     except ParserError as error:
         args_parser.exit(1, message=str(error))
+
+    if not args.disable_linter:
+        lint(proto)
 
     if args.check:  #  Checks only.
         args_parser.exit(0, message="syntax ok")

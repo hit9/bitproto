@@ -19,12 +19,12 @@ import sys
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 from typing import Type as T
-from typing import TypeVar, ClassVar
+from typing import TypeVar, ClassVar, Optional
 
 if TYPE_CHECKING:
     from bitproto._ast import Node
 
-T_ParserError = TypeVar("T_ParserError", bound="ParserError")
+_B = TypeVar("_B", bound="_TokenBound")
 
 
 @dataclass
@@ -39,7 +39,7 @@ class Base:
         return self.__doc__ or ""
 
     def _message_prefix(self) -> str:
-        return "[ error ]"
+        return "( error )"
 
     def __str__(self) -> str:
         description = self.description
@@ -57,12 +57,19 @@ class Warning(Base):
     """Warning continues processing and leaves a message."""
 
     def _message_prefix(self) -> str:
-        return "[ warning ] (skipped)"
+        return "( warning )"
 
 
-def warning(warning: "Warning") -> None:
+def warning(
+    warning: Optional["Warning"] = None, suggestion: Optional[str] = None
+) -> None:
     """Logs a warning to stderr."""
-    sys.stderr.write(str(warning))
+    if not warning:
+        return
+    message = str(warning)
+    if suggestion:
+        message = f"{message} suggestion => {suggestion}"
+    sys.stderr.write(message + "\n")
 
 
 @dataclass
@@ -71,9 +78,7 @@ class InternalError(Error):
 
 
 @dataclass
-class ParserError(Error):
-    """Some error occurred during bitproto parsing."""
-
+class _TokenBound(Base):
     message: str = ""
     filepath: str = ""
     token: str = ""
@@ -86,10 +91,15 @@ class ParserError(Error):
         return f"L{self.lineno} {self.token} => {message}"
 
     @classmethod
-    def from_token(cls: T[T_ParserError], token: "Node", **kwds: Any,) -> T_ParserError:
+    def from_token(cls: T[_B], token: "Node", **kwds: Any,) -> _B:
         return cls(
             filepath=token.filepath, token=token.token, lineno=token.lineno, **kwds
         )
+
+
+@dataclass
+class ParserError(Error, _TokenBound):
+    """Some error occurred during bitproto parsing."""
 
 
 @dataclass
@@ -200,3 +210,13 @@ class UnsupportedOption(GrammarError):
 @dataclass
 class InvalidOptionValue(GrammarError):
     """Invalid option value."""
+
+
+@dataclass
+class LintWarning(Warning, _TokenBound):
+    """Some warning occurred during bitproto linting."""
+
+
+@dataclass
+class EnumNameNotPascal(LintWarning):
+    """Enum name not pascal case."""
