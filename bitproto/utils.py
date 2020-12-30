@@ -64,7 +64,6 @@ _snake_case_regex_m_capital_match = re.compile(
 def snake_case(word: str) -> str:
     """Converts given word to snake case.
 
-
         >>> snake_case("someWord")
         "some_word"
     """

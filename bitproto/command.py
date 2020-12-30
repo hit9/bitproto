@@ -7,7 +7,7 @@ Command inteface.
 
 import argparse
 
-from bitproto.__version__ import __description__, __version__
+from bitproto import __description__, __version__
 from bitproto.errors import ParserError, RendererError
 from bitproto.parser import parse
 from bitproto.renderer import get_renderer_registry, render

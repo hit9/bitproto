@@ -2,16 +2,17 @@ from os.path import dirname, join
 from setuptools import setup  # type: ignore
 
 about = {"__name__": "bitproto"}
-with open(join(dirname(__file__), "bitproto", "__version__.py"), "r") as f:
+with open(join(dirname(__file__), "bitproto", "__init__.py"), "r") as f:
     exec(f.read(), about)
     version = about["__version__"]
+    description = about["__description__"]
 
 setup(
     name="bitproto",
     version=version,
     author="Chao Wang",
     author_email="hit9@icloud.com",
-    description="Bit level data interchange format",
+    description=description,
     packages=["bitproto"],
     include_package_data=True,
     zip_safe=False,
