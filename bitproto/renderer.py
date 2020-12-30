@@ -25,6 +25,7 @@ from bitproto._ast import (
     Message,
     MessageField,
     Node,
+    Scope,
     Proto,
     Type,
     Uint,
@@ -101,6 +102,14 @@ class Formatter:
             return 64
         return nbytes * 8
 
+    def scopes_with_namespace(self) -> Tuple[T[Scope], ...]:
+        """Returns the scope classes that define namespaces in target language.
+        For example, struct in C language defines a namespace, but enum dosen't.
+        For languages currently supported, the default implementation kicks enum out
+        from this list. Subclasses could override.
+        """
+        return (Message, Proto)
+
     def format_definition_name(self, d: Definition) -> str:
         """Formats the declaration name for given definition in target language.
         Target languages may disallow nested declarations (such as structs, enums,
@@ -115,16 +124,21 @@ class Formatter:
         scope = d.scope_stack[-1]
         definition_name = scope.get_name_by_member(d) or d.name
 
-        if len(d.scope_stack) <= 1:
-            return definition_name  # Global definition.
+        classes_ = self.scopes_with_namespace()
+        namespaces = [scope for scope in d.scope_stack if isinstance(d, classes_)]
 
-        if isinstance(scope, Proto):  # Cross proto
+        if len(namespaces) <= 1:
+            return definition_name
+
+        namespace = namespaces[-1]
+
+        if isinstance(namespace, Proto):  # Cross proto
             if not self.support_import():
                 return definition_name
-            items = [self.format_definition_name(scope), definition_name]
+            items = [self.format_definition_name(namespace), definition_name]
             return self.delimer_cross_proto().join(items)
         else:
-            items = [self.format_definition_name(scope), definition_name]
+            items = [self.format_definition_name(namespace), definition_name]
             return self.delimer_inner_proto().join(items)
 
     def format_enum_name(self, t: Enum) -> str:
