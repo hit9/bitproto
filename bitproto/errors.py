@@ -11,7 +11,7 @@ from typing import Type as T
 from typing import TypeVar
 
 if TYPE_CHECKING:
-    from bitproto.ast import Node
+    from bitproto._ast import Node
 
 T_ParserError = TypeVar("T_ParserError", bound="ParserError")
 
@@ -168,3 +168,8 @@ class UnsupportedOption(GrammarError):
 @dataclass
 class InvalidOptionValue(GrammarError):
     """Invalid option value."""
+
+
+@dataclass
+class DuplicatedOption(GrammarError):
+    """Duplicated option."""

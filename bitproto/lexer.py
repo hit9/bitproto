@@ -12,7 +12,7 @@ from typing import Dict, Iterator, List, Optional, Tuple
 from ply import lex  # type: ignore
 from ply.lex import LexToken  # type: ignore
 
-from bitproto.ast import Bool, Byte, Comment, Int, Uint
+from bitproto._ast import Bool, Byte, Comment, Int, Uint
 from bitproto.errors import InvalidEscapingChar, LexerError
 
 

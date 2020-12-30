@@ -502,8 +502,7 @@ class Parser:
         self.util_parse_sequence(p)
 
     def p_enum_item(self, p: P) -> None:
-        """enum_item : option
-                     | enum_field
+        """enum_item : enum_field
                      | comment
                      | newline"""
         p[0] = p[1]

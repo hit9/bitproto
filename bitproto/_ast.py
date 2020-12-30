@@ -53,6 +53,7 @@ from bitproto.errors import (
     DuplicatedDefinition,
     DuplicatedEnumFieldValue,
     DuplicatedMessageFieldNumber,
+    DuplicatedOption,
     EnumFieldValueOverflow,
     InternalError,
     InvalidAliasedType,
@@ -65,14 +66,21 @@ from bitproto.errors import (
     UnsupportedArrayType,
     UnsupportedOption,
 )
+from bitproto.options import (
+    MESSAGE_OPTIONS,
+    PROTO_OPTTIONS,
+    OptionDescriptor,
+    OptionDescriptors,
+    Value as OptionValue,
+    Validator as OptionValidator,
+)
 
 N = TypeVar("N", bound="Node")  # Node
 D = TypeVar("D", bound="Definition")  # Definition
 S = T[N]  # Type of Node.
 
 
-OptionValue = Union[str, int, bool]
-ConstantValue = Union[str, int, bool]
+ConstantValue = Union[bool, int, str]
 
 _ENABLE_CACHE_ON_AST_FROZEN = True
 
@@ -221,14 +229,25 @@ class Option(_NormalDefinition):
     @classmethod
     def from_value(cls, value: OptionValue, **kwds: Any) -> "Option":
         """Creates an option from value with a right subclass."""
-        class_: T[Option] = Option
+        class_ = cls.reflect_subclass_by_value_or_raise(value)
+        return class_(value=value, **kwds)
+
+    @classmethod
+    def reflect_subclass_by_value(cls, value: OptionValue) -> Optional[T["Option"]]:
         if value is True or value is False:
-            class_ = BooleanOption
+            return BooleanOption
         elif isinstance(value, int):
-            class_ = IntegerOption
+            return IntegerOption
         elif isinstance(value, str):
-            class_ = StringOption
-        return Option(value=value, **kwds)
+            return StringOption
+        return None
+
+    @classmethod
+    def reflect_subclass_by_value_or_raise(cls, value: OptionValue) -> T["Option"]:
+        class_ = cls.reflect_subclass_by_value(value)
+        if class_ is not None:
+            return class_
+        raise InvalidOptionValue(description=f"Invalid option value {value}")
 
 
 @final(frozen.post_init)
@@ -249,14 +268,28 @@ class StringOption(Option):
     value: str = ""
 
 
-@frozen.post_init
-@dataclass
-class OptionDescriptor:
+@dataclass(frozen=True)
+class OptionDescriptor_:
+    """Wrapper around original OptionDescriptor.
+    """
+
     name: str
-    type: T[Option]
+    class_: T[Option]
     default: OptionValue
-    validator: Optional[Callable[..., bool]] = None
+    validator: Optional[OptionValidator] = None
     description: Optional[str] = None
+
+    @classmethod
+    def wraps(cls, descriptor: OptionDescriptor) -> "OptionDescriptor_":
+        """Creates an OptionDescriptor_ wraps from given descriptor."""
+        class_ = Option.reflect_subclass_by_value_or_raise(descriptor.default)
+        return cls(
+            name=descriptor.name,
+            class_=class_,
+            default=descriptor.default,
+            validator=descriptor.validator,
+            description=descriptor.description,
+        )
 
 
 @abstract
@@ -271,15 +304,26 @@ class Constant(_NormalDefinition):
         return self.value
 
     @classmethod
+    def reflect_subclass_by_value(cls, value: ConstantValue) -> Optional[T["Constant"]]:
+        if value is True or value is False:
+            return BooleanConstant
+        elif isinstance(value, int):
+            return IntegerConstant
+        elif isinstance(value, str):
+            return StringConstant
+        return None
+
+    @classmethod
+    def reflect_subclass_by_value_or_raise(cls, value: ConstantValue) -> T["Constant"]:
+        class_ = cls.reflect_subclass_by_value(value)
+        if class_ is not None:
+            return class_
+        raise InvalidOptionValue(description=f"Invalid constant value {value}")
+
+    @classmethod
     def from_value(cls, value: ConstantValue, **kwds: Any) -> "Constant":
         """Creates a constant from value with a right subclass."""
-        class_: T[Constant] = Constant
-        if value is True or value is False:
-            class_ = BooleanConstant
-        elif isinstance(value, int):
-            class_ = IntegerConstant
-        elif isinstance(value, str):
-            class_ = StringConstant
+        class_ = cls.reflect_subclass_by_value_or_raise(value)
         return class_(value=value, **kwds)
 
 
@@ -317,10 +361,6 @@ class Scope(Definition):
             raise DuplicatedDefinition.from_token(token=member)
 
         self.validate_member_on_push(member, name)
-
-        if isinstance(member, Option):
-            option = cast(Option, member)
-            self.validate_option_on_push(option, name)
 
         self.members[name] = member
 
@@ -386,11 +426,6 @@ class Scope(Definition):
                 items.append((name, member))
         return items
 
-    def options(
-        self, recursive: bool = False, bound: Optional["Proto"] = None
-    ) -> List[Tuple[str, "Option"]]:
-        return self.filter(Option, recursive=recursive, bound=bound)
-
     def enums(
         self, recursive: bool = False, bound: Optional["Proto"] = None
     ) -> List[Tuple[str, "Enum"]]:
@@ -424,16 +459,48 @@ class Scope(Definition):
     def protos(self, recursive: bool = False) -> List[Tuple[str, "Proto"]]:
         return self.filter(Proto, recursive=recursive, bound=None)  # proto has no bound
 
-    @cache
-    def option_descriptors(self) -> Dict[str, OptionDescriptor]:
-        """Returns descriptors in format dict.
-        Subclasses may override this.
-        The default implementation assuming attribute `__option_descriptors__` is defined."""
-        descriptors = getattr(self, "__option_descriptors__", [])
-        return dict((d.name, d) for d in descriptors)
 
-    def get_option_descriptor(self, name: str) -> Optional[OptionDescriptor]:
+@abstract
+@dataclass
+class _NormalScope(Scope, _NormalDefinition):
+    "_NormalScope distinguishs from Proto."
+    pass
+
+
+@abstract
+@dataclass
+class ScopeWithOptions(Scope):
+    """Scope with options described."""
+
+    def options(self) -> List[Tuple[str, Option]]:
+        return self.filter(Option, recursive=False, bound=None)
+
+    @cache_if_frozen
+    def options_as_dict(self) -> "dict_[str, Option]":
+        return dict_((name, option) for name, option in self.options())
+
+    @cache
+    def option_descriptors(self) -> Dict[str, OptionDescriptor_]:
+        """Returns descriptors in format dict.
+        Assuming subclass has attribute `__option_descriptors__` declared.
+        """
+        descriptors = getattr(self, "__option_descriptors__", None)
+        if not descriptors:
+            return {}
+        wrappers = [OptionDescriptor_.wraps(d) for d in descriptors]
+        return dict((w.name, w) for w in wrappers)
+
+    def get_option_descriptor(self, name: str) -> Optional[OptionDescriptor_]:
         return self.option_descriptors().get(name, None)
+
+    def validate_member_on_push(
+        self, member: Definition, name: Optional[str] = None
+    ) -> None:
+        super(ScopeWithOptions, self).validate_member_on_push(member, name)
+
+        if isinstance(member, Option):
+            option = cast(Option, member)
+            self.validate_option_on_push(option)
 
     @cache_if_frozen
     def option(self, name: str) -> Optional[Option]:
@@ -441,15 +508,15 @@ class Scope(Definition):
         Returns a default option if not defined.
         Returns None if not described.
         """
-        options = dict_(self.options(recursive=False))
-        if name in options:
-            return options[name]
+        option_dict = self.options_as_dict()
+        if name in option_dict:
+            return option_dict[name]
 
         descriptor = self.get_option_descriptor(name)
         if not descriptor:
             return None
 
-        default = descriptor.type(value=descriptor.default, name=name)
+        default = descriptor.class_(value=descriptor.default, name=name)
         return default
 
     @cache_if_frozen
@@ -478,20 +545,17 @@ class Scope(Definition):
             return cast(BooleanOption, option).value
         raise InternalError("option not boolean")
 
-    def validate_option_on_push(
-        self, option: Option, name: Optional[str] = None
-    ) -> None:
+    def validate_option_on_push(self, option: Option) -> None:
         """Validate option on parser pushes."""
-        name = name or option.name
-
         # Is this option described?
-        descriptor = self.get_option_descriptor(name)
+        descriptor = self.get_option_descriptor(option.name)
         if not descriptor:
             raise UnsupportedOption.from_token(option)
 
-        # Validate type
-        if not isinstance(option, descriptor.type):
-            message = f"invalid option type, requires {descriptor.type}"
+        # Validate type.
+        class_ = descriptor.class_
+        if not isinstance(option, class_):
+            message = f"invalid option type, requires {class_}"
             raise InvalidOptionValue.from_token(message=message, token=option)
 
         # Validate value
@@ -502,13 +566,6 @@ class Scope(Definition):
             if not validator(option.value):
                 message = f"invalid option value (description => {description})" or ""
                 raise InvalidOptionValue.from_token(option, message=message)
-
-
-@abstract
-@dataclass
-class _NormalScope(Scope, _NormalDefinition):
-    "_NormalScope distinguishs from Proto."
-    pass
 
 
 @abstract
@@ -725,6 +782,8 @@ class Enum(ExtensibleType, _NormalScope):
     def validate_member_on_push(
         self, member: Definition, name: Optional[str] = None
     ) -> None:
+        super(Enum, self).validate_member_on_push(member, name)
+
         if isinstance(member, EnumField):
             self.validate_enum_field_on_push(member)
 
@@ -753,18 +812,9 @@ class MessageField(Field):
 
 @final(frozen.later)
 @dataclass
-class Message(ExtensibleType, _NormalScope):
+class Message(ExtensibleType, _NormalScope, ScopeWithOptions):
     name: str = ""
-
-    __option_descriptors__: ClassVar[List[OptionDescriptor]] = [
-        OptionDescriptor(
-            "max_bytes",
-            IntegerOption,
-            0,
-            lambda v: v >= 0,
-            "Setting the maximum limit of number of bytes for target message.",
-        ),
-    ]
+    __option_descriptors__: ClassVar[OptionDescriptors] = MESSAGE_OPTIONS
 
     @property
     def fields(self) -> List[MessageField]:
@@ -787,6 +837,8 @@ class Message(ExtensibleType, _NormalScope):
     def validate_member_on_push(
         self, member: Definition, name: Optional[str] = None
     ) -> None:
+        super(Message, self).validate_member_on_push(member, name)
+
         if isinstance(member, MessageField):
             self.validate_message_field_on_push(member)
 
@@ -798,38 +850,9 @@ class Message(ExtensibleType, _NormalScope):
 
 @final(frozen.later)
 @dataclass
-class Proto(Scope):
+class Proto(ScopeWithOptions):
     __repr_name__: ClassVar[str] = "bitproto"
-    __option_descriptors__: ClassVar[List[OptionDescriptor]] = [
-        OptionDescriptor(
-            "c.target_platform_bits",
-            IntegerOption,
-            32,
-            lambda v: v in (32, 64),
-            "C language target machine bits, 32 or 64",
-        ),
-        OptionDescriptor(
-            "c.struct_packing_alignment",
-            IntegerOption,
-            1,
-            lambda v: 0 <= v <= 8,
-            "C language struct packing alignment, defaults to 1",
-        ),
-        OptionDescriptor(
-            "c.enable_render_json_formatter",
-            BooleanOption,
-            True,
-            None,
-            "Whether render json formatter function for structs in C language, defaults to false",
-        ),
-        OptionDescriptor(
-            "go.package_path",
-            StringOption,
-            "",
-            None,
-            "Package path of current golang package, to be imported, e.g. github.com/path/to/shared_bp",
-        ),
-    ]
+    __option_descriptors__: ClassVar[OptionDescriptors] = PROTO_OPTTIONS
 
     def __repr__(self) -> str:
         return f"<bitproto {self.name}>"
