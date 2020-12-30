@@ -35,7 +35,6 @@ Abstraction syntax tree.
       |    |    |- Message              :Scope:Definition:Node
       |    |    |- Proto                :Scope:Definition:Node
 """
-
 from collections import OrderedDict as dict_
 from dataclasses import dataclass
 from dataclasses import field as dataclass_field
@@ -43,7 +42,13 @@ from typing import Any, Callable, ClassVar, List, Optional, Tuple, Dict
 from typing import Type as T
 from typing import TypeVar, Union, cast
 
-from bitproto.utils import conditional_cache, cache, frozen
+from bitproto.utils import (
+    conditional_cache,
+    cache,
+    frozen,
+    safe_hash,
+    final as final_,
+)
 from bitproto.errors import (
     DuplicatedDefinition,
     DuplicatedEnumFieldValue,
@@ -61,7 +66,11 @@ from bitproto.errors import (
     UnsupportedOption,
 )
 
-T_Definition = TypeVar("T_Definition", bound="Definition")
+N = TypeVar("N", bound="Node")  # Node
+D = TypeVar("D", bound="Definition")  # Definition
+S = T[N]  # Type of Node.
+
+
 OptionValue = Union[str, int, bool]
 ConstantValue = Union[str, int, bool]
 
@@ -72,21 +81,54 @@ def cache_if_frozen_condition(
     func: Callable, args: List[Any], kwargs: Dict[str, Any]
 ) -> bool:
     """Condition that cache given function if related node is frozen.
+    Works only for ast node's method.
+    Follows global cache switch: _ENABLE_CACHE_ON_AST_FROZEN.
     """
     if not _ENABLE_CACHE_ON_AST_FROZEN:
         return False
+
     if not args:
         return False
+
     self = args[0]
     if not self:
         return False
+
     if not isinstance(self, Node):
         return False
+
     node_self = cast(Node, self)
     return node_self.__frozen__
 
 
+# Decorator to cache given function if related node is frozen.
 cache_if_frozen = conditional_cache(cache_if_frozen_condition)
+
+
+def final(frozener: Callable[[S], S]) -> Callable[[S], S]:
+    """Decorator to mark a node class to be a final node.
+    A final node can't be inherit anymore.
+    A final node is applied to following decorators:
+
+        >>> @final_
+            @safe_hash
+            @frozener
+            class LeafNode:
+                pass
+    """
+
+    def decorator(node_class_: S) -> S:
+        return final_((frozener(safe_hash(node_class_))))
+
+    return decorator
+
+
+def abstract(node_class_: S) -> S:
+    """Decorator to mark a node class to be an abstract node.
+    To distinguish from final node:
+    An abstract node has no need to be frozen etc.
+    """
+    return node_class_
 
 
 class _Meta(type):
@@ -94,13 +136,18 @@ class _Meta(type):
         return getattr(self, "__repr_name__", self.__name__)
 
 
+@abstract
 @dataclass
 class Node(metaclass=_Meta):
     token: str = ""
     lineno: int = 0
     filepath: str = ""
 
-    __frozen__: ClassVar[bool] = False  # cheat mypy
+    # cheat mypy: overloads by @frozen
+    __frozen__: ClassVar[bool] = False
+
+    def is_frozen(self) -> bool:
+        return self.__frozen__
 
     def __post_init__(self) -> None:
         self.validate()
@@ -117,7 +164,7 @@ class Node(metaclass=_Meta):
         return "<{0}>".format(repr(type(self)))
 
 
-@frozen.post_init
+@final(frozen.post_init)
 @dataclass
 class Comment(Node):
     @cache_if_frozen
@@ -128,10 +175,8 @@ class Comment(Node):
     def __str__(self) -> str:
         return self.content()
 
-    def __hash__(self) -> int:
-        return id(self)
 
-
+@abstract
 @dataclass
 class Definition(Node):
     name: str = ""
@@ -150,8 +195,11 @@ class Definition(Node):
         return f"<{class_repr} {self.name}>"
 
 
+@abstract
 @dataclass
 class _NormalDefinition(Definition):
+    "_NormalDefinition distinguishs from Proto."
+
     @property
     def bound(self) -> "Proto":
         if self._bound:
@@ -162,6 +210,7 @@ class _NormalDefinition(Definition):
 _VALUE_MISSING = "_value_missing"
 
 
+@abstract
 @dataclass
 class Option(_NormalDefinition):
     value: OptionValue = _VALUE_MISSING
@@ -179,34 +228,25 @@ class Option(_NormalDefinition):
             class_ = IntegerOption
         elif isinstance(value, str):
             class_ = StringOption
-        return class_(value=value, **kwds)
+        return Option(value=value, **kwds)
 
 
-@frozen.post_init
+@final(frozen.post_init)
 @dataclass
 class IntegerOption(Option):
     value: int = 0
 
-    def __hash__(self) -> int:
-        return id(self)
 
-
-@frozen.post_init
+@final(frozen.post_init)
 @dataclass
 class BooleanOption(Option):
     value: bool = False
 
-    def __hash__(self) -> int:
-        return id(self)
 
-
-@frozen.post_init
+@final(frozen.post_init)
 @dataclass
 class StringOption(Option):
     value: str = ""
-
-    def __hash__(self) -> int:
-        return id(self)
 
 
 @frozen.post_init
@@ -219,6 +259,7 @@ class OptionDescriptor:
     description: Optional[str] = None
 
 
+@abstract
 @dataclass
 class Constant(_NormalDefinition):
     value: ConstantValue = _VALUE_MISSING
@@ -242,40 +283,32 @@ class Constant(_NormalDefinition):
         return class_(value=value, **kwds)
 
 
-@frozen.post_init
+@final(frozen.post_init)
 @dataclass
 class IntegerConstant(Constant):
     value: int = 0
 
-    def __hash__(self) -> int:
-        return id(self)
 
-
-@frozen.post_init
+@final(frozen.post_init)
 @dataclass
 class BooleanConstant(Constant):
     value: bool = False
 
-    def __hash__(self) -> int:
-        return id(self)
 
-
-@frozen.post_init
+@final(frozen.post_init)
 @dataclass
 class StringConstant(Constant):
     value: str = ""
 
-    def __hash__(self) -> int:
-        return id(self)
 
-
+@abstract
 @dataclass
 class Scope(Definition):
     members: "dict_[str, Definition]" = dataclass_field(default_factory=dict_)
 
     def push_member(self, member: Definition, name: Optional[str] = None) -> None:
         """Push a definition `member`, and run hook functions around."""
-        if self.__frozen__:
+        if self.is_frozen():
             raise InternalError("push on frozen scope.")
 
         if name is None:
@@ -330,18 +363,15 @@ class Scope(Definition):
 
     @cache_if_frozen
     def filter(
-        self,
-        t: T[T_Definition],
-        recursive: bool = False,
-        bound: Optional["Proto"] = None,
-    ) -> List[Tuple[str, T_Definition]]:
+        self, t: T[D], recursive: bool = False, bound: Optional["Proto"] = None,
+    ) -> List[Tuple[str, D]]:
         """Filter member by given type. (dfs)
 
         :param t: The type to filter.
         :param recursive: Whether filter recursively.
         :param bound: Filter definitions bound to given proto if provided.
         """
-        items: List[Tuple[str, T_Definition]] = []
+        items: List[Tuple[str, D]] = []
         for item in self.members.items():
             name, member = item
             if bound:
@@ -396,7 +426,8 @@ class Scope(Definition):
 
     @cache
     def option_descriptors(self) -> Dict[str, OptionDescriptor]:
-        """Subclasses may override this.
+        """Returns descriptors in format dict.
+        Subclasses may override this.
         The default implementation assuming attribute `__option_descriptors__` is defined."""
         descriptors = getattr(self, "__option_descriptors__", [])
         return dict((d.name, d) for d in descriptors)
@@ -473,11 +504,14 @@ class Scope(Definition):
                 raise InvalidOptionValue.from_token(option, message=message)
 
 
+@abstract
 @dataclass
 class _NormalScope(Scope, _NormalDefinition):
+    "_NormalScope distinguishs from Proto."
     pass
 
 
+@abstract
 @dataclass
 class Type(Node):
     _is_missing: bool = False
@@ -496,12 +530,13 @@ class Type(Node):
 _TYPE_MISSING = Type(_is_missing=True)
 
 
+@abstract
 @dataclass
 class BaseType(Type):
     pass
 
 
-@frozen.post_init
+@final(frozen.post_init)
 @dataclass
 class Bool(BaseType):
     def nbits(self) -> int:
@@ -510,11 +545,8 @@ class Bool(BaseType):
     def __repr__(self) -> str:
         return "<type bool>"
 
-    def __hash__(self) -> int:
-        return id(self)
 
-
-@frozen.post_init
+@final(frozen.post_init)
 @dataclass
 class Byte(BaseType):
     def nbits(self) -> int:
@@ -523,16 +555,14 @@ class Byte(BaseType):
     def __repr__(self) -> str:
         return "<byte>"
 
-    def __hash__(self) -> int:
-        return id(self)
 
-
+@abstract
 @dataclass
 class Integer(BaseType):
     pass
 
 
-@frozen.post_init
+@final(frozen.post_init)
 @dataclass
 class Uint(Integer):
     cap: int = 0
@@ -549,14 +579,11 @@ class Uint(Integer):
     def __repr__(self) -> str:
         return "<type uint{0}>".format(self.cap)
 
-    def __hash__(self) -> int:
-        return id(self)
-
 
 _UINT_MISSING = Uint(_is_missing=True)
 
 
-@frozen.post_init
+@final(frozen.post_init)
 @dataclass
 class Int(Integer):
     cap: int = 0
@@ -571,16 +598,14 @@ class Int(Integer):
     def __repr__(self) -> str:
         return "<type int{0}>".format(self.cap)
 
-    def __hash__(self) -> int:
-        return id(self)
 
-
+@abstract
 @dataclass
 class ExtensibleType(Type):
     extensible: bool = False
 
 
-@frozen.post_init
+@final(frozen.post_init)
 @dataclass
 class Array(ExtensibleType):
     type: Type = _TYPE_MISSING
@@ -614,11 +639,8 @@ class Array(ExtensibleType):
             self.type, self.cap, extensible_flag
         )
 
-    def __hash__(self) -> int:
-        return id(self)
 
-
-@frozen.post_init
+@final(frozen.post_init)
 @dataclass
 class Alias(Type, _NormalDefinition):
     type: Type = _TYPE_MISSING
@@ -658,17 +680,14 @@ class Alias(Type, _NormalDefinition):
             return extensible_type.extensible
         return False
 
-    def __hash__(self) -> int:
-        return id(self)
 
-
-@frozen.post_init
+@abstract
 @dataclass
 class Field(_NormalDefinition):
     pass
 
 
-@frozen.post_init
+@final(frozen.post_init)
 @dataclass
 class EnumField(Field):
     value: int = 0
@@ -680,11 +699,8 @@ class EnumField(Field):
         if self.value < 0:
             raise InvalidEnumFieldValue.from_token(token=self)
 
-    def __hash__(self) -> int:
-        return id(self)
 
-
-@frozen.later
+@final(frozen.later)
 @dataclass
 class Enum(ExtensibleType, _NormalScope):
     type: Uint = _UINT_MISSING
@@ -720,11 +736,8 @@ class Enum(ExtensibleType, _NormalScope):
         if field.value in self.value_to_names():
             raise DuplicatedEnumFieldValue.from_token(token=field)
 
-    def __hash__(self) -> int:
-        return id(self)
 
-
-@frozen.post_init
+@final(frozen.post_init)
 @dataclass
 class MessageField(Field):
     type: Type = Type()
@@ -738,7 +751,7 @@ class MessageField(Field):
             raise InvalidMessageFieldNumber.from_token(token=self)
 
 
-@frozen.later
+@final(frozen.later)
 @dataclass
 class Message(ExtensibleType, _NormalScope):
     name: str = ""
@@ -782,11 +795,8 @@ class Message(ExtensibleType, _NormalScope):
         if field.number in self.number_to_field():
             raise DuplicatedMessageFieldNumber.from_token(token=field)
 
-    def __hash__(self) -> int:
-        return id(self)
 
-
-@frozen.later
+@final(frozen.later)
 @dataclass
 class Proto(Scope):
     __repr_name__: ClassVar[str] = "bitproto"
@@ -823,6 +833,3 @@ class Proto(Scope):
 
     def __repr__(self) -> str:
         return f"<bitproto {self.name}>"
-
-    def __hash__(self) -> int:
-        return id(self)
