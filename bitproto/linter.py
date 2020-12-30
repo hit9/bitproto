@@ -32,7 +32,7 @@ class Rule(Generic[N]):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def checker(self, node: N, name: Optional[str] = None) -> Result:
+    def check(self, node: N, name: Optional[str] = None) -> Result:
         """Checker function, returns warning and suggestion message.
         :param node: The node of typed N.
         :param name: The name this node declared in its parent scope, if has.
@@ -47,7 +47,7 @@ class RuleEnumNamingPascal(Rule[Enum]):
     def target_class(self) -> T[Enum]:
         return Enum
 
-    def checker(self, node: Enum, name: Optional[str] = None) -> Result:
+    def check(self, node: Enum, name: Optional[str] = None) -> Result:
         # TODO
         return EnumNameNotPascal(), "using abc"
 
@@ -61,7 +61,7 @@ class Linter:
         self, rule: Rule[N], node: N, name: Optional[str] = None
     ) -> None:
         """Run given rule's checker on given node."""
-        warning(*rule.checker(node, name=name))
+        warning(*rule.check(node, name=name))
 
     def lint_enums(self, enums: List[Tuple[str, Enum]]) -> None:
         for rule in self.filter_rules(Enum):
