@@ -193,21 +193,21 @@ class Definition(Node):
 
 
 @dataclass
-class _NormalDefinition(Definition):
-    """_NormalDefinition distinguishs from Proto."""
+class _BoundDefinition(Definition):
+    """_BoundDefinition distinguishs from Proto."""
 
     @property
     def bound(self) -> "Proto":
         if self._bound:
             return self._bound
-        raise InternalError("_NormalDefinition got bound None")
+        raise InternalError("_BoundDefinition got bound None")
 
 
 _VALUE_MISSING = "_value_missing"
 
 
 @dataclass
-class Option(_NormalDefinition):
+class Option(_BoundDefinition):
     value: OptionValue = _VALUE_MISSING
 
     def __repr__(self) -> str:
@@ -279,7 +279,7 @@ class OptionDescriptor_:
 
 
 @dataclass
-class Constant(_NormalDefinition):
+class Constant(_BoundDefinition):
     value: ConstantValue = _VALUE_MISSING
 
     def __repr__(self) -> str:
@@ -399,7 +399,7 @@ class Scope(Definition):
         for item in self.members.items():
             name, member = item
             if bound:
-                if isinstance(member, _NormalDefinition):
+                if isinstance(member, _BoundDefinition):
                     if member.bound is not bound:
                         continue
             if recursive:  # Child first
@@ -445,8 +445,8 @@ class Scope(Definition):
 
 
 @dataclass
-class _NormalScope(Scope, _NormalDefinition):
-    "_NormalScope distinguishs from Proto."
+class _BoundScope(Scope, _BoundDefinition):
+    "_BoundScope distinguishs from Proto."
     pass
 
 
@@ -677,7 +677,7 @@ class Array(ExtensibleType):
 
 @final(frozen.post_init)
 @dataclass
-class Alias(Type, _NormalDefinition):
+class Alias(Type, _BoundDefinition):
     type: Type = _TYPE_MISSING
 
     def __repr__(self) -> str:
@@ -717,7 +717,7 @@ class Alias(Type, _NormalDefinition):
 
 
 @dataclass
-class Field(_NormalDefinition):
+class Field(_BoundDefinition):
     pass
 
 
@@ -736,7 +736,7 @@ class EnumField(Field):
 
 @final(frozen.later)
 @dataclass
-class Enum(ExtensibleType, _NormalScope):
+class Enum(ExtensibleType, _BoundScope):
     type: Uint = _UINT_MISSING
 
     def __repr__(self) -> str:
@@ -789,7 +789,7 @@ class MessageField(Field):
 
 @final(frozen.later)
 @dataclass
-class Message(ExtensibleType, _NormalScope, ScopeWithOptions):
+class Message(ExtensibleType, _BoundScope, ScopeWithOptions):
     name: str = ""
     __option_descriptors__: ClassVar[OptionDescriptors] = MESSAGE_OPTIONS
 
