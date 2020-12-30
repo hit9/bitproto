@@ -3,12 +3,21 @@ bitproto.errors
 ~~~~~~~~~~~~~~~
 
 Errors.
+
+    Error
+      |- InternalError          -> Error
+      |- ParserError            -> Error
+      |    |- LexerError
+      |    |- GrammarError
+      |- LintWarning            -> Warning
+      |- RendererError          -> Error
 """
 
 from dataclasses import dataclass
+from enum import unique, IntEnum
 from typing import TYPE_CHECKING, Any
 from typing import Type as T
-from typing import TypeVar
+from typing import TypeVar, ClassVar
 
 if TYPE_CHECKING:
     from bitproto._ast import Node
@@ -16,11 +25,24 @@ if TYPE_CHECKING:
 T_ParserError = TypeVar("T_ParserError", bound="ParserError")
 
 
+@unique
+class ErrorLevel(IntEnum):
+    """Error level.
+    Warning: continues, leaving a warning message.
+    Error: have to shutdown processing.
+    """
+
+    WARNING = 1
+    ERROR = 2
+
+
 @dataclass
 class Error(Exception):
     """Some error occurred during bitproto handling."""
 
     description: str = ""
+
+    level: ClassVar[ErrorLevel] = ErrorLevel.ERROR
 
     def __post_init__(self) -> None:
         if not self.description:

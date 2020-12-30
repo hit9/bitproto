@@ -195,7 +195,7 @@ class Definition(Node):
 
 @dataclass
 class _NormalDefinition(Definition):
-    "_NormalDefinition distinguishs from Proto."
+    """_NormalDefinition distinguishs from Proto."""
 
     @property
     def bound(self) -> "Proto":
@@ -258,8 +258,7 @@ class StringOption(Option):
 
 @dataclass(frozen=True)
 class OptionDescriptor_:
-    """Wrapper around original OptionDescriptor.
-    """
+    """Wrapper around original OptionDescriptor."""
 
     name: str
     class_: T[Option]
