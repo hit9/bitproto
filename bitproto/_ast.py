@@ -1,6 +1,6 @@
 """
-bitproto.ast
-~~~~~~~~~~~~
+bitproto._ast
+~~~~~~~~~~~~~
 
 Abstraction syntax tree.
 
