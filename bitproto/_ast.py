@@ -179,6 +179,7 @@ class Definition(Node):
     name: str = ""
     scope_stack: Tuple["Scope", ...] = tuple()
     comment_block: Tuple[Comment, ...] = tuple()
+    indent: int = 0  # <0 for invalid.
     _bound: Optional["Proto"] = None
 
     def set_name(self, name: str) -> None:

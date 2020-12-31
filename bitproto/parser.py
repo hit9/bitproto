@@ -78,6 +78,7 @@ class Parser:
         self.filepath_stack: List[str] = filepath_stack or []
         self.comment_block: List[Comment] = comment_block or []
         self.scope_stack_init_length: int = len(self.scope_stack)
+        self.last_newline_pos: int = 0
 
     def push_scope(self, scope: Scope) -> None:
         self.scope_stack.append(scope)
@@ -122,6 +123,16 @@ class Parser:
     def pop_filepath(self) -> str:
         return self.filepath_stack.pop()
 
+    def set_last_newline_pos(self, pos: int) -> None:
+        self.last_newline_pos = pos
+
+    def current_indent(self, p: P, i: int = 1) -> int:
+        lexpos = p.lexpos(i)
+        indent = lexpos - self.last_newline_pos - 1
+        if indent < 0:
+            return -1
+        return indent
+
     @contextmanager
     def maintain_filepath(self, filepath: str) -> Iterator[str]:
         try:
@@ -160,6 +171,17 @@ class Parser:
             p[0] = [p[1]]
         elif len(p) == 1:
             p[0] = []
+
+    def copy_p_tracking(self, p: P, from_: int = 1, to: int = 0) -> None:
+        """Don't know why P's tracking info (lexpos and lineno) sometimes missing.
+        Particular in recursion grammar situation. We have to copy it manually.
+
+        Add this function in a p_xxx function when:
+            1. the p[0] is gona to be used in another parsing target.
+            2. and the tracking information is gona to be used there.
+        """
+        p.set_lexpos(to, p.lexpos(from_))
+        p.set_lineno(to, p.lineno(from_))
 
     def p_optional_semicolon(self, p: P) -> None:
         """optional_semicolon : ';'
@@ -209,11 +231,14 @@ class Parser:
 
     def p_comment(self, p: P) -> None:
         """comment : COMMENT NEWLINE"""
-        self.push_comment(p[1])
+        comment = p[1]
+        self.push_comment(comment)
+        self.set_last_newline_pos(p.lexpos(2))
 
     def p_newline(self, p: P) -> None:
         """newline : NEWLINE"""
         self.clear_comment_block()
+        self.set_last_newline_pos(p.lexpos(1))
 
     def _get_child_filepath(self, importing_path: str) -> str:
         """Gets the filepath for the importing path.
@@ -268,6 +293,7 @@ class Parser:
             name=name,
             scope_stack=self.current_scope_stack(),
             comment_block=self.collect_comment_block(),
+            indent=self.current_indent(p),
             _bound=self.current_proto(),
             filepath=self.current_filepath(),
             lineno=p.lineno(2),
@@ -290,6 +316,7 @@ class Parser:
             filepath=self.current_filepath(),
             lineno=p.lineno(2),
             token=p[2],
+            indent=self.current_indent(p),
             scope_stack=self.current_scope_stack(),
             comment_block=self.collect_comment_block(),
             _bound=self.current_proto(),
@@ -313,6 +340,7 @@ class Parser:
             name=name,
             scope_stack=self.current_scope_stack(),
             comment_block=self.collect_comment_block(),
+            indent=self.current_indent(p),
             _bound=self.current_proto(),
             filepath=self.current_filepath(),
             token=p[2],
@@ -394,6 +422,7 @@ class Parser:
         d = self._lookup_referenced_member(p[1])
         if d is not None and isinstance(d, Constant):
             p[0] = d
+            self.copy_p_tracking(p)
         else:
             raise ReferencedConstantNotDefined(
                 message="referenced constant {0} not defined".format(p[1]),
@@ -406,11 +435,13 @@ class Parser:
         """type : single_type
                 | array_type"""
         p[0] = p[1]
+        self.copy_p_tracking(p)
 
     def p_single_type(self, p: P) -> None:
         """single_type : base_type
                        | type_reference"""
         p[0] = p[1]
+        self.copy_p_tracking(p)
 
     def p_base_type(self, p: P) -> None:
         """base_type : BOOL_TYPE
@@ -418,12 +449,14 @@ class Parser:
                      | INT_TYPE
                      | BYTE_TYPE"""
         p[0] = p[1]
+        self.copy_p_tracking(p)
 
     def p_type_reference(self, p: P) -> None:
         """type_reference : dotted_identifier"""
         d = self._lookup_referenced_member(p[1])
         if d is not None and isinstance(d, Type):
             p[0] = d
+            self.copy_p_tracking(p)
         else:
             raise ReferencedTypeNotDefined(
                 message="referenced type {0} not defined".format(p[1]),
@@ -447,6 +480,7 @@ class Parser:
             lineno=p.lineno(2),
             filepath=self.current_filepath(),
         )
+        self.copy_p_tracking(p)
 
     def p_array_capacity(self, p: P) -> None:
         """array_capacity : INT_LITERAL
@@ -469,8 +503,9 @@ class Parser:
 
     def p_enum(self, p: P) -> None:
         """enum : open_enum_scope enum_scope close_enum_scope"""
-        enum = p[2]
+        p[0] = enum = p[2]
         self.current_scope().push_member(enum)
+        self.copy_p_tracking(p)
 
     def p_open_enum_scope(self, p: P) -> None:
         """open_enum_scope : ENUM IDENTIFIER optional_extensible_flag ':' UINT_TYPE '{'"""
@@ -481,6 +516,7 @@ class Parser:
             token=p[2],
             lineno=p.lineno(2),
             filepath=self.current_filepath(),
+            indent=self.current_indent(p),
             comment_block=self.collect_comment_block(),
             scope_stack=self.current_scope_stack(),
             _bound=self.current_proto(),
@@ -516,6 +552,7 @@ class Parser:
             value=value,
             token=p[1],
             lineno=p.lineno(1),
+            indent=self.current_indent(p),
             filepath=self.current_filepath(),
             scope_stack=self.current_scope_stack(),
             comment_block=self.collect_comment_block(),
@@ -525,8 +562,9 @@ class Parser:
 
     def p_message(self, p: P) -> None:
         """message : open_message_scope message_scope close_message_scope"""
-        message = p[2]
+        p[0] = message = p[2]
         self.current_scope().push_member(message)
+        self.copy_p_tracking(p)
 
     def p_open_message_scope(self, p: P) -> None:
         """open_message_scope : MESSAGE IDENTIFIER optional_extensible_flag '{'"""
@@ -536,6 +574,7 @@ class Parser:
             token=p[2],
             lineno=p.lineno(2),
             filepath=self.current_filepath(),
+            indent=self.current_indent(p),
             comment_block=self.collect_comment_block(),
             scope_stack=self.current_scope_stack(),
             _bound=self.current_proto(),
@@ -578,6 +617,7 @@ class Parser:
             lineno=p.lineno(2),
             filepath=self.current_filepath(),
             comment_block=self.collect_comment_block(),
+            indent=self.current_indent(p),
             scope_stack=self.current_scope_stack(),
             _bound=self.current_proto(),
         )
@@ -600,6 +640,7 @@ class Parser:
         """dotted_identifier : IDENTIFIER '.' dotted_identifier
                              | IDENTIFIER"""
 
+        self.copy_p_tracking(p)
         if len(p) == 4:
             p[0] = ".".join([p[1], p[3]])
         elif len(p) == 2:
