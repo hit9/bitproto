@@ -77,7 +77,7 @@ def run_bitproto() -> None:
     try:
         proto = parse(args.filepath)
     except ParserError as error:
-        args_parser.exit(1, message=str(error))
+        args_parser.exit(1, message=error.colored())
 
     if not args.disable_linter:
         lint(proto)
@@ -89,7 +89,7 @@ def run_bitproto() -> None:
     try:
         render(proto, args.language, outdir=args.outdir)
     except RendererError as error:
-        args_parser.exit(1, message=str(error))
+        args_parser.exit(1, message=error.colored())
 
 
 if __name__ == "__main__":

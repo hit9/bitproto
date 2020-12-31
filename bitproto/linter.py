@@ -24,6 +24,7 @@ from bitproto._ast import (
 from bitproto.errors import warning
 from bitproto.errors import (
     Warning,
+    LintWarning,
     ConstantNameNotUpper,
     EnumNameNotPascal,
     EnumHasNoFieldValue0,
@@ -34,7 +35,6 @@ from bitproto.errors import (
 )
 from bitproto.utils import pascal_case, snake_case
 
-Result = Tuple[Optional[Warning], Optional[str]]
 
 D = TypeVar("D", bound=Definition)
 
@@ -60,7 +60,7 @@ class Rule(Generic[D]):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def check(self, definition: D, name: Optional[str] = None) -> Result:
+    def check(self, definition: D, name: Optional[str] = None) -> Optional[LintWarning]:
         """Checker function, returns warning and suggestion message.
         :param definition: The definition of typed D.
         :param name: The name this definition declared in its parent scope, if has.
@@ -81,7 +81,7 @@ class Linter:
         self, rule: Rule[D], definition: D, name: Optional[str] = None
     ) -> None:
         """Run given rule's checker on given definition."""
-        warning(*rule.check(definition, name=name))
+        warning(rule.check(definition, name))
 
     def lint(self, proto: Proto) -> None:
         """Run lint rules for definitions bound to this proto."""
@@ -126,11 +126,15 @@ class RuleDefinitionIndent(Rule[BoundDefinition]):
     def target_class(self) -> T[BoundDefinition]:
         return BoundDefinition
 
-    def check(self, definition: BoundDefinition, name: Optional[str] = None) -> Result:
+    def check(
+        self, definition: BoundDefinition, name: Optional[str] = None
+    ) -> Optional[LintWarning]:
         expect: int = (len(definition.scope_stack) - 1) * 4
         if definition.indent > 0 and expect >= 0 and definition.indent != expect:
-            return IndentWarning.from_token(definition), f"{expect} spaces"
-        return None, None
+            return IndentWarning.from_token(
+                token=definition, suggestion=f"{expect} spaces"
+            )
+        return None
 
 
 class RuleConstantNamingUpper(Rule[Constant]):
@@ -139,11 +143,15 @@ class RuleConstantNamingUpper(Rule[Constant]):
     def target_class(self) -> T[Constant]:
         return Constant
 
-    def check(self, definition: Constant, name: Optional[str] = None) -> Result:
+    def check(
+        self, definition: Constant, name: Optional[str] = None
+    ) -> Optional[LintWarning]:
         definition_name = name or definition.name
         if not definition_name.isupper():
-            return ConstantNameNotUpper.from_token(definition), definition_name.upper()
-        return None, None
+            return ConstantNameNotUpper.from_token(
+                token=definition, suggestion=definition_name.upper()
+            )
+        return None
 
 
 class RuleEnumNamingPascal(Rule[Enum]):
@@ -152,12 +160,14 @@ class RuleEnumNamingPascal(Rule[Enum]):
     def target_class(self) -> T[Enum]:
         return Enum
 
-    def check(self, definition: Enum, name: Optional[str] = None) -> Result:
+    def check(
+        self, definition: Enum, name: Optional[str] = None
+    ) -> Optional[LintWarning]:
         definition_name = name or definition.name
         expect = pascal_case(definition_name)
         if definition_name != expect:
-            return EnumNameNotPascal.from_token(definition), expect
-        return None, None
+            return EnumNameNotPascal.from_token(token=definition, suggestion=expect)
+        return None
 
 
 class RuleEnumContains0(Rule[Enum]):
@@ -166,11 +176,13 @@ class RuleEnumContains0(Rule[Enum]):
     def target_class(self) -> T[Enum]:
         return Enum
 
-    def check(self, definition: Enum, name: Optional[str] = None) -> Result:
+    def check(
+        self, definition: Enum, name: Optional[str] = None
+    ) -> Optional[LintWarning]:
         for field in definition.fields:
             if field.value == 0:
-                return None, None
-        return (EnumHasNoFieldValue0.from_token(definition), None)
+                return None
+        return EnumHasNoFieldValue0.from_token(token=definition, suggestion=None)
 
 
 class RuleEnumFieldNamingUpper(Rule[EnumField]):
@@ -179,11 +191,15 @@ class RuleEnumFieldNamingUpper(Rule[EnumField]):
     def target_class(self) -> T[EnumField]:
         return EnumField
 
-    def check(self, definition: EnumField, name: Optional[str] = None) -> Result:
+    def check(
+        self, definition: EnumField, name: Optional[str] = None
+    ) -> Optional[LintWarning]:
         definition_name = name or definition.name
         if not definition_name.isupper():
-            return EnumFieldNameNotUpper.from_token(definition), definition_name.upper()
-        return None, None
+            return EnumFieldNameNotUpper.from_token(
+                token=definition, suggestion=definition_name.upper()
+            )
+        return None
 
 
 class RuleMessageNamingPascal(Rule[Message]):
@@ -192,12 +208,14 @@ class RuleMessageNamingPascal(Rule[Message]):
     def target_class(self) -> T[Message]:
         return Message
 
-    def check(self, definition: Message, name: Optional[str] = None) -> Result:
+    def check(
+        self, definition: Message, name: Optional[str] = None
+    ) -> Optional[LintWarning]:
         definition_name = name or definition.name
         expect = pascal_case(definition_name)
         if expect != definition_name:
-            return MessageNameNotPascal.from_token(definition), expect
-        return None, None
+            return MessageNameNotPascal.from_token(token=definition, suggestion=expect)
+        return None
 
 
 class RuleMessageFieldNamingSnake(Rule[MessageField]):
@@ -206,9 +224,13 @@ class RuleMessageFieldNamingSnake(Rule[MessageField]):
     def target_class(self) -> T[MessageField]:
         return MessageField
 
-    def check(self, definition: MessageField, name: Optional[str] = None) -> Result:
+    def check(
+        self, definition: MessageField, name: Optional[str] = None
+    ) -> Optional[LintWarning]:
         definition_name = name or definition.name
         expect = snake_case(definition_name)
         if expect != definition_name:
-            return MessageFieldNameNotSnake.from_token(definition), expect
-        return None, None
+            return MessageFieldNameNotSnake.from_token(
+                token=definition, suggestion=expect
+            )
+        return None

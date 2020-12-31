@@ -1,4 +1,5 @@
 import re
+from enum import unique, Enum
 from typing import Any, Callable, List, Optional, Type as T, TypeVar, cast
 from typing import TYPE_CHECKING
 from functools import wraps
@@ -172,6 +173,23 @@ def write_file(filepath: str, s: str) -> None:
     """Write given s to filepath."""
     with open(filepath, "w") as f:
         f.write(s)
+
+
+@unique
+class Color(Enum):
+    BLACK: int = 0
+    RED: int = 1
+    GREEN: int = 2
+    YELLOW: int = 3
+    BLUE: int = 4
+    MAGENTA: int = 5
+    CYAN: int = 6
+    WHITE: int = 7
+
+
+def colored(text: str, color: Color) -> str:
+    """Color given text."""
+    return "\033[3%dm%s\033[0m" % (color.value, text)
 
 
 def pascal_case(word: str) -> str:

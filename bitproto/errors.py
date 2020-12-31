@@ -21,6 +21,8 @@ from typing import TYPE_CHECKING, Any
 from typing import Type as T
 from typing import TypeVar, ClassVar, Optional
 
+from bitproto.utils import colored, Color
+
 if TYPE_CHECKING:
     from bitproto._ast import Node
 
@@ -46,10 +48,16 @@ class Base:
         prefix = self._message_prefix()
         return "\n".join(map(lambda l: prefix + " " + l, description.splitlines()))
 
+    def colored(self) -> str:
+        return str(self)
+
 
 @dataclass
 class Error(Base, Exception):
     """Some error occurred during bitproto handling."""
+
+    def colored(self) -> str:
+        return colored(super(Error, self).__str__(), Color.RED)
 
 
 @dataclass
@@ -59,17 +67,15 @@ class Warning(Base):
     def _message_prefix(self) -> str:
         return "[ warning ]"
 
+    def colored(self) -> str:
+        return colored(super(Warning, self).__str__(), Color.YELLOW)
 
-def warning(
-    warning: Optional["Warning"] = None, suggestion: Optional[str] = None
-) -> None:
+
+def warning(w: Optional["Warning"] = None) -> None:
     """Logs a warning to stderr."""
-    if not warning:
+    if not w:
         return
-    message = str(warning)
-    if suggestion:
-        message = f"{message} suggestion => {suggestion}"
-    sys.stderr.write(message + "\n")
+    sys.stderr.write(w.colored() + "\n")
 
 
 @dataclass
@@ -225,6 +231,14 @@ class InvalidOptionValue(GrammarError):
 @dataclass
 class LintWarning(Warning, _TokenBound):
     """Some warning occurred during bitproto linting."""
+
+    suggestion: Optional[str] = None
+
+    def format_default_description(self) -> str:
+        description: str = super(LintWarning, self).format_default_description()
+        if self.suggestion:
+            description = description + " suggestion => " + self.suggestion
+        return description
 
 
 @dataclass
