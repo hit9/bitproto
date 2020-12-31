@@ -43,7 +43,9 @@ from bitproto.errors import (
     InternalError,
     InvalidArrayCap,
     ReferencedConstantNotDefined,
+    ReferencedNotConstant,
     ReferencedTypeNotDefined,
+    ReferencedNotType,
 )
 from bitproto.lexer import Lexer
 
@@ -420,16 +422,23 @@ class Parser:
     def p_constant_reference(self, p: P) -> None:
         """constant_reference : dotted_identifier"""
         d = self._lookup_referenced_member(p[1])
-        if d is not None and isinstance(d, Constant):
-            p[0] = d
-            self.copy_p_tracking(p)
-        else:
+        if d is None:
             raise ReferencedConstantNotDefined(
                 message="referenced constant {0} not defined".format(p[1]),
                 filepath=self.current_filepath(),
                 token=p[1],
                 lineno=p.lineno(1),
             )
+        if not isinstance(d, Constant):
+            raise ReferencedNotConstant(
+                message="referenced defintion is not a constant",
+                filepath=self.current_filepath(),
+                token=p[1],
+                lineno=p.lineno(1),
+            )
+
+        p[0] = d
+        self.copy_p_tracking(p)
 
     def p_type(self, p: P) -> None:
         """type : single_type
@@ -454,16 +463,22 @@ class Parser:
     def p_type_reference(self, p: P) -> None:
         """type_reference : dotted_identifier"""
         d = self._lookup_referenced_member(p[1])
-        if d is not None and isinstance(d, Type):
-            p[0] = d
-            self.copy_p_tracking(p)
-        else:
+        if d is None:
             raise ReferencedTypeNotDefined(
                 message="referenced type {0} not defined".format(p[1]),
                 filepath=self.current_filepath(),
                 token=p[1],
                 lineno=p.lineno(1),
             )
+        if not isinstance(d, Type):
+            raise ReferencedNotType(
+                message="referenced defintion is not a type",
+                filepath=self.current_filepath(),
+                token=p[1],
+                lineno=p.lineno(1),
+            )
+        p[0] = d
+        self.copy_p_tracking(p)
 
     def p_optional_extensible_flag(self, p: P) -> None:
         """optional_extensible_flag : "'"

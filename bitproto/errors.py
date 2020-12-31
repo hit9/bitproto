@@ -39,7 +39,7 @@ class Base:
         return self.__doc__ or ""
 
     def _message_prefix(self) -> str:
-        return "( error )"
+        return "[ error ]"
 
     def __str__(self) -> str:
         description = self.description
@@ -57,7 +57,7 @@ class Warning(Base):
     """Warning continues processing and leaves a message."""
 
     def _message_prefix(self) -> str:
-        return "( warning )"
+        return "[ warning ]"
 
 
 def warning(
@@ -158,8 +158,18 @@ class ReferencedConstantNotDefined(GrammarError):
 
 
 @dataclass
+class ReferencedNotConstant(GrammarError):
+    """Referenced not a constant."""
+
+
+@dataclass
 class ReferencedTypeNotDefined(GrammarError):
     """Referenced type not defined."""
+
+
+@dataclass
+class ReferencedNotType(GrammarError):
+    """Referenced not a type."""
 
 
 @dataclass
@@ -245,3 +255,8 @@ class MessageNameNotPascal(LintWarning):
 @dataclass
 class MessageFieldNameNotSnake(LintWarning):
     """Message field name not snake case."""
+
+
+@dataclass
+class ConstantNameNotUpper(LintWarning):
+    """Constant name not upper case."""

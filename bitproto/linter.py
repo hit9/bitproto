@@ -24,13 +24,15 @@ from bitproto._ast import (
 from bitproto.errors import warning
 from bitproto.errors import (
     Warning,
-    IndentWarning,
+    ConstantNameNotUpper,
     EnumNameNotPascal,
     EnumHasNoFieldValue0,
     EnumFieldNameNotUpper,
+    IndentWarning,
     MessageNameNotPascal,
     MessageFieldNameNotSnake,
 )
+from bitproto.utils import pascal_case, snake_case
 
 Result = Tuple[Optional[Warning], Optional[str]]
 
@@ -101,6 +103,7 @@ class Linter:
         Subclasses could overload."""
         return (
             RuleDefinitionIndent(),
+            RuleConstantNamingUpper(),
             RuleEnumNamingPascal(),
             RuleEnumContains0(),
             RuleEnumFieldNamingUpper(),
@@ -137,7 +140,10 @@ class RuleConstantNamingUpper(Rule[Constant]):
         return Constant
 
     def check(self, definition: Constant, name: Optional[str] = None) -> Result:
-        pass
+        definition_name = name or definition.name
+        if not definition_name.isupper():
+            return ConstantNameNotUpper.from_token(definition), definition_name.upper()
+        return None, None
 
 
 class RuleEnumNamingPascal(Rule[Enum]):
@@ -147,8 +153,11 @@ class RuleEnumNamingPascal(Rule[Enum]):
         return Enum
 
     def check(self, definition: Enum, name: Optional[str] = None) -> Result:
-        # TODO
-        return EnumNameNotPascal.from_token(definition), "using abc"
+        definition_name = name or definition.name
+        expect = pascal_case(definition_name)
+        if definition_name != expect:
+            return EnumNameNotPascal.from_token(definition), expect
+        return None, None
 
 
 class RuleEnumContains0(Rule[Enum]):
@@ -161,10 +170,7 @@ class RuleEnumContains0(Rule[Enum]):
         for field in definition.fields:
             if field.value == 0:
                 return None, None
-        return (
-            EnumHasNoFieldValue0.from_token(definition),
-            "define default enum value to 0",
-        )
+        return (EnumHasNoFieldValue0.from_token(definition), None)
 
 
 class RuleEnumFieldNamingUpper(Rule[EnumField]):
@@ -187,8 +193,11 @@ class RuleMessageNamingPascal(Rule[Message]):
         return Message
 
     def check(self, definition: Message, name: Optional[str] = None) -> Result:
-        # TODO
-        return MessageNameNotPascal.from_token(definition), "using abc"
+        definition_name = name or definition.name
+        expect = pascal_case(definition_name)
+        if expect != definition_name:
+            return MessageNameNotPascal.from_token(definition), expect
+        return None, None
 
 
 class RuleMessageFieldNamingSnake(Rule[MessageField]):
@@ -198,5 +207,8 @@ class RuleMessageFieldNamingSnake(Rule[MessageField]):
         return MessageField
 
     def check(self, definition: MessageField, name: Optional[str] = None) -> Result:
-        # TODO
-        return MessageFieldNameNotSnake.from_token(definition), "using abc"
+        definition_name = name or definition.name
+        expect = snake_case(definition_name)
+        if expect != definition_name:
+            return MessageFieldNameNotSnake.from_token(definition), expect
+        return None, None
