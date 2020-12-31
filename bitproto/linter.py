@@ -11,6 +11,7 @@ from typing import Callable, Optional, Tuple, TypeVar, Type as T, Generic, List
 
 from bitproto._ast import (
     Alias,
+    BoundDefinition,
     Constant,
     Definition,
     Enum,
@@ -44,6 +45,7 @@ SUPPORTED_TYPES: Tuple[T[Definition], ...] = (
     MessageField,
     Proto,
     Definition,  # For generic rule.
+    BoundDefinition,  # For generic rule in bound definition.
 )
 
 
@@ -115,15 +117,15 @@ def lint(proto: Proto) -> None:
 # Rule Implementations
 
 
-class RuleDefinitionIndent(Rule[Definition]):
+class RuleDefinitionIndent(Rule[BoundDefinition]):
     """Check definition indent."""
 
-    def target_class(self) -> T[Definition]:
-        return Definition
+    def target_class(self) -> T[BoundDefinition]:
+        return BoundDefinition
 
-    def check(self, definition: Definition, name: Optional[str] = None) -> Result:
+    def check(self, definition: BoundDefinition, name: Optional[str] = None) -> Result:
         expect: int = (len(definition.scope_stack) - 1) * 4
-        if definition.indent > 0 and definition.indent != expect:
+        if definition.indent > 0 and expect >= 0 and definition.indent != expect:
             return IndentWarning.from_token(definition), f"{expect} spaces"
         return None, None
 
