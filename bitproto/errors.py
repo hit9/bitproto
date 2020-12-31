@@ -218,6 +218,11 @@ class LintWarning(Warning, _TokenBound):
 
 
 @dataclass
+class IndentWarning(LintWarning):
+    """Indent warning."""
+
+
+@dataclass
 class EnumNameNotPascal(LintWarning):
     """Enum name not pascal case."""
 

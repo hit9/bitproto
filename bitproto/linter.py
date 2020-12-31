@@ -23,6 +23,7 @@ from bitproto._ast import (
 from bitproto.errors import warning
 from bitproto.errors import (
     Warning,
+    IndentWarning,
     EnumNameNotPascal,
     EnumHasNoFieldValue0,
     EnumFieldNameNotUpper,
@@ -42,16 +43,12 @@ SUPPORTED_TYPES: Tuple[T[Definition], ...] = (
     Message,
     MessageField,
     Proto,
+    Definition,  # For generic rule.
 )
 
 
 class Rule(Generic[D]):
     """Abstract class to describe a lint rule."""
-
-    @abc.abstractmethod
-    def description(self) -> str:
-        """Rule description."""
-        raise NotImplementedError
 
     @abc.abstractmethod
     def target_class(self) -> T[D]:
@@ -71,7 +68,9 @@ class Linter:
     """The linter."""
 
     def filter_rules(self, target_class: T[D]) -> List[Rule[D]]:
-        """Filter rule by target_class."""
+        """Filter rule by target_class.
+        Comparasion by operator `is`.
+        """
         return [rule for rule in self.rules() if rule.target_class() is target_class]
 
     def run_rule_checker(
@@ -83,7 +82,13 @@ class Linter:
     def lint(self, proto: Proto) -> None:
         """Run lint rules for definitions bound to this proto."""
         for definition_type in SUPPORTED_TYPES:
-            items = proto.filter(definition_type, recursive=True, bound=proto)
+
+            items: List[Tuple[str, Definition]]
+            if definition_type is Proto:  # proto is not a member of itself.
+                items = [(proto.name, proto)]
+            else:
+                items = proto.filter(definition_type, recursive=True, bound=proto)
+
             rules = self.filter_rules(definition_type)
             for name, definition in items:
                 for rule in rules:
@@ -93,6 +98,7 @@ class Linter:
         """Rules collection.
         Subclasses could overload."""
         return (
+            RuleDefinitionIndent(),
             RuleEnumNamingPascal(),
             RuleEnumContains0(),
             RuleEnumFieldNamingUpper(),
@@ -109,9 +115,31 @@ def lint(proto: Proto) -> None:
 # Rule Implementations
 
 
+class RuleDefinitionIndent(Rule[Definition]):
+    """Check definition indent."""
+
+    def target_class(self) -> T[Definition]:
+        return Definition
+
+    def check(self, definition: Definition, name: Optional[str] = None) -> Result:
+        expect: int = (len(definition.scope_stack) - 1) * 4
+        if definition.indent > 0 and definition.indent != expect:
+            return IndentWarning.from_token(definition), f"{expect} spaces"
+        return None, None
+
+
+class RuleConstantNamingUpper(Rule[Constant]):
+    """Check if constant name is in upper case."""
+
+    def target_class(self) -> T[Constant]:
+        return Constant
+
+    def check(self, definition: Constant, name: Optional[str] = None) -> Result:
+        pass
+
+
 class RuleEnumNamingPascal(Rule[Enum]):
-    def description(self) -> str:
-        return "Check if enum name is in pascal case."
+    """Check if enum name is in pascal case."""
 
     def target_class(self) -> T[Enum]:
         return Enum
@@ -122,8 +150,7 @@ class RuleEnumNamingPascal(Rule[Enum]):
 
 
 class RuleEnumContains0(Rule[Enum]):
-    def description(self) -> str:
-        return "Check if enum contains a field 0."
+    """Check if enum contains a field 0."""
 
     def target_class(self) -> T[Enum]:
         return Enum
@@ -139,8 +166,7 @@ class RuleEnumContains0(Rule[Enum]):
 
 
 class RuleEnumFieldNamingUpper(Rule[EnumField]):
-    def description(self) -> str:
-        return "Check if enum field name is in upper case."
+    """Check if enum field name is in upper case."""
 
     def target_class(self) -> T[EnumField]:
         return EnumField
@@ -153,8 +179,7 @@ class RuleEnumFieldNamingUpper(Rule[EnumField]):
 
 
 class RuleMessageNamingPascal(Rule[Message]):
-    def description(self) -> str:
-        return "Check if message name is in pascal case."
+    """Check if message name is in pascal case."""
 
     def target_class(self) -> T[Message]:
         return Message
@@ -165,8 +190,7 @@ class RuleMessageNamingPascal(Rule[Message]):
 
 
 class RuleMessageFieldNamingSnake(Rule[MessageField]):
-    def description(self) -> str:
-        return "Check if message field name is in snake case."
+    """Check if message field name is in snake case."""
 
     def target_class(self) -> T[MessageField]:
         return MessageField

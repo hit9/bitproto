@@ -403,6 +403,8 @@ class Scope(Definition):
                 if isinstance(member, _BoundDefinition):
                     if member.bound is not bound:
                         continue
+                else:  # skip directly.
+                    continue
             if recursive:  # Child first
                 if isinstance(member, Scope):
                     scope = cast(Scope, member)
