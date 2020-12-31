@@ -220,3 +220,23 @@ class LintWarning(Warning, _TokenBound):
 @dataclass
 class EnumNameNotPascal(LintWarning):
     """Enum name not pascal case."""
+
+
+@dataclass
+class EnumHasNoFieldValue0(LintWarning):
+    """Enum has no field with value 0."""
+
+
+@dataclass
+class EnumFieldNameNotUpper(LintWarning):
+    """Enum field name not upper case."""
+
+
+@dataclass
+class MessageNameNotPascal(LintWarning):
+    """Message name not pascal case."""
+
+
+@dataclass
+class MessageFieldNameNotSnake(LintWarning):
+    """Message field name not snake case."""
