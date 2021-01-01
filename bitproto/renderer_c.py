@@ -86,29 +86,6 @@ class BitprotoDeclaration(Block):
         self.push(self.formatter.format_comment(BITPROTO_DECLARATION))
 
 
-class IncludeHeaderFile(Block):
-    def __init__(self, header_filename: str) -> None:
-        super(IncludeHeaderFile, self).__init__()
-        self.header_filename = header_filename
-
-    def render(self) -> None:
-        self.push(f'#include "{self.header_filename}"')
-
-
-class RendererC(Renderer):
-    """Renderer for C language (c file)."""
-
-    def file_extension(self) -> str:
-        return ".c"
-
-    def formatter(self) -> Formatter:
-        return CFormatter()
-
-    def blocks(self) -> List[Block]:
-        header_filename = RendererCHeader(self.proto, self.outdir).out_filename
-        return [BitprotoDeclaration(), IncludeHeaderFile(header_filename)]
-
-
 class HeaderDeclaration(Block):
     def __init__(self, proto: Proto) -> None:
         super(HeaderDeclaration, self).__init__()
@@ -224,7 +201,7 @@ class EnumBlock(BlockForDefinition):
         self.push_location_doc()
 
     def render_enum_fields(self) -> None:
-        for field in self.as_enum.fields:
+        for field in self.as_enum.fields():
             block = EnumFieldBlock(field, formatter=self.formatter)
             block.render()
             self.push(block.collect())
@@ -283,7 +260,7 @@ class MessageBlock(BlockForDefinition):
         self.push(macro_string)
 
     def render_message_struct_fields(self) -> None:
-        for field in self.as_message.fields:
+        for field in self.as_message.sorted_fields():
             block = MessageFieldBlock(field, formatter=self.formatter, ident=4)
             block.render()
             self.push(block.collect())
@@ -385,3 +362,31 @@ class RendererCHeader(Renderer):
             blocks.append(MessageBlock(self.proto, message, name=name))
 
         return blocks
+
+
+class IncludeHeaderFile(Block):
+    def __init__(self, header_filename: str) -> None:
+        super(IncludeHeaderFile, self).__init__()
+        self.header_filename = header_filename
+
+    def render(self) -> None:
+        self.push(f'#include "{self.header_filename}"')
+
+
+class MessageEncoderBlock(BlockForDefinition):
+    def render(self) -> None:
+        pass
+
+
+class RendererC(Renderer):
+    """Renderer for C language (c file)."""
+
+    def file_extension(self) -> str:
+        return ".c"
+
+    def formatter(self) -> Formatter:
+        return CFormatter()
+
+    def blocks(self) -> List[Block]:
+        header_filename = RendererCHeader(self.proto, self.outdir).out_filename
+        return [BitprotoDeclaration(), IncludeHeaderFile(header_filename)]

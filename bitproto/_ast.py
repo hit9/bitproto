@@ -749,15 +749,17 @@ class Enum(ExtensibleType, BoundScope):
     def nbits(self) -> int:
         return self.type.nbits()
 
-    @property
+    @cache_if_frozen
     def fields(self) -> List[EnumField]:
         return [field for _, field in self.enum_fields(recursive=False)]
 
+    @cache_if_frozen
     def name_to_values(self) -> "dict_[str, int]":
-        return dict_((field.name, field.value) for field in self.fields)
+        return dict_((field.name, field.value) for field in self.fields())
 
+    @cache_if_frozen
     def value_to_names(self) -> "dict_[int, str]":
-        return dict_((field.value, field.name) for field in self.fields)
+        return dict_((field.value, field.name) for field in self.fields())
 
     def validate_member_on_push(
         self, member: Definition, name: Optional[str] = None
@@ -796,22 +798,29 @@ class Message(ExtensibleType, BoundScope, ScopeWithOptions):
     name: str = ""
     __option_descriptors__: ClassVar[OptionDescriptors] = MESSAGE_OPTIONS
 
-    @property
+    @cache_if_frozen
     def fields(self) -> List[MessageField]:
         return [field for _, field in self.message_fields(recursive=False)]
 
+    @cache_if_frozen
+    def sorted_fields(self) -> List[MessageField]:
+        return sorted(self.fields(), key=lambda field: field.number)
+
+    @cache_if_frozen
     def nbits(self) -> int:
-        return sum(field.type.nbits() for field in self.fields)
+        return sum(field.type.nbits() for field in self.fields())
 
     def __repr__(self) -> str:
         extensible_flag = "'" if self.extensible else ""
         return f"<message {self.name}{extensible_flag}>"
 
+    @cache_if_frozen
     def number_to_field(self) -> "dict_[int, MessageField]":
-        return dict_((field.number, field) for field in self.fields)
+        return dict_((field.number, field) for field in self.fields())
 
+    @cache_if_frozen
     def number_to_field_sorted(self) -> "dict_[int, MessageField]":
-        fields = sorted(self.fields, key=lambda field: field.number)
+        fields = sorted(self.fields(), key=lambda field: field.number)
         return dict_((field.number, field) for field in fields)
 
     def validate_member_on_push(

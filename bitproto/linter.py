@@ -179,7 +179,7 @@ class RuleEnumContains0(Rule[Enum]):
     def check(
         self, definition: Enum, name: Optional[str] = None
     ) -> Optional[LintWarning]:
-        for field in definition.fields:
+        for field in definition.fields():
             if field.value == 0:
                 return None
         return EnumHasNoFieldValue0.from_token(token=definition, suggestion=None)
