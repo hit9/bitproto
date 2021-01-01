@@ -62,7 +62,7 @@ class GoFormatter(Formatter):
         return "int{0}".format(self.nbits_from_integer_type(t))
 
     def format_array_type(self, t: Array, name: Optional[str] = None) -> str:
-        return "[{cap}]{type}".format(type=self.format_type(t.type), cap=t.cap)
+        return "[{cap}]{type}".format(type=self.format_type(t.element_type), cap=t.cap)
 
     def format_import_statement(self, t: Proto, as_name: Optional[str] = None) -> str:
         path = t.get_option_as_string_or_raise("go.package_path") or f"{t.name}_bp"

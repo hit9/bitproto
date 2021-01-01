@@ -488,7 +488,7 @@ class Parser:
     def p_array_type(self, p: P) -> None:
         """array_type : single_type '[' array_capacity ']' optional_extensible_flag"""
         p[0] = Array(
-            type=p[1],
+            element_type=p[1],
             cap=p[3],
             extensible=p[5],
             token="{0}[{1}]".format(p[1], p[3]),

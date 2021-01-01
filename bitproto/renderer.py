@@ -188,6 +188,12 @@ class Formatter:
             return self.format_alias_type(t)
         return "_unknown_type"
 
+    def format_left_shift(self, n: int) -> str:
+        return f"<< {n}"
+
+    def format_right_shift(self, n: int) -> str:
+        return f">> {n}"
+
     @abc.abstractmethod
     def ident_character(self) -> str:
         """Ident character of target language, e.g. ' ', '\t'

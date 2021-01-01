@@ -70,8 +70,8 @@ class CFormatter(Formatter):
 
     def format_array_type(self, t: Array, name: Optional[str] = None) -> str:
         assert name is not None, InternalError("format_array_type got name=None")
-        return "{type} {name}[{capacity}]".format(
-            type=self.format_type(t.type), name=name, capacity=t.cap
+        return "{element_type} {name}[{capacity}]".format(
+            element_type=self.format_type(t.element_type), name=name, capacity=t.cap
         )
 
     def format_message_type(self, t: Message) -> str:
@@ -159,7 +159,7 @@ class ConstantBlock(BlockForDefinition):
 class AliasBlock(BlockForDefinition):
     def render_alias_typedef_to_array(self) -> None:
         array_type = cast(Array, self.as_alias.type)
-        aliased_type = self.formatter.format_type(array_type.type)
+        aliased_type = self.formatter.format_type(array_type.element_type)
         name = self.formatter.format_alias_name(self.as_alias)
         capacity = array_type.cap
         self.push(f"typedef {aliased_type} {name}[{capacity}];")

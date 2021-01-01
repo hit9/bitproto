@@ -82,7 +82,7 @@ from bitproto.options import (
 N = TypeVar("N", bound="Node")  # Node
 D = TypeVar("D", bound="Definition")  # Definition
 S = T[N]  # Type of Node, Super N
-
+V = TypeVar("V", bool, int, str)  # Base value
 
 ConstantValue = Union[bool, int, str]
 
@@ -171,6 +171,8 @@ class Node(metaclass=_Meta):
 @final(frozen.post_init)
 @dataclass
 class Comment(Node):
+    """Represents a line of comment."""
+
     @cache_if_frozen
     def content(self) -> str:
         """Returns the stripped content of this comment."""
@@ -182,18 +184,20 @@ class Comment(Node):
 
 @dataclass
 class Definition(Node):
+    """Definition base class.
+
+    :param name: The name of this definition.
+    :param scope_stack: The parent scope stack, snapshot from parser.
+    :param comment_block: The comment lines of this definition.
+    :param indent: The number of indent characters of the starting token.
+    :param _bound: The proto instance this definition bound.
+    """
 
     name: str = ""
     scope_stack: Tuple["Scope", ...] = tuple()
     comment_block: Tuple[Comment, ...] = tuple()
     indent: int = 0  # <0 for invalid.
     _bound: Optional["Proto"] = None
-
-    def set_name(self, name: str) -> None:
-        self.name = name
-
-    def set_comment_block(self, comment_block: Tuple[Comment, ...]) -> None:
-        self.comment_block = comment_block
 
     def __repr__(self) -> str:
         class_repr = repr(type(self))
@@ -266,7 +270,10 @@ class StringOption(Option):
 
 @dataclass(frozen=True)
 class OptionDescriptor_:
-    """Wrapper around original OptionDescriptor."""
+    """Wrapper around original OptionDescriptor.
+
+    :param class_: The Option class reflect from default value in original descriptor.
+    """
 
     name: str
     class_: T[Option]
@@ -341,10 +348,23 @@ class StringConstant(Constant):
 
 @dataclass
 class Scope(Definition):
+    """Scope is a definition with child definitions as members.
+    In bitproto syntax design, a pair of braces declares a scope.
+
+        {                     => push_scope(scope)
+            definitions       => scope.push_member()
+        }                     => pop_scope(), scope.freeze()
+    """
+
     members: "dict_[str, Definition]" = dataclass_field(default_factory=dict_)
 
     def push_member(self, member: Definition, name: Optional[str] = None) -> None:
-        """Push a definition `member`, and run hook functions around."""
+        """Push a definition `member`, and run hook functions around.
+        Raises error if given member's name already taken by another member.
+
+        :param member: The member parsed.
+        :param name: Optional name declared in this scope (instead of member.name).
+        """
         if self.is_frozen():
             raise InternalError("push on frozen scope.")
 
@@ -388,7 +408,9 @@ class Scope(Definition):
 
     @cache_if_frozen
     def get_name_by_member(self, member: Definition) -> Optional[str]:
-        """Get name in this scope by member."""
+        """Get name in this scope by member.
+        Compared by operator `is`.
+        """
         for name, member_ in self.members.items():
             if member_ is member:
                 return name
@@ -457,13 +479,19 @@ class Scope(Definition):
 
 @dataclass
 class BoundScope(Scope, BoundDefinition):
-    "BoundScope distinguishs from Proto."
+    "BoundScope is the scope has a bound, distinguishs from Proto."
     pass
 
 
 @dataclass
 class ScopeWithOptions(Scope):
     """Scope with options described."""
+
+    def __init_subclass__(cls) -> None:
+        """Assuming subclasses define a class-level `__option_descriptors__`
+        attribute."""
+        if getattr(cls, "__option_descriptors__", None) is None:
+            raise InternalError("no __option_descriptors__ defined")
 
     def options(self) -> List[Tuple[str, Option]]:
         return self.filter(Option, recursive=False, bound=None)
@@ -474,9 +502,7 @@ class ScopeWithOptions(Scope):
 
     @cache
     def option_descriptors(self) -> Dict[str, OptionDescriptor_]:
-        """Returns descriptors in format dict.
-        Assuming subclass has attribute `__option_descriptors__` declared.
-        """
+        """Returns descriptors in format dict."""
         descriptors = getattr(self, "__option_descriptors__", None)
         if not descriptors:
             return {}
@@ -484,6 +510,7 @@ class ScopeWithOptions(Scope):
         return dict((w.name, w) for w in wrappers)
 
     def get_option_descriptor(self, name: str) -> Optional[OptionDescriptor_]:
+        """Get an option descriptor by name, None on not found."""
         return self.option_descriptors().get(name, None)
 
     def validate_member_on_push(
@@ -520,23 +547,25 @@ class ScopeWithOptions(Scope):
             return option
         raise UnsupportedOption(message=f"get_option_or_raise({name}) got None")
 
-    def get_option_as_int_or_raise(self, name: str) -> int:
+    def get_option_value_or_raise(self, name: str, value_type: T[V]) -> V:
+        """Obtain an option and returns its value.
+
+        :param value_type: The expecting type of the value.
+        """
         option = self.get_option_or_raise(name)
-        if isinstance(option, IntegerOption):
-            return cast(IntegerOption, option).value
-        raise InternalError("option not integer")
+        value = option.value
+        if isinstance(value, value_type):
+            return value
+        raise InternalError(f"option value not {value_type}")
+
+    def get_option_as_int_or_raise(self, name: str) -> int:
+        return self.get_option_value_or_raise(name, int)
 
     def get_option_as_string_or_raise(self, name: str) -> str:
-        option = self.get_option_or_raise(name)
-        if isinstance(option, StringOption):
-            return cast(StringOption, option).value
-        raise InternalError("option not string")
+        return self.get_option_value_or_raise(name, str)
 
     def get_option_as_bool_or_raise(self, name: str) -> bool:
-        option = self.get_option_or_raise(name)
-        if isinstance(option, BooleanOption):
-            return cast(BooleanOption, option).value
-        raise InternalError("option not boolean")
+        return self.get_option_value_or_raise(name, bool)
 
     def validate_option_on_push(self, option: Option) -> None:
         """Validate option on parser pushes."""
@@ -563,13 +592,20 @@ class ScopeWithOptions(Scope):
 
 @dataclass
 class Type(Node):
+    # Indicates if self is _TYPE_MISSING
     _is_missing: bool = False
 
     def nbits(self) -> int:
+        """Returns number of bits this type occupy.
+        Should be overload by final type subclasses.
+        """
         raise NotImplementedError
 
     @cache_if_frozen
     def nbytes(self) -> int:
+        """Returns the number of bytes this type occupy,
+        calculated by nbits().
+        """
         nbits = self.nbits()
         if nbits % 8 == 0:
             return int(nbits / 8)
@@ -581,17 +617,24 @@ _TYPE_MISSING = Type(_is_missing=True)
 
 @dataclass
 class SingleType(Type):
-    pass
+    """SingleType is the type of the value composed of a single element.
+    In bitproto, base types and enum are single types.
+    """
 
 
 @dataclass
 class CompositeType(Type):
-    pass
+    """CompositeType is the type of the value composed of multiple elements,
+    aka the type of value containers.
+    In bitproto, message and array are composite types.
+    """
 
 
 @dataclass
 class BaseType(SingleType):
-    pass
+    """BaseType is the type of base values.
+    In bitproto, bool, byte and integer are base types.
+    """
 
 
 @final(frozen.post_init)
@@ -622,6 +665,10 @@ class Integer(BaseType):
 @final(frozen.post_init)
 @dataclass
 class Uint(Integer):
+    """Uint is the unsigned Integer.
+    In bitproto, uint type supports capacity ranges from 1 to 64.
+    """
+
     cap: int = 0
 
     def validate(self) -> None:
@@ -643,6 +690,10 @@ _UINT_MISSING = Uint(_is_missing=True)
 @final(frozen.post_init)
 @dataclass
 class Int(Integer):
+    """Int is the signed Integer.
+    Different from uint, int type only supports capacity: 8, 16, 32, 64.
+    """
+
     cap: int = 0
 
     def validate(self) -> None:
@@ -658,66 +709,95 @@ class Int(Integer):
 
 @dataclass
 class ExtensibleType(Type):
+    """ExtensibleType is the type able to extend its size for backward-compatiable
+    concern. When setting the `extensible` parameter to True, a micro buffer that
+    indicates the type size will be inserted at the head of encoded buffer.
+    In bitproto, array, enum and message are extensible types.
+    """
+
     extensible: bool = False
 
 
 @final(frozen.post_init)
 @dataclass
 class Array(CompositeType, ExtensibleType):
-    type: Type = _TYPE_MISSING
+    """Array, described by element type and capacity.
+    :param type: The type of array element.
+    :param cap: Max value of number of elements.
+
+    Constraint: the pattern "array of array" (the 2D array type)
+    is not supported, otherwise that would complex the encoding handling.
+    """
+
+    element_type: Type = _TYPE_MISSING
     cap: int = 0
 
-    @property
-    def supported_types(self) -> Tuple[T[Type], ...]:
-        return (Bool, Byte, Int, Uint, Enum, Message, Alias)
+    @classmethod
+    def element_type_constraints(cls) -> Tuple[T[Type], ...]:
+        return (
+            Bool,
+            Byte,
+            Int,
+            Uint,
+            Enum,
+            Message,
+            Alias,
+        )
 
     def validate(self) -> None:
         self.validate_array_cap()
-        self.validate_array_type()
+        self.validate_array_element_type()
 
     def validate_array_cap(self) -> None:
         if not (0 < self.cap < 1024):
             raise InvalidArrayCap.from_token(token=self)
 
-    def validate_array_type(self) -> None:
-        if not isinstance(self.type, self.supported_types):
+    def validate_array_element_type(self) -> None:
+        if not isinstance(self.element_type, self.element_type_constraints()):
             raise UnsupportedArrayType.from_token(token=self)
 
     @cache_if_frozen
     def nbits(self) -> int:
-        if self.type is None:
+        if self.element_type is None:
             return 0
-        return self.cap * self.type.nbits()
+        return self.cap * self.element_type.nbits()
 
     def __repr__(self) -> str:
         extensible_flag = "'" if self.extensible else ""
         return "<type array ({0}, cap={1}){2}>".format(
-            self.type, self.cap, extensible_flag
+            self.element_type, self.cap, extensible_flag
         )
 
 
 @final(frozen.post_init)
 @dataclass
 class Alias(Type, BoundDefinition):
+    """Alias is the type that references to a type.
+    Similar to `typedef` in C, `type A = B` in Go etc.
+    :param type: The referenced type.
+    """
+
     type: Type = _TYPE_MISSING
 
     def __repr__(self) -> str:
         return f"<alias {self.name}>"
 
     def validate_type(self) -> bool:
-        """It's allowed to alias to:
-            * base types (bool, uint, int, byte)
-            * array of base types
-            * array of alias to base types
+        # FIXME: alias to array of message? alias to array of enum
+        # Maybe: alias to non-definition type
+        """Constraint type to alias:
+          * base types (bool, uint, int, byte)
+          * array of base types
+          * array of alias to base types
         """
         if isinstance(self.type, BaseType):
             return True
         if isinstance(self.type, Array):
             array = cast(Array, self.type)
-            if isinstance(array.type, BaseType):
+            if isinstance(array.element_type, BaseType):
                 return True
-            if isinstance(array.type, Alias):
-                alias = cast(Alias, array.type)
+            if isinstance(array.element_type, Alias):
+                alias = cast(Alias, array.element_type)
                 if isinstance(alias.type, BaseType):
                     return True
         return False
@@ -758,6 +838,12 @@ class EnumField(Field):
 @final(frozen.later)
 @dataclass
 class Enum(SingleType, ExtensibleType, BoundScope):
+    """Enum.
+    :param type: The type annotation of this enum.
+
+    Enum in bitproto constraints to uint type.
+    """
+
     type: Uint = _UINT_MISSING
 
     def __repr__(self) -> str:
@@ -769,14 +855,17 @@ class Enum(SingleType, ExtensibleType, BoundScope):
 
     @cache_if_frozen
     def fields(self) -> List[EnumField]:
+        """Returns the EnumField list in this enum scope."""
         return [field for _, field in self.enum_fields(recursive=False)]
 
     @cache_if_frozen
     def name_to_values(self) -> "dict_[str, int]":
+        """Returns the dict of field name to field value."""
         return dict_((field.name, field.value) for field in self.fields())
 
     @cache_if_frozen
     def value_to_names(self) -> "dict_[int, str]":
+        """Returns the dict of field value to field name."""
         return dict_((field.value, field.name) for field in self.fields())
 
     def validate_member_on_push(
@@ -806,6 +895,7 @@ class MessageField(Field):
         return f"<message-field {self.name}={self.number}>"
 
     def validate(self) -> None:
+        """Constraint message field number from 1 to 255."""
         if not (0 < self.number < 256):
             raise InvalidMessageFieldNumber.from_token(token=self)
 
@@ -813,15 +903,19 @@ class MessageField(Field):
 @final(frozen.later)
 @dataclass
 class Message(CompositeType, ExtensibleType, BoundScope, ScopeWithOptions):
+    """Message (similar to protobuf's message). """
+
     name: str = ""
     __option_descriptors__: ClassVar[OptionDescriptors] = MESSAGE_OPTIONS
 
     @cache_if_frozen
     def fields(self) -> List[MessageField]:
+        """Returns the MessageField list in this message scope."""
         return [field for _, field in self.message_fields(recursive=False)]
 
     @cache_if_frozen
     def sorted_fields(self) -> List[MessageField]:
+        """Sorted version of fields(), by field number."""
         return sorted(self.fields(), key=lambda field: field.number)
 
     @cache_if_frozen
@@ -834,12 +928,13 @@ class Message(CompositeType, ExtensibleType, BoundScope, ScopeWithOptions):
 
     @cache_if_frozen
     def number_to_field(self) -> "dict_[int, MessageField]":
+        """Returns the dict field number to field."""
         return dict_((field.number, field) for field in self.fields())
 
     @cache_if_frozen
     def number_to_field_sorted(self) -> "dict_[int, MessageField]":
-        fields = sorted(self.fields(), key=lambda field: field.number)
-        return dict_((field.number, field) for field in fields)
+        """Dict version of sorted_fields(), in format of field number to field."""
+        return dict_((field.number, field) for field in self.sorted_fields())
 
     def validate_member_on_push(
         self, member: Definition, name: Optional[str] = None
@@ -860,6 +955,16 @@ class Message(CompositeType, ExtensibleType, BoundScope, ScopeWithOptions):
 class Proto(ScopeWithOptions):
     __repr_name__: ClassVar[str] = "bitproto"
     __option_descriptors__: ClassVar[OptionDescriptors] = PROTO_OPTTIONS
+
+    def set_name(self, name: str) -> None:
+        if self.is_frozen():
+            raise InternalError("set_name on frozen proto")
+        self.name = name
+
+    def set_comment_block(self, comment_block: Tuple[Comment, ...]) -> None:
+        if self.is_frozen():
+            raise InternalError("set_comment_block on frozen proto")
+        self.comment_block = comment_block
 
     def __repr__(self) -> str:
         return f"<bitproto {self.name}>"
