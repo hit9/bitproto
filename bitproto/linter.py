@@ -47,7 +47,7 @@ SUPPORTED_TYPES: Tuple[T[Definition], ...] = (
     MessageField,
     Proto,
     Definition,  # For generic rule.
-    BoundDefinition,  # For generic rule in bound definition.
+    BoundDefinition,  # For generic rule on bound definition.
 )
 
 
