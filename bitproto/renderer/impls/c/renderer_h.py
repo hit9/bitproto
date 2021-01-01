@@ -5,17 +5,11 @@ Renderer for C header file.
 from typing import cast, Any, List
 
 from bitproto._ast import Array, Proto
-from bitproto.renderer.block import Block, BlockForDefinition
+from bitproto.renderer.block import Block, BlockForDefinition, BitprotoDeclarationBlock
 from bitproto.renderer.formatter import Formatter
 from bitproto.renderer.renderer import Renderer
 from bitproto.renderer.impls.c.formatter import CFormatter
 from bitproto.utils import snake_case
-
-
-class BitprotoDeclaration(Block):
-    def render(self) -> None:
-        declaration = self.formatter.BITPROTO_DECLARATION
-        self.push(self.formatter.format_comment(declaration))
 
 
 class HeaderDeclaration(Block):
@@ -269,7 +263,7 @@ class RendererCHeader(Renderer):
 
     def blocks(self) -> List[Block]:
         blocks = [
-            BitprotoDeclaration(),
+            BitprotoDeclarationBlock(),
             HeaderDeclaration(self.proto),
             HeaderIncludes(),
         ]

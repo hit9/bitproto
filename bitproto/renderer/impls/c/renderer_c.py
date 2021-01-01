@@ -4,11 +4,11 @@ Renderer for C file.
 
 from typing import List
 
-from bitproto.renderer.block import Block, BlockForDefinition
+from bitproto.renderer.block import Block, BlockForDefinition, BitprotoDeclarationBlock
 from bitproto.renderer.formatter import Formatter
 from bitproto.renderer.renderer import Renderer
 from bitproto.renderer.impls.c.formatter import CFormatter
-from bitproto.renderer.impls.c.renderer_h import RendererCHeader, BitprotoDeclaration
+from bitproto.renderer.impls.c.renderer_h import RendererCHeader
 
 
 class IncludeHeaderFile(Block):
@@ -36,4 +36,4 @@ class RendererC(Renderer):
 
     def blocks(self) -> List[Block]:
         header_filename = RendererCHeader(self.proto, self.outdir).out_filename
-        return [BitprotoDeclaration(), IncludeHeaderFile(header_filename)]
+        return [BitprotoDeclarationBlock(), IncludeHeaderFile(header_filename)]

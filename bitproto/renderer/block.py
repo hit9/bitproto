@@ -69,8 +69,18 @@ class Block:
         raise NotImplementedError
 
     def defer(self) -> None:
-        """Defer render processor for this block. invoked by Renderer.render()."""
+        """Defer render processor for this block. invoked by Renderer.render().
+        Optional overrided.
+        """
         raise NotImplementedError
+
+
+class BitprotoDeclarationBlock(Block):
+    """Block to render bitproto header declaration."""
+
+    def render(self) -> None:
+        declaration = self.formatter.BITPROTO_DECLARATION
+        self.push(self.formatter.format_comment(declaration))
 
 
 class BlockForDefinition(Block):
