@@ -75,12 +75,11 @@ class Block:
         raise NotImplementedError
 
 
-class BitprotoDeclarationBlock(Block):
-    """Block to render bitproto header declaration."""
+class BlockAheadNotice(Block):
+    """Block to render bitproto ahead notice"""
 
     def render(self) -> None:
-        declaration = self.formatter.BITPROTO_DECLARATION
-        self.push(self.formatter.format_comment(declaration))
+        self.push(self.formatter.format_comment(self.formatter.AHEAD_NOTICE))
 
 
 class BlockForDefinition(Block):
