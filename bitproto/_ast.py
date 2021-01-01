@@ -146,7 +146,7 @@ class Node(metaclass=_Meta):
     lineno: int = 0
     filepath: str = ""
 
-    # cheat mypy: overloads by @frozen
+    # cheat mypy: override by @frozen
     __frozen__: ClassVar[bool] = False
 
     def is_frozen(self) -> bool:
@@ -161,7 +161,7 @@ class Node(metaclass=_Meta):
 
     def freeze(self) -> None:
         """Makes mypy happy.
-        @frozen.later overloads this."""
+        @frozen.later override this."""
         pass
 
     def __repr__(self) -> str:
@@ -597,7 +597,7 @@ class Type(Node):
 
     def nbits(self) -> int:
         """Returns number of bits this type occupy.
-        Should be overload by final type subclasses.
+        Should be override by final type subclasses.
         """
         raise NotImplementedError
 

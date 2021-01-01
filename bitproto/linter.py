@@ -100,7 +100,7 @@ class Linter:
 
     def rules(self) -> Tuple[Rule, ...]:
         """Rules collection.
-        Subclasses could overload."""
+        Subclasses could override."""
         return (
             RuleDefinitionIndent(),
             RuleConstantNamingUpper(),
