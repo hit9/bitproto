@@ -11,7 +11,7 @@ from bitproto import __description__, __version__
 from bitproto.errors import ParserError, RendererError
 from bitproto.linter import lint
 from bitproto.parser import parse
-from bitproto.renderer import get_renderer_registry, render
+from bitproto.renderer import renderer_registry, render
 
 EPILOG = """
 example usage:
@@ -26,7 +26,7 @@ example usage:
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
-    supported_languages = list(get_renderer_registry().keys())
+    supported_languages = list(renderer_registry.keys())
     args_parser = argparse.ArgumentParser(
         description=__description__,
         epilog=EPILOG,

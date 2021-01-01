@@ -1,11 +1,8 @@
 """
-bitproto.renderer_py
-~~~~~~~~~~~~~~~~~~~~
-
 Renderer for Python.
 """
 
-from bitproto.renderer import Renderer
+from bitproto.renderer.renderer import Renderer
 
 
 class RendererPy(Renderer):

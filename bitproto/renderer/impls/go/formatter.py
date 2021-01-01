@@ -1,15 +1,11 @@
 """
-bitproto.renderer_go
-~~~~~~~~~~~~~~~~~~~~
-
-Renderer for Go.
+Go Formatter
 """
 
-from typing import List, Optional
+from typing import Optional
 
 from bitproto._ast import Array, Constant, EnumField, Int, Uint, Proto
-from bitproto.errors import InternalError
-from bitproto.renderer import Block, Formatter, Renderer
+from bitproto.renderer.formatter import Formatter
 
 
 class GoFormatter(Formatter):
@@ -69,16 +65,3 @@ class GoFormatter(Formatter):
         if as_name:
             return f'import {as_name} "{path}"'
         return f'import "{path}"'
-
-
-class RendererGo(Renderer):
-    """Renderer for Go language."""
-
-    def file_extension(self) -> str:
-        return ".go"
-
-    def formatter(self) -> Formatter:
-        return GoFormatter()
-
-    def blocks(self) -> List[Block]:
-        pass  # TODO
