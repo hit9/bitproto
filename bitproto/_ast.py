@@ -7,11 +7,16 @@ Abstraction syntax tree.
     Node
       |- Comment                        :Node
       |- Type                           :Node
-      |    |- BaseType                  :Type:Node
-      |    |    |- Bool                 :BaseType:Type:Node
-      |    |    |- Byte                 :BaseType:Type:Node
-      |    |    |- Int                  :BaseType:Type:Node
-      |    |    |- Uint                 :BaseType:Type:Node
+      |    |- SingleType                :Type:Node
+      |    |    |- BaseType             :SingleType:Node
+      |    |    |    |- Bool            :BaseType:SingleType:Type:Node
+      |    |    |    |- Byte            :BaseType:SingleType:Type:Node
+      |    |    |    |- Int             :BaseType:SingleType:Type:Node
+      |    |    |    |- Uint            :BaseType:SingleType:Type:Node
+      |    |    |- Enum                 :SingleType:Type:Node
+      |    |- CompositeType             :Type:Node
+      |    |    |- Array                :CompositeType:Type:Node
+      |    |    |- Message              :CompositeType:Type:Node
       |    |- ExtensibleType            :Type:Node
       |    |    |- Array                :ExtensibleType:Type:Node
       |    |    |- Enum                 :ExtensibleType:Type:Node
@@ -151,6 +156,7 @@ class Node(metaclass=_Meta):
         self.validate()
 
     def validate(self) -> None:
+        """Validator hook function, invoked after node init."""
         pass
 
     def freeze(self) -> None:
@@ -176,6 +182,7 @@ class Comment(Node):
 
 @dataclass
 class Definition(Node):
+
     name: str = ""
     scope_stack: Tuple["Scope", ...] = tuple()
     comment_block: Tuple[Comment, ...] = tuple()
@@ -195,7 +202,8 @@ class Definition(Node):
 
 @dataclass
 class BoundDefinition(Definition):
-    """BoundDefinition distinguishs from Proto."""
+    """BoundDefinition is definitions bound to a proto,
+    distinguishs from Proto."""
 
     @property
     def bound(self) -> "Proto":
@@ -572,7 +580,17 @@ _TYPE_MISSING = Type(_is_missing=True)
 
 
 @dataclass
-class BaseType(Type):
+class SingleType(Type):
+    pass
+
+
+@dataclass
+class CompositeType(Type):
+    pass
+
+
+@dataclass
+class BaseType(SingleType):
     pass
 
 
@@ -645,7 +663,7 @@ class ExtensibleType(Type):
 
 @final(frozen.post_init)
 @dataclass
-class Array(ExtensibleType):
+class Array(CompositeType, ExtensibleType):
     type: Type = _TYPE_MISSING
     cap: int = 0
 
@@ -739,7 +757,7 @@ class EnumField(Field):
 
 @final(frozen.later)
 @dataclass
-class Enum(ExtensibleType, BoundScope):
+class Enum(SingleType, ExtensibleType, BoundScope):
     type: Uint = _UINT_MISSING
 
     def __repr__(self) -> str:
@@ -794,7 +812,7 @@ class MessageField(Field):
 
 @final(frozen.later)
 @dataclass
-class Message(ExtensibleType, BoundScope, ScopeWithOptions):
+class Message(CompositeType, ExtensibleType, BoundScope, ScopeWithOptions):
     name: str = ""
     __option_descriptors__: ClassVar[OptionDescriptors] = MESSAGE_OPTIONS
 
