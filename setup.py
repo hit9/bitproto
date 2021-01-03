@@ -17,7 +17,7 @@ setup(
     include_package_data=True,
     zip_safe=False,
     entry_points={"console_scripts": ["bitproto=bitproto.command:run_bitproto"]},
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     install_requires=["ply>=3.11"],
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
@@ -26,7 +26,6 @@ setup(
         "License :: OSI Approved :: BSD License",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
     ],

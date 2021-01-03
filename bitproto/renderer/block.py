@@ -5,7 +5,7 @@ bitproto.renderer.block
 Block class base.
 """
 
-import abc
+from abc import abstractmethod
 from typing import cast, List, Optional
 
 from bitproto._ast import (
@@ -64,7 +64,7 @@ class Block:
         self.clear()
         return s
 
-    @abc.abstractmethod
+    @abstractmethod
     def render(self) -> None:
         """Render processor for this block, invoked by Renderer.render()."""
         raise NotImplementedError

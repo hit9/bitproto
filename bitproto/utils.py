@@ -20,11 +20,6 @@ else:
     except ImportError:
         from functools import lru_cache as cache
 
-try:
-    from typing import final
-except ImportError:
-    from typing_extensions import final
-
 
 def conditional_cache(condition: Callable[..., bool]) -> Callable[[F], F]:
     """Cache given function until condition function returns True.

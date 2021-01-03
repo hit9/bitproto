@@ -46,12 +46,12 @@ from dataclasses import field as dataclass_field
 from typing import Any, Callable, ClassVar, List, Optional, Tuple, Dict
 from typing import Type as T
 from typing import TypeVar, Union, cast
+from typing import final
 
 from bitproto.utils import (
     conditional_cache,
     cache,
     frozen,
-    final,
 )
 from bitproto.errors import (
     DuplicatedDefinition,

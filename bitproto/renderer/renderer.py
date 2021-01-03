@@ -5,7 +5,7 @@ bitproto.renderer.renderer
 Renderer class base.
 """
 
-import abc
+from abc import abstractmethod
 import os
 from typing import List, Optional
 
@@ -86,17 +86,17 @@ class Renderer:
             f.write(content)
         return self.out_filepath
 
-    @abc.abstractmethod
+    @abstractmethod
     def blocks(self) -> List[Block]:
         """Returns the blocks to render."""
         raise NotImplementedError
 
-    @abc.abstractmethod
+    @abstractmethod
     def file_extension(self) -> str:
         """Returns the file extension to generate.  e.g. ".c"
         """
         raise NotImplementedError
 
-    @abc.abstractmethod
+    @abstractmethod
     def formatter(self) -> Formatter:
         raise NotImplementedError

@@ -4,7 +4,7 @@ bitproto.renderer.formatter
 
 Formatter class base.
 """
-import abc
+from abc import abstractmethod
 from typing import Optional, Tuple, Union, Type as T
 
 from bitproto._ast import (
@@ -153,70 +153,70 @@ class Formatter:
     def format_right_shift(self, n: int) -> str:
         return f">> {n}"
 
-    @abc.abstractmethod
+    @abstractmethod
     def ident_character(self) -> str:
         """Ident character of target language, e.g. ' ', '\t'
         """
         raise NotImplementedError
 
-    @abc.abstractmethod
+    @abstractmethod
     def support_import(self) -> bool:
         """Dose target language support proto import?"""
         raise NotImplementedError
 
-    @abc.abstractmethod
+    @abstractmethod
     def delimer_cross_proto(self) -> str:
         """Delimer character between definitions across protos, e.g. '.'
         """
         raise NotImplementedError
 
-    @abc.abstractmethod
+    @abstractmethod
     def delimer_inner_proto(self) -> str:
         """Delimer character between definitions inner a single proto, e.g. '_'
         """
         raise NotImplementedError
 
-    @abc.abstractmethod
+    @abstractmethod
     def format_comment(self, content: str) -> str:
         """Format given content into a line of comment in target language."""
         raise NotImplementedError
 
-    @abc.abstractmethod
+    @abstractmethod
     def format_bool_value(self, value: bool) -> str:
         """Boolean literal representation in target language."""
         raise NotImplementedError
 
-    @abc.abstractmethod
+    @abstractmethod
     def format_str_value(self, value: str) -> str:
         """String literal representation in target language."""
         raise NotImplementedError
 
-    @abc.abstractmethod
+    @abstractmethod
     def format_int_value(self, value: int) -> str:
         """Integer literal representation in target language."""
         raise NotImplementedError
 
-    @abc.abstractmethod
+    @abstractmethod
     def format_bool_type(self) -> str:
         """Bool type representation in target language."""
         raise NotImplementedError
 
-    @abc.abstractmethod
+    @abstractmethod
     def format_byte_type(self) -> str:
         """Byte type representation in target language."""
         raise NotImplementedError
 
-    @abc.abstractmethod
+    @abstractmethod
     def format_uint_type(self, t: Uint) -> str:
         """Unsigned integer type representation in target language."""
         raise NotImplementedError
 
-    @abc.abstractmethod
+    @abstractmethod
     def format_int_type(self, t: Int) -> str:
         """Signed integer type representation in target language."""
         raise NotImplementedError
 
-    @abc.abstractmethod
+    @abstractmethod
     def format_array_type(self, t: Array, name: Optional[str] = None) -> str:
         """Array type representation in target language.
         :param name: Target language (like C) may require a name for array declaration.
@@ -238,6 +238,6 @@ class Formatter:
         Normally the alias name, without extra declaration statements."""
         return self.format_alias_name(t)
 
-    @abc.abstractmethod
+    @abstractmethod
     def format_import_statement(self, t: Proto, as_name: Optional[str] = None) -> str:
         raise NotImplementedError

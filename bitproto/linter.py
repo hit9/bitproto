@@ -5,7 +5,7 @@ bitproto.linter
 Built-in linter, skipable but not configurable.
 """
 
-import abc
+from abc import abstractmethod
 from dataclasses import dataclass
 from typing import Callable, Optional, Tuple, TypeVar, Type as T, Generic, List
 
@@ -54,12 +54,12 @@ SUPPORTED_TYPES: Tuple[T[Definition], ...] = (
 class Rule(Generic[D]):
     """Abstract class to describe a lint rule."""
 
-    @abc.abstractmethod
+    @abstractmethod
     def target_class(self) -> T[D]:
         """Target ast class."""
         raise NotImplementedError
 
-    @abc.abstractmethod
+    @abstractmethod
     def check(self, definition: D, name: Optional[str] = None) -> Optional[LintWarning]:
         """Checker function, returns warning and suggestion message.
         :param definition: The definition of typed D.
