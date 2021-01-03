@@ -23,7 +23,7 @@ from bitproto.renderer.formatter import Formatter
 
 
 class Block:
-    """Renderer block."""
+    """Block is a collection of rendered strings."""
 
     def __init__(self, formatter: Optional[Formatter] = None, ident: int = 0) -> None:
         self.strings: List[str] = []
@@ -53,6 +53,7 @@ class Block:
         self.strings.append(line)
 
     def push_empty_line(self) -> None:
+        """Append an empty line."""
         self.push("")
 
     def clear(self) -> None:
@@ -79,7 +80,9 @@ class BlockAheadNotice(Block):
     """Block to render bitproto ahead notice"""
 
     def render(self) -> None:
-        self.push(self.formatter.format_comment(self.formatter.AHEAD_NOTICE))
+        notice = self.formatter.AHEAD_NOTICE
+        notice_comment = self.formatter.format_comment(notice)
+        self.push(notice_comment)
 
 
 class BlockForDefinition(Block):

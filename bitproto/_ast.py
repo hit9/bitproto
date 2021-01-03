@@ -75,7 +75,6 @@ from bitproto.options import (
     PROTO_OPTTIONS,
     OptionDescriptor,
     OptionDescriptors,
-    Value as OptionValue,
     Validator as OptionValidator,
 )
 
@@ -84,7 +83,7 @@ D = TypeVar("D", bound="Definition")  # Definition
 S = T[N]  # Type of Node, Super N
 V = TypeVar("V", bool, int, str)  # Base value
 
-ConstantValue = Union[bool, int, str]
+Value = Union[bool, int, str]
 
 _ENABLE_CACHE_ON_AST_FROZEN = True
 
@@ -221,19 +220,19 @@ _VALUE_MISSING = "_value_missing"
 
 @dataclass
 class Option(BoundDefinition):
-    value: OptionValue = _VALUE_MISSING
+    value: Value = _VALUE_MISSING
 
     def __repr__(self) -> str:
         return "<option {0}={1}>".format(self.name, self.value)
 
     @classmethod
-    def from_value(cls, value: OptionValue, **kwds: Any) -> "Option":
+    def from_value(cls, value: Value, **kwds: Any) -> "Option":
         """Creates an option from value with a right subclass."""
         class_ = cls.reflect_subclass_by_value_or_raise(value)
         return class_(value=value, **kwds)
 
     @classmethod
-    def reflect_subclass_by_value(cls, value: OptionValue) -> Optional[T["Option"]]:
+    def reflect_subclass_by_value(cls, value: Value) -> Optional[T["Option"]]:
         if value is True or value is False:
             return BooleanOption
         elif isinstance(value, int):
@@ -243,7 +242,7 @@ class Option(BoundDefinition):
         return None
 
     @classmethod
-    def reflect_subclass_by_value_or_raise(cls, value: OptionValue) -> T["Option"]:
+    def reflect_subclass_by_value_or_raise(cls, value: Value) -> T["Option"]:
         class_ = cls.reflect_subclass_by_value(value)
         if class_ is not None:
             return class_
@@ -277,7 +276,7 @@ class OptionDescriptor_:
 
     name: str
     class_: T[Option]
-    default: OptionValue
+    default: Value
     validator: Optional[OptionValidator] = None
     description: Optional[str] = None
 
@@ -296,16 +295,16 @@ class OptionDescriptor_:
 
 @dataclass
 class Constant(BoundDefinition):
-    value: ConstantValue = _VALUE_MISSING
+    value: Value = _VALUE_MISSING
 
     def __repr__(self) -> str:
         return "<constant {0}={1}>".format(self.name, self.value)
 
-    def unwrap(self) -> ConstantValue:
+    def unwrap(self) -> Value:
         return self.value
 
     @classmethod
-    def reflect_subclass_by_value(cls, value: ConstantValue) -> Optional[T["Constant"]]:
+    def reflect_subclass_by_value(cls, value: Value) -> Optional[T["Constant"]]:
         if value is True or value is False:
             return BooleanConstant
         elif isinstance(value, int):
@@ -315,14 +314,14 @@ class Constant(BoundDefinition):
         return None
 
     @classmethod
-    def reflect_subclass_by_value_or_raise(cls, value: ConstantValue) -> T["Constant"]:
+    def reflect_subclass_by_value_or_raise(cls, value: Value) -> T["Constant"]:
         class_ = cls.reflect_subclass_by_value(value)
         if class_ is not None:
             return class_
         raise InvalidOptionValue(description=f"Invalid constant value {value}")
 
     @classmethod
-    def from_value(cls, value: ConstantValue, **kwds: Any) -> "Constant":
+    def from_value(cls, value: Value, **kwds: Any) -> "Constant":
         """Creates a constant from value with a right subclass."""
         class_ = cls.reflect_subclass_by_value_or_raise(value)
         return class_(value=value, **kwds)

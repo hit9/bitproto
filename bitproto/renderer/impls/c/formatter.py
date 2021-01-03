@@ -26,15 +26,15 @@ class CFormatter(Formatter):
     def format_comment(self, content: str) -> str:
         return f"// {content}"
 
-    def format_bool_literal(self, value: bool) -> str:
+    def format_bool_value(self, value: bool) -> str:
         if value:
             return "true"
         return "false"
 
-    def format_str_literal(self, value: str) -> str:
+    def format_str_value(self, value: str) -> str:
         return '"{0}"'.format(value)
 
-    def format_int_literal(self, value: int) -> str:
+    def format_int_value(self, value: int) -> str:
         return "{0}".format(value)
 
     def format_constant_name(self, v: Constant) -> str:
