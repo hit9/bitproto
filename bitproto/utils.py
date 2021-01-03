@@ -209,9 +209,10 @@ safe_hash_ = safe_hash  # Alias
 
 def override(c: C) -> Callable[[F], F]:
     """Just a simple mark indicates this method is overriding super method.
-    >>> @override(SuperClass)
-        def some_func(self):
-            pass
+
+        >>> @override(SuperClass)
+            def some_func(self):
+                pass
     """
 
     def decorator(f: F) -> F:

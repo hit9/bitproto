@@ -5,11 +5,11 @@ Renderer for C header file.
 from typing import Any, List, cast
 
 from bitproto._ast import Array, Proto
-from bitproto.renderer.block import Block, BlockAheadNotice, BlockForDefinition
+from bitproto.renderer.block import Block, BlockAheadNotice, BlockDefinition
 from bitproto.renderer.formatter import Formatter
 from bitproto.renderer.impls.c.formatter import CFormatter
 from bitproto.renderer.renderer import Renderer
-from bitproto.utils import snake_case
+from bitproto.utils import override, snake_case
 
 
 class BlockIncludeGuard(Block):
@@ -33,15 +33,18 @@ class BlockIncludeGuard(Block):
     def render_declaration_end(self) -> None:
         self.push(f"#endif")
 
+    @override(Block)
     def render(self) -> None:
         self.render_proto_doc()
         self.render_declaration_begin()
 
+    @override(Block)
     def defer(self) -> None:
         self.render_declaration_end()
 
 
 class BlockIncludeGeneralHeaders(Block):
+    @override(Block)
     def render(self) -> None:
         self.push("#include <inttypes.h>")
         self.push("#include <stdbool.h>")
@@ -50,39 +53,44 @@ class BlockIncludeGeneralHeaders(Block):
 
 
 class BlockExternCPlusPlus(Block):
+    @override(Block)
     def render(self) -> None:
         self.push("#if defined(__cplusplus)")
         self.push('extern "C" {')
         self.push("#endif")
 
+    @override(Block)
     def defer(self) -> None:
         self.push("#if defined(__cplusplus)")
         self.push("}")
         self.push("#endif")
 
 
-class BlockIncludeChildProtoHeader(BlockForDefinition):
+class BlockIncludeChildProtoHeader(BlockDefinition):
+    @override(Block)
     def render(self) -> None:
         self.push(self.formatter.format_import_statement(self.as_proto))
 
 
 class BlockGeneralMacroDefines(Block):
+    @override(Block)
     def render(self) -> None:
         self.push('#define btoa(x) ((x) ? "true" : "false")')
 
 
-class BlockConstant(BlockForDefinition):
+class BlockConstant(BlockDefinition):
     def render_constant_define(self) -> None:
         name = self.formatter.format_constant_name(self.as_constant)
         value = self.formatter.format_value(self.as_constant.value)
         self.push(f"#define {name} {value}")
 
+    @override(Block)
     def render(self) -> None:
         self.render_doc()
         self.render_constant_define()
 
 
-class BlockAlias(BlockForDefinition):
+class BlockAlias(BlockDefinition):
     def render_alias_typedef_to_array(self) -> None:
         array_type = cast(Array, self.as_alias.type)
         aliased_type = self.formatter.format_type(array_type.element_type)
@@ -102,24 +110,26 @@ class BlockAlias(BlockForDefinition):
             self.render_alias_typedef_to_common()
         self.push_location_doc()
 
+    @override(Block)
     def render(self) -> None:
         self.render_doc()
         self.render_alias_typedef()
 
 
-class BlockEnumField(BlockForDefinition):
+class BlockEnumField(BlockDefinition):
     def render_define_macro(self) -> None:
         field = self.as_enum_field
         name = self.formatter.format_enum_field_name(field)
         value = self.formatter.format_int_value(field.value)
         self.push(f"#define {name} {value}")
 
+    @override(Block)
     def render(self) -> None:
         self.render_doc()
         self.render_define_macro()
 
 
-class BlockEnum(BlockForDefinition):
+class BlockEnum(BlockDefinition):
     def render_enum_typedef(self) -> None:
         name = self.formatter.format_enum_name(self.as_enum)
         uint_type = self.formatter.format_uint_type(self.as_enum.type)
@@ -132,13 +142,14 @@ class BlockEnum(BlockForDefinition):
             block.render()
             self.push(block.collect())
 
+    @override(Block)
     def render(self) -> None:
         self.render_doc()
         self.render_enum_typedef()
         self.render_enum_fields()
 
 
-class BlockMessageField(BlockForDefinition):
+class BlockMessageField(BlockDefinition):
     def render_field_declaration_array(self) -> None:
         field_type = self.as_message_field.type
         field_name = self.as_message_field.name
@@ -159,12 +170,13 @@ class BlockMessageField(BlockForDefinition):
             self.render_field_declaration_common()
         self.push_location_doc()
 
+    @override(Block)
     def render(self) -> None:
         self.render_doc()
         self.render_field_declaration()
 
 
-class BlockMessage(BlockForDefinition):
+class BlockMessage(BlockDefinition):
     def __init__(self, proto: Proto, *args: Any, **kwds: Any) -> None:
         super(BlockMessage, self).__init__(*args, **kwds)
         self.proto = proto
@@ -239,6 +251,7 @@ class BlockMessage(BlockForDefinition):
         declaration = f"int Json{struct_name}({struct_type} *m, char *s);"
         self.push(declaration)
 
+    @override(Block)
     def render(self) -> None:
         self.render_message_length_macro()
         self.push_empty_line()
@@ -255,12 +268,15 @@ class BlockMessage(BlockForDefinition):
 class RendererCHeader(Renderer):
     """Renderer for C language (header)."""
 
+    @override(Renderer)
     def file_extension(self) -> str:
         return ".h"
 
+    @override(Renderer)
     def formatter(self) -> Formatter:
         return CFormatter()
 
+    @override(Renderer)
     def blocks(self) -> List[Block]:
         blocks = [
             BlockAheadNotice(),

@@ -12,7 +12,7 @@ from bitproto._ast import (Alias, Constant, Definition, Enum, EnumField,
                            Message, MessageField, Proto)
 from bitproto.errors import InternalError
 from bitproto.renderer.formatter import Formatter
-from bitproto.utils import final
+from bitproto.utils import final, overridable
 
 
 class Block:
@@ -39,19 +39,23 @@ class Block:
         assert self._formatter is not None, InternalError("block._formatter not set")
         return self._formatter
 
+    @final
     def set_formatter(self, formatter: Formatter) -> None:
         self._formatter = formatter
 
+    @final
     def __str__(self) -> str:
         """Returns the joined managed strings with separator."""
         return self.separator.join(self.strings)
 
+    @final
     def push_string(self, s: str, separator: str = " ") -> None:
         """Append a in-line string `s` onto current string.
         :param separator: The separator between current string with given `s`.
         """
         self.strings[-1] = separator.join([self.strings[-1], s])
 
+    @final
     def push(self, line: str, ident: Optional[int] = None) -> None:
         """Append a line of string.
         :param line: A line of string (without ending newline character).
@@ -63,13 +67,16 @@ class Block:
             line = ident * self.formatter.indent_character() + line
         self.strings.append(line)
 
+    @final
     def push_empty_line(self) -> None:
         """Append an empty line."""
         self.push("")
 
+    @final
     def clear(self) -> None:
         self.strings = []
 
+    @final
     def collect(self) -> str:
         """Clear and returns the joined string."""
         s = str(self)
@@ -81,6 +88,7 @@ class Block:
         """Render processor for this block, invoked by Renderer.render()."""
         raise NotImplementedError
 
+    @overridable
     def defer(self) -> None:
         """Defer render processor for this block. invoked by Renderer.render().
         Optional overrided.
@@ -98,7 +106,7 @@ class BlockAheadNotice(Block):
         self.push(notice_comment)
 
 
-class BlockForDefinition(Block):
+class BlockDefinition(Block):
     """Block for a definition.
 
     :param definition: The associated definition.
@@ -114,7 +122,7 @@ class BlockForDefinition(Block):
         formatter: Optional[Formatter] = None,
         ident: int = 0,
     ) -> None:
-        super(BlockForDefinition, self).__init__(formatter=formatter, ident=ident)
+        super(BlockDefinition, self).__init__(formatter=formatter, ident=ident)
 
         self.definition = definition
         self.definition_name: str = name or definition.name
@@ -154,6 +162,7 @@ class BlockForDefinition(Block):
         """Returns the definition as a Proto."""
         return cast(Proto, self.definition)
 
+    @final
     def render_doc(self) -> None:
         """Format the comment_block of this definition, and push them."""
         for comment in self.definition.comment_block:
@@ -161,6 +170,7 @@ class BlockForDefinition(Block):
             formatted_comment = self.formatter.format_comment(comment_string)
             self.push(formatted_comment)
 
+    @final
     def push_location_doc(self) -> None:
         """Push current definition source location as an inline-comment to current line."""
         location_string = self.formatter.format_token_location(self.definition)
