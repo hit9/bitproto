@@ -11,7 +11,7 @@ from bitproto import __description__, __version__
 from bitproto.errors import ParserError, RendererError
 from bitproto.linter import lint
 from bitproto.parser import parse
-from bitproto.renderer import renderer_registry, render
+from bitproto.renderer import render, renderer_registry
 
 EPILOG = """
 example usage:

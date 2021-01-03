@@ -44,39 +44,22 @@ Abstraction syntax tree.
 from collections import OrderedDict as dict_
 from dataclasses import dataclass
 from dataclasses import field as dataclass_field
-from typing import Any, Callable, ClassVar, List, Optional, Tuple, Dict
+from typing import Any, Callable, ClassVar, Dict, List, Optional, Tuple
 from typing import Type as T
 from typing import TypeVar, Union, cast
 
-from bitproto.utils import (
-    conditional_cache,
-    cache,
-    final,
-    frozen,
-)
-from bitproto.errors import (
-    DuplicatedDefinition,
-    DuplicatedEnumFieldValue,
-    DuplicatedMessageFieldNumber,
-    EnumFieldValueOverflow,
-    InternalError,
-    InvalidAliasedType,
-    InvalidArrayCap,
-    InvalidEnumFieldValue,
-    InvalidIntCap,
-    InvalidMessageFieldNumber,
-    InvalidOptionValue,
-    InvalidUintCap,
-    UnsupportedArrayType,
-    UnsupportedOption,
-)
-from bitproto.options import (
-    MESSAGE_OPTIONS,
-    PROTO_OPTTIONS,
-    OptionDescriptor,
-    OptionDescriptors,
-    Validator as OptionValidator,
-)
+from bitproto.errors import (DuplicatedDefinition, DuplicatedEnumFieldValue,
+                             DuplicatedMessageFieldNumber,
+                             EnumFieldValueOverflow, InternalError,
+                             InvalidAliasedType, InvalidArrayCap,
+                             InvalidEnumFieldValue, InvalidIntCap,
+                             InvalidMessageFieldNumber, InvalidOptionValue,
+                             InvalidUintCap, UnsupportedArrayType,
+                             UnsupportedOption)
+from bitproto.options import (MESSAGE_OPTIONS, PROTO_OPTTIONS,
+                              OptionDescriptor, OptionDescriptors)
+from bitproto.options import Validator as OptionValidator
+from bitproto.utils import cache, conditional_cache, final, frozen
 
 N = TypeVar("N", bound="Node")  # Node
 D = TypeVar("D", bound="Definition")  # Definition

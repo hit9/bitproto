@@ -17,11 +17,11 @@ Errors.
 
 import sys
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar, Optional
 from typing import Type as T
-from typing import TypeVar, ClassVar, Optional
+from typing import TypeVar
 
-from bitproto.utils import colored, Color
+from bitproto.utils import Color, colored
 
 if TYPE_CHECKING:
     from bitproto._ast import Node

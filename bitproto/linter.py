@@ -7,34 +7,18 @@ Built-in linter, skipable but not configurable.
 
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import Callable, Optional, Tuple, TypeVar, Type as T, Generic, List
+from typing import Callable, Generic, List, Optional, Tuple
+from typing import Type as T
+from typing import TypeVar
 
-from bitproto._ast import (
-    Alias,
-    BoundDefinition,
-    Constant,
-    Definition,
-    Enum,
-    EnumField,
-    Message,
-    MessageField,
-    Node,
-    Proto,
-)
-from bitproto.errors import warning
-from bitproto.errors import (
-    Warning,
-    LintWarning,
-    ConstantNameNotUpper,
-    EnumNameNotPascal,
-    EnumHasNoFieldValue0,
-    EnumFieldNameNotUpper,
-    IndentWarning,
-    MessageNameNotPascal,
-    MessageFieldNameNotSnake,
-)
+from bitproto._ast import (Alias, BoundDefinition, Constant, Definition, Enum,
+                           EnumField, Message, MessageField, Node, Proto)
+from bitproto.errors import (ConstantNameNotUpper, EnumFieldNameNotUpper,
+                             EnumHasNoFieldValue0, EnumNameNotPascal,
+                             IndentWarning, LintWarning,
+                             MessageFieldNameNotSnake, MessageNameNotPascal,
+                             Warning, warning)
 from bitproto.utils import pascal_case, snake_case
-
 
 D = TypeVar("D", bound=Definition)
 

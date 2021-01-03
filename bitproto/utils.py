@@ -1,9 +1,9 @@
+import re
 from enum import Enum, unique
 from functools import wraps
-import re
-from typing import Any, Callable, List, Optional, Type as T, TypeVar, Union
-from typing import TYPE_CHECKING
-from typing import cast, overload
+from typing import TYPE_CHECKING, Any, Callable, List, Optional
+from typing import Type as T
+from typing import TypeVar, Union, cast, overload
 
 I = TypeVar("I")  # Any Input
 O = TypeVar("O")  # Ant Output

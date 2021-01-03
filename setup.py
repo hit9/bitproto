@@ -1,4 +1,5 @@
 from os.path import dirname, join
+
 from setuptools import setup  # type: ignore
 
 about = {"__name__": "bitproto"}
