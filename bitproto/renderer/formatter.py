@@ -97,6 +97,11 @@ class Formatter:
         raise NotImplementedError
 
     @abstractmethod
+    def format_docstring(self, content: str) -> str:
+        """Format given content into a docstring in target language."""
+        raise NotImplementedError
+
+    @abstractmethod
     def format_bool_value(self, value: bool) -> str:
         """Boolean literal representation in target language."""
         raise NotImplementedError

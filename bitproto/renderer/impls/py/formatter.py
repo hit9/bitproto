@@ -1,16 +1,16 @@
 """
-Go formatter
+Python formatter.
 """
 
 from typing import Optional
 
-from bitproto._ast import Array, Constant, EnumField, Int, Proto, Uint
+from bitproto._ast import Array, Byte, Constant, EnumField, Int, Proto, Uint
 from bitproto.renderer.formatter import CaseStyleMapping, Formatter
 from bitproto.utils import override
 
 
-class GoFormatter(Formatter):
-    """Formatter for Go language."""
+class PyFormatter(Formatter):
+    """Formatter for Python language."""
 
     @override(Formatter)
     def case_style_mapping(self) -> CaseStyleMapping:
@@ -21,7 +21,7 @@ class GoFormatter(Formatter):
 
     @override(Formatter)
     def indent_character(self) -> str:
-        return "\t"
+        return " "
 
     @override(Formatter)
     def support_import_as_member(self) -> bool:
@@ -29,13 +29,17 @@ class GoFormatter(Formatter):
 
     @override(Formatter)
     def format_comment(self, content: str) -> str:
-        return f"// {content}"
+        return f"# {content}"
+
+    @override(Formatter)
+    def format_docstring(self, content: str) -> str:
+        return f'"""{content}"""'
 
     @override(Formatter)
     def format_bool_value(self, value: bool) -> str:
         if value:
-            return "true"
-        return "false"
+            return "True"
+        return "False"
 
     @override(Formatter)
     def format_str_value(self, value: str) -> str:
@@ -51,23 +55,28 @@ class GoFormatter(Formatter):
 
     @override(Formatter)
     def format_byte_type(self) -> str:
-        return "byte"
+        """Python dosen't have a type 'byte', using str instead."""
+        return "str"
 
     @override(Formatter)
     def format_uint_type(self, t: Uint) -> str:
-        return "uint{0}".format(self.nbits_from_integer_type(t))
+        return "int"
 
     @override(Formatter)
     def format_int_type(self, t: Int) -> str:
-        return "int{0}".format(self.nbits_from_integer_type(t))
+        return "int"
 
     @override(Formatter)
     def format_array_type(self, t: Array, name: Optional[str] = None) -> str:
-        return "[{cap}]{type}".format(type=self.format_type(t.element_type), cap=t.cap)
+        if isinstance(t.element_type, Byte):  # Array of byte is str
+            return "str"
+        return "List[{type}]".format(type=self.format_type(t.element_type))
 
     @override(Formatter)
     def format_import_statement(self, t: Proto, as_name: Optional[str] = None) -> str:
-        path = t.get_option_as_string_or_raise("go.package_path") or f"{t.name}_bp"
+        module_name = (
+            t.get_option_as_string_or_raise("py.module_name") or f"{t.name}_bp"
+        )
         if as_name:
-            return f'import {as_name} "{path}"'
-        return f'import "{path}"'
+            return f"import {module_name} as {as_name}"
+        return f"import {module_name}"

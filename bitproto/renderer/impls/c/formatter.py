@@ -33,6 +33,10 @@ class CFormatter(Formatter):
         return f"// {content}"
 
     @override(Formatter)
+    def format_docstring(self, content: str) -> str:
+        return self.format_comment(content)
+
+    @override(Formatter)
     def format_bool_value(self, value: bool) -> str:
         if value:
             return "true"

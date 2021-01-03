@@ -206,7 +206,7 @@ class MessageBlock(BlockForDefinition):
 
     def render_encoder_function_declaration(self) -> None:
         struct_name: str = self.struct_name
-        comment = self.formatter.format_comment(
+        comment = self.formatter.format_docstring(
             f"Encode struct {struct_name} to given buffer s"
         )
         self.push(comment)
@@ -216,7 +216,7 @@ class MessageBlock(BlockForDefinition):
 
     def render_decoder_function_declaration(self) -> None:
         struct_name: str = self.struct_name
-        comment = self.formatter.format_comment(
+        comment = self.formatter.format_docstring(
             f"Decode struct {struct_name} from given buffer s"
         )
         self.push(comment)
@@ -231,7 +231,7 @@ class MessageBlock(BlockForDefinition):
         if not enabled:
             return
         struct_name: str = self.struct_name
-        comment = self.formatter.format_comment(
+        comment = self.formatter.format_docstring(
             f"Format struct {struct_name} to a json format string."
         )
         self.push(comment)
