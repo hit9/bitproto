@@ -1,8 +1,9 @@
-import re
-from enum import unique, Enum
-from typing import Any, Callable, List, Optional, Type as T, TypeVar, cast
-from typing import TYPE_CHECKING
+from enum import Enum, unique
 from functools import wraps
+import re
+from typing import Any, Callable, List, Optional, Type as T, TypeVar, Union
+from typing import TYPE_CHECKING
+from typing import cast, overload
 
 I = TypeVar("I")  # Any Input
 O = TypeVar("O")  # Ant Output
@@ -19,20 +20,10 @@ else:
     except ImportError:
         from functools import lru_cache as cache
 
-
-if TYPE_CHECKING:
-    from typing import final  # 3.8+
-else:
-
-    def final(class_: C) -> C:
-        """Marks a class as a final class, which can't be inherit.
-        We don't use mypy's final keyword."""
-
-        def __init_subclass__(*args, **kwargs):
-            raise TypeError("Final class can't be inherit.")
-
-        setattr(class_, "__init_subclass__", __init_subclass__)
-        return class_
+try:
+    from typing import final
+except ImportError:
+    from typing_extensions import final
 
 
 def conditional_cache(condition: Callable[..., bool]) -> Callable[[F], F]:
@@ -81,81 +72,75 @@ class cached_property:
         return value
 
 
-class frozen:
-    """Freeze a class on its inition or later."""
+@overload
+def frozen(class_: C) -> C:
+    ...
 
-    @classmethod
-    def _create_setattr_func(cls):
+
+@overload
+def frozen(*, safe_hash: bool = True, post_init: bool = True) -> Callable[[C], C]:
+    ...
+
+
+def frozen(
+    class_: Optional[C] = None, *, safe_hash: bool = True, post_init: bool = True
+):
+    """Freeze a class:
+
+    >>> @frozen
+        class MyClass:
+            def __init__(self, name):
+                self.name = name
+    >>> inst = MyClass(name="ha")
+    >>> inst.name = "changed"  # raised
+
+    """
+
+    def wrap(class_: C) -> C:
+        def freeze(class_self) -> None:
+            if getattr(class_self, "__frozen__", False):
+                raise AttributeError("Cannot freeze frozen instance")
+            setattr(class_self, "__frozen__", True)
+
         def __setattr__(self, name, value):
             if getattr(self, "__frozen__", False):
                 raise AttributeError("Cant setattr on frozen instance")
             else:
                 object.__setattr__(self, name, value)
 
-        return __setattr__
-
-    @classmethod
-    def _create_delattr_func(cls):
         def __delattr__(self, name):
             if getattr(self, "__frozen__", False):
                 raise AttributeError("Cant delattr on frozen instance")
             else:
                 object.__delattr__(self, name)
 
-        return __delattr__
-
-    @classmethod
-    def later(cls, class_: C) -> C:
-        """Decorates given class to freeze on demand later init.
-
-        >>> @frozen.later
-            class MyClass:
-                pass
-
-        >>> inst = MyClass()
-        >>> inst.name = "ha" # => ok
-        >>> inst.freeze()
-        >>> inst.name = "but" # => AttributeError
-        >>> inst.is_frozen() # => True
-
-        """
-
-        def freeze(class_self) -> None:
-            setattr(class_self, "__frozen__", True)
-
         setattr(class_, "__frozen__", False)
         setattr(class_, "freeze", freeze)
-        setattr(class_, "__setattr__", cls._create_setattr_func())
-        setattr(class_, "__delattr__", cls._create_delattr_func())
+        setattr(class_, "__setattr__", __setattr__)
+        setattr(class_, "__delattr__", __delattr__)
+
+        if post_init:
+
+            init_func = getattr(class_, "__init__")
+
+            def decorate_init(func):
+                @wraps(func)
+                def decorated(class_self, *args, **kwds):
+                    ret = func(class_self, *args, **kwds)
+                    class_self.freeze()
+                    return ret
+
+                return decorated
+
+            setattr(class_, "__init__", decorate_init(init_func))
+
+        if safe_hash:
+            return safe_hash_(class_)
         return class_
 
-    @classmethod
-    def post_init(cls, class_: C) -> C:
-        """Decorates given class to freeze post init.
-
-        >>> @frozen.post_init
-            class MyClass:
-                def __init__(self, name):
-                    self.name = name
-
-        >>> inst = MyClass("sweet")
-        >>> inst.name = "ha" # => AttributeError
-        """
-        func = getattr(class_, "__init__")
-
-        def decorate_init(func):
-            @wraps(func)
-            def decorated(class_self, *args, **kwargs):
-                ret = func(class_self, *args, **kwargs)
-                setattr(class_self, "__frozen__", True)
-                return ret
-
-            return decorated
-
-        setattr(class_, "__init__", decorate_init(func))
-        setattr(class_, "__setattr__", cls._create_setattr_func())
-        setattr(class_, "__delattr__", cls._create_delattr_func())
-        return class_
+    if class_ is None:
+        return wrap
+    return wrap(class_)
 
 
 def safe_hash(class_: C) -> C:
@@ -167,6 +152,9 @@ def safe_hash(class_: C) -> C:
 
     setattr(class_, "__hash__", __hash__)
     return class_
+
+
+safe_hash_ = safe_hash
 
 
 def write_file(filepath: str, s: str) -> None:

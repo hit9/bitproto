@@ -51,8 +51,7 @@ from bitproto.utils import (
     conditional_cache,
     cache,
     frozen,
-    safe_hash,
-    final as final_,
+    final,
 )
 from bitproto.errors import (
     DuplicatedDefinition,
@@ -116,24 +115,6 @@ def cache_if_frozen_condition(
 cache_if_frozen = conditional_cache(cache_if_frozen_condition)
 
 
-def final(frozener: Callable[[S], S]) -> Callable[[S], S]:
-    """Decorator to mark a node class to be a final node.
-    A final node can't be inherit anymore.
-    A final node is applied to following decorators:
-
-        >>> @final_
-            @safe_hash
-            @frozener
-            class LeafNode:
-                pass
-    """
-
-    def decorator(node_class_: S) -> S:
-        return final_((frozener(safe_hash(node_class_))))
-
-    return decorator
-
-
 class _Meta(type):
     def __repr__(self) -> str:
         return getattr(self, "__repr_name__", self.__name__)
@@ -160,14 +141,15 @@ class Node(metaclass=_Meta):
 
     def freeze(self) -> None:
         """Makes mypy happy.
-        @frozen.later override this."""
+        @frozen override this."""
         pass
 
     def __repr__(self) -> str:
         return "<{0}>".format(repr(type(self)))
 
 
-@final(frozen.post_init)
+@final
+@frozen
 @dataclass
 class Comment(Node):
     """Represents a line of comment."""
@@ -249,19 +231,22 @@ class Option(BoundDefinition):
         raise InvalidOptionValue(description=f"Invalid option value {value}")
 
 
-@final(frozen.post_init)
+@final
+@frozen
 @dataclass
 class IntegerOption(Option):
     value: int = 0
 
 
-@final(frozen.post_init)
+@final
+@frozen
 @dataclass
 class BooleanOption(Option):
     value: bool = False
 
 
-@final(frozen.post_init)
+@final
+@frozen
 @dataclass
 class StringOption(Option):
     value: str = ""
@@ -327,19 +312,22 @@ class Constant(BoundDefinition):
         return class_(value=value, **kwds)
 
 
-@final(frozen.post_init)
+@final
+@frozen
 @dataclass
 class IntegerConstant(Constant):
     value: int = 0
 
 
-@final(frozen.post_init)
+@final
+@frozen
 @dataclass
 class BooleanConstant(Constant):
     value: bool = False
 
 
-@final(frozen.post_init)
+@final
+@frozen
 @dataclass
 class StringConstant(Constant):
     value: str = ""
@@ -636,7 +624,8 @@ class BaseType(SingleType):
     """
 
 
-@final(frozen.post_init)
+@final
+@frozen
 @dataclass
 class Bool(BaseType):
     def nbits(self) -> int:
@@ -646,7 +635,8 @@ class Bool(BaseType):
         return "<type bool>"
 
 
-@final(frozen.post_init)
+@final
+@frozen
 @dataclass
 class Byte(BaseType):
     def nbits(self) -> int:
@@ -661,7 +651,8 @@ class Integer(BaseType):
     pass
 
 
-@final(frozen.post_init)
+@final
+@frozen
 @dataclass
 class Uint(Integer):
     """Uint is the unsigned Integer.
@@ -686,7 +677,8 @@ class Uint(Integer):
 _UINT_MISSING = Uint(_is_missing=True)
 
 
-@final(frozen.post_init)
+@final
+@frozen
 @dataclass
 class Int(Integer):
     """Int is the signed Integer.
@@ -717,7 +709,8 @@ class ExtensibleType(Type):
     extensible: bool = False
 
 
-@final(frozen.post_init)
+@final
+@frozen
 @dataclass
 class Array(CompositeType, ExtensibleType):
     """Array, described by element type and capacity.
@@ -768,7 +761,8 @@ class Array(CompositeType, ExtensibleType):
         )
 
 
-@final(frozen.post_init)
+@final
+@frozen
 @dataclass
 class Alias(Type, BoundDefinition):
     """Alias is the type that references to a type.
@@ -821,7 +815,8 @@ class Field(BoundDefinition):
     pass
 
 
-@final(frozen.post_init)
+@final
+@frozen
 @dataclass
 class EnumField(Field):
     value: int = 0
@@ -834,7 +829,8 @@ class EnumField(Field):
             raise InvalidEnumFieldValue.from_token(token=self)
 
 
-@final(frozen.later)
+@final
+@frozen(post_init=False)
 @dataclass
 class Enum(SingleType, ExtensibleType, BoundScope):
     """Enum.
@@ -884,7 +880,8 @@ class Enum(SingleType, ExtensibleType, BoundScope):
             raise DuplicatedEnumFieldValue.from_token(token=field)
 
 
-@final(frozen.post_init)
+@final
+@frozen
 @dataclass
 class MessageField(Field):
     type: Type = Type()
@@ -899,7 +896,8 @@ class MessageField(Field):
             raise InvalidMessageFieldNumber.from_token(token=self)
 
 
-@final(frozen.later)
+@final
+@frozen(post_init=False)
 @dataclass
 class Message(CompositeType, ExtensibleType, BoundScope, ScopeWithOptions):
     """Message (similar to protobuf's message). """
@@ -949,7 +947,8 @@ class Message(CompositeType, ExtensibleType, BoundScope, ScopeWithOptions):
             raise DuplicatedMessageFieldNumber.from_token(token=field)
 
 
-@final(frozen.later)
+@final
+@frozen(post_init=False)
 @dataclass
 class Proto(ScopeWithOptions):
     __repr_name__: ClassVar[str] = "bitproto"
