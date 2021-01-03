@@ -9,8 +9,8 @@ from typing import List, Optional
 
 from bitproto._ast import Proto
 from bitproto.errors import UnsupportedLanguageToRender
-from bitproto.renderer.renderer import Renderer
 from bitproto.renderer.impls import renderer_registry
+from bitproto.renderer.renderer import Renderer
 
 
 def render(proto: Proto, lang: str, outdir: Optional[str] = None) -> List[str]:

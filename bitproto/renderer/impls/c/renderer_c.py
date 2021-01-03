@@ -6,9 +6,9 @@ from typing import List
 
 from bitproto.renderer.block import Block, BlockAheadNotice, BlockForDefinition
 from bitproto.renderer.formatter import Formatter
-from bitproto.renderer.renderer import Renderer
 from bitproto.renderer.impls.c.formatter import CFormatter
 from bitproto.renderer.impls.c.renderer_h import RendererCHeader
+from bitproto.renderer.renderer import Renderer
 
 
 class IncludeHeaderFile(Block):

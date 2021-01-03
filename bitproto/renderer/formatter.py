@@ -5,32 +5,18 @@ bitproto.renderer.formatter
 Formatter class base.
 """
 from abc import abstractmethod
-from typing import Callable, Dict, Optional, Tuple, Union, Type as T, Tuple
-from typing import cast
-from enum import Enum as Enum_, unique
+from enum import Enum as Enum_
+from enum import unique
+from typing import Callable, Dict, Optional, Tuple
+from typing import Type as T
+from typing import Union, cast
 
-from bitproto._ast import (
-    Alias,
-    Array,
-    Bool,
-    Byte,
-    Constant,
-    Definition,
-    Enum,
-    EnumField,
-    Int,
-    Integer,
-    Message,
-    Node,
-    Proto,
-    Scope,
-    Type,
-    Uint,
-    Value,
-)
+from bitproto._ast import (Alias, Array, Bool, Byte, Constant, Definition,
+                           Enum, EnumField, Int, Integer, Message, Node, Proto,
+                           Scope, Type, Uint, Value)
 from bitproto.errors import InternalError
-from bitproto.utils import final, overridable
-from bitproto.utils import snake_case, pascal_case, upper_case, keep_case
+from bitproto.utils import (final, keep_case, overridable, pascal_case,
+                            snake_case, upper_case)
 
 CaseStyleConverter = Callable[[str], str]
 

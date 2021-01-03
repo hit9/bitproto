@@ -6,8 +6,8 @@ from typing import List
 
 from bitproto.renderer.block import Block
 from bitproto.renderer.formatter import Formatter
-from bitproto.renderer.renderer import Renderer
 from bitproto.renderer.impls.go.formatter import GoFormatter
+from bitproto.renderer.renderer import Renderer
 
 
 class RendererGo(Renderer):

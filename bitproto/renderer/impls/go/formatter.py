@@ -4,8 +4,8 @@ Go Formatter
 
 from typing import Optional
 
-from bitproto._ast import Array, Constant, EnumField, Int, Uint, Proto
-from bitproto.renderer.formatter import Formatter, CaseStyleMapping
+from bitproto._ast import Array, Constant, EnumField, Int, Proto, Uint
+from bitproto.renderer.formatter import CaseStyleMapping, Formatter
 from bitproto.utils import override
 
 

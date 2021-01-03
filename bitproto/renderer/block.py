@@ -6,18 +6,10 @@ Block class base.
 """
 
 from abc import abstractmethod
-from typing import cast, List, Optional
+from typing import List, Optional, cast
 
-from bitproto._ast import (
-    Alias,
-    Constant,
-    Definition,
-    Enum,
-    EnumField,
-    Message,
-    MessageField,
-    Proto,
-)
+from bitproto._ast import (Alias, Constant, Definition, Enum, EnumField,
+                           Message, MessageField, Proto)
 from bitproto.errors import InternalError
 from bitproto.renderer.formatter import Formatter
 from bitproto.utils import final

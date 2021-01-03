@@ -2,13 +2,13 @@
 Renderer for C header file.
 """
 
-from typing import cast, Any, List
+from typing import Any, List, cast
 
 from bitproto._ast import Array, Proto
 from bitproto.renderer.block import Block, BlockAheadNotice, BlockForDefinition
 from bitproto.renderer.formatter import Formatter
-from bitproto.renderer.renderer import Renderer
 from bitproto.renderer.impls.c.formatter import CFormatter
+from bitproto.renderer.renderer import Renderer
 from bitproto.utils import snake_case
 
 

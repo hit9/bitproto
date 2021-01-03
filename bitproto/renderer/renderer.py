@@ -5,8 +5,8 @@ bitproto.renderer.renderer
 Renderer class base.
 """
 
-from abc import abstractmethod
 import os
+from abc import abstractmethod
 from typing import List, Optional
 
 from bitproto._ast import Proto

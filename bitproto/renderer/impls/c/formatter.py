@@ -6,7 +6,7 @@ from typing import Optional
 
 from bitproto._ast import Array, Constant, EnumField, Int, Message, Proto, Uint
 from bitproto.errors import InternalError
-from bitproto.renderer.formatter import Formatter, CaseStyleMapping
+from bitproto.renderer.formatter import CaseStyleMapping, Formatter
 from bitproto.utils import override
 
 
