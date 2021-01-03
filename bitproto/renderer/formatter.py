@@ -259,9 +259,11 @@ class Formatter:
         definition_name = scope.get_name_by_member(d) or d.name
 
         classes_ = self.scopes_with_namespace()
-        namespaces = [scope for scope in d.scope_stack if isinstance(d, classes_)]
+        namespaces = [scope for scope in d.scope_stack if isinstance(scope, classes_)]
 
-        if len(namespaces) <= 1:
+        if len(namespaces) == 0:
+            return definition_name  # Actually couldn't happen.
+        if len(namespaces) == 1 and namespaces[0] is Proto:
             return definition_name
 
         namespace = namespaces[-1]
@@ -355,4 +357,4 @@ class Formatter:
             return self.format_message_type(t)
         elif isinstance(t, Alias):
             return self.format_alias_type(t)
-        return "_unknown_type"
+        raise InternalError("unknown type for format_type")
