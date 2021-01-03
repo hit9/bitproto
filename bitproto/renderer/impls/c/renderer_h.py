@@ -74,7 +74,7 @@ class HeaderBuiltinMacroDefines(Block):
 class ConstantBlock(BlockForDefinition):
     def render_constant_define(self) -> None:
         name = self.formatter.format_constant_name(self.as_constant)
-        value = self.formatter.format_literal(self.as_constant.value)
+        value = self.formatter.format_value(self.as_constant.value)
         self.push(f"#define {name} {value}")
 
     def render(self) -> None:
@@ -111,7 +111,7 @@ class EnumFieldBlock(BlockForDefinition):
     def render_define_macro(self) -> None:
         field = self.as_enum_field
         name = self.formatter.format_enum_field_name(field)
-        value = self.formatter.format_int_literal(field.value)
+        value = self.formatter.format_int_value(field.value)
         self.push(f"#define {name} {value}")
 
     def render(self) -> None:
