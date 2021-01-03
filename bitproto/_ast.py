@@ -46,11 +46,11 @@ from dataclasses import field as dataclass_field
 from typing import Any, Callable, ClassVar, List, Optional, Tuple, Dict
 from typing import Type as T
 from typing import TypeVar, Union, cast
-from typing import final
 
 from bitproto.utils import (
     conditional_cache,
     cache,
+    final,
     frozen,
 )
 from bitproto.errors import (
@@ -107,21 +107,15 @@ def cache_if_frozen_condition(
     if not isinstance(self, Node):
         return False
 
-    node_self = cast(Node, self)
-    return node_self.__frozen__
+    return getattr(self, "__frozen__", False)
 
 
 # Decorator to cache given function if related node is frozen.
 cache_if_frozen = conditional_cache(cache_if_frozen_condition)
 
 
-class _Meta(type):
-    def __repr__(self) -> str:
-        return getattr(self, "__repr_name__", self.__name__)
-
-
 @dataclass
-class Node(metaclass=_Meta):
+class Node:
     token: str = ""
     lineno: int = 0
     filepath: str = ""
@@ -141,7 +135,7 @@ class Node(metaclass=_Meta):
 
     def freeze(self) -> None:
         """Makes mypy happy.
-        @frozen override this."""
+        @frozen overrides this."""
         pass
 
     def __repr__(self) -> str:
@@ -503,7 +497,7 @@ class ScopeWithOptions(Scope):
     def validate_member_on_push(
         self, member: Definition, name: Optional[str] = None
     ) -> None:
-        super(ScopeWithOptions, self).validate_member_on_push(member, name)
+        super().validate_member_on_push(member, name)
 
         if isinstance(member, Option):
             option = cast(Option, member)
@@ -951,7 +945,6 @@ class Message(CompositeType, ExtensibleType, BoundScope, ScopeWithOptions):
 @frozen(post_init=False)
 @dataclass
 class Proto(ScopeWithOptions):
-    __repr_name__: ClassVar[str] = "bitproto"
     __option_descriptors__: ClassVar[OptionDescriptors] = PROTO_OPTTIONS
 
     def set_name(self, name: str) -> None:

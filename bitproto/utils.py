@@ -10,6 +10,38 @@ O = TypeVar("O")  # Ant Output
 C = TypeVar("C", bound=T)  # Any Class
 F = TypeVar("F", bound=Callable[..., Any])  # Any Function
 
+__all__ = (
+    "F",
+    "C",
+    "final",
+    "cache",
+    "conditional_cache",
+    "cached_property",
+    "frozen",
+    "safe_hash",
+    "write_file",
+    "Color",
+    "colored",
+    "pascal_case",
+    "snake_case",
+)
+
+if TYPE_CHECKING:
+    from typing_extensions import final  # Compat 3.7
+else:
+
+    def final(class_: C) -> C:
+        """We wan't final check as well on runtime stage.
+        Subclasses inheritance will be checked on module checking, instead of the real
+        running time.
+        """
+
+        def __init_subclass__(*args, **kwds) -> None:
+            raise TypeError(f"Cant inherit from final class {class_.__name__}")
+
+        setattr(class_, "__init_subclass__", __init_subclass__)
+        return class_
+
 
 if TYPE_CHECKING:
     # Cheat mypy, which just won't let "try import" goes on.
@@ -149,7 +181,7 @@ def safe_hash(class_: C) -> C:
     return class_
 
 
-safe_hash_ = safe_hash
+safe_hash_ = safe_hash  # Alias
 
 
 def write_file(filepath: str, s: str) -> None:
