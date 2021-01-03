@@ -1,4 +1,5 @@
 import re
+import sys
 from enum import Enum, unique
 from functools import wraps
 from typing import TYPE_CHECKING, Any, Callable, List, Optional
@@ -20,6 +21,7 @@ __all__ = (
     "frozen",
     "safe_hash",
     "override",
+    "overridable",
     "write_file",
     "Color",
     "colored",
@@ -36,7 +38,17 @@ else:
     try:
         from functools import cache  # 3.9+
     except ImportError:
-        from functools import lru_cache as cache
+        if sys.hexversion > 0x3080000:
+            from functools import lru_cache as cache
+        else:  # Compat 3.7
+            from functools import lru_cache
+
+            def cache(maxsize=128, typed=False):
+                if callable(maxsize):  # user_function passed directly
+                    user_function, maxsize = maxsize, 128
+                    decorator = lru_cache(maxsize, typed)
+                    return decorator(user_function)
+                return lru_cache(maxsize, typed)
 
 
 def conditional_cache(condition: Callable[..., bool]) -> Callable[[F], F]:
