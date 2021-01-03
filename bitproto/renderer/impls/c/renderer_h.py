@@ -12,9 +12,9 @@ from bitproto.renderer.renderer import Renderer
 from bitproto.utils import snake_case
 
 
-class HeaderDeclaration(Block):
+class BlockIncludeGuard(Block):
     def __init__(self, proto: Proto) -> None:
-        super(HeaderDeclaration, self).__init__()
+        super(BlockIncludeGuard, self).__init__()
         self.proto = proto
 
     def render_proto_doc(self) -> None:
@@ -41,7 +41,7 @@ class HeaderDeclaration(Block):
         self.render_declaration_end()
 
 
-class HeaderIncludes(Block):
+class BlockIncludeGeneralHeaders(Block):
     def render(self) -> None:
         self.push("#include <inttypes.h>")
         self.push("#include <stdbool.h>")
@@ -49,7 +49,7 @@ class HeaderIncludes(Block):
         self.push("#include <stdio.h>")
 
 
-class HeaderIncludeGuard(Block):
+class BlockExternCPlusPlus(Block):
     def render(self) -> None:
         self.push("#if defined(__cplusplus)")
         self.push('extern "C" {')
@@ -61,17 +61,17 @@ class HeaderIncludeGuard(Block):
         self.push("#endif")
 
 
-class HeaderImportBlock(BlockForDefinition):
+class BlockIncludeChildProtoHeader(BlockForDefinition):
     def render(self) -> None:
         self.push(self.formatter.format_import_statement(self.as_proto))
 
 
-class HeaderBuiltinMacroDefines(Block):
+class BlockGeneralMacroDefines(Block):
     def render(self) -> None:
         self.push('#define btoa(x) ((x) ? "true" : "false")')
 
 
-class ConstantBlock(BlockForDefinition):
+class BlockConstant(BlockForDefinition):
     def render_constant_define(self) -> None:
         name = self.formatter.format_constant_name(self.as_constant)
         value = self.formatter.format_value(self.as_constant.value)
@@ -82,7 +82,7 @@ class ConstantBlock(BlockForDefinition):
         self.render_constant_define()
 
 
-class AliasBlock(BlockForDefinition):
+class BlockAlias(BlockForDefinition):
     def render_alias_typedef_to_array(self) -> None:
         array_type = cast(Array, self.as_alias.type)
         aliased_type = self.formatter.format_type(array_type.element_type)
@@ -107,7 +107,7 @@ class AliasBlock(BlockForDefinition):
         self.render_alias_typedef()
 
 
-class EnumFieldBlock(BlockForDefinition):
+class BlockEnumField(BlockForDefinition):
     def render_define_macro(self) -> None:
         field = self.as_enum_field
         name = self.formatter.format_enum_field_name(field)
@@ -119,7 +119,7 @@ class EnumFieldBlock(BlockForDefinition):
         self.render_define_macro()
 
 
-class EnumBlock(BlockForDefinition):
+class BlockEnum(BlockForDefinition):
     def render_enum_typedef(self) -> None:
         name = self.formatter.format_enum_name(self.as_enum)
         uint_type = self.formatter.format_uint_type(self.as_enum.type)
@@ -128,7 +128,7 @@ class EnumBlock(BlockForDefinition):
 
     def render_enum_fields(self) -> None:
         for field in self.as_enum.fields():
-            block = EnumFieldBlock(field, formatter=self.formatter)
+            block = BlockEnumField(field, formatter=self.formatter)
             block.render()
             self.push(block.collect())
 
@@ -138,7 +138,7 @@ class EnumBlock(BlockForDefinition):
         self.render_enum_fields()
 
 
-class MessageFieldBlock(BlockForDefinition):
+class BlockMessageField(BlockForDefinition):
     def render_field_declaration_array(self) -> None:
         field_type = self.as_message_field.type
         field_name = self.as_message_field.name
@@ -164,9 +164,9 @@ class MessageFieldBlock(BlockForDefinition):
         self.render_field_declaration()
 
 
-class MessageBlock(BlockForDefinition):
+class BlockMessage(BlockForDefinition):
     def __init__(self, proto: Proto, *args: Any, **kwds: Any) -> None:
-        super(MessageBlock, self).__init__(*args, **kwds)
+        super(BlockMessage, self).__init__(*args, **kwds)
         self.proto = proto
 
     @property
@@ -187,7 +187,7 @@ class MessageBlock(BlockForDefinition):
 
     def render_message_struct_fields(self) -> None:
         for field in self.as_message.sorted_fields():
-            block = MessageFieldBlock(field, formatter=self.formatter, ident=4)
+            block = BlockMessageField(field, formatter=self.formatter, ident=4)
             block.render()
             self.push(block.collect())
 
@@ -264,27 +264,27 @@ class RendererCHeader(Renderer):
     def blocks(self) -> List[Block]:
         blocks = [
             BlockAheadNotice(),
-            HeaderDeclaration(self.proto),
-            HeaderIncludes(),
+            BlockIncludeGuard(self.proto),
+            BlockIncludeGeneralHeaders(),
+            BlockExternCPlusPlus(),
         ]
         # Imports
         for name, proto in self.proto.protos(recursive=False):
-            blocks.append(HeaderImportBlock(proto, name=name))
+            blocks.append(BlockIncludeChildProtoHeader(proto, name=name))
 
-        blocks.extend(
-            [HeaderIncludeGuard(), HeaderBuiltinMacroDefines(),]
-        )
+        blocks.append(BlockGeneralMacroDefines())
+
         # Constants
         for name, constant in self.proto.constants(recursive=True, bound=self.proto):
-            blocks.append(ConstantBlock(constant, name=name))
+            blocks.append(BlockConstant(constant, name=name))
         # Alias
         for name, alias in self.proto.aliases(recursive=True, bound=self.proto):
-            blocks.append(AliasBlock(alias, name=name))
+            blocks.append(BlockAlias(alias, name=name))
         # Enum
         for name, enum in self.proto.enums(recursive=True, bound=self.proto):
-            blocks.append(EnumBlock(enum, name=name))
+            blocks.append(BlockEnum(enum, name=name))
         # Message
         for name, message in self.proto.messages(recursive=True, bound=self.proto):
-            blocks.append(MessageBlock(self.proto, message, name=name))
+            blocks.append(BlockMessage(self.proto, message, name=name))
 
         return blocks
