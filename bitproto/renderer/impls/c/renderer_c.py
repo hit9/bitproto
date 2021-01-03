@@ -35,5 +35,5 @@ class RendererC(Renderer):
         return CFormatter()
 
     def blocks(self) -> List[Block]:
-        header_filename = RendererCHeader(self.proto, self.outdir).out_filename
+        header_filename = self.format_out_filename(extension=".h")
         return [BlockAheadNotice(), IncludeHeaderFile(header_filename)]

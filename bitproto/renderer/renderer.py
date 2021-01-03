@@ -38,17 +38,18 @@ class Renderer:
             return os.path.dirname(os.path.abspath(proto.filepath))
         return os.getcwd()
 
-    def format_out_filename(self) -> str:
+    def format_out_filename(self, extension: Optional[str] = None) -> str:
         """Returns the output file's name for given extension.
 
             >>> format_out_filepath(".go")
             example_bp.go
         """
         out_base_name = self.proto.name
+        extension = extension or self.file_extension()
         if self.proto.filepath:
             proto_base_name = os.path.basename(self.proto.filepath)
             out_base_name = os.path.splitext(proto_base_name)[0]  # remove extension
-        out_filename = out_base_name + "_bp" + self.file_extension()
+        out_filename = out_base_name + "_bp" + extension
         return out_filename
 
     def render_string(self) -> str:
@@ -88,7 +89,7 @@ class Renderer:
 
     @abstractmethod
     def blocks(self) -> List[Block]:
-        """Returns the blocks to render."""
+        """Returns the block list to render."""
         raise NotImplementedError
 
     @abstractmethod
@@ -99,4 +100,5 @@ class Renderer:
 
     @abstractmethod
     def formatter(self) -> Formatter:
+        """Returns the formatter of this renderer."""
         raise NotImplementedError

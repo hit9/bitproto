@@ -40,6 +40,7 @@ Abstraction syntax tree.
       |    |    |- Message              :Scope:Definition:Node
       |    |    |- Proto                :Scope:Definition:Node
 """
+
 from collections import OrderedDict as dict_
 from dataclasses import dataclass
 from dataclasses import field as dataclass_field

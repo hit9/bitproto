@@ -19,6 +19,7 @@ __all__ = (
     "cached_property",
     "frozen",
     "safe_hash",
+    "override",
     "write_file",
     "Color",
     "colored",
@@ -26,22 +27,7 @@ __all__ = (
     "snake_case",
 )
 
-if TYPE_CHECKING:
-    from typing_extensions import final  # Compat 3.7
-else:
-
-    def final(class_: C) -> C:
-        """We wan't final check as well on runtime stage.
-        Subclasses inheritance will be checked on module checking, instead of the real
-        running time.
-        """
-
-        def __init_subclass__(*args, **kwds) -> None:
-            raise TypeError(f"Cant inherit from final class {class_.__name__}")
-
-        setattr(class_, "__init_subclass__", __init_subclass__)
-        return class_
-
+from typing_extensions import final  # Compat 3.7
 
 if TYPE_CHECKING:
     # Cheat mypy, which just won't let "try import" goes on.
@@ -83,9 +69,18 @@ class cached_property:
     Original from:
     https://github.com/bottlepy/bottle/commit/fa7733e075da0d790d809aa3d2f53071897e6f76
 
-        >>> @cached_property
-            def name(self) -> str:
-                return "cached!"
+        >>> class MyClass:
+                @cached_property
+                def name(self) -> str:
+                    print("cached!")
+                    return "name"
+        >>> inst = MyClass()
+        >>> inst.name
+        cached!
+        "name"
+        >>> inst.name  # already cached
+        "name"
+
     """
 
     def __init__(self, func: Callable[[I], O]) -> None:
@@ -112,14 +107,30 @@ def frozen(*, safe_hash: bool = True, post_init: bool = True) -> Callable[[C], C
 def frozen(
     class_: Optional[C] = None, *, safe_hash: bool = True, post_init: bool = True
 ):
-    """Freeze a class:
+    """Freeze a class.
 
-    >>> @frozen
-        class MyClass:
-            def __init__(self, name):
-                self.name = name
-    >>> inst = MyClass(name="ha")
-    >>> inst.name = "changed"  # raised
+    :param class_: The class to frozen.
+    :param safe_hash: Whether to inject a `__hash__` method onto this class, checks
+       decorator `safe_hash()`.
+    :param post_init: Whether to freeze the instance after `__init__` function is called.
+
+    Example::
+
+        >>> @frozen
+            class MyClass:
+                def __init__(self, name):
+                    self.name = name
+        >>> inst = MyClass(name="ha")
+        >>> inst.name = "changed"  # AttributeError
+
+    Or::
+
+        >>> @frozen(post_init=False)
+            class MyClass:
+                pass
+        >>> inst = MyClass()
+        >>> inst.name = "init-my-name"  # ok
+        >>> inst.name = "changed"  # AttributeError
 
     """
 
@@ -184,6 +195,30 @@ def safe_hash(class_: C) -> C:
 safe_hash_ = safe_hash  # Alias
 
 
+def override(c: C) -> Callable[[F], F]:
+    """Just a simple mark indicates this method is overriding super method.
+    >>> @override(SuperClass)
+        def some_func(self):
+            pass
+    """
+
+    def decorator(f: F) -> F:
+        super_f = getattr(c, f.__name__)
+        if not getattr(super_f, "__overridable__", False):
+            if not getattr(super_f, "__isabstractmethod__", False):
+                raise AttributeError(f"Cant override {super_f.__qualname__}")
+        return f
+
+    return decorator
+
+
+def overridable(f: F) -> F:
+    """Just a simple mark indicates this method could be overrided by future subclass
+    method implementation."""
+    setattr(f, "__overridable__", True)
+    return f
+
+
 def write_file(filepath: str, s: str) -> None:
     """Write given s to filepath."""
     with open(filepath, "w") as f:
@@ -205,6 +240,16 @@ class Color(Enum):
 def colored(text: str, color: Color) -> str:
     """Color given text."""
     return "\033[3%dm%s\033[0m" % (color.value, text)
+
+
+def keep_case(word: str) -> str:
+    """Returns the word as it is."""
+    return word
+
+
+def upper_case(word: str) -> str:
+    """Converts given word to upper case."""
+    return word.upper()
 
 
 def pascal_case(word: str) -> str:
