@@ -82,6 +82,18 @@ class PyFormatter(Formatter):
             return f"import {module_name} as {as_name}"
         return f"import {module_name}"
 
+    @override(Formatter)
+    def format_int_value_type(self) -> str:
+        return "int"
+
+    @override(Formatter)
+    def format_string_value_type(self) -> str:
+        return "str"
+
+    @override(Formatter)
+    def format_bool_value_type(self) -> str:
+        return "bool"
+
     @final
     def format_enum_value_to_name_map_name(self, enum: Enum) -> str:
         enum_name = self.format_enum_name(enum)

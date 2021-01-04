@@ -806,6 +806,10 @@ class EnumField(Field):
         if self.value < 0:
             raise InvalidEnumFieldValue.from_token(token=self)
 
+    @property
+    def enum(self) -> "Enum":
+        return cast(Enum, self.scope_stack[-1])
+
 
 @final
 @frozen(post_init=False)
@@ -867,6 +871,10 @@ class MessageField(Field):
 
     def __repr__(self) -> str:
         return f"<message-field {self.name}={self.number}>"
+
+    @property
+    def message(self) -> "Message":
+        return cast(Message, self.scope_stack[-1])
 
     def validate(self) -> None:
         """Constraint message field number from 1 to 255."""

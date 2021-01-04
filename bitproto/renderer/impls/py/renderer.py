@@ -92,10 +92,14 @@ class BlockConstant(BlockDefinition):
     def constant_value(self) -> str:
         return self.formatter.format_value(self.as_constant.value)
 
+    @property
+    def constant_type(self) -> str:
+        return self.formatter.format_constant_type(self.as_constant)
+
     @override(Block)
     def render(self) -> None:
         self.push_docstring(as_comment=True)
-        self.push(f"{self.constant_name} = {self.constant_value}")
+        self.push(f"{self.constant_name}: {self.constant_type} = {self.constant_value}")
         self.push_location_doc()
 
 
@@ -117,15 +121,24 @@ class BlockEnumFieldBase(BlockDefinition):
     def field_value(self) -> str:
         return self.formatter.format_int_value(self.as_enum_field.value)
 
+    @property
+    def field_type(self) -> str:
+        enum = self.as_enum_field.enum
+        return self.formatter.format_enum_type(enum)
+
 
 class BlockEnumField(BlockEnumFieldBase):
     @override(Block)
     def render(self) -> None:
-        self.push(f"{self.field_name}: int = {self.field_value}")
+        self.push_docstring(as_comment=True)
+        self.push(f"{self.field_name}: {self.field_type} = {self.field_value}")
+        self.push_location_doc()
 
 
 class BlockEnumBase(BlockDefinition):
-    pass
+    @property
+    def enum_type_name(self) -> str:
+        return self.formatter.format_enum_type(self.as_enum)
 
 
 class BlockEnumFieldList(BlockEnumBase, BlockComposition):
@@ -145,7 +158,12 @@ class BlockEnumFieldListWrapper(BlockEnumBase, BlockWrapper):
 
     @override(BlockWrapper)
     def before(self) -> None:
+        self.render_enum_type()
+
+    def render_enum_type(self) -> None:
         self.push_docstring(as_comment=True)
+        self.push(f"{self.enum_type_name} = int")
+        self.push_location_doc()
 
 
 class BlockEnumValueToNameMapItem(BlockEnumFieldBase):
@@ -176,7 +194,7 @@ class BlockEnumValueToNameMap(BlockEnumBase, BlockWrapper):
     def before(self) -> None:
         formatter = cast(PyFormatter, self.formatter)
         map_name = formatter.format_enum_value_to_name_map_name(self.as_enum)
-        self.push(f"{map_name}: Dict[int, str] = {{")
+        self.push(f"{map_name}: Dict[{self.enum_type_name}, str] = {{")
 
     @override(BlockWrapper)
     def after(self) -> None:
@@ -204,12 +222,15 @@ class BlockEnumList(BlockComposition):
 class RendererPy(Renderer):
     """Renderer for Python language."""
 
+    @override(Renderer)
     def file_extension(self) -> str:
         return ".py"
 
+    @override(Renderer)
     def formatter(self) -> Formatter:
         return PyFormatter()
 
+    @override(Renderer)
     def blocks(self) -> List[Block]:
         return [
             BlockAheadNotice(),

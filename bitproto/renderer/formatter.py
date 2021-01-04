@@ -11,9 +11,10 @@ from typing import Callable, Dict, Optional, Tuple
 from typing import Type as T
 from typing import Union, cast
 
-from bitproto._ast import (Alias, Array, Bool, Byte, Constant, Definition,
-                           Enum, EnumField, Int, Integer, Message, Node, Proto,
-                           Scope, Type, Uint, Value)
+from bitproto._ast import (Alias, Array, Bool, BooleanConstant, Byte, Constant,
+                           Definition, Enum, EnumField, Int, Integer,
+                           IntegerConstant, Message, Node, Proto, Scope,
+                           StringConstant, Type, Uint, Value)
 from bitproto.errors import InternalError
 from bitproto.utils import (final, keep_case, overridable, pascal_case,
                             snake_case, upper_case)
@@ -156,6 +157,21 @@ class Formatter:
         return f">> {n}"
 
     @overridable
+    def format_int_value_type(self) -> str:
+        """Returns the type representation in target language for a integer value."""
+        raise NotImplementedError
+
+    @overridable
+    def format_string_value_type(self) -> str:
+        """Returns the type representation in target language for a string value."""
+        raise NotImplementedError
+
+    @overridable
+    def format_bool_value_type(self) -> str:
+        """Returns the type representation in target language for a bool value."""
+        raise NotImplementedError
+
+    @overridable
     def format_enum_type(self, t: Enum) -> str:
         """Enum type representation in target language.
         Without extra declaration statements.
@@ -224,7 +240,7 @@ class Formatter:
         """Get number of bits to occupy for an given integer type in a language.
         Special language may override this default implementation.
         """
-        # TODO: FIXME
+        # TODO: FIXME: func naming
         nbytes = t.nbytes()
         if nbytes == 1:
             return 8
@@ -349,3 +365,14 @@ class Formatter:
         elif isinstance(t, Alias):
             return self.format_alias_type(t)
         raise InternalError("unknown type for format_type")
+
+    @final
+    def format_constant_type(self, c: Constant) -> str:
+        """Formats the string representation for given constant's type."""
+        if isinstance(c, BooleanConstant):
+            return self.format_bool_value_type()
+        elif isinstance(c, StringConstant):
+            return self.format_string_value_type()
+        elif isinstance(c, IntegerConstant):
+            return self.format_int_value_type()
+        raise InternalError(f"got unexpected constant type {c}")
