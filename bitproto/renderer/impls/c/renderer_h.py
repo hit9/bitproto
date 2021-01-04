@@ -5,24 +5,21 @@ Renderer for C header file.
 from typing import Any, List, cast
 
 from bitproto._ast import Array, Proto
-from bitproto.renderer.block import Block, BlockAheadNotice, BlockDefinition
+from bitproto.renderer.block import (Block, BlockAheadNotice, BlockComposition,
+                                     BlockDefinition, BlockWrapper)
 from bitproto.renderer.formatter import Formatter
 from bitproto.renderer.impls.c.formatter import CFormatter
 from bitproto.renderer.renderer import Renderer
-from bitproto.utils import override, snake_case
+from bitproto.utils import override, snake_case, upper_case
 
 
 class BlockIncludeGuard(Block):
-    def __init__(self, proto: Proto) -> None:
-        super(BlockIncludeGuard, self).__init__()
-        self.proto = proto
-
     def render_proto_doc(self) -> None:
-        for comment in self.proto.comment_block:
+        for comment in self.bound.comment_block:
             self.push("// {0}".format(comment.content()))
 
     def format_proto_macro_name(self) -> str:
-        proto_name = snake_case(self.proto.name).upper()
+        proto_name = snake_case(self.bound.name).upper()
         return f"__BITPROTO__{proto_name}_H__"
 
     def render_declaration_begin(self) -> None:
@@ -129,24 +126,37 @@ class BlockEnumField(BlockDefinition):
         self.render_define_macro()
 
 
-class BlockEnum(BlockDefinition):
+class BlockEnumBase(BlockDefinition):
+    @property
+    def enum_name(self) -> str:
+        return self.formatter.format_enum_name(self.as_enum)
+
+
+class BlockEnumFieldList(BlockEnumBase, BlockComposition):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block]:
+        return [BlockEnumField(field) for field in self.as_enum.fields()]
+
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n"
+
+
+class BlockEnum(BlockEnumBase, BlockWrapper):
+    @override(BlockWrapper)
+    def before(self) -> None:
+        self.render_doc()
+        self.render_enum_typedef()
+
+    @override(BlockWrapper)
+    def wraps(self) -> Block:
+        return BlockEnumFieldList(self.as_message)
+
     def render_enum_typedef(self) -> None:
-        name = self.formatter.format_enum_name(self.as_enum)
+        name = self.enum_name
         uint_type = self.formatter.format_uint_type(self.as_enum.type)
         self.push(f"typedef {uint_type} {name};")
         self.push_location_doc()
-
-    def render_enum_fields(self) -> None:
-        for field in self.as_enum.fields():
-            block = BlockEnumField(field, formatter=self.formatter)
-            block.render()
-            self.push(block.collect())
-
-    @override(Block)
-    def render(self) -> None:
-        self.render_doc()
-        self.render_enum_typedef()
-        self.render_enum_fields()
 
 
 class BlockMessageField(BlockDefinition):
@@ -176,19 +186,18 @@ class BlockMessageField(BlockDefinition):
         self.render_field_declaration()
 
 
-class BlockMessage(BlockDefinition):
-    def __init__(self, proto: Proto, *args: Any, **kwds: Any) -> None:
-        super(BlockMessage, self).__init__(*args, **kwds)
-        self.proto = proto
-
+class BlockMessageBase(BlockDefinition):
     @property
     def struct_name(self) -> str:
         return self.formatter.format_message_name(self.as_message)
 
-    def render_message_length_macro(self) -> None:
+
+class BlockMessageLengthMacro(BlockMessageBase):
+    @override(BlockDefinition)
+    def render(self) -> None:
         message = self.as_message
         struct_name: str = self.struct_name
-        struct_name_upper = snake_case(struct_name).upper()
+        struct_name_upper = upper_case(snake_case(struct_name))
         comment = self.formatter.format_comment(
             f"Number of bytes to encode struct {struct_name}"
         )
@@ -197,26 +206,44 @@ class BlockMessage(BlockDefinition):
         macro_string = f"#define BYTES_LENGTH_{struct_name_upper} {nbytes}"
         self.push(macro_string)
 
-    def render_message_struct_fields(self) -> None:
-        for field in self.as_message.sorted_fields():
-            block = BlockMessageField(field, formatter=self.formatter, ident=4)
-            block.render()
-            self.push(block.collect())
 
-    def render_message_struct(self) -> None:
+class BlockMessageFieldList(BlockMessageBase, BlockComposition):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block]:
+        return [
+            BlockMessageField(field, indent=4)
+            for field in self.as_message.sorted_fields()
+        ]
+
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n"
+
+
+class BlockMessageStruct(BlockMessageBase, BlockWrapper):
+    @override(BlockWrapper)
+    def wraps(self) -> Block:
+        return BlockMessageFieldList(self.definition, name=self.definition_name)
+
+    @override(BlockWrapper)
+    def before(self) -> None:
         struct_name: str = self.struct_name
-
         self.push(f"struct {struct_name} {{")
         self.push_location_doc()
-        self.render_message_struct_fields()
-        self.push("}")
 
-        alignment = self.proto.get_option_as_int_or_raise("c.struct_packing_alignment")
+    @override(BlockWrapper)
+    def after(self) -> None:
+        self.push("}")
+        option_name = "c.struct_packing_alignment"
+        alignment = self.bound.get_option_as_int_or_raise(option_name)
         if alignment > 0:
             self.push_string(f"__attribute__((packed, aligned({alignment})))")
         self.push_string(";")
 
-    def render_encoder_function_declaration(self) -> None:
+
+class BlockMessageEncoderFunctionDeclaration(BlockMessageBase):
+    @override(Block)
+    def render(self) -> None:
         struct_name: str = self.struct_name
         comment = self.formatter.format_docstring(
             f"Encode struct {struct_name} to given buffer s"
@@ -226,7 +253,10 @@ class BlockMessage(BlockDefinition):
         declaration = f"int Encode{struct_name}({struct_type} *m, unsigned char *s);"
         self.push(declaration)
 
-    def render_decoder_function_declaration(self) -> None:
+
+class BlockMessageDecoderFunctionDeclaration(BlockMessageBase):
+    @override(Block)
+    def render(self) -> None:
         struct_name: str = self.struct_name
         comment = self.formatter.format_docstring(
             f"Decode struct {struct_name} from given buffer s"
@@ -236,8 +266,11 @@ class BlockMessage(BlockDefinition):
         declaration = f"int Decode{struct_name}({struct_type} *m, unsigned char *s);"
         self.push(declaration)
 
-    def render_json_formatter_function_declaration(self) -> None:
-        enabled = self.proto.get_option_as_bool_or_raise(
+
+class BlockMessageJsonFormatterFunctionDeclaration(BlockMessageBase):
+    @override(Block)
+    def render(self) -> None:
+        enabled = self.bound.get_option_as_bool_or_raise(
             "c.enable_render_json_formatter"
         )
         if not enabled:
@@ -251,18 +284,17 @@ class BlockMessage(BlockDefinition):
         declaration = f"int Json{struct_name}({struct_type} *m, char *s);"
         self.push(declaration)
 
-    @override(Block)
-    def render(self) -> None:
-        self.render_message_length_macro()
-        self.push_empty_line()
-        self.render_doc()
-        self.render_message_struct()
-        self.push_empty_line()
-        self.render_encoder_function_declaration()
-        self.push_empty_line()
-        self.render_decoder_function_declaration()
-        self.push_empty_line()
-        self.render_json_formatter_function_declaration()
+
+class BlockMessage(BlockDefinition, BlockComposition):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block]:
+        return [
+            BlockMessageLengthMacro(self.as_message),
+            BlockMessageStruct(self.as_message),
+            BlockMessageEncoderFunctionDeclaration(self.as_message),
+            BlockMessageDecoderFunctionDeclaration(self.as_message),
+            BlockMessageJsonFormatterFunctionDeclaration(self.as_message),
+        ]
 
 
 class RendererCHeader(Renderer):
@@ -280,7 +312,7 @@ class RendererCHeader(Renderer):
     def blocks(self) -> List[Block]:
         blocks = [
             BlockAheadNotice(),
-            BlockIncludeGuard(self.proto),
+            BlockIncludeGuard(),
             BlockIncludeGeneralHeaders(),
             BlockExternCPlusPlus(),
         ]
@@ -301,6 +333,6 @@ class RendererCHeader(Renderer):
             blocks.append(BlockEnum(enum, name=name))
         # Message
         for name, message in self.proto.messages(recursive=True, bound=self.proto):
-            blocks.append(BlockMessage(self.proto, message, name=name))
+            blocks.append(BlockMessage(message, name=name))
 
         return blocks

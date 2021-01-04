@@ -58,9 +58,10 @@ class Renderer:
         strings = []
         formatter = self.formatter()
 
-        # Sets formatter
+        # Initial
         for block in blocks:
             block.set_formatter(formatter)
+            block.set_bound(self.proto)
 
         # Executes `render()`.
         for block in blocks:

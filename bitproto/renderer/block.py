@@ -12,27 +12,21 @@ from bitproto._ast import (Alias, Constant, Definition, Enum, EnumField,
                            Message, MessageField, Proto)
 from bitproto.errors import InternalError
 from bitproto.renderer.formatter import Formatter
-from bitproto.utils import final, overridable
+from bitproto.utils import final, overridable, override
 
 
 class Block:
     """Block is a collection of rendered strings.
 
-    :param formatter: The formatter for target language.
-    :param ident: Number of characters to indent for this block.
-    :param separator: Separator to join managed strings, defaults to "\n".
+    :param indent: Number of characters to indent for this block.
     """
 
-    def __init__(
-        self,
-        formatter: Optional[Formatter] = None,
-        ident: int = 0,
-        separator: str = "\n",
-    ) -> None:
+    def __init__(self, indent: int = 0) -> None:
         self.strings: List[str] = []
-        self._formatter: Optional[Formatter] = formatter
-        self.ident = ident
-        self.separator = separator
+        self.indent = indent
+
+        self._bound: Optional[Proto] = None
+        self._formatter: Optional[Formatter] = None
 
     @property
     def formatter(self) -> Formatter:
@@ -43,10 +37,19 @@ class Block:
     def set_formatter(self, formatter: Formatter) -> None:
         self._formatter = formatter
 
+    @property
+    def bound(self) -> Proto:
+        assert self._bound is not None, InternalError("block._bound not set")
+        return self._bound
+
+    @final
+    def set_bound(self, bound: Proto) -> None:
+        self._bound = bound
+
     @final
     def __str__(self) -> str:
         """Returns the joined managed strings with separator."""
-        return self.separator.join(self.strings)
+        return self.separator().join(self.strings)
 
     @final
     def push_string(self, s: str, separator: str = " ") -> None:
@@ -56,15 +59,15 @@ class Block:
         self.strings[-1] = separator.join([self.strings[-1], s])
 
     @final
-    def push(self, line: str, ident: Optional[int] = None) -> None:
+    def push(self, line: str, indent: Optional[int] = None) -> None:
         """Append a line of string.
         :param line: A line of string (without ending newline character).
         :param indent: The number of characters to indent this line, defaults to this
-           block's ident.
+           block's indent.
         """
-        ident = self.ident if ident is None else ident
-        if ident > 0:
-            line = ident * self.formatter.indent_character() + line
+        indent = self.indent if indent is None else indent
+        if indent > 0:
+            line = indent * self.formatter.indent_character() + line
         self.strings.append(line)
 
     @final
@@ -95,6 +98,11 @@ class Block:
         """
         raise NotImplementedError
 
+    @overridable
+    def separator(self) -> str:
+        """Separator to join managed strings, defaults to '\n'."""
+        return "\n"
+
 
 @final
 class BlockAheadNotice(Block):
@@ -111,18 +119,13 @@ class BlockDefinition(Block):
 
     :param definition: The associated definition.
     :param name: The name of associated definition, defaults to `definition.name`.
-    :param formatter: Argument inherits from super class Block.
     :param indent: Argument inherits from super class Block.
     """
 
     def __init__(
-        self,
-        definition: Definition,
-        name: Optional[str] = None,
-        formatter: Optional[Formatter] = None,
-        ident: int = 0,
+        self, definition: Definition, name: Optional[str] = None, indent: int = 0,
     ) -> None:
-        super(BlockDefinition, self).__init__(formatter=formatter, ident=ident)
+        super(BlockDefinition, self).__init__(indent=indent)
 
         self.definition = definition
         self.definition_name: str = name or definition.name
@@ -176,3 +179,54 @@ class BlockDefinition(Block):
         location_string = self.formatter.format_token_location(self.definition)
         inline_comment = self.formatter.format_comment(location_string)
         self.push_string(inline_comment, separator=" ")
+
+
+class BlockComposition(Block):
+    """Composition of a list of blocks as a block."""
+
+    @overridable
+    @override(Block)
+    def separator(self) -> str:
+        return "\n\n"
+
+    @final
+    @override(Block)
+    def render(self) -> None:
+        for block in self.blocks():
+            block.set_formatter(self.formatter)
+            block.set_bound(self.bound)
+            block.render()
+            self.push(block.collect())
+
+    @abstractmethod
+    def blocks(self) -> List[Block]:
+        raise NotImplementedError
+
+
+class BlockWrapper(Block):
+    """Wraps on a block as a block."""
+
+    @final
+    @override(Block)
+    def render(self) -> None:
+        self.before()
+
+        block = self.wraps()
+        block.set_formatter(self.formatter)
+        block.set_bound(self.bound)
+        block.render()
+        self.push(block.collect())
+
+        self.after()
+
+    @abstractmethod
+    def wraps(self) -> Block:
+        raise NotImplementedError
+
+    @overridable
+    def before(self) -> None:
+        pass
+
+    @overridable
+    def after(self) -> None:
+        pass
