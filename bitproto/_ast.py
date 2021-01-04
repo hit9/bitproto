@@ -796,7 +796,10 @@ class EnumField(Field):
 
     @property
     def enum(self) -> "Enum":
-        return cast(Enum, self.scope_stack[-1])
+        scope = self.scope_stack[-1]
+        if isinstance(scope, Enum):
+            return cast(Enum, self.scope_stack[-1])
+        raise InternalError("enum_field's last scope not enum")
 
 
 @final
@@ -862,7 +865,10 @@ class MessageField(Field):
 
     @property
     def message(self) -> "Message":
-        return cast(Message, self.scope_stack[-1])
+        scope = self.scope_stack[-1]
+        if isinstance(scope, Message):
+            return cast(Message, self.scope_stack[-1])
+        raise InternalError("message_field's last scope not message")
 
     def validate(self) -> None:
         """Constraint message field number from 1 to 255."""
