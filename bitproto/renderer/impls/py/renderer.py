@@ -14,6 +14,7 @@ from bitproto.utils import override
 class BlockGeneralImports(Block):
     @override(Block)
     def render(self) -> None:
+        self.push("from dataclasses import dataclass, field")
         self.push("import json")
         self.push("from typing import Dict, List")
 
@@ -243,6 +244,72 @@ class BlockEnumList(BlockComposition):
         ]
 
 
+class BlockMessageField(BlockDefinition):
+    @property
+    def field_name(self) -> str:
+        return self.as_message_field.name
+
+    @property
+    def field_type(self) -> str:
+        return self.formatter.format_type(self.as_message_field.type)
+
+    @property
+    def field_default_value(self) -> str:
+        formatter = cast(PyFormatter, self.formatter)
+        return formatter.format_field_default_value(self.as_message_field.type)
+
+    @override(Block)
+    def render(self) -> None:
+        self.push_docstring(as_comment=True)
+        self.push(f"{self.field_name}: {self.field_type} = {self.field_default_value}",)
+
+
+class BlockMessageBase(BlockDefinition):
+    @property
+    def class_name(self) -> str:
+        return self.formatter.format_message_name(self.as_message)
+
+
+class BlockMessageFieldList(BlockDefinition, BlockComposition):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block]:
+        return [
+            BlockMessageField(field, indent=4)
+            for field in self.as_message.sorted_fields()
+        ]
+
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n"
+
+
+class BlockMessageClass(BlockMessageBase, BlockWrapper):
+    @override(BlockWrapper)
+    def wraps(self) -> Block:
+        return BlockMessageFieldList(self.as_message)
+
+    @override(BlockWrapper)
+    def before(self) -> None:
+        self.push("@dataclass")
+        self.push(f"class {self.class_name}:")
+        self.push_docstring(indent=4)
+
+
+class BlockMessage(BlockMessageBase, BlockComposition):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block]:
+        return [BlockMessageClass(self.as_message)]
+
+
+class BlockMessageList(BlockComposition):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block]:
+        return [
+            BlockMessage(message, name=name)
+            for name, message in self.bound.messages(recursive=True, bound=self.bound)
+        ]
+
+
 class RendererPy(Renderer):
     """Renderer for Python language."""
 
@@ -264,4 +331,5 @@ class RendererPy(Renderer):
             BlockAliasList(),
             BlockConstantList(),
             BlockEnumList(),
+            BlockMessageList(),
         ]

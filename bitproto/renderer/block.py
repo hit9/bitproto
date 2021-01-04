@@ -166,8 +166,9 @@ class BlockDefinition(Block):
         return cast(Proto, self.definition)
 
     @final
-    def push_docstring(self, as_comment: bool = False) -> None:
+    def push_docstring(self, as_comment: bool = False, indent: int = 0) -> None:
         """Format the comment_block of this definition, and push them."""
+        indent = indent or self.indent
         fmt = self.formatter.format_docstring
         if as_comment:
             fmt = self.formatter.format_comment
@@ -175,7 +176,7 @@ class BlockDefinition(Block):
         for comment in self.definition.comment_block:
             comment_string = comment.content()
             formatted_comment = fmt(comment_string)
-            self.push(formatted_comment)
+            self.push(formatted_comment, indent)
 
     @final
     def push_location_doc(self) -> None:
