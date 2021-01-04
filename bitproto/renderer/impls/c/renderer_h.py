@@ -297,6 +297,51 @@ class BlockMessage(BlockDefinition, BlockComposition):
         ]
 
 
+class BlockImportList(BlockComposition):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block]:
+        return [
+            BlockIncludeChildProtoHeader(proto, name=name)
+            for name, proto in self.bound.protos(recursive=False)
+        ]
+
+
+class BlockConstantList(BlockComposition):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block]:
+        return [
+            BlockConstant(constant, name=name)
+            for name, constant in self.bound.constants(recursive=True, bound=self.bound)
+        ]
+
+
+class BlockAliasList(BlockComposition):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block]:
+        return [
+            BlockAlias(alias, name=name)
+            for name, alias in self.bound.aliases(recursive=True, bound=self.bound)
+        ]
+
+
+class BlockEnumList(BlockComposition):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block]:
+        return [
+            BlockEnum(enum, name=name)
+            for name, enum in self.bound.enums(recursive=True, bound=self.bound)
+        ]
+
+
+class BlockMessageList(BlockComposition):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block]:
+        return [
+            BlockMessage(message, name=name)
+            for name, message in self.bound.messages(recursive=True, bound=self.bound)
+        ]
+
+
 class RendererCHeader(Renderer):
     """Renderer for C language (header)."""
 
@@ -310,29 +355,15 @@ class RendererCHeader(Renderer):
 
     @override(Renderer)
     def blocks(self) -> List[Block]:
-        blocks = [
+        return [
             BlockAheadNotice(),
             BlockIncludeGuard(),
             BlockIncludeGeneralHeaders(),
             BlockExternCPlusPlus(),
+            BlockImportList(),
+            BlockGeneralMacroDefines(),
+            BlockConstantList(),
+            BlockAliasList(),
+            BlockEnumList(),
+            BlockMessageList(),
         ]
-        # Imports
-        for name, proto in self.proto.protos(recursive=False):
-            blocks.append(BlockIncludeChildProtoHeader(proto, name=name))
-
-        blocks.append(BlockGeneralMacroDefines())
-
-        # Constants
-        for name, constant in self.proto.constants(recursive=True, bound=self.proto):
-            blocks.append(BlockConstant(constant, name=name))
-        # Alias
-        for name, alias in self.proto.aliases(recursive=True, bound=self.proto):
-            blocks.append(BlockAlias(alias, name=name))
-        # Enum
-        for name, enum in self.proto.enums(recursive=True, bound=self.proto):
-            blocks.append(BlockEnum(enum, name=name))
-        # Message
-        for name, message in self.proto.messages(recursive=True, bound=self.proto):
-            blocks.append(BlockMessage(message, name=name))
-
-        return blocks
