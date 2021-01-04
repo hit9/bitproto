@@ -166,10 +166,8 @@ class BlockEnum(BlockEnumBase, BlockWrapper_):
 
 
 class BlockMessageField(BlockDefinition_):
-    def render_field_declaration_array(self) -> None:
-        field_type = self.as_message_field.type
+    def render_field_declaration_array(self, array_type: Array) -> None:
         field_name = self.as_message_field.name
-        array_type = cast(Array, field_type)
         field_definition = self.formatter.format_array_type(array_type, field_name)
         self.push(f"{field_definition};")
 
@@ -181,7 +179,8 @@ class BlockMessageField(BlockDefinition_):
 
     def render_field_declaration(self) -> None:
         if isinstance(self.as_message_field.type, Array):
-            self.render_field_declaration_array()
+            array_type = cast(Array, self.as_message_field.type)
+            self.render_field_declaration_array(array_type)
         else:
             self.render_field_declaration_common()
         self.push_location_doc()
