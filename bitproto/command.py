@@ -73,6 +73,8 @@ def run_bitproto() -> None:
     args_parser = build_arg_parser()
     args = args_parser.parse_args()
 
+    exit_code = 0
+
     # Parse
     try:
         proto = parse(args.filepath)
@@ -80,10 +82,11 @@ def run_bitproto() -> None:
         args_parser.exit(1, message=error.colored())
 
     if not args.disable_linter:
-        lint(proto)
+        if lint(proto) > 0:
+            exit_code = 1
 
     if args.check:  #  Checks only.
-        args_parser.exit(0)
+        args_parser.exit(exit_code)
 
     # Render
     try:
