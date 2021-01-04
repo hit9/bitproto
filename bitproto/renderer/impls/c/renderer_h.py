@@ -137,6 +137,10 @@ class BlockEnumFieldList(BlockEnumBase, BlockComposition):
     def blocks(self) -> List[Block]:
         return [BlockEnumField(field) for field in self.as_enum.fields()]
 
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n"
+
 
 class BlockEnum(BlockEnumBase, BlockWrapper):
     @override(BlockWrapper)
@@ -302,6 +306,10 @@ class BlockImportList(BlockComposition):
             for name, proto in self.bound.protos(recursive=False)
         ]
 
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n"
+
 
 class BlockConstantList(BlockComposition):
     @override(BlockComposition)
@@ -311,6 +319,10 @@ class BlockConstantList(BlockComposition):
             for name, constant in self.bound.constants(recursive=True, bound=self.bound)
         ]
 
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n"
+
 
 class BlockAliasList(BlockComposition):
     @override(BlockComposition)
@@ -319,6 +331,10 @@ class BlockAliasList(BlockComposition):
             BlockAlias(alias, name=name)
             for name, alias in self.bound.aliases(recursive=True, bound=self.bound)
         ]
+
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n"
 
 
 class BlockEnumList(BlockComposition):
