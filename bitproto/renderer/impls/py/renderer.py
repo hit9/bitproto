@@ -3,12 +3,19 @@ Renderer for Python.
 """
 from typing import List, cast
 
+from bitproto._ast import MessageField
 from bitproto.renderer.block import (Block, BlockAheadNotice, BlockComposition,
                                      BlockDefinition, BlockWrapper)
 from bitproto.renderer.formatter import Formatter
 from bitproto.renderer.impls.py.formatter import PyFormatter
 from bitproto.renderer.renderer import Renderer
 from bitproto.utils import override
+
+
+class BlockStatementPass(Block):
+    @override(Block)
+    def render(self) -> None:
+        self.push("pass")
 
 
 class BlockGeneralImports(Block):
@@ -57,6 +64,10 @@ class BlockGeneralFunctionInt64(Block):
 
 class BlockGeneralGlobalFunctions(BlockComposition):
     @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n\n\n"
+
+    @override(BlockComposition)
     def blocks(self) -> List[Block]:
         return [
             BlockGeneralFunctionInt8(),
@@ -83,6 +94,10 @@ class BlockImportList(BlockComposition):
             for name, proto in self.bound.protos(recursive=False)
         ]
 
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n"
+
 
 class BlockAlias(BlockDefinition):
     @property
@@ -106,6 +121,10 @@ class BlockAliasList(BlockComposition):
             BlockAlias(alias, name=name)
             for name, alias in self.bound.aliases(recursive=True, bound=self.bound)
         ]
+
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n"
 
 
 class BlockConstant(BlockDefinition):
@@ -135,6 +154,10 @@ class BlockConstantList(BlockComposition):
             BlockConstant(constant, name=name)
             for name, constant in self.bound.constants(recursive=True, bound=self.bound)
         ]
+
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n"
 
 
 class BlockEnumFieldBase(BlockDefinition):
@@ -243,6 +266,10 @@ class BlockEnumList(BlockComposition):
             for name, enum in self.bound.enums(recursive=True, bound=self.bound)
         ]
 
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n\n\n"
+
 
 class BlockMessageField(BlockDefinition):
     @property
@@ -261,7 +288,7 @@ class BlockMessageField(BlockDefinition):
     @override(Block)
     def render(self) -> None:
         self.push_docstring(as_comment=True)
-        self.push(f"{self.field_name}: {self.field_type} = {self.field_default_value}",)
+        self.push(f"{self.field_name}: {self.field_type} = {self.field_default_value}")
 
 
 class BlockMessageBase(BlockDefinition):
@@ -271,12 +298,14 @@ class BlockMessageBase(BlockDefinition):
 
 
 class BlockMessageFieldList(BlockDefinition, BlockComposition):
+    @property
+    def fields(self) -> List[MessageField]:
+        return self.as_message.sorted_fields()
+
     @override(BlockComposition)
     def blocks(self) -> List[Block]:
-        return [
-            BlockMessageField(field, indent=4)
-            for field in self.as_message.sorted_fields()
-        ]
+        fields = self.as_message.sorted_fields()
+        return [BlockMessageField(field, indent=self.indent) for field in fields]
 
     @override(BlockComposition)
     def separator(self) -> str:
@@ -286,7 +315,9 @@ class BlockMessageFieldList(BlockDefinition, BlockComposition):
 class BlockMessageClass(BlockMessageBase, BlockWrapper):
     @override(BlockWrapper)
     def wraps(self) -> Block:
-        return BlockMessageFieldList(self.as_message)
+        if self.as_message.fields():
+            return BlockMessageFieldList(self.as_message, indent=4)
+        return BlockStatementPass(indent=4)
 
     @override(BlockWrapper)
     def before(self) -> None:
@@ -308,6 +339,10 @@ class BlockMessageList(BlockComposition):
             BlockMessage(message, name=name)
             for name, message in self.bound.messages(recursive=True, bound=self.bound)
         ]
+
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n\n\n"
 
 
 class RendererPy(Renderer):

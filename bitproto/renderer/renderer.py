@@ -66,14 +66,14 @@ class Renderer:
         # Executes `render()`.
         for block in blocks:
             block.render()
-            strings.append(block.collect())
+            strings.append(str(block))
 
         # Executes `defer()`.
         reversed_blocks = blocks[::-1]
         for block in reversed_blocks:
             try:
                 block.defer()
-                strings.append(block.collect())
+                strings.append(str(block))
             except NotImplementedError:
                 pass
         return "\n\n".join(strings)

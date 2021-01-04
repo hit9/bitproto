@@ -80,11 +80,9 @@ class Block:
         self.strings = []
 
     @final
-    def collect(self) -> str:
-        """Clear and returns the joined string."""
-        s = str(self)
-        self.clear()
-        return s
+    def push_from_block(self, b: "Block") -> None:
+        """Push from another block."""
+        self.push(str(b), indent=0)
 
     @abstractmethod
     def render(self) -> None:
@@ -166,9 +164,12 @@ class BlockDefinition(Block):
         return cast(Proto, self.definition)
 
     @final
-    def push_docstring(self, as_comment: bool = False, indent: int = 0) -> None:
+    def push_docstring(
+        self, as_comment: bool = False, indent: Optional[int] = None
+    ) -> None:
         """Format the comment_block of this definition, and push them."""
-        indent = indent or self.indent
+        indent = self.indent if indent is None else indent
+
         fmt = self.formatter.format_docstring
         if as_comment:
             fmt = self.formatter.format_comment
@@ -192,7 +193,7 @@ class BlockComposition(Block):
     @overridable
     @override(Block)
     def separator(self) -> str:
-        """Overrides the separator between managed strings, defaults to '\n\n'."""
+        """Overrides the separator, between blocks, defaults to '\n\n'."""
         return "\n\n"
 
     @final
@@ -202,7 +203,7 @@ class BlockComposition(Block):
             block.set_formatter(self.formatter)
             block.set_bound(self.bound)
             block.render()
-            self.push(block.collect())
+            self.push_from_block(block)
 
     @abstractmethod
     def blocks(self) -> List[Block]:
@@ -222,7 +223,7 @@ class BlockWrapper(Block):
         block.set_formatter(self.formatter)
         block.set_bound(self.bound)
         block.render()
-        self.push(block.collect())
+        self.push_from_block(block)
 
         self.after()
 

@@ -137,10 +137,6 @@ class BlockEnumFieldList(BlockEnumBase, BlockComposition):
     def blocks(self) -> List[Block]:
         return [BlockEnumField(field) for field in self.as_enum.fields()]
 
-    @override(BlockComposition)
-    def separator(self) -> str:
-        return "\n"
-
 
 class BlockEnum(BlockEnumBase, BlockWrapper):
     @override(BlockWrapper)
