@@ -6,9 +6,10 @@ Block class base.
 """
 
 from abc import abstractmethod
-from typing import Generic, List, Optional, cast
+from typing import Generic, List, Optional
+from typing import Type as T
 
-from bitproto._ast import (Alias, Constant, Definition, Enum, EnumField,
+from bitproto._ast import (Alias, Constant, D, Definition, Enum, EnumField,
                            Message, MessageField, Proto)
 from bitproto.errors import InternalError
 from bitproto.renderer.formatter import F, Formatter
@@ -141,40 +142,46 @@ class BlockDefinition(Block[F]):
         self.definition = definition
         self.definition_name: str = name or definition.name
 
+    def as_t(self, t: T[D]) -> D:
+        """Safe cast internal definition to given definition type `t`."""
+        if isinstance(self.definition, t):
+            return self.definition
+        raise InternalError(f"can't cast {self.definition} to type {t}")
+
     @property
     def as_constant(self) -> Constant:
         """Returns the definition as a Constant."""
-        return cast(Constant, self.definition)
+        return self.as_t(Constant)
 
     @property
     def as_alias(self) -> Alias:
         """Returns the definition as an Alias."""
-        return cast(Alias, self.definition)
+        return self.as_t(Alias)
 
     @property
     def as_enum(self) -> Enum:
         """Returns the definition as an Enum."""
-        return cast(Enum, self.definition)
+        return self.as_t(Enum)
 
     @property
     def as_enum_field(self) -> EnumField:
         """Returns the definition as a EnumField."""
-        return cast(EnumField, self.definition)
+        return self.as_t(EnumField)
 
     @property
     def as_message(self) -> Message:
         """Returns the definition as a Message."""
-        return cast(Message, self.definition)
+        return self.as_t(Message)
 
     @property
     def as_message_field(self) -> MessageField:
         """Returns the definition as a MessageField."""
-        return cast(MessageField, self.definition)
+        return self.as_t(MessageField)
 
     @property
     def as_proto(self) -> Proto:
         """Returns the definition as a Proto."""
-        return cast(Proto, self.definition)
+        return self.as_t(Proto)
 
     @final
     def push_docstring(
