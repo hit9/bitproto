@@ -83,7 +83,7 @@ class BlockConstant(BlockDefinition):
 
     @override(Block)
     def render(self) -> None:
-        self.render_doc()
+        self.push_docstring()
         self.render_constant_define()
 
 
@@ -109,7 +109,7 @@ class BlockAlias(BlockDefinition):
 
     @override(Block)
     def render(self) -> None:
-        self.render_doc()
+        self.push_docstring()
         self.render_alias_typedef()
 
 
@@ -122,7 +122,7 @@ class BlockEnumField(BlockDefinition):
 
     @override(Block)
     def render(self) -> None:
-        self.render_doc()
+        self.push_docstring()
         self.render_define_macro()
 
 
@@ -145,7 +145,7 @@ class BlockEnumFieldList(BlockEnumBase, BlockComposition):
 class BlockEnum(BlockEnumBase, BlockWrapper):
     @override(BlockWrapper)
     def before(self) -> None:
-        self.render_doc()
+        self.push_docstring()
         self.render_enum_typedef()
 
     @override(BlockWrapper)
@@ -182,7 +182,7 @@ class BlockMessageField(BlockDefinition):
 
     @override(Block)
     def render(self) -> None:
-        self.render_doc()
+        self.push_docstring()
         self.render_field_declaration()
 
 
@@ -227,6 +227,7 @@ class BlockMessageStruct(BlockMessageBase, BlockWrapper):
 
     @override(BlockWrapper)
     def before(self) -> None:
+        self.push_docstring()
         struct_name: str = self.struct_name
         self.push(f"struct {struct_name} {{")
         self.push_location_doc()

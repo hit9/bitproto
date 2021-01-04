@@ -166,11 +166,15 @@ class BlockDefinition(Block):
         return cast(Proto, self.definition)
 
     @final
-    def render_doc(self) -> None:
+    def push_docstring(self, as_comment: bool = False) -> None:
         """Format the comment_block of this definition, and push them."""
+        fmt = self.formatter.format_docstring
+        if as_comment:
+            fmt = self.formatter.format_comment
+
         for comment in self.definition.comment_block:
             comment_string = comment.content()
-            formatted_comment = self.formatter.format_comment(comment_string)
+            formatted_comment = fmt(comment_string)
             self.push(formatted_comment)
 
     @final
@@ -187,6 +191,7 @@ class BlockComposition(Block):
     @overridable
     @override(Block)
     def separator(self) -> str:
+        """Overrides the separator between managed strings, defaults to '\n\n'."""
         return "\n\n"
 
     @final
@@ -200,6 +205,7 @@ class BlockComposition(Block):
 
     @abstractmethod
     def blocks(self) -> List[Block]:
+        """Returns the blocks to join."""
         raise NotImplementedError
 
 
@@ -221,12 +227,15 @@ class BlockWrapper(Block):
 
     @abstractmethod
     def wraps(self) -> Block:
+        """Returns the wrapped block instance."""
         raise NotImplementedError
 
     @overridable
     def before(self) -> None:
+        """Hook function invoked before render."""
         pass
 
     @overridable
     def after(self) -> None:
+        """Hook function invoked after render."""
         pass

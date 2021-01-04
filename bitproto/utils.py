@@ -22,7 +22,7 @@ __all__ = (
     "safe_hash",
     "override",
     "overridable",
-    "write_file",
+    "isabstractmethod" "write_file",
     "Color",
     "colored",
     "pascal_case",
@@ -230,6 +230,10 @@ def overridable(f: F) -> F:
     method implementation."""
     setattr(f, "__overridable__", True)
     return f
+
+
+def isabstractmethod(f: F) -> bool:
+    return getattr(f, "__isabstractmethod__", False)
 
 
 def write_file(filepath: str, s: str) -> None:

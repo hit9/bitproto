@@ -4,9 +4,10 @@ Python formatter.
 
 from typing import Optional
 
-from bitproto._ast import Array, Byte, Constant, EnumField, Int, Proto, Uint
+from bitproto._ast import (Array, Byte, Constant, Enum, EnumField, Int, Proto,
+                           Uint)
 from bitproto.renderer.formatter import CaseStyleMapping, Formatter
-from bitproto.utils import override
+from bitproto.utils import final, override
 
 
 class PyFormatter(Formatter):
@@ -80,3 +81,8 @@ class PyFormatter(Formatter):
         if as_name:
             return f"import {module_name} as {as_name}"
         return f"import {module_name}"
+
+    @final
+    def format_enum_value_to_name_map_name(self, enum: Enum) -> str:
+        enum_name = self.format_enum_name(enum)
+        return "_{0}_VALUE_TO_NAME_MAP".format(enum_name)

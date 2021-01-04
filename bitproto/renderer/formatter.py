@@ -254,7 +254,7 @@ class Formatter:
 
         if len(namespaces) == 0:
             return definition_name  # Actually couldn't happen.
-        if len(namespaces) == 1 and namespaces[0] is Proto:
+        if len(namespaces) == 1 and isinstance(namespaces[0], Proto):
             return definition_name
 
         namespace = namespaces[-1]
