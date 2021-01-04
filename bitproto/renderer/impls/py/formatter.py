@@ -7,7 +7,7 @@ from typing import Optional
 from bitproto._ast import (Array, Byte, Constant, Enum, EnumField, Int, Proto,
                            Uint)
 from bitproto.renderer.formatter import CaseStyleMapping, Formatter
-from bitproto.utils import final, override
+from bitproto.utils import final, override, upper_case
 
 
 class PyFormatter(Formatter):
@@ -97,4 +97,4 @@ class PyFormatter(Formatter):
     @final
     def format_enum_value_to_name_map_name(self, enum: Enum) -> str:
         enum_name = self.format_enum_name(enum)
-        return "_{0}_VALUE_TO_NAME_MAP".format(enum_name)
+        return upper_case("_{0}_VALUE_TO_NAME_MAP".format(enum_name))
