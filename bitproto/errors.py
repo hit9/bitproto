@@ -200,7 +200,7 @@ class CyclicImport(GrammarError):
 
 @dataclass
 class InvalidAliasedType(GrammarError):
-    """Invalid type to alias, only bool,byte,uint,int and array of them can be aliased."""
+    """Invalid type to alias."""
 
 
 @dataclass

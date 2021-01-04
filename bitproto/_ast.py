@@ -753,29 +753,17 @@ class Alias(Type, BoundDefinition):
     def __repr__(self) -> str:
         return f"<alias {self.name}>"
 
-    def validate_type(self) -> bool:
-        # FIXME: alias to array of message? alias to array of enum
-        # Maybe: alias to non-definition type
-        """Constraint type to alias:
-          * base types (bool, uint, int, byte)
-          * array of base types
-          * array of alias to base types
-        """
-        if isinstance(self.type, BaseType):
-            return True
-        if isinstance(self.type, Array):
-            array = cast(Array, self.type)
-            if isinstance(array.element_type, BaseType):
-                return True
-            if isinstance(array.element_type, Alias):
-                alias = cast(Alias, array.element_type)
-                if isinstance(alias.type, BaseType):
-                    return True
-        return False
+    def validate_type(self) -> None:
+        """Constraint type to alias: type but not definition."""
+        if isinstance(self.type, Definition):
+            message = (
+                f"invalid type alias, "
+                f"target type '{self.type.name}' already has a name."
+            )
+            raise InvalidAliasedType.from_token(token=self, message=message)
 
     def validate(self) -> None:
-        if not self.validate_type():
-            raise InvalidAliasedType.from_token(token=self)
+        self.validate_type()
 
     def nbits(self) -> int:
         return self.type.nbits()
