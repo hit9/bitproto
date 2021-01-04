@@ -15,7 +15,7 @@ class BlockGeneralImports(Block):
     @override(Block)
     def render(self) -> None:
         self.push("import json")
-        self.push("from typing import Dict")
+        self.push("from typing import Dict, List")
 
 
 class BlockGeneralFunctionInt8(Block):
@@ -80,6 +80,30 @@ class BlockImportList(BlockComposition):
         return [
             BlockImportChildproto(proto, name=name)
             for name, proto in self.bound.protos(recursive=False)
+        ]
+
+
+class BlockAlias(BlockDefinition):
+    @property
+    def alias_name(self) -> str:
+        return self.formatter.format_alias_name(self.as_alias)
+
+    @property
+    def alias_type(self) -> str:
+        return self.formatter.format_type(self.as_alias.type)
+
+    @override(Block)
+    def render(self) -> None:
+        self.push_docstring(as_comment=True)
+        self.push(f"{self.alias_name} = {self.alias_type}")
+
+
+class BlockAliasList(BlockComposition):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block]:
+        return [
+            BlockAlias(alias, name=name)
+            for name, alias in self.bound.aliases(recursive=True, bound=self.bound)
         ]
 
 
@@ -237,6 +261,7 @@ class RendererPy(Renderer):
             BlockGeneralImports(),
             BlockImportList(),
             BlockGeneralGlobalFunctions(),
+            BlockAliasList(),
             BlockConstantList(),
             BlockEnumList(),
         ]

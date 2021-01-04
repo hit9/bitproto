@@ -239,7 +239,7 @@ class BlockMessageStruct(BlockMessageBase, BlockWrapper):
         alignment = self.bound.get_option_as_int_or_raise(option_name)
         if alignment > 0:
             self.push_string(f"__attribute__((packed, aligned({alignment})))")
-        self.push_string(";")
+        self.push_string(";", separator="")
 
 
 class BlockMessageEncoderFunctionDeclaration(BlockMessageBase):
@@ -363,8 +363,8 @@ class RendererCHeader(Renderer):
             BlockExternCPlusPlus(),
             BlockImportList(),
             BlockGeneralMacroDefines(),
-            BlockConstantList(),
             BlockAliasList(),
+            BlockConstantList(),
             BlockEnumList(),
             BlockMessageList(),
         ]
