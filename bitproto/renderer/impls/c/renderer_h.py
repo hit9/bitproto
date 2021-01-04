@@ -12,8 +12,14 @@ from bitproto.renderer.impls.c.formatter import CFormatter
 from bitproto.renderer.renderer import Renderer
 from bitproto.utils import override, snake_case, upper_case
 
+Renderer_ = Renderer[CFormatter]
+Block_ = Block[CFormatter]
+BlockComposition_ = BlockComposition[CFormatter]
+BlockWrapper_ = BlockWrapper[CFormatter]
+BlockDefinition_ = BlockDefinition[CFormatter]
 
-class BlockIncludeGuard(Block):
+
+class BlockIncludeGuard(Block_):
     def render_proto_doc(self) -> None:
         for comment in self.bound.comment_block:
             self.push("// {0}".format(comment.content()))
@@ -30,18 +36,18 @@ class BlockIncludeGuard(Block):
     def render_declaration_end(self) -> None:
         self.push(f"#endif")
 
-    @override(Block)
+    @override(Block_)
     def render(self) -> None:
         self.render_proto_doc()
         self.render_declaration_begin()
 
-    @override(Block)
+    @override(Block_)
     def defer(self) -> None:
         self.render_declaration_end()
 
 
-class BlockIncludeGeneralHeaders(Block):
-    @override(Block)
+class BlockIncludeGeneralHeaders(Block_):
+    @override(Block_)
     def render(self) -> None:
         self.push("#include <inttypes.h>")
         self.push("#include <stdbool.h>")
@@ -49,45 +55,45 @@ class BlockIncludeGeneralHeaders(Block):
         self.push("#include <stdio.h>")
 
 
-class BlockExternCPlusPlus(Block):
-    @override(Block)
+class BlockExternCPlusPlus(Block_):
+    @override(Block_)
     def render(self) -> None:
         self.push("#if defined(__cplusplus)")
         self.push('extern "C" {')
         self.push("#endif")
 
-    @override(Block)
+    @override(Block_)
     def defer(self) -> None:
         self.push("#if defined(__cplusplus)")
         self.push("}")
         self.push("#endif")
 
 
-class BlockIncludeChildProtoHeader(BlockDefinition):
-    @override(Block)
+class BlockIncludeChildProtoHeader(BlockDefinition_):
+    @override(Block_)
     def render(self) -> None:
         self.push(self.formatter.format_import_statement(self.as_proto))
 
 
-class BlockGeneralMacroDefines(Block):
-    @override(Block)
+class BlockGeneralMacroDefines(Block_):
+    @override(Block_)
     def render(self) -> None:
         self.push('#define btoa(x) ((x) ? "true" : "false")')
 
 
-class BlockConstant(BlockDefinition):
+class BlockConstant(BlockDefinition_):
     def render_constant_define(self) -> None:
         name = self.formatter.format_constant_name(self.as_constant)
         value = self.formatter.format_value(self.as_constant.value)
         self.push(f"#define {name} {value}")
 
-    @override(Block)
+    @override(Block_)
     def render(self) -> None:
         self.push_docstring()
         self.render_constant_define()
 
 
-class BlockAlias(BlockDefinition):
+class BlockAlias(BlockDefinition_):
     def render_alias_typedef_to_array(self) -> None:
         array_type = cast(Array, self.as_alias.type)
         aliased_type = self.formatter.format_type(array_type.element_type)
@@ -107,49 +113,49 @@ class BlockAlias(BlockDefinition):
             self.render_alias_typedef_to_common()
         self.push_location_doc()
 
-    @override(Block)
+    @override(Block_)
     def render(self) -> None:
         self.push_docstring()
         self.render_alias_typedef()
 
 
-class BlockEnumField(BlockDefinition):
+class BlockEnumField(BlockDefinition_):
     def render_define_macro(self) -> None:
         field = self.as_enum_field
         name = self.formatter.format_enum_field_name(field)
         value = self.formatter.format_int_value(field.value)
         self.push(f"#define {name} {value}")
 
-    @override(Block)
+    @override(Block_)
     def render(self) -> None:
         self.push_docstring()
         self.render_define_macro()
 
 
-class BlockEnumBase(BlockDefinition):
+class BlockEnumBase(BlockDefinition_):
     @property
     def enum_name(self) -> str:
         return self.formatter.format_enum_name(self.as_enum)
 
 
-class BlockEnumFieldList(BlockEnumBase, BlockComposition):
-    @override(BlockComposition)
-    def blocks(self) -> List[Block]:
+class BlockEnumFieldList(BlockEnumBase, BlockComposition_):
+    @override(BlockComposition_)
+    def blocks(self) -> List[Block_]:
         return [BlockEnumField(field) for field in self.as_enum.fields()]
 
-    @override(BlockComposition)
+    @override(BlockComposition_)
     def separator(self) -> str:
         return "\n"
 
 
-class BlockEnum(BlockEnumBase, BlockWrapper):
-    @override(BlockWrapper)
+class BlockEnum(BlockEnumBase, BlockWrapper_):
+    @override(BlockWrapper_)
     def before(self) -> None:
         self.push_docstring()
         self.render_enum_typedef()
 
-    @override(BlockWrapper)
-    def wraps(self) -> Block:
+    @override(BlockWrapper_)
+    def wraps(self) -> Block_:
         return BlockEnumFieldList(self.as_message)
 
     def render_enum_typedef(self) -> None:
@@ -159,7 +165,7 @@ class BlockEnum(BlockEnumBase, BlockWrapper):
         self.push_location_doc()
 
 
-class BlockMessageField(BlockDefinition):
+class BlockMessageField(BlockDefinition_):
     def render_field_declaration_array(self) -> None:
         field_type = self.as_message_field.type
         field_name = self.as_message_field.name
@@ -180,20 +186,20 @@ class BlockMessageField(BlockDefinition):
             self.render_field_declaration_common()
         self.push_location_doc()
 
-    @override(Block)
+    @override(Block_)
     def render(self) -> None:
         self.push_docstring()
         self.render_field_declaration()
 
 
-class BlockMessageBase(BlockDefinition):
+class BlockMessageBase(BlockDefinition_):
     @property
     def struct_name(self) -> str:
         return self.formatter.format_message_name(self.as_message)
 
 
 class BlockMessageLengthMacro(BlockMessageBase):
-    @override(BlockDefinition)
+    @override(BlockDefinition_)
     def render(self) -> None:
         message = self.as_message
         struct_name: str = self.struct_name
@@ -207,32 +213,32 @@ class BlockMessageLengthMacro(BlockMessageBase):
         self.push(macro_string)
 
 
-class BlockMessageFieldList(BlockMessageBase, BlockComposition):
-    @override(BlockComposition)
-    def blocks(self) -> List[Block]:
+class BlockMessageFieldList(BlockMessageBase, BlockComposition_):
+    @override(BlockComposition_)
+    def blocks(self) -> List[Block_]:
         return [
             BlockMessageField(field, indent=4)
             for field in self.as_message.sorted_fields()
         ]
 
-    @override(BlockComposition)
+    @override(BlockComposition_)
     def separator(self) -> str:
         return "\n"
 
 
-class BlockMessageStruct(BlockMessageBase, BlockWrapper):
-    @override(BlockWrapper)
-    def wraps(self) -> Block:
+class BlockMessageStruct(BlockMessageBase, BlockWrapper_):
+    @override(BlockWrapper_)
+    def wraps(self) -> Block_:
         return BlockMessageFieldList(self.definition, name=self.definition_name)
 
-    @override(BlockWrapper)
+    @override(BlockWrapper_)
     def before(self) -> None:
         self.push_docstring()
         struct_name: str = self.struct_name
         self.push(f"struct {struct_name} {{")
         self.push_location_doc()
 
-    @override(BlockWrapper)
+    @override(BlockWrapper_)
     def after(self) -> None:
         self.push("}")
         option_name = "c.struct_packing_alignment"
@@ -243,7 +249,7 @@ class BlockMessageStruct(BlockMessageBase, BlockWrapper):
 
 
 class BlockMessageEncoderFunctionDeclaration(BlockMessageBase):
-    @override(Block)
+    @override(Block_)
     def render(self) -> None:
         struct_name: str = self.struct_name
         comment = self.formatter.format_docstring(
@@ -256,7 +262,7 @@ class BlockMessageEncoderFunctionDeclaration(BlockMessageBase):
 
 
 class BlockMessageDecoderFunctionDeclaration(BlockMessageBase):
-    @override(Block)
+    @override(Block_)
     def render(self) -> None:
         struct_name: str = self.struct_name
         comment = self.formatter.format_docstring(
@@ -269,7 +275,7 @@ class BlockMessageDecoderFunctionDeclaration(BlockMessageBase):
 
 
 class BlockMessageJsonFormatterFunctionDeclaration(BlockMessageBase):
-    @override(Block)
+    @override(Block_)
     def render(self) -> None:
         enabled = self.bound.get_option_as_bool_or_raise(
             "c.enable_render_json_formatter"
@@ -286,9 +292,9 @@ class BlockMessageJsonFormatterFunctionDeclaration(BlockMessageBase):
         self.push(declaration)
 
 
-class BlockMessage(BlockDefinition, BlockComposition):
-    @override(BlockComposition)
-    def blocks(self) -> List[Block]:
+class BlockMessage(BlockDefinition_, BlockComposition_):
+    @override(BlockComposition_)
+    def blocks(self) -> List[Block_]:
         return [
             BlockMessageLengthMacro(self.as_message),
             BlockMessageStruct(self.as_message),
@@ -298,66 +304,66 @@ class BlockMessage(BlockDefinition, BlockComposition):
         ]
 
 
-class BlockImportList(BlockComposition):
-    @override(BlockComposition)
-    def blocks(self) -> List[Block]:
+class BlockImportList(BlockComposition_):
+    @override(BlockComposition_)
+    def blocks(self) -> List[Block_]:
         return [
             BlockIncludeChildProtoHeader(proto, name=name)
             for name, proto in self.bound.protos(recursive=False)
         ]
 
-    @override(BlockComposition)
+    @override(BlockComposition_)
     def separator(self) -> str:
         return "\n"
 
 
-class BlockConstantList(BlockComposition):
-    @override(BlockComposition)
-    def blocks(self) -> List[Block]:
+class BlockConstantList(BlockComposition_):
+    @override(BlockComposition_)
+    def blocks(self) -> List[Block_]:
         return [
             BlockConstant(constant, name=name)
             for name, constant in self.bound.constants(recursive=True, bound=self.bound)
         ]
 
-    @override(BlockComposition)
+    @override(BlockComposition_)
     def separator(self) -> str:
         return "\n"
 
 
-class BlockAliasList(BlockComposition):
-    @override(BlockComposition)
-    def blocks(self) -> List[Block]:
+class BlockAliasList(BlockComposition_):
+    @override(BlockComposition_)
+    def blocks(self) -> List[Block_]:
         return [
             BlockAlias(alias, name=name)
             for name, alias in self.bound.aliases(recursive=True, bound=self.bound)
         ]
 
-    @override(BlockComposition)
+    @override(BlockComposition_)
     def separator(self) -> str:
         return "\n"
 
 
-class BlockEnumList(BlockComposition):
-    @override(BlockComposition)
-    def blocks(self) -> List[Block]:
+class BlockEnumList(BlockComposition_):
+    @override(BlockComposition_)
+    def blocks(self) -> List[Block_]:
         return [
             BlockEnum(enum, name=name)
             for name, enum in self.bound.enums(recursive=True, bound=self.bound)
         ]
 
 
-class BlockMessageList(BlockComposition):
-    @override(BlockComposition)
-    def blocks(self) -> List[Block]:
+class BlockMessageList(BlockComposition_):
+    @override(BlockComposition_)
+    def blocks(self) -> List[Block_]:
         return [
             BlockMessage(message, name=name)
             for name, message in self.bound.messages(recursive=True, bound=self.bound)
         ]
 
 
-class BlockList(BlockComposition):
-    @override(BlockComposition)
-    def blocks(self) -> List[Block]:
+class BlockList(BlockComposition_):
+    @override(BlockComposition_)
+    def blocks(self) -> List[Block_]:
         return [
             BlockAheadNotice(),
             BlockIncludeGuard(),
@@ -372,17 +378,17 @@ class BlockList(BlockComposition):
         ]
 
 
-class RendererCHeader(Renderer):
+class RendererCHeader(Renderer_):
     """Renderer for C language (header)."""
 
-    @override(Renderer)
+    @override(Renderer_)
     def file_extension(self) -> str:
         return ".h"
 
-    @override(Renderer)
-    def formatter(self) -> Formatter:
+    @override(Renderer_)
+    def formatter(self) -> CFormatter:
         return CFormatter()
 
-    @override(Renderer)
-    def block(self) -> Block:
+    @override(Renderer_)
+    def block(self) -> Block_:
         return BlockList()

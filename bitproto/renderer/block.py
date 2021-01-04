@@ -6,16 +6,16 @@ Block class base.
 """
 
 from abc import abstractmethod
-from typing import List, Optional, cast
+from typing import Generic, List, Optional, cast
 
 from bitproto._ast import (Alias, Constant, Definition, Enum, EnumField,
                            Message, MessageField, Proto)
 from bitproto.errors import InternalError
-from bitproto.renderer.formatter import Formatter
+from bitproto.renderer.formatter import F, Formatter
 from bitproto.utils import final, overridable, override
 
 
-class Block:
+class Block(Generic[F]):
     """Block is a collection of rendered strings.
 
     :param indent: Number of characters to indent for this block.
@@ -26,15 +26,15 @@ class Block:
         self.indent = indent
 
         self._bound: Optional[Proto] = None
-        self._formatter: Optional[Formatter] = None
+        self._formatter: Optional[F] = None
 
     @property
-    def formatter(self) -> Formatter:
+    def formatter(self) -> F:
         assert self._formatter is not None, InternalError("block._formatter not set")
         return self._formatter
 
     @final
-    def set_formatter(self, formatter: Formatter) -> None:
+    def set_formatter(self, formatter: F) -> None:
         self._formatter = formatter
 
     @property
@@ -125,7 +125,7 @@ class BlockAheadNotice(Block):
         self.push(notice_comment)
 
 
-class BlockDefinition(Block):
+class BlockDefinition(Block[F]):
     """Block for a definition.
 
     :param definition: The associated definition.
@@ -200,7 +200,7 @@ class BlockDefinition(Block):
         self.push_string(inline_comment, separator=" ")
 
 
-class BlockComposition(Block):
+class BlockComposition(Block[F]):
     """Composition of a list of blocks as a block."""
 
     @overridable
@@ -234,12 +234,12 @@ class BlockComposition(Block):
                 self.push_from_block(block)
 
     @abstractmethod
-    def blocks(self) -> List[Block]:
+    def blocks(self) -> List[Block[F]]:
         """Returns the blocks to join."""
         raise NotImplementedError
 
 
-class BlockWrapper(Block):
+class BlockWrapper(Block[F]):
     """Wraps on a block as a block."""
 
     @final
@@ -256,7 +256,7 @@ class BlockWrapper(Block):
         self.after()
 
     @abstractmethod
-    def wraps(self) -> Block:
+    def wraps(self) -> Block[F]:
         """Returns the wrapped block instance."""
         raise NotImplementedError
 
