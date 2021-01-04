@@ -94,8 +94,7 @@ class BlockConstant(BlockDefinition_):
 
 
 class BlockAlias(BlockDefinition_):
-    def render_alias_typedef_to_array(self) -> None:
-        array_type = cast(Array, self.as_alias.type)
+    def render_alias_typedef_to_array(self, array_type: Array) -> None:
         aliased_type = self.formatter.format_type(array_type.element_type)
         name = self.formatter.format_alias_name(self.as_alias)
         capacity = array_type.cap
@@ -108,7 +107,8 @@ class BlockAlias(BlockDefinition_):
 
     def render_alias_typedef(self) -> None:
         if isinstance(self.as_alias.type, Array):
-            self.render_alias_typedef_to_array()
+            array_type = cast(Array, self.as_alias.type)
+            self.render_alias_typedef_to_array(array_type)
         else:
             self.render_alias_typedef_to_common()
         self.push_location_doc()
