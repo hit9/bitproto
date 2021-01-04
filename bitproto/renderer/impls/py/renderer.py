@@ -21,8 +21,8 @@ class BlockStatementPass(Block):
 class BlockGeneralImports(Block):
     @override(Block)
     def render(self) -> None:
-        self.push("from dataclasses import dataclass, field")
         self.push("import json")
+        self.push("from dataclasses import dataclass, field")
         self.push("from typing import Dict, List")
 
 
@@ -77,7 +77,7 @@ class BlockGeneralGlobalFunctions(BlockComposition):
         ]
 
 
-class BlockImportChildproto(BlockDefinition):
+class BlockImportChildProto(BlockDefinition):
     @override(Block)
     def render(self) -> None:
         statement = self.formatter.format_import_statement(
@@ -86,17 +86,30 @@ class BlockImportChildproto(BlockDefinition):
         self.push(statement)
 
 
-class BlockImportList(BlockComposition):
+class BlockImportChildProtoList(BlockComposition):
     @override(BlockComposition)
     def blocks(self) -> List[Block]:
         return [
-            BlockImportChildproto(proto, name=name)
+            BlockImportChildProto(proto, name=name)
             for name, proto in self.bound.protos(recursive=False)
         ]
 
     @override(BlockComposition)
     def separator(self) -> str:
         return "\n"
+
+
+class BlockImportList(BlockComposition):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block]:
+        return [
+            BlockGeneralImports(),
+            BlockImportChildProtoList(),
+        ]
+
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n\n"
 
 
 class BlockAlias(BlockDefinition):
@@ -345,6 +358,24 @@ class BlockMessageList(BlockComposition):
         return "\n\n\n"
 
 
+class BlockList(BlockComposition):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block]:
+        return [
+            BlockAheadNotice(),
+            BlockImportList(),
+            BlockGeneralGlobalFunctions(),
+            BlockAliasList(),
+            BlockConstantList(),
+            BlockEnumList(),
+            BlockMessageList(),
+        ]
+
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n\n\n"
+
+
 class RendererPy(Renderer):
     """Renderer for Python language."""
 
@@ -357,14 +388,5 @@ class RendererPy(Renderer):
         return PyFormatter()
 
     @override(Renderer)
-    def blocks(self) -> List[Block]:
-        return [
-            BlockAheadNotice(),
-            BlockGeneralImports(),
-            BlockImportList(),
-            BlockGeneralGlobalFunctions(),
-            BlockAliasList(),
-            BlockConstantList(),
-            BlockEnumList(),
-            BlockMessageList(),
-        ]
+    def block(self) -> Block:
+        return BlockList()

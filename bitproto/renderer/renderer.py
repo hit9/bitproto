@@ -26,7 +26,7 @@ class Renderer:
         self.proto = proto
         self.outdir = outdir or self.get_outdir_default(proto)
 
-        self.out_filename = self.format_out_filename()
+        self.out_filename = self.get_out_filename()
         self.out_filepath = os.path.join(self.outdir, self.out_filename)
 
     def get_outdir_default(self, proto: Proto) -> str:
@@ -38,45 +38,20 @@ class Renderer:
             return os.path.dirname(os.path.abspath(proto.filepath))
         return os.getcwd()
 
-    def format_out_filename(self, extension: Optional[str] = None) -> str:
-        """Returns the output file's name for given extension.
-
-            >>> format_out_filepath(".go")
-            example_bp.go
-        """
-        out_base_name = self.proto.name
-        extension = extension or self.file_extension()
-        if self.proto.filepath:
-            proto_base_name = os.path.basename(self.proto.filepath)
-            out_base_name = os.path.splitext(proto_base_name)[0]  # remove extension
-        out_filename = out_base_name + "_bp" + extension
-        return out_filename
+    def get_out_filename(self) -> str:
+        """Returns the output file's name for this renderer. """
+        extension = self.file_extension()
+        formatter = self.formatter()
+        return formatter.format_out_filename(self.proto, extension=extension)
 
     def render_string(self) -> str:
         """Render current proto to string."""
-        blocks = self.blocks()
-        strings = []
         formatter = self.formatter()
-
-        # Initial
-        for block in blocks:
-            block.set_formatter(formatter)
-            block.set_bound(self.proto)
-
-        # Executes `render()`.
-        for block in blocks:
-            block.render()
-            strings.append(str(block))
-
-        # Executes `defer()`.
-        reversed_blocks = blocks[::-1]
-        for block in reversed_blocks:
-            try:
-                block.defer()
-                strings.append(str(block))
-            except NotImplementedError:
-                pass
-        return "\n\n".join(strings)
+        block = self.block()
+        block.set_bound(self.proto)
+        block.set_formatter(formatter)
+        block.render()
+        return block.collect()
 
     def render(self) -> str:
         """Render current proto to file(s).
@@ -89,8 +64,8 @@ class Renderer:
         return self.out_filepath
 
     @abstractmethod
-    def blocks(self) -> List[Block]:
-        """Returns the block list to render."""
+    def block(self) -> Block:
+        """Returns the block to render."""
         raise NotImplementedError
 
     @abstractmethod

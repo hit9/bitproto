@@ -52,6 +52,11 @@ class Block:
         return self.separator().join(self.strings)
 
     @final
+    def is_empty(self) -> bool:
+        """Returns if this block is empty."""
+        return len(self.strings) == 0
+
+    @final
     def push_string(self, s: str, separator: str = " ") -> None:
         """Append a in-line string `s` onto current string.
         :param separator: The separator between current string with given `s`.
@@ -80,9 +85,17 @@ class Block:
         self.strings = []
 
     @final
+    def collect(self) -> str:
+        """Clear and returns the joined string."""
+        s = str(self)
+        self.clear()
+        return s
+
+    @final
     def push_from_block(self, b: "Block") -> None:
         """Push from another block."""
-        self.push(str(b), indent=0)
+        if not b.is_empty():
+            self.push(b.collect(), indent=0)
 
     @abstractmethod
     def render(self) -> None:
@@ -91,7 +104,7 @@ class Block:
 
     @overridable
     def defer(self) -> None:
-        """Defer render processor for this block. invoked by Renderer.render().
+        """Defer render processor for this block. invoked by BlockComposition.render().
         Optional overrided.
         """
         raise NotImplementedError
@@ -193,17 +206,32 @@ class BlockComposition(Block):
     @overridable
     @override(Block)
     def separator(self) -> str:
-        """Overrides the separator, between blocks, defaults to '\n\n'."""
+        """Overrides upper method `separator()`, for separator between blocks,
+        defaults to '\n\n'.
+        """
         return "\n\n"
 
     @final
     @override(Block)
     def render(self) -> None:
-        for block in self.blocks():
+        """Overrides upper method `render()`.
+        It will firstly call each block's render method.
+        And then call defer method reversively.
+        """
+        blocks = self.blocks()
+        for block in blocks:
             block.set_formatter(self.formatter)
             block.set_bound(self.bound)
             block.render()
             self.push_from_block(block)
+
+        for block in blocks[::-1]:
+            try:
+                block.defer()
+            except NotImplementedError:
+                pass
+            else:
+                self.push_from_block(block)
 
     @abstractmethod
     def blocks(self) -> List[Block]:

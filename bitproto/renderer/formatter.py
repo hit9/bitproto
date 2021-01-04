@@ -4,6 +4,7 @@ bitproto.renderer.formatter
 
 Formatter class base.
 """
+import os
 from abc import abstractmethod
 from enum import Enum as Enum_
 from enum import unique
@@ -376,3 +377,17 @@ class Formatter:
         elif isinstance(c, IntegerConstant):
             return self.format_int_value_type()
         raise InternalError(f"got unexpected constant type {c}")
+
+    @final
+    def format_out_filename(self, proto: Proto, extension: str) -> str:
+        """Formats the out file name for given proto and given extension.
+
+            >>> format_out_filename(proto, ".h")
+            "example_bp.h"
+        """
+        out_base_name = proto.name
+        if proto.filepath:
+            proto_base_name = os.path.basename(proto.filepath)
+            out_base_name = os.path.splitext(proto_base_name)[0]  # remove extension
+        out_filename = out_base_name + "_bp" + extension
+        return out_filename

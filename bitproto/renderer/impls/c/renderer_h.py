@@ -339,18 +339,8 @@ class BlockMessageList(BlockComposition):
         ]
 
 
-class RendererCHeader(Renderer):
-    """Renderer for C language (header)."""
-
-    @override(Renderer)
-    def file_extension(self) -> str:
-        return ".h"
-
-    @override(Renderer)
-    def formatter(self) -> Formatter:
-        return CFormatter()
-
-    @override(Renderer)
+class BlockList(BlockComposition):
+    @override(BlockComposition)
     def blocks(self) -> List[Block]:
         return [
             BlockAheadNotice(),
@@ -364,3 +354,19 @@ class RendererCHeader(Renderer):
             BlockEnumList(),
             BlockMessageList(),
         ]
+
+
+class RendererCHeader(Renderer):
+    """Renderer for C language (header)."""
+
+    @override(Renderer)
+    def file_extension(self) -> str:
+        return ".h"
+
+    @override(Renderer)
+    def formatter(self) -> Formatter:
+        return CFormatter()
+
+    @override(Renderer)
+    def block(self) -> Block:
+        return BlockList()

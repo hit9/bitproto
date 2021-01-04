@@ -4,7 +4,8 @@ Renderer for C file.
 
 from typing import List
 
-from bitproto.renderer.block import Block, BlockAheadNotice, BlockDefinition
+from bitproto.renderer.block import (Block, BlockAheadNotice, BlockComposition,
+                                     BlockDefinition)
 from bitproto.renderer.formatter import Formatter
 from bitproto.renderer.impls.c.formatter import CFormatter
 from bitproto.renderer.impls.c.renderer_h import RendererCHeader
@@ -13,19 +14,22 @@ from bitproto.utils import override
 
 
 class BlockInclude(Block):
-    def __init__(self, header_filename: str) -> None:
-        super(BlockInclude, self).__init__()
-        self.header_filename = header_filename
-
     @override(Block)
     def render(self) -> None:
-        self.push(f'#include "{self.header_filename}"')
+        header_filename = self.formatter.format_out_filename(self.bound, extension=".h")
+        self.push(f'#include "{header_filename}"')
 
 
 class BlockMessageEncoder(BlockDefinition):
     @override(Block)
     def render(self) -> None:
         pass
+
+
+class BlockList(BlockComposition):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block]:
+        return [BlockAheadNotice(), BlockInclude()]
 
 
 class RendererC(Renderer):
@@ -40,6 +44,5 @@ class RendererC(Renderer):
         return CFormatter()
 
     @override(Renderer)
-    def blocks(self) -> List[Block]:
-        header_filename = self.format_out_filename(extension=".h")
-        return [BlockAheadNotice(), BlockInclude(header_filename)]
+    def block(self) -> Block:
+        return BlockList()
