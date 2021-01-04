@@ -17,11 +17,11 @@ Errors.
 
 import sys
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar, Optional
 from typing import Type as T
-from typing import TypeVar, ClassVar, Optional
+from typing import TypeVar
 
-from bitproto.utils import colored, Color
+from bitproto.utils import Color, colored
 
 if TYPE_CHECKING:
     from bitproto._ast import Node
@@ -200,7 +200,7 @@ class CyclicImport(GrammarError):
 
 @dataclass
 class InvalidAliasedType(GrammarError):
-    """Invalid type to alias, only bool,byte,uint,int and array of them can be aliased."""
+    """Invalid type to alias."""
 
 
 @dataclass
@@ -274,3 +274,8 @@ class MessageFieldNameNotSnake(LintWarning):
 @dataclass
 class ConstantNameNotUpper(LintWarning):
     """Constant name not upper case."""
+
+
+@dataclass
+class AliasNameNotPascal(LintWarning):
+    """Alias name not pascal case."""

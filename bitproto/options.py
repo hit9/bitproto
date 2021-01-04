@@ -6,7 +6,7 @@ Options bitproto supports.
 """
 
 from dataclasses import dataclass
-from typing import Callable, Optional, Union, Tuple, cast
+from typing import Callable, Optional, Tuple, Union, cast
 
 Value = Union[bool, int, str]
 Validator = Callable[..., bool]
@@ -58,5 +58,11 @@ PROTO_OPTTIONS: OptionDescriptors = (
         "",
         None,
         "Package path of current golang package, to be imported, e.g. github.com/path/to/shared_bp",
+    ),
+    OptionDescriptor(
+        "py.module_name",
+        "",
+        None,
+        "Module name of current python module, to be imported, e.g. example_bp",
     ),
 )

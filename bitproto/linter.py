@@ -7,34 +7,18 @@ Built-in linter, skipable but not configurable.
 
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import Callable, Optional, Tuple, TypeVar, Type as T, Generic, List
+from typing import Callable, Generic, List, Optional, Tuple
+from typing import Type as T
+from typing import TypeVar
 
-from bitproto._ast import (
-    Alias,
-    BoundDefinition,
-    Constant,
-    Definition,
-    Enum,
-    EnumField,
-    Message,
-    MessageField,
-    Node,
-    Proto,
-)
-from bitproto.errors import warning
-from bitproto.errors import (
-    Warning,
-    LintWarning,
-    ConstantNameNotUpper,
-    EnumNameNotPascal,
-    EnumHasNoFieldValue0,
-    EnumFieldNameNotUpper,
-    IndentWarning,
-    MessageNameNotPascal,
-    MessageFieldNameNotSnake,
-)
+from bitproto._ast import (Alias, BoundDefinition, Constant, Definition, Enum,
+                           EnumField, Message, MessageField, Node, Proto)
+from bitproto.errors import (AliasNameNotPascal, ConstantNameNotUpper,
+                             EnumFieldNameNotUpper, EnumHasNoFieldValue0,
+                             EnumNameNotPascal, IndentWarning, LintWarning,
+                             MessageFieldNameNotSnake, MessageNameNotPascal,
+                             Warning, warning)
 from bitproto.utils import pascal_case, snake_case
-
 
 D = TypeVar("D", bound=Definition)
 
@@ -77,14 +61,11 @@ class Linter:
         """
         return [rule for rule in self.rules() if rule.target_class() is target_class]
 
-    def run_rule_checker(
-        self, rule: Rule[D], definition: D, name: Optional[str] = None
-    ) -> None:
-        """Run given rule's checker on given definition."""
-        warning(rule.check(definition, name))
-
-    def lint(self, proto: Proto) -> None:
-        """Run lint rules for definitions bound to this proto."""
+    def lint(self, proto: Proto) -> int:
+        """Run lint rules for definitions bound to this proto.
+        Returns number of warning reported.
+        """
+        warning_count: int = 0
         for definition_type in SUPPORTED_TYPES:
 
             items: List[Tuple[str, Definition]]
@@ -96,13 +77,18 @@ class Linter:
             rules = self.filter_rules(definition_type)
             for name, definition in items:
                 for rule in rules:
-                    self.run_rule_checker(rule, definition, name=name)
+                    w = rule.check(definition, name)
+                    if w is not None:
+                        warning(w)
+                        warning_count += 1
+        return warning_count
 
     def rules(self) -> Tuple[Rule, ...]:
         """Rules collection.
         Subclasses could override."""
         return (
             RuleDefinitionIndent(),
+            RuleAliasNamingPascal(),
             RuleConstantNamingUpper(),
             RuleEnumNamingPascal(),
             RuleEnumContains0(),
@@ -112,8 +98,10 @@ class Linter:
         )
 
 
-def lint(proto: Proto) -> None:
-    """Run default linter on given proto."""
+def lint(proto: Proto) -> int:
+    """Run default linter on given proto.
+    Returns number of warning reported.
+    """
     return Linter().lint(proto)
 
 
@@ -134,6 +122,22 @@ class RuleDefinitionIndent(Rule[BoundDefinition]):
             return IndentWarning.from_token(
                 token=definition, suggestion=f"{expect} spaces"
             )
+        return None
+
+
+class RuleAliasNamingPascal(Rule[Alias]):
+    """Check if alias type name is in pascal case."""
+
+    def target_class(self) -> T[Alias]:
+        return Alias
+
+    def check(
+        self, definition: Alias, name: Optional[str] = None
+    ) -> Optional[LintWarning]:
+        definition_name = name or definition.name
+        expect = pascal_case(definition_name)
+        if definition_name != expect:
+            return AliasNameNotPascal.from_token(token=definition, suggestion=expect)
         return None
 
 

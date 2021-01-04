@@ -18,35 +18,15 @@ from ply.lex import LexToken  # type: ignore
 from ply.yacc import LRParser as PlyParser  # type: ignore
 from ply.yacc import YaccProduction as P  # type: ignore
 
-from bitproto._ast import (
-    Alias,
-    Array,
-    BooleanConstant,
-    Comment,
-    Constant,
-    Definition,
-    Enum,
-    EnumField,
-    IntegerConstant,
-    Message,
-    MessageField,
-    Option,
-    Proto,
-    Scope,
-    StringConstant,
-    Type,
-)
-from bitproto.errors import (
-    CalculationExpressionError,
-    CyclicImport,
-    GrammarError,
-    InternalError,
-    InvalidArrayCap,
-    ReferencedConstantNotDefined,
-    ReferencedNotConstant,
-    ReferencedTypeNotDefined,
-    ReferencedNotType,
-)
+from bitproto._ast import (Alias, Array, BooleanConstant, Comment, Constant,
+                           Definition, Enum, EnumField, IntegerConstant,
+                           Message, MessageField, Option, Proto, Scope,
+                           StringConstant, Type)
+from bitproto.errors import (CalculationExpressionError, CyclicImport,
+                             GrammarError, InternalError, InvalidArrayCap,
+                             ReferencedConstantNotDefined,
+                             ReferencedNotConstant, ReferencedNotType,
+                             ReferencedTypeNotDefined)
 from bitproto.lexer import Lexer
 
 

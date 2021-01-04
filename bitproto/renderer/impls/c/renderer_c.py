@@ -4,36 +4,45 @@ Renderer for C file.
 
 from typing import List
 
-from bitproto.renderer.block import Block, BlockAheadNotice, BlockForDefinition
+from bitproto.renderer.block import (Block, BlockAheadNotice, BlockComposition,
+                                     BlockDefinition)
 from bitproto.renderer.formatter import Formatter
-from bitproto.renderer.renderer import Renderer
 from bitproto.renderer.impls.c.formatter import CFormatter
 from bitproto.renderer.impls.c.renderer_h import RendererCHeader
+from bitproto.renderer.renderer import Renderer
+from bitproto.utils import override
 
 
-class IncludeHeaderFile(Block):
-    def __init__(self, header_filename: str) -> None:
-        super(IncludeHeaderFile, self).__init__()
-        self.header_filename = header_filename
-
+class BlockInclude(Block):
+    @override(Block)
     def render(self) -> None:
-        self.push(f'#include "{self.header_filename}"')
+        header_filename = self.formatter.format_out_filename(self.bound, extension=".h")
+        self.push(f'#include "{header_filename}"')
 
 
-class MessageEncoderBlock(BlockForDefinition):
+class BlockMessageEncoder(BlockDefinition):
+    @override(Block)
     def render(self) -> None:
         pass
+
+
+class BlockList(BlockComposition):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block]:
+        return [BlockAheadNotice(), BlockInclude()]
 
 
 class RendererC(Renderer):
     """Renderer for C language (c file)."""
 
+    @override(Renderer)
     def file_extension(self) -> str:
         return ".c"
 
+    @override(Renderer)
     def formatter(self) -> Formatter:
         return CFormatter()
 
-    def blocks(self) -> List[Block]:
-        header_filename = RendererCHeader(self.proto, self.outdir).out_filename
-        return [BlockAheadNotice(), IncludeHeaderFile(header_filename)]
+    @override(Renderer)
+    def block(self) -> Block:
+        return BlockList()

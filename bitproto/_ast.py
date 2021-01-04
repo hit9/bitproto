@@ -40,42 +40,26 @@ Abstraction syntax tree.
       |    |    |- Message              :Scope:Definition:Node
       |    |    |- Proto                :Scope:Definition:Node
 """
+
 from collections import OrderedDict as dict_
 from dataclasses import dataclass
 from dataclasses import field as dataclass_field
-from typing import Any, Callable, ClassVar, List, Optional, Tuple, Dict
+from typing import Any, Callable, ClassVar, Dict, List, Optional, Tuple
 from typing import Type as T
 from typing import TypeVar, Union, cast
 
-from bitproto.utils import (
-    conditional_cache,
-    cache,
-    final,
-    frozen,
-)
-from bitproto.errors import (
-    DuplicatedDefinition,
-    DuplicatedEnumFieldValue,
-    DuplicatedMessageFieldNumber,
-    EnumFieldValueOverflow,
-    InternalError,
-    InvalidAliasedType,
-    InvalidArrayCap,
-    InvalidEnumFieldValue,
-    InvalidIntCap,
-    InvalidMessageFieldNumber,
-    InvalidOptionValue,
-    InvalidUintCap,
-    UnsupportedArrayType,
-    UnsupportedOption,
-)
-from bitproto.options import (
-    MESSAGE_OPTIONS,
-    PROTO_OPTTIONS,
-    OptionDescriptor,
-    OptionDescriptors,
-    Validator as OptionValidator,
-)
+from bitproto.errors import (DuplicatedDefinition, DuplicatedEnumFieldValue,
+                             DuplicatedMessageFieldNumber,
+                             EnumFieldValueOverflow, InternalError,
+                             InvalidAliasedType, InvalidArrayCap,
+                             InvalidEnumFieldValue, InvalidIntCap,
+                             InvalidMessageFieldNumber, InvalidOptionValue,
+                             InvalidUintCap, UnsupportedArrayType,
+                             UnsupportedOption)
+from bitproto.options import (MESSAGE_OPTIONS, PROTO_OPTTIONS,
+                              OptionDescriptor, OptionDescriptors)
+from bitproto.options import Validator as OptionValidator
+from bitproto.utils import cache, conditional_cache, final, frozen
 
 N = TypeVar("N", bound="Node")  # Node
 D = TypeVar("D", bound="Definition")  # Definition
@@ -769,29 +753,17 @@ class Alias(Type, BoundDefinition):
     def __repr__(self) -> str:
         return f"<alias {self.name}>"
 
-    def validate_type(self) -> bool:
-        # FIXME: alias to array of message? alias to array of enum
-        # Maybe: alias to non-definition type
-        """Constraint type to alias:
-          * base types (bool, uint, int, byte)
-          * array of base types
-          * array of alias to base types
-        """
-        if isinstance(self.type, BaseType):
-            return True
-        if isinstance(self.type, Array):
-            array = cast(Array, self.type)
-            if isinstance(array.element_type, BaseType):
-                return True
-            if isinstance(array.element_type, Alias):
-                alias = cast(Alias, array.element_type)
-                if isinstance(alias.type, BaseType):
-                    return True
-        return False
+    def validate_type(self) -> None:
+        """Constraint type to alias: type but not definition."""
+        if isinstance(self.type, Definition):
+            message = (
+                f"invalid type alias, "
+                f"target type '{self.type.name}' already has a name."
+            )
+            raise InvalidAliasedType.from_token(token=self, message=message)
 
     def validate(self) -> None:
-        if not self.validate_type():
-            raise InvalidAliasedType.from_token(token=self)
+        self.validate_type()
 
     def nbits(self) -> int:
         return self.type.nbits()
@@ -821,6 +793,10 @@ class EnumField(Field):
     def validate(self) -> None:
         if self.value < 0:
             raise InvalidEnumFieldValue.from_token(token=self)
+
+    @property
+    def enum(self) -> "Enum":
+        return cast(Enum, self.scope_stack[-1])
 
 
 @final
@@ -883,6 +859,10 @@ class MessageField(Field):
 
     def __repr__(self) -> str:
         return f"<message-field {self.name}={self.number}>"
+
+    @property
+    def message(self) -> "Message":
+        return cast(Message, self.scope_stack[-1])
 
     def validate(self) -> None:
         """Constraint message field number from 1 to 255."""
