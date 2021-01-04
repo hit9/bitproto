@@ -274,3 +274,8 @@ class MessageFieldNameNotSnake(LintWarning):
 @dataclass
 class ConstantNameNotUpper(LintWarning):
     """Constant name not upper case."""
+
+
+@dataclass
+class AliasNameNotPascal(LintWarning):
+    """Alias name not pascal case."""

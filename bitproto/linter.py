@@ -13,9 +13,9 @@ from typing import TypeVar
 
 from bitproto._ast import (Alias, BoundDefinition, Constant, Definition, Enum,
                            EnumField, Message, MessageField, Node, Proto)
-from bitproto.errors import (ConstantNameNotUpper, EnumFieldNameNotUpper,
-                             EnumHasNoFieldValue0, EnumNameNotPascal,
-                             IndentWarning, LintWarning,
+from bitproto.errors import (AliasNameNotPascal, ConstantNameNotUpper,
+                             EnumFieldNameNotUpper, EnumHasNoFieldValue0,
+                             EnumNameNotPascal, IndentWarning, LintWarning,
                              MessageFieldNameNotSnake, MessageNameNotPascal,
                              Warning, warning)
 from bitproto.utils import pascal_case, snake_case
@@ -87,6 +87,7 @@ class Linter:
         Subclasses could override."""
         return (
             RuleDefinitionIndent(),
+            RuleAliasNamingPascal(),
             RuleConstantNamingUpper(),
             RuleEnumNamingPascal(),
             RuleEnumContains0(),
@@ -118,6 +119,22 @@ class RuleDefinitionIndent(Rule[BoundDefinition]):
             return IndentWarning.from_token(
                 token=definition, suggestion=f"{expect} spaces"
             )
+        return None
+
+
+class RuleAliasNamingPascal(Rule[Alias]):
+    """Check if alias type name is in pascal case."""
+
+    def target_class(self) -> T[Alias]:
+        return Alias
+
+    def check(
+        self, definition: Alias, name: Optional[str] = None
+    ) -> Optional[LintWarning]:
+        definition_name = name or definition.name
+        expect = pascal_case(definition_name)
+        if definition_name != expect:
+            return AliasNameNotPascal.from_token(token=definition, suggestion=expect)
         return None
 
 
