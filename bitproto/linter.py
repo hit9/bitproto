@@ -61,14 +61,11 @@ class Linter:
         """
         return [rule for rule in self.rules() if rule.target_class() is target_class]
 
-    def run_rule_checker(
-        self, rule: Rule[D], definition: D, name: Optional[str] = None
-    ) -> None:
-        """Run given rule's checker on given definition."""
-        warning(rule.check(definition, name))
-
-    def lint(self, proto: Proto) -> None:
-        """Run lint rules for definitions bound to this proto."""
+    def lint(self, proto: Proto) -> int:
+        """Run lint rules for definitions bound to this proto.
+        Returns number of warning reported.
+        """
+        warning_count: int = 0
         for definition_type in SUPPORTED_TYPES:
 
             items: List[Tuple[str, Definition]]
@@ -80,7 +77,11 @@ class Linter:
             rules = self.filter_rules(definition_type)
             for name, definition in items:
                 for rule in rules:
-                    self.run_rule_checker(rule, definition, name=name)
+                    w = rule.check(definition, name)
+                    if w is not None:
+                        warning(w)
+                        warning_count += 1
+        return warning_count
 
     def rules(self) -> Tuple[Rule, ...]:
         """Rules collection.
@@ -97,8 +98,10 @@ class Linter:
         )
 
 
-def lint(proto: Proto) -> None:
-    """Run default linter on given proto."""
+def lint(proto: Proto) -> int:
+    """Run default linter on given proto.
+    Returns number of warning reported.
+    """
     return Linter().lint(proto)
 
 

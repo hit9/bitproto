@@ -83,7 +83,7 @@ def run_bitproto() -> None:
         lint(proto)
 
     if args.check:  #  Checks only.
-        args_parser.exit(0, message="syntax ok")
+        args_parser.exit(0)
 
     # Render
     try:
