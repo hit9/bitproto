@@ -21,7 +21,7 @@ BlockDefinition_ = BlockDefinition[GoFormatter]
 class BlockPackageName(BlockDefinition_):
     @override(Block_)
     def render(self) -> None:
-        self.push_docstring()
+        self.push_definition_docstring()
         self.push(f"package {self.as_proto.name}")
 
 
@@ -96,7 +96,7 @@ class BlockAlias(BlockDefinition_):
         t = self.as_alias
         type_name = self.formatter.format_alias_type(t)
         original_type_name = self.formatter.format_type(t.type)
-        self.push_docstring(as_comment=True)
+        self.push_definition_docstring(as_comment=True)
         self.push(f"type {type_name} {original_type_name}")
 
 
@@ -117,7 +117,7 @@ class BlockConstant(BlockDefinition_):
     @override(Block_)
     def render(self) -> None:
         t = self.as_constant
-        self.push_docstring(as_comment=True)
+        self.push_definition_docstring(as_comment=True)
         name = self.formatter.format_constant_name(t)
         value = self.formatter.format_value(t.value)
         value_type = self.formatter.format_constant_type(t)
@@ -155,7 +155,7 @@ class BlockEnumField(BlockEnumFieldBase):
     @override(Block_)
     def render(self) -> None:
         t = self.as_enum_field
-        self.push_docstring(as_comment=True)
+        self.push_definition_docstring(as_comment=True)
         self.push(f"const {self.field_name} {self.field_type} = {self.field_value}")
 
 
@@ -182,7 +182,7 @@ class BlockEnumFieldList(BlockEnumBase, BlockComposition_):
 class BlockEnumType(BlockEnumBase):
     @override(Block_)
     def render(self) -> None:
-        self.push_docstring(as_comment=True)
+        self.push_definition_docstring(as_comment=True)
         self.push(f"type {self.enum_name} {self.enum_type}")
 
 
@@ -226,8 +226,7 @@ class BlockEnumStringFunction(BlockEnumBase, BlockWrapper_):
 
     @override(BlockWrapper_)
     def before(self) -> None:
-        comment = "String returns the name of this enum item."
-        self.push(self.formatter.format_docstring(comment))
+        self.push_docstring("String returns the name of this enum item.")
         self.push(f"func (v {self.enum_name}) String() string {{")
 
     @override(BlockWrapper_)

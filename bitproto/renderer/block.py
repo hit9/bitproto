@@ -8,9 +8,10 @@ Block class base.
 from abc import abstractmethod
 from typing import Generic, List, Optional
 from typing import Type as T
+from typing import Union
 
-from bitproto._ast import (Alias, Constant, D, Definition, Enum, EnumField,
-                           Message, MessageField, Proto)
+from bitproto._ast import (Alias, Comment, Constant, D, Definition, Enum,
+                           EnumField, Message, MessageField, Proto)
 from bitproto.errors import InternalError
 from bitproto.renderer.formatter import F, Formatter
 from bitproto.utils import final, overridable, override
@@ -80,6 +81,20 @@ class Block(Generic[F]):
     def push_empty_line(self) -> None:
         """Append an empty line."""
         self.push("")
+
+    @final
+    def push_comment(
+        self, comment: Union[Comment, str], indent: Optional[int] = None
+    ) -> None:
+        """Push a line of comment (or from string)."""
+        self.push(self.formatter.format_comment(str(comment)), indent=indent)
+
+    @final
+    def push_docstring(
+        self, comment: Union[Comment, str], indent: Optional[int] = None
+    ) -> None:
+        """Push a line of docstring (or from string)."""
+        self.push(self.formatter.format_docstring(str(comment)), indent=indent)
 
     @final
     def clear(self) -> None:
@@ -184,20 +199,17 @@ class BlockDefinition(Block[F]):
         return self.as_t(Proto)
 
     @final
-    def push_docstring(
+    def push_definition_docstring(
         self, as_comment: bool = False, indent: Optional[int] = None
     ) -> None:
         """Format the comment_block of this definition, and push them."""
-        indent = self.indent if indent is None else indent
-
-        fmt = self.formatter.format_docstring
+        pusher = self.push_docstring
         if as_comment:
-            fmt = self.formatter.format_comment
+            pusher = self.push_comment
 
         for comment in self.definition.comment_block:
             comment_string = comment.content()
-            formatted_comment = fmt(comment_string)
-            self.push(formatted_comment, indent)
+            pusher(comment_string, indent)
 
 
 class BlockComposition(Block[F]):

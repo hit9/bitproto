@@ -128,7 +128,7 @@ class BlockAlias(BlockDefinition_):
 
     @override(Block_)
     def render(self) -> None:
-        self.push_docstring(as_comment=True)
+        self.push_definition_docstring(as_comment=True)
         self.push(f"{self.alias_name} = {self.alias_type}")
 
 
@@ -160,7 +160,7 @@ class BlockConstant(BlockDefinition_):
 
     @override(Block_)
     def render(self) -> None:
-        self.push_docstring(as_comment=True)
+        self.push_definition_docstring(as_comment=True)
         self.push(f"{self.constant_name}: {self.constant_type} = {self.constant_value}")
 
 
@@ -195,7 +195,7 @@ class BlockEnumFieldBase(BlockDefinition_):
 class BlockEnumField(BlockEnumFieldBase):
     @override(Block_)
     def render(self) -> None:
-        self.push_docstring(as_comment=True)
+        self.push_definition_docstring(as_comment=True)
         self.push(f"{self.field_name}: {self.field_type} = {self.field_value}")
 
 
@@ -225,7 +225,7 @@ class BlockEnumFieldListWrapper(BlockEnumBase, BlockWrapper_):
         self.render_enum_type()
 
     def render_enum_type(self) -> None:
-        self.push_docstring(as_comment=True)
+        self.push_definition_docstring(as_comment=True)
         self.push(f"{self.enum_type_name} = int")
 
 
@@ -300,7 +300,7 @@ class BlockMessageField(BlockDefinition_):
 
     @override(Block_)
     def render(self) -> None:
-        self.push_docstring(as_comment=True)
+        self.push_definition_docstring(as_comment=True)
         self.push(f"{self.field_name}: {self.field_type} = {self.field_default_value}")
 
 
@@ -313,8 +313,7 @@ class BlockMessageBase(BlockDefinition_):
 class BlockMessageSize(BlockMessageBase):
     @override(Block_)
     def render(self) -> None:
-        comment = f"Number of bytes to serialize class {self.class_name}"
-        self.push(self.formatter.format_comment(comment))
+        self.push_comment(f"Number of bytes to serialize class {self.class_name}")
         nbytes = self.formatter.format_int_value(self.as_message.nbytes())
         self.push(f"MESSAGE_BYTES_LENGTH: ClassVar[int] = {nbytes}")
 
@@ -356,7 +355,7 @@ class BlockMessageClass(BlockMessageBase, BlockWrapper_):
     def before(self) -> None:
         self.push("@dataclass")
         self.push(f"class {self.class_name}:")
-        self.push_docstring(indent=4)
+        self.push_definition_docstring(indent=4)
 
 
 class BlockMessage(BlockMessageBase, BlockComposition_):
