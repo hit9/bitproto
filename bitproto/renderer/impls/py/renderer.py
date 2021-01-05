@@ -27,7 +27,6 @@ class BlockStatementPass(Block_):
 class BlockGeneralImports(Block_):
     @override(Block_)
     def render(self) -> None:
-        self.push("import json")
         self.push("from dataclasses import dataclass, field")
         self.push("from typing import Dict, List")
 
