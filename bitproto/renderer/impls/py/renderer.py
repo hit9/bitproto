@@ -28,7 +28,7 @@ class BlockGeneralImports(Block_):
     @override(Block_)
     def render(self) -> None:
         self.push("from dataclasses import dataclass, field")
-        self.push("from typing import Dict, List")
+        self.push("from typing import ClassVar, Dict, List")
 
 
 class BlockGeneralFunctionInt8(Block_):
@@ -310,6 +310,15 @@ class BlockMessageBase(BlockDefinition_):
         return self.formatter.format_message_name(self.as_message)
 
 
+class BlockMessageSize(BlockMessageBase):
+    @override(Block_)
+    def render(self) -> None:
+        comment = f"Number of bytes to serialize class {self.class_name}"
+        self.push(self.formatter.format_comment(comment))
+        nbytes = self.formatter.format_int_value(self.as_message.nbytes())
+        self.push(f"MESSAGE_BYTES_LENGTH: ClassVar[int] = {nbytes}")
+
+
 class BlockMessageFieldList(BlockMessageBase, BlockComposition_):
     @property
     def fields(self) -> List[MessageField]:
@@ -325,12 +334,23 @@ class BlockMessageFieldList(BlockMessageBase, BlockComposition_):
         return "\n"
 
 
+class BlockMessageClassDefs(BlockMessageBase, BlockComposition_):
+    @override(BlockComposition_)
+    def blocks(self) -> List[Block_]:
+        return [
+            BlockMessageSize(self.as_message, indent=self.indent),
+            BlockMessageFieldList(self.as_message, indent=self.indent),
+        ]
+
+    @override(BlockComposition_)
+    def separator(self) -> str:
+        return "\n\n"
+
+
 class BlockMessageClass(BlockMessageBase, BlockWrapper_):
     @override(BlockWrapper_)
     def wraps(self) -> Block_:
-        if self.as_message.fields():
-            return BlockMessageFieldList(self.as_message, indent=4)
-        return BlockStatementPass(indent=4)
+        return BlockMessageClassDefs(self.as_message, indent=4)
 
     @override(BlockWrapper_)
     def before(self) -> None:
