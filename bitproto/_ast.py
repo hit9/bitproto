@@ -54,12 +54,13 @@ from bitproto.errors import (DuplicatedDefinition, DuplicatedEnumFieldValue,
                              InvalidAliasedType, InvalidArrayCap,
                              InvalidEnumFieldValue, InvalidIntCap,
                              InvalidMessageFieldNumber, InvalidOptionValue,
-                             InvalidUintCap, UnsupportedArrayType,
-                             UnsupportedOption)
+                             InvalidUintCap, MessageSizeOverflows,
+                             UnsupportedArrayType, UnsupportedOption)
 from bitproto.options import (MESSAGE_OPTIONS, PROTO_OPTTIONS,
                               OptionDescriptor, OptionDescriptors)
 from bitproto.options import Validator as OptionValidator
-from bitproto.utils import cache, conditional_cache, final, frozen
+from bitproto.utils import (cache, conditional_cache, final, frozen,
+                            overridable, override)
 
 N = TypeVar("N", bound="Node")  # Node
 D = TypeVar("D", bound="Definition")  # Definition
@@ -113,6 +114,7 @@ class Node:
     def __post_init__(self) -> None:
         self.validate()
 
+    @overridable
     def validate(self) -> None:
         """Validator hook function, invoked after node init."""
         pass
@@ -342,6 +344,7 @@ class Scope(Definition):
 
         self.members[name] = member
 
+    @overridable
     def validate_member_on_push(
         self, member: Definition, name: Optional[str] = None
     ) -> None:
@@ -478,6 +481,7 @@ class ScopeWithOptions(Scope):
         """Get an option descriptor by name, None on not found."""
         return self.option_descriptors().get(name, None)
 
+    @override(Scope)
     def validate_member_on_push(
         self, member: Definition, name: Optional[str] = None
     ) -> None:
@@ -560,12 +564,14 @@ class Type(Node):
     # Indicates if self is _TYPE_MISSING
     _is_missing: bool = False
 
+    @overridable
     def nbits(self) -> int:
         """Returns number of bits this type occupy.
         Should be override by final type subclasses.
         """
         raise NotImplementedError
 
+    @final
     @cache_if_frozen
     def nbytes(self) -> int:
         """Returns the number of bytes this type occupy,
@@ -606,6 +612,7 @@ class BaseType(SingleType):
 @frozen
 @dataclass
 class Bool(BaseType):
+    @override(Type)
     def nbits(self) -> int:
         return 1
 
@@ -617,6 +624,7 @@ class Bool(BaseType):
 @frozen
 @dataclass
 class Byte(BaseType):
+    @override(Type)
     def nbits(self) -> int:
         return 8
 
@@ -639,12 +647,18 @@ class Uint(Integer):
 
     cap: int = 0
 
+    # Max value of cap.
+    MAX_CAP: ClassVar[int] = 64
+
+    @override(Node)
     def validate(self) -> None:
         if self._is_missing:
             return
-        if not (0 < self.cap <= 64):
-            raise InvalidUintCap.from_token(token=self)
+        if not (0 < self.cap <= self.MAX_CAP):
+            message = f"Invalid bits capacity for a uint type, should between [1, {self.MAX_CAP}]"
+            raise InvalidUintCap.from_token(token=self, message=message)
 
+    @override(Type)
     def nbits(self) -> int:
         return self.cap
 
@@ -665,10 +679,12 @@ class Int(Integer):
 
     cap: int = 0
 
+    @override(Node)
     def validate(self) -> None:
         if self.cap not in (8, 16, 32, 64):
             raise InvalidIntCap.from_token(token=self)
 
+    @override(Type)
     def nbits(self) -> int:
         return self.cap
 
@@ -686,6 +702,16 @@ class ExtensibleType(Type):
 
     extensible: bool = False
 
+    @overridable
+    def ahead_value_max(self) -> int:
+        """Returns the ahead value max."""
+        raise NotImplementedError
+
+    @final
+    def ahead_nbits(self) -> int:
+        """Returns number of bits the ahead value takes."""
+        return self.ahead_value_max().bit_length()
+
 
 @final
 @frozen
@@ -702,6 +728,9 @@ class Array(CompositeType, ExtensibleType):
     element_type: Type = _TYPE_MISSING
     cap: int = 0
 
+    # Max value of array cap.
+    MAX_CAP: ClassVar[int] = 1024 - 1
+
     @classmethod
     def element_type_constraints(cls) -> Tuple[T[Type], ...]:
         return (
@@ -714,23 +743,34 @@ class Array(CompositeType, ExtensibleType):
             Alias,
         )
 
+    @override(Node)
     def validate(self) -> None:
         self.validate_array_cap()
         self.validate_array_element_type()
 
     def validate_array_cap(self) -> None:
-        if not (0 < self.cap < 1024):
-            raise InvalidArrayCap.from_token(token=self)
+        if not (0 < self.cap <= self.MAX_CAP):
+            message = f"Invalid array capacity, should between (0, {self.MAX_CAP}]"
+            raise InvalidArrayCap.from_token(token=self, message=message)
 
     def validate_array_element_type(self) -> None:
         if not isinstance(self.element_type, self.element_type_constraints()):
             raise UnsupportedArrayType.from_token(token=self)
 
+    @override(ExtensibleType)
+    def ahead_value_max(self) -> int:
+        """Array's ahead_value stores the array capacity."""
+        return self.MAX_CAP
+
+    @override(Type)
     @cache_if_frozen
     def nbits(self) -> int:
         if self.element_type is None:
-            return 0
-        return self.cap * self.element_type.nbits()
+            raise InternalError("array's element_type is None")
+        n = self.cap * self.element_type.nbits()
+        if not self.extensible:
+            return n
+        return self.ahead_nbits() + n
 
     def __repr__(self) -> str:
         extensible_flag = "'" if self.extensible else ""
@@ -762,9 +802,11 @@ class Alias(Type, BoundDefinition):
             )
             raise InvalidAliasedType.from_token(token=self, message=message)
 
+    @override(Node)
     def validate(self) -> None:
         self.validate_type()
 
+    @override(Type)
     def nbits(self) -> int:
         return self.type.nbits()
 
@@ -790,6 +832,7 @@ class EnumField(Field):
     def __repr__(self) -> str:
         return f"<enum-field {self.name}={self.value}>"
 
+    @override(Node)
     def validate(self) -> None:
         if self.value < 0:
             raise InvalidEnumFieldValue.from_token(token=self)
@@ -818,8 +861,17 @@ class Enum(SingleType, ExtensibleType, BoundScope):
         extensible_flag = "'" if self.extensible else ""
         return f"<enum {self.name}{extensible_flag}>"
 
+    @override(ExtensibleType)
+    def ahead_value_max(self) -> int:
+        """Enum's ahead_value stores number of bits of the enum's uint type."""
+        return Uint.MAX_CAP
+
+    @override(Type)
     def nbits(self) -> int:
-        return self.type.nbits()
+        n = self.type.nbits()
+        if not self.extensible:
+            return n
+        return self.ahead_nbits() + n
 
     @cache_if_frozen
     def fields(self) -> List[EnumField]:
@@ -836,6 +888,7 @@ class Enum(SingleType, ExtensibleType, BoundScope):
         """Returns the dict of field value to field name."""
         return dict_((field.value, field.name) for field in self.fields())
 
+    @override(Scope)
     def validate_member_on_push(
         self, member: Definition, name: Optional[str] = None
     ) -> None:
@@ -870,6 +923,7 @@ class MessageField(Field):
             return cast(Message, self.scope_stack[-1])
         raise InternalError("message_field's last scope not message")
 
+    @override(Node)
     def validate(self) -> None:
         """Constraint message field number from 1 to 255."""
         if not (0 < self.number < 256):
@@ -883,7 +937,9 @@ class Message(CompositeType, ExtensibleType, BoundScope, ScopeWithOptions):
     """Message (similar to protobuf's message). """
 
     name: str = ""
+
     __option_descriptors__: ClassVar[OptionDescriptors] = MESSAGE_OPTIONS
+    MAX_NBITS: ClassVar[int] = 8 * 1024 * 8 - 1  # < 8kb
 
     @cache_if_frozen
     def fields(self) -> List[MessageField]:
@@ -895,9 +951,18 @@ class Message(CompositeType, ExtensibleType, BoundScope, ScopeWithOptions):
         """Sorted version of fields(), by field number."""
         return sorted(self.fields(), key=lambda field: field.number)
 
+    @override(ExtensibleType)
+    def ahead_value_max(self) -> int:
+        """Message's ahead_value stores the number of bits of this message."""
+        return self.MAX_NBITS
+
+    @override(Type)
     @cache_if_frozen
     def nbits(self) -> int:
-        return sum(field.type.nbits() for field in self.fields())
+        n = sum(field.type.nbits() for field in self.fields())
+        if not self.extensible:
+            return n
+        return self.ahead_nbits() + n
 
     def __repr__(self) -> str:
         extensible_flag = "'" if self.extensible else ""
@@ -913,6 +978,13 @@ class Message(CompositeType, ExtensibleType, BoundScope, ScopeWithOptions):
         """Dict version of sorted_fields(), in format of field number to field."""
         return dict_((field.number, field) for field in self.sorted_fields())
 
+    @override(Node)
+    def validate(self) -> None:
+        if self.nbits() > self.MAX_NBITS:
+            message = f"Message size overflows constraint ({self.MAX_NBITS} bit)"
+            raise MessageSizeOverflows.from_token(token=self, message=message)
+
+    @override(Scope)
     def validate_member_on_push(
         self, member: Definition, name: Optional[str] = None
     ) -> None:
