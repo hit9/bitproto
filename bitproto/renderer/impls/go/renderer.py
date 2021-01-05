@@ -9,7 +9,7 @@ from bitproto.renderer.block import (Block, BlockAheadNotice, BlockComposition,
 from bitproto.renderer.formatter import Formatter
 from bitproto.renderer.impls.go.formatter import GoFormatter
 from bitproto.renderer.renderer import Renderer
-from bitproto.utils import override
+from bitproto.utils import override, snake_case, upper_case
 
 Renderer_ = Renderer[GoFormatter]
 Block_ = Block[GoFormatter]
@@ -257,6 +257,114 @@ class BlockEnumList(BlockComposition_):
         ]
 
 
+class BlockMessageFieldBase(BlockDefinition_):
+    @property
+    def field_name(self) -> str:
+        return self.as_message_field.name
+
+    @property
+    def field_type(self) -> str:
+        return self.formatter.format_type(self.as_message_field.type)
+
+
+class BlockMessageField(BlockMessageFieldBase):
+    @override(Block_)
+    def render(self) -> None:
+        self.push_definition_docstring(as_comment=True)
+        snake_case_name = snake_case(self.field_name)
+        self.push(f'{self.field_name} {self.field_type} `json:"{snake_case_name}"`')
+
+
+class BlockMessageBase(BlockDefinition_):
+    @property
+    def struct_name(self) -> str:
+        return self.formatter.format_message_name(self.as_message)
+
+    @property
+    def size_string(self) -> str:
+        return self.formatter.format_int_value(self.as_message.nbytes())
+
+    @property
+    def struct_size_const_name(self) -> str:
+        return upper_case(f"BYTES_LENGTH_{self.struct_name}")
+
+
+class BlockMessageFieldList(BlockMessageBase, BlockComposition_):
+    @override(BlockComposition_)
+    def blocks(self) -> List[Block_]:
+        return [
+            BlockMessageField(field, indent=self.indent)
+            for field in self.as_message.sorted_fields()
+        ]
+
+    @override(BlockComposition_)
+    def separator(self) -> str:
+        return "\n"
+
+
+class BlockMessageSize(BlockMessageBase):
+    @override(Block_)
+    def render(self) -> None:
+        self.push_comment(f"Number of bytes to serialize struct {self.struct_name}")
+        self.push(f"const {self.struct_size_const_name} uint32 = {self.size_string}")
+
+
+class BlockMessageStruct(BlockMessageBase, BlockWrapper_):
+    @override(BlockWrapper_)
+    def wraps(self) -> Block_:
+        return BlockMessageFieldList(self.as_message, indent=1)
+
+    @override(BlockWrapper_)
+    def before(self) -> None:
+        self.push_definition_docstring()
+        self.push(f"type {self.struct_name} struct {{")
+
+    @override(BlockWrapper_)
+    def after(self) -> None:
+        self.push("}")
+
+
+class BlockMessageFunctionSize(BlockMessageBase):
+    @override(Block_)
+    def render(self) -> None:
+        self.push_docstring(f"Returns struct {self.struct_name} size.")
+        self.push(f"func (m *{self.struct_name}) Size() uint32 {{")
+        self.push(f"return {self.struct_size_const_name}", indent=1)
+        self.push("}")
+
+
+class BlockMessageFunctionString(BlockMessageBase):
+    @override(Block_)
+    def render(self) -> None:
+        self.push_docstring(
+            f"Returns string representation for struct {self.struct_name}."
+        )
+        self.push(f"func (m *{self.struct_name}) String() string {{")
+        self.push(f"v, _ := json.Marshal(m)", indent=1)
+        self.push(f"return string(v)", indent=1)
+        self.push("}")
+
+
+class BlockMessage(BlockMessageBase, BlockComposition_):
+    @override(BlockComposition_)
+    def blocks(self) -> List[Block_]:
+        return [
+            BlockMessageSize(self.as_message),
+            BlockMessageStruct(self.as_message),
+            BlockMessageFunctionSize(self.as_message),
+            BlockMessageFunctionString(self.as_message),
+        ]
+
+
+class BlockMessageList(BlockComposition_):
+    @override(BlockComposition_)
+    def blocks(self) -> List[Block_]:
+        return [
+            BlockMessage(message, name)
+            for name, message in self.bound.messages(recursive=True, bound=self.bound)
+        ]
+
+
 class BlockList(BlockComposition_):
     @override(BlockComposition_)
     def blocks(self) -> List[Block_]:
@@ -269,6 +377,7 @@ class BlockList(BlockComposition_):
             BlockAliasList(),
             BlockConstantList(),
             BlockEnumList(),
+            BlockMessageList(),
         ]
 
 
