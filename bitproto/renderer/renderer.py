@@ -7,14 +7,15 @@ Renderer class base.
 
 import os
 from abc import abstractmethod
-from typing import List, Optional
+from typing import Generic, List, Optional
 
 from bitproto._ast import Proto
+from bitproto.errors import InternalError
 from bitproto.renderer.block import Block
-from bitproto.renderer.formatter import Formatter
+from bitproto.renderer.formatter import F, Formatter
 
 
-class Renderer:
+class Renderer(Generic[F]):
     """Base renderer class.
 
     :param proto: The parsed bitproto instance.
@@ -48,6 +49,7 @@ class Renderer:
         """Render current proto to string."""
         formatter = self.formatter()
         block = self.block()
+        assert block is not None, InternalError("block() returns None")
         block.set_bound(self.proto)
         block.set_formatter(formatter)
         block.render()
@@ -64,7 +66,7 @@ class Renderer:
         return self.out_filepath
 
     @abstractmethod
-    def block(self) -> Block:
+    def block(self) -> Block[F]:
         """Returns the block to render."""
         raise NotImplementedError
 
@@ -75,6 +77,6 @@ class Renderer:
         raise NotImplementedError
 
     @abstractmethod
-    def formatter(self) -> Formatter:
+    def formatter(self) -> F:
         """Returns the formatter of this renderer."""
         raise NotImplementedError

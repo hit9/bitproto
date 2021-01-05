@@ -75,3 +75,15 @@ class GoFormatter(Formatter):
         if as_name:
             return f'import {as_name} "{path}"'
         return f'import "{path}"'
+
+    @override(Formatter)
+    def format_int_value_type(self) -> str:
+        return "int"
+
+    @override(Formatter)
+    def format_string_value_type(self) -> str:
+        return "string"
+
+    @override(Formatter)
+    def format_bool_value_type(self) -> str:
+        return "bool"

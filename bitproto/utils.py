@@ -100,9 +100,9 @@ class cached_property:
         self.__doc__ = func.__doc__
         self.func = func
 
-    def __get__(self, obj: Optional[I], cls: T[O]) -> O:
+    def __get__(self, obj: Optional[I], cls: T[I]) -> Union["cached_property", O]:
         if obj is None:
-            return self  # type: ignore
+            return self
         value = obj.__dict__[self.func.__name__] = self.func(obj)
         return value
 

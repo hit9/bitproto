@@ -10,7 +10,7 @@ from enum import Enum as Enum_
 from enum import unique
 from typing import Callable, Dict, Optional, Tuple
 from typing import Type as T
-from typing import Union, cast
+from typing import TypeVar, Union, cast
 
 from bitproto._ast import (Alias, Array, Bool, BooleanConstant, Byte, Constant,
                            Definition, Enum, EnumField, Int, Integer,
@@ -52,6 +52,9 @@ class CaseStyle(Enum_):
             "pascal": cls.PASCAL,
         }
         return mapping.get(name, cls.KEEP)
+
+
+F = TypeVar("F", bound="Formatter")
 
 
 class Formatter:

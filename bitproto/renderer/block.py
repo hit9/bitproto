@@ -6,16 +6,18 @@ Block class base.
 """
 
 from abc import abstractmethod
-from typing import List, Optional, cast
+from typing import Generic, List, Optional
+from typing import Type as T
+from typing import Union
 
-from bitproto._ast import (Alias, Constant, Definition, Enum, EnumField,
-                           Message, MessageField, Proto)
+from bitproto._ast import (Alias, Comment, Constant, D, Definition, Enum,
+                           EnumField, Message, MessageField, Proto)
 from bitproto.errors import InternalError
-from bitproto.renderer.formatter import Formatter
+from bitproto.renderer.formatter import F, Formatter
 from bitproto.utils import final, overridable, override
 
 
-class Block:
+class Block(Generic[F]):
     """Block is a collection of rendered strings.
 
     :param indent: Number of characters to indent for this block.
@@ -26,15 +28,15 @@ class Block:
         self.indent = indent
 
         self._bound: Optional[Proto] = None
-        self._formatter: Optional[Formatter] = None
+        self._formatter: Optional[F] = None
 
     @property
-    def formatter(self) -> Formatter:
+    def formatter(self) -> F:
         assert self._formatter is not None, InternalError("block._formatter not set")
         return self._formatter
 
     @final
-    def set_formatter(self, formatter: Formatter) -> None:
+    def set_formatter(self, formatter: F) -> None:
         self._formatter = formatter
 
     @property
@@ -81,6 +83,20 @@ class Block:
         self.push("")
 
     @final
+    def push_comment(
+        self, comment: Union[Comment, str], indent: Optional[int] = None
+    ) -> None:
+        """Push a line of comment (or from string)."""
+        self.push(self.formatter.format_comment(str(comment)), indent=indent)
+
+    @final
+    def push_docstring(
+        self, comment: Union[Comment, str], indent: Optional[int] = None
+    ) -> None:
+        """Push a line of docstring (or from string)."""
+        self.push(self.formatter.format_docstring(str(comment)), indent=indent)
+
+    @final
     def clear(self) -> None:
         self.strings = []
 
@@ -125,7 +141,7 @@ class BlockAheadNotice(Block):
         self.push(notice_comment)
 
 
-class BlockDefinition(Block):
+class BlockDefinition(Block[F]):
     """Block for a definition.
 
     :param definition: The associated definition.
@@ -141,66 +157,62 @@ class BlockDefinition(Block):
         self.definition = definition
         self.definition_name: str = name or definition.name
 
+    def as_t(self, t: T[D]) -> D:
+        """Safe cast internal definition to given definition type `t`."""
+        if isinstance(self.definition, t):
+            return self.definition
+        raise InternalError(f"can't cast {self.definition} to type {t}")
+
     @property
     def as_constant(self) -> Constant:
         """Returns the definition as a Constant."""
-        return cast(Constant, self.definition)
+        return self.as_t(Constant)
 
     @property
     def as_alias(self) -> Alias:
         """Returns the definition as an Alias."""
-        return cast(Alias, self.definition)
+        return self.as_t(Alias)
 
     @property
     def as_enum(self) -> Enum:
         """Returns the definition as an Enum."""
-        return cast(Enum, self.definition)
+        return self.as_t(Enum)
 
     @property
     def as_enum_field(self) -> EnumField:
         """Returns the definition as a EnumField."""
-        return cast(EnumField, self.definition)
+        return self.as_t(EnumField)
 
     @property
     def as_message(self) -> Message:
         """Returns the definition as a Message."""
-        return cast(Message, self.definition)
+        return self.as_t(Message)
 
     @property
     def as_message_field(self) -> MessageField:
         """Returns the definition as a MessageField."""
-        return cast(MessageField, self.definition)
+        return self.as_t(MessageField)
 
     @property
     def as_proto(self) -> Proto:
         """Returns the definition as a Proto."""
-        return cast(Proto, self.definition)
+        return self.as_t(Proto)
 
     @final
-    def push_docstring(
+    def push_definition_docstring(
         self, as_comment: bool = False, indent: Optional[int] = None
     ) -> None:
         """Format the comment_block of this definition, and push them."""
-        indent = self.indent if indent is None else indent
-
-        fmt = self.formatter.format_docstring
+        pusher = self.push_docstring
         if as_comment:
-            fmt = self.formatter.format_comment
+            pusher = self.push_comment
 
         for comment in self.definition.comment_block:
             comment_string = comment.content()
-            formatted_comment = fmt(comment_string)
-            self.push(formatted_comment, indent)
-
-    @final
-    def push_location_doc(self) -> None:
-        """Push current definition source location as an inline-comment to current line."""
-        location_string = self.formatter.format_token_location(self.definition)
-        inline_comment = self.formatter.format_comment(location_string)
-        self.push_string(inline_comment, separator=" ")
+            pusher(comment_string, indent)
 
 
-class BlockComposition(Block):
+class BlockComposition(Block[F]):
     """Composition of a list of blocks as a block."""
 
     @overridable
@@ -234,12 +246,12 @@ class BlockComposition(Block):
                 self.push_from_block(block)
 
     @abstractmethod
-    def blocks(self) -> List[Block]:
+    def blocks(self) -> List[Block[F]]:
         """Returns the blocks to join."""
         raise NotImplementedError
 
 
-class BlockWrapper(Block):
+class BlockWrapper(Block[F]):
     """Wraps on a block as a block."""
 
     @final
@@ -256,7 +268,7 @@ class BlockWrapper(Block):
         self.after()
 
     @abstractmethod
-    def wraps(self) -> Block:
+    def wraps(self) -> Block[F]:
         """Returns the wrapped block instance."""
         raise NotImplementedError
 
