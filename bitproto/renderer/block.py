@@ -199,13 +199,6 @@ class BlockDefinition(Block[F]):
             formatted_comment = fmt(comment_string)
             self.push(formatted_comment, indent)
 
-    @final
-    def push_location_doc(self) -> None:
-        """Push current definition source location as an inline-comment to current line."""
-        location_string = self.formatter.format_token_location(self.definition)
-        inline_comment = self.formatter.format_comment(location_string)
-        self.push_string(inline_comment, separator=" ")
-
 
 class BlockComposition(Block[F]):
     """Composition of a list of blocks as a block."""

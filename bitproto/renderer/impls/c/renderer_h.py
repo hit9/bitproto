@@ -111,7 +111,6 @@ class BlockAlias(BlockDefinition_):
             self.render_alias_typedef_to_array(array_type)
         else:
             self.render_alias_typedef_to_common()
-        self.push_location_doc()
 
     @override(Block_)
     def render(self) -> None:
@@ -156,13 +155,12 @@ class BlockEnum(BlockEnumBase, BlockWrapper_):
 
     @override(BlockWrapper_)
     def wraps(self) -> Block_:
-        return BlockEnumFieldList(self.as_message)
+        return BlockEnumFieldList(self.as_enum)
 
     def render_enum_typedef(self) -> None:
         name = self.enum_name
         uint_type = self.formatter.format_uint_type(self.as_enum.type)
         self.push(f"typedef {uint_type} {name};")
-        self.push_location_doc()
 
 
 class BlockMessageField(BlockDefinition_):
@@ -183,7 +181,6 @@ class BlockMessageField(BlockDefinition_):
             self.render_field_declaration_array(array_type)
         else:
             self.render_field_declaration_common()
-        self.push_location_doc()
 
     @override(Block_)
     def render(self) -> None:
@@ -235,7 +232,6 @@ class BlockMessageStruct(BlockMessageBase, BlockWrapper_):
         self.push_docstring()
         struct_name: str = self.struct_name
         self.push(f"struct {struct_name} {{")
-        self.push_location_doc()
 
     @override(BlockWrapper_)
     def after(self) -> None:

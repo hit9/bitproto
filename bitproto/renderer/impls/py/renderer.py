@@ -163,7 +163,6 @@ class BlockConstant(BlockDefinition_):
     def render(self) -> None:
         self.push_docstring(as_comment=True)
         self.push(f"{self.constant_name}: {self.constant_type} = {self.constant_value}")
-        self.push_location_doc()
 
 
 class BlockConstantList(BlockComposition_):
@@ -199,7 +198,6 @@ class BlockEnumField(BlockEnumFieldBase):
     def render(self) -> None:
         self.push_docstring(as_comment=True)
         self.push(f"{self.field_name}: {self.field_type} = {self.field_value}")
-        self.push_location_doc()
 
 
 class BlockEnumBase(BlockDefinition_):
@@ -230,7 +228,6 @@ class BlockEnumFieldListWrapper(BlockEnumBase, BlockWrapper_):
     def render_enum_type(self) -> None:
         self.push_docstring(as_comment=True)
         self.push(f"{self.enum_type_name} = int")
-        self.push_location_doc()
 
 
 class BlockEnumValueToNameMapItem(BlockEnumFieldBase):
