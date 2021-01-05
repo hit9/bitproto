@@ -27,7 +27,7 @@ syn match bitprotoAliasName       /\<\(type\s\+\)\@<=\(\w\+\)\s*\>/
 syn match bitprotoEnumName       /\<\(enum\s\+\)\@<=\(\w\+\)\s*\>/
 syn match bitprotoMessageName    /\<\(message\s\+\)\@<=\(\w\+\)\s*\>/
 syn match bitprotoConstantName   /\<\(const\s\+\)\@<=\(\w\+\)\s*\>/
-syn match bitprotoOptionName     /\<\(option\s\+\)\@<=\(\w[\.]\w*\)\s*\>/
+syn match bitprotoOptionName     /\<\(option\s\+\)\@<=\(\w\+[\.]\w*\)\s*\>/
 syn match bitprotoOperator       '\V=\|+\|-\|*\|/\|\'\|:'
 syn match bitprotoSemicolon      ';'
 syn region bitprotoComment start="//" skip="\\$" end="$" keepend contains=@bitprotoCommentGroup
