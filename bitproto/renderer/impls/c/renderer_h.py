@@ -6,6 +6,7 @@ from typing import Any, List
 
 from bitproto._ast import Array, Proto
 from bitproto.renderer.block import (Block, BlockAheadNotice, BlockComposition,
+                                     BlockConditional, BlockDeferable,
                                      BlockDefinition, BlockWrapper)
 from bitproto.renderer.formatter import Formatter
 from bitproto.renderer.impls.c.formatter import CFormatter
@@ -16,8 +17,10 @@ from bitproto.utils import (cached_property, cast_or_raise, override,
 Renderer_ = Renderer[CFormatter]
 Block_ = Block[CFormatter]
 BlockComposition_ = BlockComposition[CFormatter]
-BlockWrapper_ = BlockWrapper[CFormatter]
+BlockConditional_ = BlockConditional[CFormatter]
+BlockDeferable_ = BlockDeferable[CFormatter]
 BlockDefinition_ = BlockDefinition[CFormatter]
+BlockWrapper_ = BlockWrapper[CFormatter]
 
 
 class BlockProtoDocstring(BlockDefinition_):
@@ -26,7 +29,7 @@ class BlockProtoDocstring(BlockDefinition_):
         self.push_definition_comments()
 
 
-class BlockIncludeGuard(Block_):
+class BlockIncludeGuard(BlockDeferable_):
     def format_proto_macro_name(self) -> str:
         proto_name = snake_case(self.bound.name).upper()
         return f"__BITPROTO__{proto_name}_H__"
@@ -37,7 +40,7 @@ class BlockIncludeGuard(Block_):
         self.push(f"#ifndef  {macro_name}")
         self.push(f"#define  {macro_name} 1")
 
-    @override(Block_)
+    @override(BlockDeferable_)
     def defer(self) -> None:
         self.push(f"#endif")
 
@@ -51,14 +54,14 @@ class BlockIncludeGeneralHeaders(Block_):
         self.push("#include <stdio.h>")
 
 
-class BlockExternCPlusPlus(Block_):
+class BlockExternCPlusPlus(BlockDeferable_):
     @override(Block_)
     def render(self) -> None:
         self.push("#if defined(__cplusplus)")
         self.push('extern "C" {')
         self.push("#endif")
 
-    @override(Block_)
+    @override(BlockDeferable_)
     def defer(self) -> None:
         self.push("#if defined(__cplusplus)")
         self.push("}")
@@ -189,6 +192,10 @@ class BlockMessageBase(BlockDefinition_):
     def struct_name(self) -> str:
         return self.formatter.format_message_name(self.as_message)
 
+    @cached_property
+    def struct_type(self) -> str:
+        return self.formatter.format_message_type(self.as_message)
+
 
 class BlockMessageLengthMacro(BlockMessageBase):
     @override(BlockDefinition_)
@@ -236,39 +243,73 @@ class BlockMessageStruct(BlockMessageBase, BlockWrapper_):
         self.push_string(";", separator="")
 
 
-class BlockMessageEncoderFunctionDeclaration(BlockMessageBase):
+class BlockMessageEncoderBase(BlockMessageBase):
+    @cached_property
+    def function_name(self) -> str:
+        return f"Encode{self.struct_name}"
+
+    @cached_property
+    def function_comment(self) -> str:
+        return f"Encode struct {self.struct_name} to given buffer s."
+
+    @cached_property
+    def function_signature(self) -> str:
+        return f"int {self.function_name}({self.struct_type} *m, unsigned char *s)"
+
+
+class BlockMessageEncoderFunctionDeclaration(BlockMessageEncoderBase):
     @override(Block_)
     def render(self) -> None:
-        struct_name: str = self.struct_name
-        self.push_comment(f"Encode struct {struct_name} to given buffer s")
-        struct_type = self.formatter.format_message_type(self.as_message)
-        declaration = f"int Encode{struct_name}({struct_type} *m, unsigned char *s);"
-        self.push(declaration)
+        self.push_comment(self.function_comment)
+        self.push(f"{self.function_signature};")
 
 
-class BlockMessageDecoderFunctionDeclaration(BlockMessageBase):
+class BlockMessageDecoderBase(BlockMessageBase):
+    @cached_property
+    def function_name(self) -> str:
+        return f"Decode{self.struct_name}"
+
+    @cached_property
+    def function_comment(self) -> str:
+        return f"Decode struct {self.struct_name} from given buffer s."
+
+    @cached_property
+    def function_signature(self) -> str:
+        return f"int {self.function_name}({self.struct_type} *m, unsigned char *s)"
+
+
+class BlockMessageDecoderFunctionDeclaration(BlockMessageDecoderBase):
     @override(Block_)
     def render(self) -> None:
-        struct_name: str = self.struct_name
-        self.push_comment(f"Decode struct {struct_name} from given buffer s")
-        struct_type = self.formatter.format_message_type(self.as_message)
-        declaration = f"int Decode{struct_name}({struct_type} *m, unsigned char *s);"
-        self.push(declaration)
+        self.push_comment(self.function_comment)
+        self.push(f"{self.function_signature};")
 
 
-class BlockMessageJsonFormatterFunctionDeclaration(BlockMessageBase):
+class BlockMessageJsonFormatterBase(BlockMessageBase):
+    @cached_property
+    def function_name(self) -> str:
+        return f"Json{self.struct_name}"
+
+    @cached_property
+    def function_comment(self) -> str:
+        return f"Format struct {self.struct_name} to a json format string."
+
+    @cached_property
+    def function_signature(self) -> str:
+        return f"int Json{self.struct_name}({self.struct_type} *m, char *s)"
+
+    def is_enabled(self) -> bool:
+        option_name = "c.enable_render_json_formatter"
+        return self.bound.get_option_as_bool_or_raise(option_name)
+
+
+class BlockMessageJsonFormatterFunctionDeclaration(BlockMessageJsonFormatterBase):
     @override(Block_)
     def render(self) -> None:
-        enabled = self.bound.get_option_as_bool_or_raise(
-            "c.enable_render_json_formatter"
-        )
-        if not enabled:
+        if not self.is_enabled():
             return
-        struct_name: str = self.struct_name
-        self.push_comment(f"Format struct {struct_name} to a json format string.")
-        struct_type = self.formatter.format_message_type(self.as_message)
-        declaration = f"int Json{struct_name}({struct_type} *m, char *s);"
-        self.push(declaration)
+        self.push_comment(self.function_comment)
+        self.push(f"{self.function_signature};")
 
 
 class BlockMessage(BlockDefinition_, BlockComposition_):

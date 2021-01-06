@@ -11,7 +11,7 @@ from typing import Generic, List, Optional
 
 from bitproto._ast import Proto
 from bitproto.errors import InternalError
-from bitproto.renderer.block import Block
+from bitproto.renderer.block import Block, BlockRenderContext
 from bitproto.renderer.formatter import F, Formatter
 
 
@@ -50,10 +50,10 @@ class Renderer(Generic[F]):
         formatter = self.formatter()
         block = self.block()
         assert block is not None, InternalError("block() returns None")
-        block.set_bound(self.proto)
-        block.set_formatter(formatter)
-        block.render()
-        return block.collect()
+
+        ctx = BlockRenderContext(formatter=formatter, bound=self.proto)
+        block._render_with_ctx(ctx)
+        return block._collect()
 
     def render(self) -> str:
         """Render current proto to file(s).
