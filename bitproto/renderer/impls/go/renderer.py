@@ -9,7 +9,7 @@ from bitproto.renderer.block import (Block, BlockAheadNotice, BlockComposition,
 from bitproto.renderer.formatter import Formatter
 from bitproto.renderer.impls.go.formatter import GoFormatter
 from bitproto.renderer.renderer import Renderer
-from bitproto.utils import override, snake_case, upper_case
+from bitproto.utils import cached_property, override, snake_case, upper_case
 
 Renderer_ = Renderer[GoFormatter]
 Block_ = Block[GoFormatter]
@@ -138,15 +138,15 @@ class BlockConstantList(BlockComposition_):
 
 
 class BlockEnumFieldBase(BlockDefinition_):
-    @property
+    @cached_property
     def field_value(self) -> str:
         return self.formatter.format_int_value(self.as_enum_field.value)
 
-    @property
+    @cached_property
     def field_name(self) -> str:
         return self.formatter.format_enum_field_name(self.as_enum_field)
 
-    @property
+    @cached_property
     def field_type(self) -> str:
         return self.formatter.format_enum_type(self.as_enum_field.enum)
 
@@ -160,11 +160,11 @@ class BlockEnumField(BlockEnumFieldBase):
 
 
 class BlockEnumBase(BlockDefinition_):
-    @property
+    @cached_property
     def enum_name(self) -> str:
         return self.formatter.format_enum_name(self.as_enum)
 
-    @property
+    @cached_property
     def enum_type(self) -> str:
         return self.formatter.format_uint_type(self.as_enum.type)
 
@@ -258,11 +258,11 @@ class BlockEnumList(BlockComposition_):
 
 
 class BlockMessageFieldBase(BlockDefinition_):
-    @property
+    @cached_property
     def field_name(self) -> str:
         return self.as_message_field.name
 
-    @property
+    @cached_property
     def field_type(self) -> str:
         return self.formatter.format_type(self.as_message_field.type)
 
@@ -276,15 +276,15 @@ class BlockMessageField(BlockMessageFieldBase):
 
 
 class BlockMessageBase(BlockDefinition_):
-    @property
+    @cached_property
     def struct_name(self) -> str:
         return self.formatter.format_message_name(self.as_message)
 
-    @property
+    @cached_property
     def size_string(self) -> str:
         return self.formatter.format_int_value(self.as_message.nbytes())
 
-    @property
+    @cached_property
     def struct_size_const_name(self) -> str:
         return upper_case(f"BYTES_LENGTH_{self.struct_name}")
 

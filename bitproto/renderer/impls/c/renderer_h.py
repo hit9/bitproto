@@ -10,7 +10,7 @@ from bitproto.renderer.block import (Block, BlockAheadNotice, BlockComposition,
 from bitproto.renderer.formatter import Formatter
 from bitproto.renderer.impls.c.formatter import CFormatter
 from bitproto.renderer.renderer import Renderer
-from bitproto.utils import override, snake_case, upper_case
+from bitproto.utils import cached_property, override, snake_case, upper_case
 
 Renderer_ = Renderer[CFormatter]
 Block_ = Block[CFormatter]
@@ -132,7 +132,7 @@ class BlockEnumField(BlockDefinition_):
 
 
 class BlockEnumBase(BlockDefinition_):
-    @property
+    @cached_property
     def enum_name(self) -> str:
         return self.formatter.format_enum_name(self.as_enum)
 
@@ -158,7 +158,7 @@ class BlockEnum(BlockEnumBase, BlockWrapper_):
         return BlockEnumFieldList(self.as_enum)
 
     def render_enum_typedef(self) -> None:
-        name = self.enum_name
+        name: str = self.enum_name
         uint_type = self.formatter.format_uint_type(self.as_enum.type)
         self.push(f"typedef {uint_type} {name};")
 
@@ -189,7 +189,7 @@ class BlockMessageField(BlockDefinition_):
 
 
 class BlockMessageBase(BlockDefinition_):
-    @property
+    @cached_property
     def struct_name(self) -> str:
         return self.formatter.format_message_name(self.as_message)
 

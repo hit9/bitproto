@@ -100,6 +100,14 @@ class cached_property:
         self.__doc__ = func.__doc__
         self.func = func
 
+    @overload
+    def __get__(self, obj: None, cls: T[I]) -> "cached_property":
+        ...
+
+    @overload
+    def __get__(self, obj: I, cls: T[I]) -> O:
+        ...
+
     def __get__(self, obj: Optional[I], cls: T[I]) -> Union["cached_property", O]:
         if obj is None:
             return self

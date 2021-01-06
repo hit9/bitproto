@@ -9,7 +9,7 @@ from bitproto.renderer.block import (Block, BlockAheadNotice, BlockComposition,
 from bitproto.renderer.formatter import Formatter
 from bitproto.renderer.impls.py.formatter import PyFormatter
 from bitproto.renderer.renderer import Renderer
-from bitproto.utils import override
+from bitproto.utils import cached_property, override
 
 Renderer_ = Renderer[PyFormatter]
 Block_ = Block[PyFormatter]
@@ -118,11 +118,11 @@ class BlockImportList(BlockComposition_):
 
 
 class BlockAlias(BlockDefinition_):
-    @property
+    @cached_property
     def alias_name(self) -> str:
         return self.formatter.format_alias_name(self.as_alias)
 
-    @property
+    @cached_property
     def alias_type(self) -> str:
         return self.formatter.format_type(self.as_alias.type)
 
@@ -146,15 +146,15 @@ class BlockAliasList(BlockComposition_):
 
 
 class BlockConstant(BlockDefinition_):
-    @property
+    @cached_property
     def constant_name(self) -> str:
         return self.formatter.format_constant_name(self.as_constant)
 
-    @property
+    @cached_property
     def constant_value(self) -> str:
         return self.formatter.format_value(self.as_constant.value)
 
-    @property
+    @cached_property
     def constant_type(self) -> str:
         return self.formatter.format_constant_type(self.as_constant)
 
@@ -178,15 +178,15 @@ class BlockConstantList(BlockComposition_):
 
 
 class BlockEnumFieldBase(BlockDefinition_):
-    @property
+    @cached_property
     def field_name(self) -> str:
         return self.formatter.format_enum_field_name(self.as_enum_field)
 
-    @property
+    @cached_property
     def field_value(self) -> str:
         return self.formatter.format_int_value(self.as_enum_field.value)
 
-    @property
+    @cached_property
     def field_type(self) -> str:
         enum = self.as_enum_field.enum
         return self.formatter.format_enum_type(enum)
@@ -200,7 +200,7 @@ class BlockEnumField(BlockEnumFieldBase):
 
 
 class BlockEnumBase(BlockDefinition_):
-    @property
+    @cached_property
     def enum_type_name(self) -> str:
         return self.formatter.format_enum_type(self.as_enum)
 
@@ -286,15 +286,15 @@ class BlockEnumList(BlockComposition_):
 
 
 class BlockMessageField(BlockDefinition_):
-    @property
+    @cached_property
     def field_name(self) -> str:
         return self.as_message_field.name
 
-    @property
+    @cached_property
     def field_type(self) -> str:
         return self.formatter.format_type(self.as_message_field.type)
 
-    @property
+    @cached_property
     def field_default_value(self) -> str:
         return self.formatter.format_field_default_value(self.as_message_field.type)
 
@@ -305,7 +305,7 @@ class BlockMessageField(BlockDefinition_):
 
 
 class BlockMessageBase(BlockDefinition_):
-    @property
+    @cached_property
     def class_name(self) -> str:
         return self.formatter.format_message_name(self.as_message)
 
@@ -319,7 +319,7 @@ class BlockMessageSize(BlockMessageBase):
 
 
 class BlockMessageFieldList(BlockMessageBase, BlockComposition_):
-    @property
+    @cached_property
     def fields(self) -> List[MessageField]:
         return self.as_message.sorted_fields()
 
