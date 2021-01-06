@@ -383,13 +383,25 @@ class BlockMessageList(BlockComposition_):
         return "\n\n\n"
 
 
-class BlockList(BlockComposition_):
+class BlockHeadList(BlockComposition_):
     @override(BlockComposition_)
     def blocks(self) -> List[Block_]:
         return [
             BlockAheadNotice(),
             BlockProtoDocstring(self.bound),
             BlockImportList(),
+        ]
+
+    @override(BlockComposition_)
+    def separator(self) -> str:
+        return "\n\n"
+
+
+class BlockList(BlockComposition_):
+    @override(BlockComposition_)
+    def blocks(self) -> List[Block_]:
+        return [
+            BlockHeadList(),
             BlockGeneralGlobalFunctions(),
             BlockAliasList(),
             BlockConstantList(),
