@@ -21,6 +21,7 @@ __all__ = (
     "frozen",
     "safe_hash",
     "override",
+    "cast_or_raise",
     "overridable",
     "isabstractmethod",
     "write_file",
@@ -245,6 +246,12 @@ def overridable(f: F) -> F:
 
 def isabstractmethod(f: F) -> bool:
     return getattr(f, "__isabstractmethod__", False)
+
+
+def cast_or_raise(t: T[I], v: Any) -> I:
+    if isinstance(v, t):
+        return v
+    raise TypeError(f"Cant cast {v} to {t}")
 
 
 def write_file(filepath: str, s: str) -> None:

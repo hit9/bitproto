@@ -2,7 +2,7 @@
 Renderer for C header file.
 """
 
-from typing import Any, List, cast
+from typing import Any, List
 
 from bitproto._ast import Array, Proto
 from bitproto.renderer.block import (Block, BlockAheadNotice, BlockComposition,
@@ -10,7 +10,8 @@ from bitproto.renderer.block import (Block, BlockAheadNotice, BlockComposition,
 from bitproto.renderer.formatter import Formatter
 from bitproto.renderer.impls.c.formatter import CFormatter
 from bitproto.renderer.renderer import Renderer
-from bitproto.utils import cached_property, override, snake_case, upper_case
+from bitproto.utils import (cached_property, cast_or_raise, override,
+                            snake_case, upper_case)
 
 Renderer_ = Renderer[CFormatter]
 Block_ = Block[CFormatter]
@@ -19,31 +20,26 @@ BlockWrapper_ = BlockWrapper[CFormatter]
 BlockDefinition_ = BlockDefinition[CFormatter]
 
 
-class BlockIncludeGuard(Block_):
-    def render_proto_doc(self) -> None:
-        for comment in self.bound.comment_block:
-            self.push("// {0}".format(comment.content()))
+class BlockProtoDocstring(BlockDefinition_):
+    @override(Block_)
+    def render(self) -> None:
+        self.push_definition_comments()
 
+
+class BlockIncludeGuard(Block_):
     def format_proto_macro_name(self) -> str:
         proto_name = snake_case(self.bound.name).upper()
         return f"__BITPROTO__{proto_name}_H__"
 
-    def render_declaration_begin(self) -> None:
+    @override(Block_)
+    def render(self) -> None:
         macro_name = self.format_proto_macro_name()
         self.push(f"#ifndef  {macro_name}")
         self.push(f"#define  {macro_name} 1")
 
-    def render_declaration_end(self) -> None:
-        self.push(f"#endif")
-
-    @override(Block_)
-    def render(self) -> None:
-        self.render_proto_doc()
-        self.render_declaration_begin()
-
     @override(Block_)
     def defer(self) -> None:
-        self.render_declaration_end()
+        self.push(f"#endif")
 
 
 class BlockIncludeGeneralHeaders(Block_):
@@ -94,7 +90,8 @@ class BlockConstant(BlockDefinition_):
 
 
 class BlockAlias(BlockDefinition_):
-    def render_alias_typedef_to_array(self, array_type: Array) -> None:
+    def render_alias_typedef_to_array(self) -> None:
+        array_type = cast_or_raise(Array, self.as_alias.type)
         aliased_type = self.formatter.format_type(array_type.element_type)
         name = self.formatter.format_alias_name(self.as_alias)
         capacity = array_type.cap
@@ -107,8 +104,7 @@ class BlockAlias(BlockDefinition_):
 
     def render_alias_typedef(self) -> None:
         if isinstance(self.as_alias.type, Array):
-            array_type = cast(Array, self.as_alias.type)
-            self.render_alias_typedef_to_array(array_type)
+            self.render_alias_typedef_to_array()
         else:
             self.render_alias_typedef_to_common()
 
@@ -164,7 +160,8 @@ class BlockEnum(BlockEnumBase, BlockWrapper_):
 
 
 class BlockMessageField(BlockDefinition_):
-    def render_field_declaration_array(self, array_type: Array) -> None:
+    def render_field_declaration_array(self) -> None:
+        array_type = cast_or_raise(Array, self.as_message_field.type)
         field_name = self.as_message_field.name
         field_definition = self.formatter.format_array_type(array_type, field_name)
         self.push(f"{field_definition};")
@@ -177,8 +174,7 @@ class BlockMessageField(BlockDefinition_):
 
     def render_field_declaration(self) -> None:
         if isinstance(self.as_message_field.type, Array):
-            array_type = cast(Array, self.as_message_field.type)
-            self.render_field_declaration_array(array_type)
+            self.render_field_declaration_array()
         else:
             self.render_field_declaration_common()
 
@@ -349,6 +345,7 @@ class BlockList(BlockComposition_):
     def blocks(self) -> List[Block_]:
         return [
             BlockAheadNotice(),
+            BlockProtoDocstring(self.bound),
             BlockIncludeGuard(),
             BlockIncludeGeneralHeaders(),
             BlockExternCPlusPlus(),
