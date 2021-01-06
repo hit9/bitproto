@@ -245,10 +245,14 @@ def overridable(f: F) -> F:
 
 
 def isabstractmethod(f: F) -> bool:
+    """Returns True if given f is an abstract method."""
     return getattr(f, "__isabstractmethod__", False)
 
 
 def cast_or_raise(t: T[I], v: Any) -> I:
+    """Cast given value v to type t.
+    Raises `TypeError` if v is not an instance of t.
+    """
     if isinstance(v, t):
         return v
     raise TypeError(f"Cant cast {v} to {t}")
