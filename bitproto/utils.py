@@ -94,6 +94,8 @@ class cached_property:
         >>> inst.name  # already cached
         "name"
 
+    Notes: Python 3.9+ provides cached_property in library functools.
+    This custom implementation existing for compatiable reason (3.7, 3.8).
     """
 
     def __init__(self, func: Callable[[I], O]) -> None:
