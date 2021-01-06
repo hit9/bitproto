@@ -4,139 +4,141 @@ Renderer for C file.
 
 from typing import List
 
-from bitproto.renderer.block import BlockAheadNotice
-from bitproto.renderer.impls.c.formatter import CFormatter
+from bitproto.renderer.block import (Block, BlockAheadNotice, BlockComposition,
+                                     BlockConditional, BlockDeferable,
+                                     BlockWrapper)
+from bitproto.renderer.impls.c.formatter import CFormatter as F
 from bitproto.renderer.impls.c.renderer_h import (
-    Block_, BlockComposition_, BlockConditional_, BlockDefinition_,
     BlockMessageBase, BlockMessageDecoderBase, BlockMessageEncoderBase,
-    BlockMessageJsonFormatterBase, BlockWrapper_, Renderer_, RendererCHeader)
+    BlockMessageJsonFormatterBase, RendererCHeader)
+from bitproto.renderer.renderer import Renderer
 from bitproto.utils import override
 
 
-class BlockInclude(Block_):
-    @override(Block_)
+class BlockInclude(Block[F]):
+    @override(Block)
     def render(self) -> None:
         header_filename = self.formatter.format_out_filename(self.bound, extension=".h")
         self.push(f'#include "{header_filename}"')
 
 
 class BlockMessageEncoderBody(BlockMessageEncoderBase):
-    @override(Block_)
+    @override(Block)
     def render(self) -> None:
         pass  # TODO
 
 
-class BlockMessageEncoder(BlockMessageEncoderBase, BlockWrapper_):
-    @override(BlockWrapper_)
-    def wraps(self) -> Block_:
-        return BlockMessageEncoderBody(self.as_message, indent=4)
+class BlockMessageEncoder(BlockMessageEncoderBase, BlockWrapper[F]):
+    @override(BlockWrapper)
+    def wraps(self) -> Block:
+        return BlockMessageEncoderBody(self.d, indent=4)
 
-    @override(BlockWrapper_)
+    @override(BlockWrapper)
     def before(self) -> None:
         self.push_comment(self.function_comment)
         self.push(f"{self.function_signature} {{")
 
-    @override(BlockWrapper_)
+    @override(BlockWrapper)
     def after(self) -> None:
         self.push("}")
 
 
 class BlockMessageDecoderBody(BlockMessageDecoderBase):
-    @override(Block_)
+    @override(Block)
     def render(self) -> None:
         pass  # TODO
 
 
-class BlockMessageDecoder(BlockMessageDecoderBase, BlockWrapper_):
-    @override(BlockWrapper_)
-    def wraps(self) -> Block_:
-        return BlockMessageDecoderBody(self.as_message, indent=4)
+class BlockMessageDecoder(BlockMessageDecoderBase, BlockWrapper[F]):
+    @override(BlockWrapper)
+    def wraps(self) -> Block:
+        return BlockMessageDecoderBody(self.d, indent=4)
 
-    @override(BlockWrapper_)
+    @override(BlockWrapper)
     def before(self) -> None:
         self.push_comment(self.function_comment)
         self.push(f"{self.function_signature} {{")
 
-    @override(BlockWrapper_)
+    @override(BlockWrapper)
     def after(self) -> None:
         self.push("}")
 
 
 class BlockMessageJsonFormatterBody(BlockMessageJsonFormatterBase):
-    @override(Block_)
+    @override(Block)
     def render(self) -> None:
         pass  # TODO
 
 
-class BlockMessageJsonFormatterWrapper(BlockMessageJsonFormatterBase, BlockWrapper_):
-    @override(BlockWrapper_)
-    def wraps(self) -> Block_:
-        return BlockMessageJsonFormatterBody(self.as_message, indent=4)
+class BlockMessageJsonFormatterWrapper(BlockMessageJsonFormatterBase, BlockWrapper[F]):
+    @override(BlockWrapper)
+    def wraps(self) -> Block:
+        return BlockMessageJsonFormatterBody(self.d, indent=4)
 
-    @override(BlockWrapper_)
+    @override(BlockWrapper)
     def before(self) -> None:
         self.push_comment(self.function_comment)
         self.push(f"{self.function_signature} {{")
 
-    @override(BlockWrapper_)
+    @override(BlockWrapper)
     def after(self) -> None:
         self.push("}")
 
 
-class BlockMessageJsonFormatter(BlockMessageJsonFormatterBase, BlockConditional_):
-    @override(BlockConditional_)
+class BlockMessageJsonFormatter(BlockMessageJsonFormatterBase, BlockConditional[F]):
+    @override(BlockConditional)
     def condition(self) -> bool:
         return self.is_enabled()
 
-    @override(BlockConditional_)
-    def block(self) -> Block_:
-        return BlockMessageJsonFormatterWrapper(self.as_message)
+    @override(BlockConditional)
+    def block(self) -> Block:
+        return BlockMessageJsonFormatterWrapper(self.d)
 
 
-class BlockMessageFunctionList(BlockMessageBase, BlockComposition_):
-    @override(BlockComposition_)
-    def blocks(self) -> List[Block_]:
+class BlockMessageFunctionList(BlockMessageBase, BlockComposition[F]):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block[F]]:
         return [
-            BlockMessageEncoder(self.as_message),
-            BlockMessageDecoder(self.as_message),
-            BlockMessageJsonFormatter(self.as_message),
+            BlockMessageEncoder(self.d),
+            BlockMessageDecoder(self.d),
+            BlockMessageJsonFormatter(self.d),
         ]
 
-    @override(BlockComposition_)
+    @override(BlockComposition)
     def separator(self) -> str:
         return "\n\n\n"
 
 
-class BlockFunctionList(BlockComposition_):
-    @override(BlockComposition_)
-    def blocks(self) -> List[Block_]:
+class BlockFunctionList(BlockComposition[F]):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block[F]]:
         return [
             BlockMessageFunctionList(message, name=name)
             for name, message in self.bound.messages(recursive=True, bound=self.bound)
         ]
 
-    @override(BlockComposition_)
+    @override(BlockComposition)
     def separator(self) -> str:
         return "\n\n\n"
 
 
-class BlockList(BlockComposition_):
-    @override(BlockComposition_)
-    def blocks(self) -> List[Block_]:
+class BlockList(BlockComposition[F]):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block[F]]:
         return [BlockAheadNotice(), BlockInclude(), BlockFunctionList()]
 
 
-class RendererC(Renderer_):
+class RendererC(Renderer[F]):
     """Renderer for C language (c file)."""
 
-    @override(Renderer_)
+    @override(Renderer)
     def file_extension(self) -> str:
         return ".c"
 
-    @override(Renderer_)
-    def formatter(self) -> CFormatter:
-        return CFormatter()
+    @override(Renderer)
+    def formatter(self) -> F:
+        return F()
 
-    @override(Renderer_)
-    def block(self) -> Block_:
+    @override(Renderer)
+    def block(self) -> Block[F]:
         return BlockList()

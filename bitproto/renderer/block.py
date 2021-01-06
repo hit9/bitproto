@@ -4,12 +4,18 @@ bitproto.renderer.block
 
 Block class base.
 
-
-   Block
-     |- BlockDefinition
-     |- BlockDeferable
-     |- BlockComposition
-     |- BlockWrapper
+    Block
+      |- BlockDeferable
+      |- BlockComposition
+      |- BlockWrapper
+      |- BlockBindDefinition
+      |    |- BlockBindAlias
+      |    |- BlockBindConstant
+      |    |- BlockBindEnum
+      |    |- BlockBindEnumField
+      |    |- BlockBindMessage
+      |    |- BlockBindMessageField
+      |    |- BlockBindProto
 """
 
 from abc import abstractmethod
@@ -17,13 +23,13 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Generic, Iterator, List, Optional
 from typing import Type as T
-from typing import Union, cast
+from typing import TypeVar, Union, cast
 
 from bitproto._ast import (Alias, Comment, Constant, D, Definition, Enum,
                            EnumField, Message, MessageField, Proto)
 from bitproto.errors import InternalError
 from bitproto.renderer.formatter import F, Formatter
-from bitproto.utils import final, overridable, override
+from bitproto.utils import cached_property, final, overridable, override
 
 
 @dataclass
@@ -212,69 +218,31 @@ class BlockAheadNotice(Block):
         self.push(notice_comment)
 
 
-class BlockDefinition(Block[F]):
-    """Block that bind a definition.
+@dataclass
+class BlockBindDefinitionBase(Generic[D]):
+    """Base class of BlockBindDefinition.
 
-    :param definition: The associated definition.
-    :param name: The name of associated definition, defaults to `definition.name`.
-    :param indent: Argument inherits from super class Block.
+    :param d: The associated definition instance.
+    :param name: The name of associated definition, defaults to `d.name`.
     """
 
-    def __init__(
-        self, definition: Definition, name: Optional[str] = None, indent: int = 0,
-    ) -> None:
-        super(BlockDefinition, self).__init__(indent=indent)
+    d: D
+    name: Optional[str] = None
 
-        self.definition = definition
-        self.definition_name: str = name or definition.name
 
-    def as_t(self, t: T[D]) -> D:
-        """Safe cast internal definition to given definition type `t`."""
-        if isinstance(self.definition, t):
-            return self.definition
-        raise InternalError(f"can't cast {self.definition} to type {t}")
+class BlockBindDefinition(Block[F], BlockBindDefinitionBase[D]):
+    """Block that bind a definition."""
 
-    @property
-    def as_constant(self) -> Constant:
-        """Returns the definition as a Constant."""
-        return self.as_t(Constant)
-
-    @property
-    def as_alias(self) -> Alias:
-        """Returns the definition as an Alias."""
-        return self.as_t(Alias)
-
-    @property
-    def as_enum(self) -> Enum:
-        """Returns the definition as an Enum."""
-        return self.as_t(Enum)
-
-    @property
-    def as_enum_field(self) -> EnumField:
-        """Returns the definition as a EnumField."""
-        return self.as_t(EnumField)
-
-    @property
-    def as_message(self) -> Message:
-        """Returns the definition as a Message."""
-        return self.as_t(Message)
-
-    @property
-    def as_message_field(self) -> MessageField:
-        """Returns the definition as a MessageField."""
-        return self.as_t(MessageField)
-
-    @property
-    def as_proto(self) -> Proto:
-        """Returns the definition as a Proto."""
-        return self.as_t(Proto)
+    def __init__(self, d: D, name: Optional[str] = None, indent: int = 0,) -> None:
+        BlockBindDefinitionBase.__init__(self, d, name=name)
+        Block.__init__(self, indent=indent)
 
     @final
     def push_definition_comments(self, indent: Optional[int] = None):
         """Format the comment_block of this definition as lines of comments,
         and push them.
         """
-        for comment in self.definition.comment_block:
+        for comment in self.d.comment_block:
             comment_string = comment.content()
             self.push_comment(comment, indent)
 
@@ -283,7 +251,101 @@ class BlockDefinition(Block[F]):
         """Format the comment_block of this definition as lines of docstring,
         and push them.
         """
-        self.push_docstring(*self.definition.comment_block, indent=indent)
+        self.push_docstring(*self.d.comment_block, indent=indent)
+
+
+class BlockBindAlias(BlockBindDefinition[F, Alias]):
+    """Implements BlockBindDefinition for Alias."""
+
+    @cached_property
+    def alias_name(self) -> str:
+        """Returns the formatted name of this alias."""
+        return self.formatter.format_alias_name(self.d)
+
+    @cached_property
+    def aliased_type(self) -> str:
+        """Returns the formatted representation of the type it aliased to."""
+        # FIXME: name argument?
+        return self.formatter.format_type(self.d.type)
+
+
+class BlockBindConstant(BlockBindDefinition[F, Constant]):
+    """Implements BlockBindDefinition for Constant."""
+
+    @cached_property
+    def constant_name(self) -> str:
+        """Returns the formatted name of this constant."""
+        return self.formatter.format_constant_name(self.d)
+
+    @cached_property
+    def constant_value(self) -> str:
+        """Returns the formatted value of this constant."""
+        return self.formatter.format_value(self.d.value)
+
+
+class BlockBindEnum(BlockBindDefinition[F, Enum]):
+    """Implements BlockBindDefinition for Enum."""
+
+    @cached_property
+    def enum_name(self) -> str:
+        """Returns the formatted name of this enum."""
+        return self.formatter.format_enum_name(self.d)
+
+    @cached_property
+    def enum_uint_type(self) -> str:
+        """Returns the formatted uint type representation of this enum."""
+        return self.formatter.format_uint_type(self.d.type)
+
+
+class BlockBindEnumField(BlockBindDefinition[F, EnumField]):
+    """Implements the BlockBindDefinition for EnumField."""
+
+    @cached_property
+    def enum_field_name(self) -> str:
+        """Returns the formatted name of this enum field."""
+        return self.formatter.format_enum_field_name(self.d)
+
+    @cached_property
+    def enum_field_value(self) -> str:
+        """Returns the formatted value of this enum field."""
+        return self.formatter.format_int_value(self.d.value)
+
+
+class BlockBindMessage(BlockBindDefinition[F, Message]):
+    """Implements the BlockBindDefinition for Message."""
+
+    @cached_property
+    def message_name(self) -> str:
+        """Returns the formatted name of this message."""
+        return self.formatter.format_message_name(self.d)
+
+    @cached_property
+    def message_type(self) -> str:
+        """Returns the formatted representation of this message type."""
+        return self.formatter.format_message_type(self.d)
+
+    @cached_property
+    def message_nbytes(self) -> str:
+        """Returns the formatted representation of the number of bytes of this message."""
+        return self.formatter.format_int_value(self.d.nbytes())
+
+
+class BlockBindMessageField(BlockBindDefinition[F, MessageField]):
+    """Implements the BlockBindDefinition for MessageField."""
+
+    @cached_property
+    def field_name(self) -> str:
+        return self.d.name
+
+    @cached_property
+    def field_type(self) -> str:
+        """Returns the formatted field type representation of this field."""
+        # FIXME: array of c ? option argument name?
+        return self.formatter.format_type(self.d.type)
+
+
+class BlockBindProto(BlockBindDefinition[F, Proto]):
+    pass
 
 
 class BlockDeferable(Block[F]):

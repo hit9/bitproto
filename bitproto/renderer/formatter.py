@@ -54,9 +54,6 @@ class CaseStyle(Enum_):
         return mapping.get(name, cls.KEEP)
 
 
-F = TypeVar("F", bound="Formatter")
-
-
 class Formatter:
     """Generic language specific formatter."""
 
@@ -394,3 +391,6 @@ class Formatter:
             out_base_name = os.path.splitext(proto_base_name)[0]  # remove extension
         out_filename = out_base_name + "_bp" + extension
         return out_filename
+
+
+F = TypeVar("F", bound=Formatter)
