@@ -89,7 +89,7 @@ class BlockConstant(BlockDefinition_):
 
     @override(Block_)
     def render(self) -> None:
-        self.push_definition_docstring()
+        self.push_definition_comments()
         self.render_constant_define()
 
 
@@ -114,7 +114,7 @@ class BlockAlias(BlockDefinition_):
 
     @override(Block_)
     def render(self) -> None:
-        self.push_definition_docstring()
+        self.push_definition_comments()
         self.render_alias_typedef()
 
 
@@ -127,7 +127,7 @@ class BlockEnumField(BlockDefinition_):
 
     @override(Block_)
     def render(self) -> None:
-        self.push_definition_docstring()
+        self.push_definition_comments()
         self.render_define_macro()
 
 
@@ -150,7 +150,7 @@ class BlockEnumFieldList(BlockEnumBase, BlockComposition_):
 class BlockEnum(BlockEnumBase, BlockWrapper_):
     @override(BlockWrapper_)
     def before(self) -> None:
-        self.push_definition_docstring()
+        self.push_definition_comments()
         self.render_enum_typedef()
 
     @override(BlockWrapper_)
@@ -184,7 +184,7 @@ class BlockMessageField(BlockDefinition_):
 
     @override(Block_)
     def render(self) -> None:
-        self.push_definition_docstring()
+        self.push_definition_comments()
         self.render_field_declaration()
 
 
@@ -226,7 +226,7 @@ class BlockMessageStruct(BlockMessageBase, BlockWrapper_):
 
     @override(BlockWrapper_)
     def before(self) -> None:
-        self.push_definition_docstring()
+        self.push_definition_comments()
         struct_name: str = self.struct_name
         self.push(f"struct {struct_name} {{")
 
@@ -244,7 +244,7 @@ class BlockMessageEncoderFunctionDeclaration(BlockMessageBase):
     @override(Block_)
     def render(self) -> None:
         struct_name: str = self.struct_name
-        self.push_docstring(f"Encode struct {struct_name} to given buffer s")
+        self.push_comment(f"Encode struct {struct_name} to given buffer s")
         struct_type = self.formatter.format_message_type(self.as_message)
         declaration = f"int Encode{struct_name}({struct_type} *m, unsigned char *s);"
         self.push(declaration)
@@ -254,7 +254,7 @@ class BlockMessageDecoderFunctionDeclaration(BlockMessageBase):
     @override(Block_)
     def render(self) -> None:
         struct_name: str = self.struct_name
-        self.push_docstring(f"Decode struct {struct_name} from given buffer s")
+        self.push_comment(f"Decode struct {struct_name} from given buffer s")
         struct_type = self.formatter.format_message_type(self.as_message)
         declaration = f"int Decode{struct_name}({struct_type} *m, unsigned char *s);"
         self.push(declaration)
@@ -269,7 +269,7 @@ class BlockMessageJsonFormatterFunctionDeclaration(BlockMessageBase):
         if not enabled:
             return
         struct_name: str = self.struct_name
-        self.push_docstring(f"Format struct {struct_name} to a json format string.")
+        self.push_comment(f"Format struct {struct_name} to a json format string.")
         struct_type = self.formatter.format_message_type(self.as_message)
         declaration = f"int Json{struct_name}({struct_type} *m, char *s);"
         self.push(declaration)

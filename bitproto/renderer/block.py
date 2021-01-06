@@ -8,7 +8,7 @@ Block class base.
 from abc import abstractmethod
 from typing import Generic, List, Optional
 from typing import Type as T
-from typing import Union
+from typing import Union, cast
 
 from bitproto._ast import (Alias, Comment, Constant, D, Definition, Enum,
                            EnumField, Message, MessageField, Proto)
@@ -91,10 +91,14 @@ class Block(Generic[F]):
 
     @final
     def push_docstring(
-        self, comment: Union[Comment, str], indent: Optional[int] = None
+        self, *comments: Union[Comment, str], indent: Optional[int] = None
     ) -> None:
-        """Push a line of docstring (or from string)."""
-        self.push(self.formatter.format_docstring(str(comment)), indent=indent)
+        """Push lines of comment (or string) as docstring."""
+        if not comments:
+            return
+        strings = [i.content() if isinstance(i, Comment) else i for i in comments]
+        for string in self.formatter.format_docstring(*strings):
+            self.push(string, indent=indent)
 
     @final
     def clear(self) -> None:
@@ -199,17 +203,20 @@ class BlockDefinition(Block[F]):
         return self.as_t(Proto)
 
     @final
-    def push_definition_docstring(
-        self, as_comment: bool = False, indent: Optional[int] = None
-    ) -> None:
-        """Format the comment_block of this definition, and push them."""
-        pusher = self.push_docstring
-        if as_comment:
-            pusher = self.push_comment
-
+    def push_definition_comments(self, indent: Optional[int] = None):
+        """Format the comment_block of this definition as lines of comments,
+        and push them.
+        """
         for comment in self.definition.comment_block:
             comment_string = comment.content()
-            pusher(comment_string, indent)
+            self.push_comment(comment, indent)
+
+    @final
+    def push_definition_docstring(self, indent: Optional[int] = None) -> None:
+        """Format the comment_block of this definition as lines of docstring,
+        and push them.
+        """
+        self.push_docstring(*self.definition.comment_block, indent=indent)
 
 
 class BlockComposition(Block[F]):

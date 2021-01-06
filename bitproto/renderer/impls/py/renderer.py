@@ -24,6 +24,12 @@ class BlockStatementPass(Block_):
         self.push("pass")
 
 
+class BlockProtoDocstring(BlockDefinition_):
+    @override(Block_)
+    def render(self) -> None:
+        self.push_definition_docstring()
+
+
 class BlockGeneralImports(Block_):
     @override(Block_)
     def render(self) -> None:
@@ -128,7 +134,7 @@ class BlockAlias(BlockDefinition_):
 
     @override(Block_)
     def render(self) -> None:
-        self.push_definition_docstring(as_comment=True)
+        self.push_definition_comments()
         self.push(f"{self.alias_name} = {self.alias_type}")
 
 
@@ -160,7 +166,7 @@ class BlockConstant(BlockDefinition_):
 
     @override(Block_)
     def render(self) -> None:
-        self.push_definition_docstring(as_comment=True)
+        self.push_definition_comments()
         self.push(f"{self.constant_name}: {self.constant_type} = {self.constant_value}")
 
 
@@ -195,7 +201,7 @@ class BlockEnumFieldBase(BlockDefinition_):
 class BlockEnumField(BlockEnumFieldBase):
     @override(Block_)
     def render(self) -> None:
-        self.push_definition_docstring(as_comment=True)
+        self.push_definition_comments()
         self.push(f"{self.field_name}: {self.field_type} = {self.field_value}")
 
 
@@ -225,7 +231,7 @@ class BlockEnumFieldListWrapper(BlockEnumBase, BlockWrapper_):
         self.render_enum_type()
 
     def render_enum_type(self) -> None:
-        self.push_definition_docstring(as_comment=True)
+        self.push_definition_comments()
         self.push(f"{self.enum_type_name} = int")
 
 
@@ -300,7 +306,7 @@ class BlockMessageField(BlockDefinition_):
 
     @override(Block_)
     def render(self) -> None:
-        self.push_definition_docstring(as_comment=True)
+        self.push_definition_comments()
         self.push(f"{self.field_name}: {self.field_type} = {self.field_default_value}")
 
 
@@ -382,6 +388,7 @@ class BlockList(BlockComposition_):
     def blocks(self) -> List[Block_]:
         return [
             BlockAheadNotice(),
+            BlockProtoDocstring(self.bound),
             BlockImportList(),
             BlockGeneralGlobalFunctions(),
             BlockAliasList(),

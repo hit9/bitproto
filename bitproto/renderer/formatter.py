@@ -8,7 +8,7 @@ import os
 from abc import abstractmethod
 from enum import Enum as Enum_
 from enum import unique
-from typing import Callable, Dict, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 from typing import Type as T
 from typing import TypeVar, Union, cast
 
@@ -102,11 +102,6 @@ class Formatter:
         raise NotImplementedError
 
     @abstractmethod
-    def format_docstring(self, content: str) -> str:
-        """Format given content into a docstring in target language."""
-        raise NotImplementedError
-
-    @abstractmethod
     def format_bool_value(self, value: bool) -> str:
         """Boolean literal representation in target language."""
         raise NotImplementedError
@@ -159,6 +154,13 @@ class Formatter:
     def format_right_shift(self, n: int) -> str:
         """Returns the representation to shift right for n bits."""
         return f">> {n}"
+
+    @overridable
+    def format_docstring(self, *comments: str) -> List[str]:
+        """Format given lines of comments to a list of docstring lines.
+        Default implemented to lines of comments.
+        """
+        return [self.format_comment(comment) for comment in comments]
 
     @overridable
     def format_int_value_type(self) -> str:
