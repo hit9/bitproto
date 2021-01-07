@@ -86,16 +86,10 @@ class BlockConstant(BlockBindConstant[F]):
 
 class BlockAlias(BlockBindAlias[F]):
     def render_alias_typedef_to_array(self) -> None:
-        array_type = cast_or_raise(Array, self.d.type)
-        aliased_type = self.formatter.format_type(array_type.element_type)
-        name = self.formatter.format_alias_name(self.d)
-        capacity = array_type.cap
-        self.push(f"typedef {aliased_type} {name}[{capacity}];")
+        self.push(f"typedef {self.aliased_type};")
 
     def render_alias_typedef_to_common(self) -> None:
-        aliased_type = self.formatter.format_type(self.d.type)
-        name = self.formatter.format_alias_name(self.d)
-        self.push(f"typedef {aliased_type} {name};")
+        self.push(f"typedef {self.aliased_type} {self.alias_name};")
 
     def render_alias_typedef(self) -> None:
         if isinstance(self.d.type, Array):
@@ -145,16 +139,10 @@ class BlockEnum(BlockBindEnum[F], BlockWrapper[F]):
 
 class BlockMessageField(BlockBindMessageField[F]):
     def render_field_declaration_array(self) -> None:
-        array_type = cast_or_raise(Array, self.d.type)
-        field_name = self.d.name
-        field_definition = self.formatter.format_array_type(array_type, field_name)
-        self.push(f"{field_definition};")
+        self.push(f"{self.message_field_type};")
 
     def render_field_declaration_common(self) -> None:
-        field_type = self.d.type
-        field_name = self.d.name
-        type_string = self.formatter.format_type(field_type)
-        self.push(f"{type_string} {field_name};")
+        self.push(f"{self.message_field_type} {self.message_field_name};")
 
     def render_field_declaration(self) -> None:
         if isinstance(self.d.type, Array):

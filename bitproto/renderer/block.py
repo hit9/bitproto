@@ -266,8 +266,7 @@ class BlockBindAlias(BlockBindDefinition[F, Alias]):
     @cached_property
     def aliased_type(self) -> str:
         """Returns the formatted representation of the type it aliased to."""
-        # FIXME: name argument?
-        return self.formatter.format_type(self.d.type)
+        return self.formatter.format_type(self.d.type, name=self.alias_name)
 
 
 class BlockBindConstant(BlockBindDefinition[F, Constant]):
@@ -357,8 +356,7 @@ class BlockBindMessageField(BlockBindDefinition[F, MessageField]):
     @cached_property
     def message_field_type(self) -> str:
         """Returns the formatted field type representation of this field."""
-        # FIXME: array of c ? option argument name?
-        return self.formatter.format_type(self.d.type)
+        return self.formatter.format_type(self.d.type, name=self.message_field_name)
 
 
 class BlockBindProto(BlockBindDefinition[F, Proto]):

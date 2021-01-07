@@ -345,9 +345,12 @@ class Formatter:
         return self.format_definition_name(f)
 
     @final
-    def format_type(self, t: Type) -> str:
+    def format_type(self, t: Type, name: Optional[str] = None) -> str:
         """Formats the string representation for given type.
         This is a default implementation.
+
+        :param name: The name helps to build the type's representation.
+            Currently, only `format_array_type` takes this argument forward.
         """
         if isinstance(t, Bool):
             return self.format_bool_type()
@@ -358,7 +361,7 @@ class Formatter:
         elif isinstance(t, Int):
             return self.format_int_type(t)
         elif isinstance(t, Array):
-            return self.format_array_type(t)
+            return self.format_array_type(t, name=name)
         elif isinstance(t, Enum):
             return self.format_enum_type(t)
         elif isinstance(t, Message):
