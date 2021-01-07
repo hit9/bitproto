@@ -6,10 +6,13 @@ from typing import TYPE_CHECKING, Any, Callable, List, Optional
 from typing import Type as T
 from typing import TypeVar, Union, cast, overload
 
+Function = Callable[..., Any]
+
 I = TypeVar("I")  # Any Input
 O = TypeVar("O")  # Ant Output
 C = TypeVar("C", bound=T)  # Any Class
-F = TypeVar("F", bound=Callable[..., Any])  # Any Function
+F = TypeVar("F", bound=Function)  # Any Function
+M = TypeVar("M", bound=Union[Function, "cached_property"])
 
 __all__ = (
     "F",
@@ -21,6 +24,7 @@ __all__ = (
     "frozen",
     "safe_hash",
     "override",
+    "cast_or_raise",
     "overridable",
     "isabstractmethod",
     "write_file",
@@ -94,11 +98,22 @@ class cached_property:
         >>> inst.name  # already cached
         "name"
 
+    Notes: Python 3.9+ provides cached_property in library functools.
+    This custom implementation existing for compatiable reason (3.7, 3.8).
     """
 
     def __init__(self, func: Callable[[I], O]) -> None:
         self.__doc__ = func.__doc__
+        self.__name__ = func.__name__
         self.func = func
+
+    @overload
+    def __get__(self, obj: None, cls: T[I]) -> "cached_property":
+        ...
+
+    @overload
+    def __get__(self, obj: I, cls: T[I]) -> O:
+        ...
 
     def __get__(self, obj: Optional[I], cls: T[I]) -> Union["cached_property", O]:
         if obj is None:
@@ -208,7 +223,7 @@ def safe_hash(class_: C) -> C:
 safe_hash_ = safe_hash  # Alias
 
 
-def override(c: C) -> Callable[[F], F]:
+def override(c: C) -> Callable[[M], M]:
     """Just a simple mark indicates this method is overriding super method.
 
         >>> @override(SuperClass)
@@ -216,17 +231,17 @@ def override(c: C) -> Callable[[F], F]:
                 pass
     """
 
-    def decorator(f: F) -> F:
+    def decorator(f: M) -> M:
         super_f = getattr(c, f.__name__)
         if not getattr(super_f, "__overridable__", False):
             if not getattr(super_f, "__isabstractmethod__", False):
-                raise AttributeError(f"Cant override {super_f.__qualname__}")
+                raise AttributeError(f"Cant override {super_f.__name__}")
         return f
 
     return decorator
 
 
-def overridable(f: F) -> F:
+def overridable(f: M) -> M:
     """Just a simple mark indicates this method could be overrided by future subclass
     method implementation."""
     setattr(f, "__overridable__", True)
@@ -234,7 +249,17 @@ def overridable(f: F) -> F:
 
 
 def isabstractmethod(f: F) -> bool:
+    """Returns True if given f is an abstract method."""
     return getattr(f, "__isabstractmethod__", False)
+
+
+def cast_or_raise(t: T[I], v: Any) -> I:
+    """Cast given value v to type t.
+    Raises `TypeError` if v is not an instance of t.
+    """
+    if isinstance(v, t):
+        return v
+    raise TypeError(f"Cant cast {v} to {t}")
 
 
 def write_file(filepath: str, s: str) -> None:

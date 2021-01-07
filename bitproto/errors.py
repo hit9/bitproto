@@ -150,7 +150,7 @@ class CalculationExpressionError(GrammarError):
 
 @dataclass
 class InvalidArrayCap(GrammarError):
-    """Invalid array capacity, should between (0, 1024)."""
+    """Invalid array capacity, should between (0, 1023]."""
 
 
 @dataclass
@@ -229,7 +229,12 @@ class InvalidOptionValue(GrammarError):
 
 
 @dataclass
-class LintWarning(Warning, _TokenBound):
+class MessageSizeOverflows(GrammarError):
+    """Message size overflows constraint."""
+
+
+@dataclass
+class LintWarning(_TokenBound, Warning):
     """Some warning occurred during bitproto linting."""
 
     suggestion: Optional[str] = None

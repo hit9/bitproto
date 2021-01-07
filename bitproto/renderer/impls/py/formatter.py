@@ -2,7 +2,7 @@
 Python formatter.
 """
 
-from typing import Optional
+from typing import List, Optional
 
 from bitproto._ast import (Alias, Array, Bool, Byte, Constant, Enum, EnumField,
                            Int, Message, Proto, Type, Uint)
@@ -34,8 +34,11 @@ class PyFormatter(Formatter):
         return f"# {content}"
 
     @override(Formatter)
-    def format_docstring(self, content: str) -> str:
-        return f'"""{content}"""'
+    def format_docstring(self, *comments: str) -> List[str]:
+        strings = ['"""']
+        strings.extend([comment for comment in comments])
+        strings.append('"""')
+        return strings
 
     @override(Formatter)
     def format_bool_value(self, value: bool) -> str:
