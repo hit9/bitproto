@@ -16,6 +16,7 @@ class GoFormatter(Formatter):
     @override(Formatter)
     def case_style_mapping(self) -> CaseStyleMapping:
         return {
+            Alias: "pascal",
             Constant: "upper",
             EnumField: ("snake", "upper"),
             MessageField: "pascal",
