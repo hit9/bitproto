@@ -18,6 +18,7 @@ class GoFormatter(Formatter):
         return {
             Constant: "upper",
             EnumField: ("snake", "upper"),
+            MessageField: "pascal",
         }
 
     @override(Formatter)
