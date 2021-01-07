@@ -57,7 +57,7 @@ PROTO_OPTTIONS: OptionDescriptors = (
         "go.package_path",
         "",
         None,
-        "Package path of current golang package, to be imported, e.g. github.com/path/to/shared_bp",
+        "Package path of current golang package, to be imported, e.g.  github.com/path/to/example",
     ),
     OptionDescriptor(
         "py.module_name",

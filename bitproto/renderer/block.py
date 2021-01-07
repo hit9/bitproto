@@ -29,7 +29,8 @@ from bitproto._ast import (Alias, Comment, Constant, D, Definition, Enum,
                            EnumField, Message, MessageField, Proto)
 from bitproto.errors import InternalError
 from bitproto.renderer.formatter import F, Formatter
-from bitproto.utils import cached_property, final, overridable, override
+from bitproto.utils import (cached_property, final, overridable, override,
+                            upper_case)
 
 
 @dataclass
@@ -282,6 +283,11 @@ class BlockBindConstant(BlockBindDefinition[F, Constant]):
         """Returns the formatted value of this constant."""
         return self.formatter.format_value(self.d.value)
 
+    @cached_property
+    def constant_value_type(self) -> str:
+        """Returns the formatted representation of this constant's value."""
+        return self.formatter.format_constant_type(self.d)
+
 
 class BlockBindEnum(BlockBindDefinition[F, Enum]):
     """Implements BlockBindDefinition for Enum."""
@@ -310,6 +316,11 @@ class BlockBindEnumField(BlockBindDefinition[F, EnumField]):
         """Returns the formatted value of this enum field."""
         return self.formatter.format_int_value(self.d.value)
 
+    @cached_property
+    def enum_field_type(self) -> str:
+        """Returns the formatted representation of the enum field type, aka the enum type."""
+        return self.formatter.format_enum_type(self.d.enum)
+
 
 class BlockBindMessage(BlockBindDefinition[F, Message]):
     """Implements the BlockBindDefinition for Message."""
@@ -329,23 +340,28 @@ class BlockBindMessage(BlockBindDefinition[F, Message]):
         """Returns the formatted representation of the number of bytes of this message."""
         return self.formatter.format_int_value(self.d.nbytes())
 
+    @cached_property
+    def message_size_constant_name(self) -> str:
+        """Return the formatted name of the message size constant."""
+        return f"BYTES_LENGTH_" + upper_case(self.message_name)
+
 
 class BlockBindMessageField(BlockBindDefinition[F, MessageField]):
     """Implements the BlockBindDefinition for MessageField."""
 
     @cached_property
-    def field_name(self) -> str:
+    def message_field_name(self) -> str:
         return self.d.name
 
     @cached_property
-    def field_type(self) -> str:
+    def message_field_type(self) -> str:
         """Returns the formatted field type representation of this field."""
         # FIXME: array of c ? option argument name?
         return self.formatter.format_type(self.d.type)
 
 
 class BlockBindProto(BlockBindDefinition[F, Proto]):
-    pass
+    """Implements the BlockBindDefinition for Proto."""
 
 
 class BlockDeferable(Block[F]):

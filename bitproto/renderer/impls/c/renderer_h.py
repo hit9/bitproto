@@ -119,11 +119,7 @@ class BlockEnumField(BlockBindEnumField[F]):
         self.render_define_macro()
 
 
-class BlockEnumBase(BlockBindEnum[F]):
-    ...
-
-
-class BlockEnumFieldList(BlockEnumBase, BlockComposition[F]):
+class BlockEnumFieldList(BlockBindEnum[F], BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
         return [BlockEnumField(field) for field in self.d.fields()]
@@ -133,7 +129,7 @@ class BlockEnumFieldList(BlockEnumBase, BlockComposition[F]):
         return "\n"
 
 
-class BlockEnum(BlockEnumBase, BlockWrapper[F]):
+class BlockEnum(BlockBindEnum[F], BlockWrapper[F]):
     @override(BlockWrapper[F])
     def before(self) -> None:
         self.push_definition_comments()
@@ -172,24 +168,14 @@ class BlockMessageField(BlockBindMessageField[F]):
         self.render_field_declaration()
 
 
-class BlockMessageBase(BlockBindMessage[F]):
-    @cached_property
-    def message_name_upper(self) -> str:
-        return upper_case(self.message_name)
-
-    @cached_property
-    def message_size_const_name(self) -> str:
-        return f"BYTES_LENGTH_{self.message_name_upper}"
-
-
-class BlockMessageLengthMacro(BlockMessageBase):
+class BlockMessageLengthMacro(BlockBindMessage[F]):
     @override(Block)
     def render(self) -> None:
         self.push_comment(f"Number of bytes to encode struct {self.message_name}")
-        self.push(f"#define {self.message_size_const_name} {self.message_nbytes}")
+        self.push(f"#define {self.message_size_constant_name} {self.message_nbytes}")
 
 
-class BlockMessageFieldList(BlockMessageBase, BlockComposition[F]):
+class BlockMessageFieldList(BlockBindMessage[F], BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
         return [BlockMessageField(field, indent=4) for field in self.d.sorted_fields()]
@@ -199,7 +185,7 @@ class BlockMessageFieldList(BlockMessageBase, BlockComposition[F]):
         return "\n"
 
 
-class BlockMessageStruct(BlockMessageBase, BlockWrapper[F]):
+class BlockMessageStruct(BlockBindMessage[F], BlockWrapper[F]):
     @override(BlockWrapper)
     def wraps(self) -> Block:
         return BlockMessageFieldList(self.d, name=self.name)
@@ -219,7 +205,7 @@ class BlockMessageStruct(BlockMessageBase, BlockWrapper[F]):
         self.push_string(";", separator="")
 
 
-class BlockMessageEncoderBase(BlockMessageBase):
+class BlockMessageEncoderBase(BlockBindMessage[F]):
     @cached_property
     def function_name(self) -> str:
         return f"Encode{self.message_name}"
@@ -240,7 +226,7 @@ class BlockMessageEncoderFunctionDeclaration(BlockMessageEncoderBase):
         self.push(f"{self.function_signature};")
 
 
-class BlockMessageDecoderBase(BlockMessageBase):
+class BlockMessageDecoderBase(BlockBindMessage[F]):
     @cached_property
     def function_name(self) -> str:
         return f"Decode{self.message_name}"
@@ -261,7 +247,7 @@ class BlockMessageDecoderFunctionDeclaration(BlockMessageDecoderBase):
         self.push(f"{self.function_signature};")
 
 
-class BlockMessageJsonFormatterBase(BlockMessageBase):
+class BlockMessageJsonFormatterBase(BlockBindMessage[F]):
     @cached_property
     def function_name(self) -> str:
         return f"Json{self.message_name}"
@@ -288,7 +274,7 @@ class BlockMessageJsonFormatterFunctionDeclaration(BlockMessageJsonFormatterBase
         self.push(f"{self.function_signature};")
 
 
-class BlockMessage(BlockMessageBase, BlockComposition[F]):
+class BlockMessage(BlockBindMessage[F], BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
         return [

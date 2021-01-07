@@ -4,12 +4,12 @@ Renderer for C file.
 
 from typing import List
 
-from bitproto.renderer.block import (Block, BlockAheadNotice, BlockComposition,
-                                     BlockConditional, BlockDeferable,
-                                     BlockWrapper)
+from bitproto.renderer.block import (Block, BlockAheadNotice, BlockBindMessage,
+                                     BlockComposition, BlockConditional,
+                                     BlockDeferable, BlockWrapper)
 from bitproto.renderer.impls.c.formatter import CFormatter as F
 from bitproto.renderer.impls.c.renderer_h import (
-    BlockMessageBase, BlockMessageDecoderBase, BlockMessageEncoderBase,
+    BlockMessageDecoderBase, BlockMessageEncoderBase,
     BlockMessageJsonFormatterBase, RendererCHeader)
 from bitproto.renderer.renderer import Renderer
 from bitproto.utils import override
@@ -95,7 +95,7 @@ class BlockMessageJsonFormatter(BlockMessageJsonFormatterBase, BlockConditional[
         return BlockMessageJsonFormatterWrapper(self.d)
 
 
-class BlockMessageFunctionList(BlockMessageBase, BlockComposition[F]):
+class BlockMessageFunctionList(BlockBindMessage[F], BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
         return [

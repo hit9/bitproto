@@ -85,10 +85,8 @@ class BlockGeneralGlobalFunctions(BlockComposition[F]):
 class BlockAlias(BlockBindAlias[F]):
     @override(Block)
     def render(self) -> None:
-        type_name = self.formatter.format_alias_type(self.d)
-        original_type_name = self.formatter.format_type(self.d.type)
         self.push_definition_comments()
-        self.push(f"type {type_name} {original_type_name}")
+        self.push(f"type {self.alias_name} {self.aliased_type}")
 
 
 class BlockAliasList(BlockComposition[F]):
@@ -108,10 +106,9 @@ class BlockConstant(BlockBindConstant[F]):
     @override(Block)
     def render(self) -> None:
         self.push_definition_comments()
-        name = self.formatter.format_constant_name(self.d)
-        value = self.formatter.format_value(self.d.value)
-        value_type = self.formatter.format_constant_type(self.d)
-        self.push(f"const {name} {value_type} = {value}")
+        self.push(
+            f"const {self.constant_name} {self.constant_value_type} = {self.constant_value}"
+        )
 
 
 class BlockConstantList(BlockComposition[F]):
@@ -127,38 +124,16 @@ class BlockConstantList(BlockComposition[F]):
         return "\n\n"
 
 
-class BlockEnumFieldBase(BlockBindEnumField[F]):
-    @cached_property
-    def field_value(self) -> str:
-        return self.formatter.format_int_value(self.d.value)
-
-    @cached_property
-    def field_name(self) -> str:
-        return self.formatter.format_enum_field_name(self.d)
-
-    @cached_property
-    def field_type(self) -> str:
-        return self.formatter.format_enum_type(self.d.enum)
-
-
-class BlockEnumField(BlockEnumFieldBase):
+class BlockEnumField(BlockBindEnumField[F]):
     @override(Block)
     def render(self) -> None:
         self.push_definition_comments()
-        self.push(f"const {self.field_name} {self.field_type} = {self.field_value}")
+        self.push(
+            f"const {self.enum_field_name} {self.enum_field_type} = {self.enum_field_value}"
+        )
 
 
-class BlockEnumBase(BlockBindEnum[F]):
-    @cached_property
-    def enum_name(self) -> str:
-        return self.formatter.format_enum_name(self.d)
-
-    @cached_property
-    def enum_type(self) -> str:
-        return self.formatter.format_uint_type(self.d.type)
-
-
-class BlockEnumFieldList(BlockEnumBase, BlockComposition[F]):
+class BlockEnumFieldList(BlockBindEnum[F], BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
         return [BlockEnumField(field) for field in self.d.fields()]
@@ -168,21 +143,21 @@ class BlockEnumFieldList(BlockEnumBase, BlockComposition[F]):
         return "\n"
 
 
-class BlockEnumType(BlockEnumBase):
+class BlockEnumType(BlockBindEnum[F]):
     @override(Block)
     def render(self) -> None:
         self.push_definition_comments()
-        self.push(f"type {self.enum_name} {self.enum_type}")
+        self.push(f"type {self.enum_name} {self.enum_uint_type}")
 
 
-class BlockEnumStringFunctionCaseItem(BlockEnumFieldBase):
+class BlockEnumStringFunctionCaseItem(BlockBindEnumField[F]):
     @override(Block)
     def render(self) -> None:
-        self.push(f"case {self.field_value}:")
-        self.push(f'return "{self.field_name}"', indent=self.indent + 1)
+        self.push(f"case {self.enum_field_value}:")
+        self.push(f'return "{self.enum_field_name}"', indent=self.indent + 1)
 
 
-class BlockEnumStringFunctionCaseDefault(BlockEnumBase):
+class BlockEnumStringFunctionCaseDefault(BlockBindEnum[F]):
     @override(Block)
     def render(self) -> None:
         self.push("default:")
@@ -192,7 +167,7 @@ class BlockEnumStringFunctionCaseDefault(BlockEnumBase):
         )
 
 
-class BlockEnumStringFunctionCaseList(BlockEnumBase, BlockComposition[F]):
+class BlockEnumStringFunctionCaseList(BlockBindEnum[F], BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
         bs: List[Block[F]] = [
@@ -207,7 +182,7 @@ class BlockEnumStringFunctionCaseList(BlockEnumBase, BlockComposition[F]):
         return "\n"
 
 
-class BlockEnumStringFunction(BlockEnumBase, BlockWrapper[F]):
+class BlockEnumStringFunction(BlockBindEnum[F], BlockWrapper[F]):
     @override(BlockWrapper)
     def wraps(self) -> Block:
         return BlockEnumStringFunctionCaseList(self.d, indent=1)
@@ -222,7 +197,7 @@ class BlockEnumStringFunction(BlockEnumBase, BlockWrapper[F]):
         self.push("}")
 
 
-class BlockEnum(BlockEnumBase, BlockComposition[F]):
+class BlockEnum(BlockBindEnum[F], BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
         return [
@@ -245,39 +220,17 @@ class BlockEnumList(BlockComposition):
         ]
 
 
-class BlockMessageFieldBase(BlockBindMessageField[F]):
-    @cached_property
-    def field_name(self) -> str:
-        return self.d.name
-
-    @cached_property
-    def field_type(self) -> str:
-        return self.formatter.format_type(self.d.type)
-
-
-class BlockMessageField(BlockMessageFieldBase):
+class BlockMessageField(BlockBindMessageField[F]):
     @override(Block)
     def render(self) -> None:
         self.push_definition_comments()
-        snake_case_name = snake_case(self.field_name)
-        self.push(f'{self.field_name} {self.field_type} `json:"{snake_case_name}"`')
+        snake_case_name = snake_case(self.message_field_name)
+        self.push(
+            f'{self.message_field_name} {self.message_field_type} `json:"{snake_case_name}"`'
+        )
 
 
-class BlockMessageBase(BlockBindMessage[F]):
-    @cached_property
-    def struct_name(self) -> str:
-        return self.formatter.format_message_name(self.d)
-
-    @cached_property
-    def size_string(self) -> str:
-        return self.formatter.format_int_value(self.d.nbytes())
-
-    @cached_property
-    def struct_size_const_name(self) -> str:
-        return upper_case(f"BYTES_LENGTH_{self.struct_name}")
-
-
-class BlockMessageFieldList(BlockMessageBase, BlockComposition[F]):
+class BlockMessageFieldList(BlockBindMessage[F], BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
         return [
@@ -290,14 +243,16 @@ class BlockMessageFieldList(BlockMessageBase, BlockComposition[F]):
         return "\n"
 
 
-class BlockMessageSize(BlockMessageBase):
+class BlockMessageSize(BlockBindMessage[F]):
     @override(Block)
     def render(self) -> None:
-        self.push_comment(f"Number of bytes to serialize struct {self.struct_name}")
-        self.push(f"const {self.struct_size_const_name} uint32 = {self.size_string}")
+        self.push_comment(f"Number of bytes to serialize struct {self.message_name}")
+        self.push(
+            f"const {self.message_size_constant_name} uint32 = {self.message_nbytes}"
+        )
 
 
-class BlockMessageStruct(BlockMessageBase, BlockWrapper[F]):
+class BlockMessageStruct(BlockBindMessage[F], BlockWrapper[F]):
     @override(BlockWrapper)
     def wraps(self) -> Block[F]:
         return BlockMessageFieldList(self.d, indent=1)
@@ -305,35 +260,35 @@ class BlockMessageStruct(BlockMessageBase, BlockWrapper[F]):
     @override(BlockWrapper)
     def before(self) -> None:
         self.push_definition_comments()
-        self.push(f"type {self.struct_name} struct {{")
+        self.push(f"type {self.message_name} struct {{")
 
     @override(BlockWrapper)
     def after(self) -> None:
         self.push("}")
 
 
-class BlockMessageFunctionSize(BlockMessageBase):
+class BlockMessageFunctionSize(BlockBindMessage[F]):
     @override(Block)
     def render(self) -> None:
-        self.push_comment(f"Returns struct {self.struct_name} size.")
-        self.push(f"func (m *{self.struct_name}) Size() uint32 {{")
-        self.push(f"return {self.struct_size_const_name}", indent=1)
+        self.push_comment(f"Returns struct {self.message_name} size.")
+        self.push(f"func (m *{self.message_name}) Size() uint32 {{")
+        self.push(f"return {self.message_nbytes}", indent=1)
         self.push("}")
 
 
-class BlockMessageFunctionString(BlockMessageBase):
+class BlockMessageFunctionString(BlockBindMessage[F]):
     @override(Block)
     def render(self) -> None:
         self.push_comment(
-            f"Returns string representation for struct {self.struct_name}."
+            f"Returns string representation for struct {self.message_name}."
         )
-        self.push(f"func (m *{self.struct_name}) String() string {{")
+        self.push(f"func (m *{self.message_name}) String() string {{")
         self.push(f"v, _ := json.Marshal(m)", indent=1)
         self.push(f"return string(v)", indent=1)
         self.push("}")
 
 
-class BlockMessage(BlockMessageBase, BlockComposition[F]):
+class BlockMessage(BlockBindMessage[F], BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
         return [
