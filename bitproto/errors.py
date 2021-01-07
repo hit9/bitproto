@@ -234,7 +234,7 @@ class MessageSizeOverflows(GrammarError):
 
 
 @dataclass
-class LintWarning(Warning, _TokenBound):
+class LintWarning(_TokenBound, Warning):
     """Some warning occurred during bitproto linting."""
 
     suggestion: Optional[str] = None

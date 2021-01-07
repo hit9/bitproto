@@ -847,7 +847,7 @@ class EnumField(Field):
 @final
 @frozen(post_init=False)
 @dataclass
-class Enum(SingleType, ExtensibleType, BoundScope):
+class Enum(BoundScope, SingleType, ExtensibleType):
     """Enum.
     :param type: The type annotation of this enum.
 
@@ -932,7 +932,7 @@ class MessageField(Field):
 @final
 @frozen(post_init=False)
 @dataclass
-class Message(CompositeType, ExtensibleType, BoundScope, ScopeWithOptions):
+class Message(BoundScope, ScopeWithOptions, CompositeType, ExtensibleType):
     """Message (similar to protobuf's message). """
 
     name: str = ""
