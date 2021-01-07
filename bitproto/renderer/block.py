@@ -5,9 +5,6 @@ bitproto.renderer.block
 Block class base.
 
     Block
-      |- BlockDeferable
-      |- BlockComposition
-      |- BlockWrapper
       |- BlockBindDefinition
       |    |- BlockBindAlias
       |    |- BlockBindConstant
@@ -16,6 +13,10 @@ Block class base.
       |    |- BlockBindMessage
       |    |- BlockBindMessageField
       |    |- BlockBindProto
+      |- BlockDeferable
+      |- BlockComposition
+      |- BlockWrapper
+      |- BlockConditional
 """
 
 from abc import abstractmethod
@@ -31,6 +32,10 @@ from bitproto.errors import InternalError
 from bitproto.renderer.formatter import F, Formatter
 from bitproto.utils import (cached_property, final, overridable, override,
                             upper_case)
+
+#############
+# Block base
+#############
 
 
 @dataclass
@@ -219,6 +224,11 @@ class BlockAheadNotice(Block):
         self.push(notice_comment)
 
 
+#############
+# Block that bind a definition ast.
+#############
+
+
 @dataclass
 class BlockBindDefinitionBase(Generic[D]):
     """Base class of BlockBindDefinition.
@@ -371,6 +381,11 @@ class BlockBindProto(BlockBindDefinition[F, Proto]):
     """Implements the BlockBindDefinition for Proto."""
 
 
+#############
+# Block that defines a defer().
+#############
+
+
 class BlockDeferable(Block[F]):
     """Block with a defer method defined."""
 
@@ -385,6 +400,11 @@ class BlockDeferable(Block[F]):
         """Call this block's defer() processor with given ctx."""
         with self._maintain_ctx(ctx):
             self.defer()
+
+
+#############
+# Block that join a list of blocks.
+#############
 
 
 class BlockComposition(Block[F]):
@@ -419,6 +439,11 @@ class BlockComposition(Block[F]):
         raise NotImplementedError
 
 
+#############
+# Block that wraps a block.
+#############
+
+
 class BlockWrapper(Block[F]):
     """Wraps on a block as a block."""
 
@@ -444,6 +469,11 @@ class BlockWrapper(Block[F]):
     def after(self) -> None:
         """Hook function invoked after render."""
         pass
+
+
+#############
+# Block that works if condition satisfied
+#############
 
 
 class BlockConditional(Block[F]):
