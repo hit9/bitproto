@@ -6,10 +6,13 @@ from typing import TYPE_CHECKING, Any, Callable, List, Optional
 from typing import Type as T
 from typing import TypeVar, Union, cast, overload
 
+Function = Callable[..., Any]
+
 I = TypeVar("I")  # Any Input
 O = TypeVar("O")  # Ant Output
 C = TypeVar("C", bound=T)  # Any Class
-F = TypeVar("F", bound=Callable[..., Any])  # Any Function
+F = TypeVar("F", bound=Function)  # Any Function
+M = TypeVar("M", bound=Union[Function, "cached_property"])
 
 __all__ = (
     "F",
@@ -220,7 +223,7 @@ def safe_hash(class_: C) -> C:
 safe_hash_ = safe_hash  # Alias
 
 
-def override(c: C) -> Callable[[F], F]:
+def override(c: C) -> Callable[[M], M]:
     """Just a simple mark indicates this method is overriding super method.
 
         >>> @override(SuperClass)
@@ -228,7 +231,7 @@ def override(c: C) -> Callable[[F], F]:
                 pass
     """
 
-    def decorator(f: F) -> F:
+    def decorator(f: M) -> M:
         super_f = getattr(c, f.__name__)
         if not getattr(super_f, "__overridable__", False):
             if not getattr(super_f, "__isabstractmethod__", False):
@@ -238,7 +241,7 @@ def override(c: C) -> Callable[[F], F]:
     return decorator
 
 
-def overridable(f: F) -> F:
+def overridable(f: M) -> M:
     """Just a simple mark indicates this method could be overrided by future subclass
     method implementation."""
     setattr(f, "__overridable__", True)
