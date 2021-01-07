@@ -64,7 +64,6 @@ from bitproto.utils import (cache, conditional_cache, final, frozen,
 
 N = TypeVar("N", bound="Node")  # Node
 D = TypeVar("D", bound="Definition")  # Definition
-S = T[N]  # Type of Node, Super N
 V = TypeVar("V", bool, int, str)  # Base value
 
 Value = Union[bool, int, str]
