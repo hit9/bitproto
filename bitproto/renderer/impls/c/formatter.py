@@ -57,11 +57,11 @@ class CFormatter(Formatter):
 
     @override(Formatter)
     def format_uint_type(self, t: Uint) -> str:
-        return "uint{0}_t".format(self.get_nbits(t))
+        return "uint{0}_t".format(self.get_nbits_of_integer(t))
 
     @override(Formatter)
     def format_int_type(self, t: Int) -> str:
-        return "int{0}_t".format(self.get_nbits(t))
+        return "int{0}_t".format(self.get_nbits_of_integer(t))
 
     @override(Formatter)
     def format_array_type(self, t: Array, name: Optional[str] = None) -> str:
