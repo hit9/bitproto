@@ -101,6 +101,7 @@ class cached_property:
 
     def __init__(self, func: Callable[[I], O]) -> None:
         self.__doc__ = func.__doc__
+        self.__name__ = func.__name__
         self.func = func
 
     @overload
@@ -231,7 +232,7 @@ def override(c: C) -> Callable[[F], F]:
         super_f = getattr(c, f.__name__)
         if not getattr(super_f, "__overridable__", False):
             if not getattr(super_f, "__isabstractmethod__", False):
-                raise AttributeError(f"Cant override {super_f.__qualname__}")
+                raise AttributeError(f"Cant override {super_f.__name__}")
         return f
 
     return decorator
