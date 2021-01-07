@@ -14,12 +14,6 @@ from bitproto.renderer.renderer import Renderer
 from bitproto.utils import cached_property, override
 
 
-class BlockStatementPass(Block[F]):
-    @override(Block)
-    def render(self) -> None:
-        self.push("pass")
-
-
 class BlockProtoDocstring(BlockBindProto[F]):
     @override(Block)
     def render(self) -> None:
@@ -113,18 +107,10 @@ class BlockImportList(BlockComposition[F]):
 
 
 class BlockAlias(BlockBindAlias[F]):
-    @cached_property
-    def alias_name(self) -> str:
-        return self.formatter.format_alias_name(self.d)
-
-    @cached_property
-    def alias_type(self) -> str:
-        return self.formatter.format_type(self.d.type)
-
     @override(Block)
     def render(self) -> None:
         self.push_definition_comments()
-        self.push(f"{self.alias_name} = {self.alias_type}")
+        self.push(f"{self.alias_name} = {self.aliased_type}")
 
 
 class BlockAliasList(BlockComposition):
@@ -141,22 +127,12 @@ class BlockAliasList(BlockComposition):
 
 
 class BlockConstant(BlockBindConstant[F]):
-    @cached_property
-    def constant_name(self) -> str:
-        return self.formatter.format_constant_name(self.d)
-
-    @cached_property
-    def constant_value(self) -> str:
-        return self.formatter.format_value(self.d.value)
-
-    @cached_property
-    def constant_type(self) -> str:
-        return self.formatter.format_constant_type(self.d)
-
     @override(Block)
     def render(self) -> None:
         self.push_definition_comments()
-        self.push(f"{self.constant_name}: {self.constant_type} = {self.constant_value}")
+        self.push(
+            f"{self.constant_name}: {self.constant_value_type} = {self.constant_value}"
+        )
 
 
 class BlockConstantList(BlockComposition[F]):
@@ -172,35 +148,16 @@ class BlockConstantList(BlockComposition[F]):
         return "\n"
 
 
-class BlockEnumFieldBase(BlockBindEnumField[F]):
-    @cached_property
-    def field_name(self) -> str:
-        return self.formatter.format_enum_field_name(self.d)
-
-    @cached_property
-    def field_value(self) -> str:
-        return self.formatter.format_int_value(self.d.value)
-
-    @cached_property
-    def field_type(self) -> str:
-        enum = self.d.enum
-        return self.formatter.format_enum_type(enum)
-
-
-class BlockEnumField(BlockEnumFieldBase):
+class BlockEnumField(BlockBindEnumField[F]):
     @override(Block)
     def render(self) -> None:
         self.push_definition_comments()
-        self.push(f"{self.field_name}: {self.field_type} = {self.field_value}")
+        self.push(
+            f"{self.enum_field_name}: {self.enum_field_type} = {self.enum_field_value}"
+        )
 
 
-class BlockEnumBase(BlockBindEnum[F]):
-    @cached_property
-    def enum_type_name(self) -> str:
-        return self.formatter.format_enum_type(self.d)
-
-
-class BlockEnumFieldList(BlockEnumBase, BlockComposition[F]):
+class BlockEnumFieldList(BlockBindEnum[F], BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block]:
         return [BlockEnumField(field) for field in self.d.fields()]
@@ -210,7 +167,7 @@ class BlockEnumFieldList(BlockEnumBase, BlockComposition[F]):
         return "\n"
 
 
-class BlockEnumFieldListWrapper(BlockEnumBase, BlockWrapper[F]):
+class BlockEnumFieldListWrapper(BlockBindEnum[F], BlockWrapper[F]):
     @override(BlockWrapper)
     def wraps(self) -> Block:
         return BlockEnumFieldList(self.d)
@@ -221,16 +178,16 @@ class BlockEnumFieldListWrapper(BlockEnumBase, BlockWrapper[F]):
 
     def render_enum_type(self) -> None:
         self.push_definition_comments()
-        self.push(f"{self.enum_type_name} = int")
+        self.push(f"{self.enum_name} = int")
 
 
-class BlockEnumValueToNameMapItem(BlockEnumFieldBase):
+class BlockEnumValueToNameMapItem(BlockBindEnumField[F]):
     @override(Block)
     def render(self) -> None:
-        self.push(f'{self.field_value}: "{self.field_name}",')
+        self.push(f'{self.enum_field_value}: "{self.enum_field_name}",')
 
 
-class BlockEnumValueToNameMapItemList(BlockEnumBase, BlockComposition[F]):
+class BlockEnumValueToNameMapItemList(BlockBindEnum[F], BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block]:
         return [
@@ -242,7 +199,7 @@ class BlockEnumValueToNameMapItemList(BlockEnumBase, BlockComposition[F]):
         return "\n"
 
 
-class BlockEnumValueToNameMap(BlockEnumBase, BlockWrapper[F]):
+class BlockEnumValueToNameMap(BlockBindEnum[F], BlockWrapper[F]):
     @override(BlockWrapper)
     def wraps(self) -> Block:
         return BlockEnumValueToNameMapItemList(self.d)
@@ -250,14 +207,14 @@ class BlockEnumValueToNameMap(BlockEnumBase, BlockWrapper[F]):
     @override(BlockWrapper)
     def before(self) -> None:
         map_name = self.formatter.format_enum_value_to_name_map_name(self.d)
-        self.push(f"{map_name}: Dict[{self.enum_type_name}, str] = {{")
+        self.push(f"{map_name}: Dict[{self.enum_name}, str] = {{")
 
     @override(BlockWrapper)
     def after(self) -> None:
         self.push("}")
 
 
-class BlockEnum(BlockEnumBase, BlockComposition[F]):
+class BlockEnum(BlockBindEnum[F], BlockComposition[F]):
     @override(BlockComposition[F])
     def blocks(self) -> List[Block]:
         return [
@@ -281,46 +238,40 @@ class BlockEnumList(BlockComposition[F]):
 
 class BlockMessageField(BlockBindMessageField[F]):
     @cached_property
-    def field_name(self) -> str:
-        return self.d.name
-
-    @cached_property
-    def field_type(self) -> str:
-        return self.formatter.format_type(self.d.type)
-
-    @cached_property
-    def field_default_value(self) -> str:
+    def message_field_default_value(self) -> str:
         return self.formatter.format_field_default_value(self.d.type)
 
     @override(Block)
     def render(self) -> None:
         self.push_definition_comments()
-        self.push(f"{self.field_name}: {self.field_type} = {self.field_default_value}")
+        self.push(
+            f"{self.message_field_name}: {self.message_field_type} = {self.message_field_default_value}"
+        )
 
 
 class BlockMessageBase(BlockBindMessage[F]):
     @cached_property
-    def class_name(self) -> str:
-        return self.formatter.format_message_name(self.d)
+    # @override(BlockBindMessage) # FIXME: override
+    def message_size_constant_name(self) -> str:
+        return "BYTES_LENGTH"
 
 
 class BlockMessageSize(BlockMessageBase):
     @override(Block)
     def render(self) -> None:
-        self.push_comment(f"Number of bytes to serialize class {self.class_name}")
-        nbytes = self.formatter.format_int_value(self.d.nbytes())
-        self.push(f"MESSAGE_BYTES_LENGTH: ClassVar[int] = {nbytes}")
+        self.push_comment(f"Number of bytes to serialize class {self.message_name}")
+        self.push(
+            f"{self.message_size_constant_name}: ClassVar[int] = {self.message_nbytes}"
+        )
 
 
 class BlockMessageFieldList(BlockMessageBase, BlockComposition[F]):
-    @cached_property
-    def fields(self) -> List[MessageField]:
-        return self.d.sorted_fields()
-
     @override(BlockComposition)
     def blocks(self) -> List[Block]:
-        fields = self.d.sorted_fields()
-        return [BlockMessageField(field, indent=self.indent) for field in fields]
+        return [
+            BlockMessageField(field, indent=self.indent)
+            for field in self.d.sorted_fields()
+        ]
 
     @override(BlockComposition)
     def separator(self) -> str:
@@ -348,7 +299,7 @@ class BlockMessageClass(BlockMessageBase, BlockWrapper[F]):
     @override(BlockWrapper)
     def before(self) -> None:
         self.push("@dataclass")
-        self.push(f"class {self.class_name}:")
+        self.push(f"class {self.message_name}:")
         self.push_definition_docstring(indent=4)
 
 
