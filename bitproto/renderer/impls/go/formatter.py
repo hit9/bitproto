@@ -86,3 +86,7 @@ class GoFormatter(Formatter):
     @override(Formatter)
     def format_bool_value_type(self) -> str:
         return "bool"
+
+    @override(Formatter)
+    def format_endecoder_message_name(self) -> str:
+        return "m"

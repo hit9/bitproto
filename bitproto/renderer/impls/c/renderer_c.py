@@ -22,10 +22,30 @@ class BlockInclude(Block[F]):
         self.push(f'#include "{header_filename}"')
 
 
-class BlockMessageEncoderBody(BlockMessageEncoderBase):
+class BlockMessageEncoderFieldList(BlockMessageEncoderBase):
     @override(Block)
     def render(self) -> None:
-        pass  # TODO
+        for item in self.message_encoder_items():
+            self.push(item)
+
+
+class BlockMessageEncoderFunctionReturn(Block[F]):
+    @override(Block)
+    def render(self) -> None:
+        self.push("return 0;")
+
+
+class BlockMessageEncoderBody(BlockMessageEncoderBase, BlockComposition[F]):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block[F]]:
+        return [
+            BlockMessageEncoderFieldList(self.d, indent=self.indent),
+            BlockMessageEncoderFunctionReturn(indent=self.indent),
+        ]
+
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n"
 
 
 class BlockMessageEncoder(BlockMessageEncoderBase, BlockWrapper[F]):
@@ -43,10 +63,30 @@ class BlockMessageEncoder(BlockMessageEncoderBase, BlockWrapper[F]):
         self.push("}")
 
 
-class BlockMessageDecoderBody(BlockMessageDecoderBase):
+class BlockMessageDecoderFieldList(BlockMessageDecoderBase):
     @override(Block)
     def render(self) -> None:
-        pass  # TODO
+        for item in self.message_decoder_items():
+            self.push(item)
+
+
+class BlockMessageDecoderFunctionReturn(Block[F]):
+    @override(Block)
+    def render(self) -> None:
+        self.push("return 0;")
+
+
+class BlockMessageDecoderBody(BlockMessageDecoderBase, BlockComposition[F]):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block[F]]:
+        return [
+            BlockMessageDecoderFieldList(self.d, indent=self.indent),
+            BlockMessageDecoderFunctionReturn(indent=self.indent),
+        ]
+
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n"
 
 
 class BlockMessageDecoder(BlockMessageDecoderBase, BlockWrapper[F]):

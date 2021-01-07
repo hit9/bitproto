@@ -162,3 +162,7 @@ class PyFormatter(Formatter):
         else:
             alias_type = self.format_alias_type(t)
             return self.format_dataclass_field_default(alias_type)
+
+    @override(Formatter)
+    def format_endecoder_message_name(self) -> str:
+        return "self"

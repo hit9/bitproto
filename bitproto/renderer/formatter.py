@@ -15,7 +15,8 @@ from typing import TypeVar, Union, cast
 from bitproto._ast import (Alias, Array, Bool, BooleanConstant, Byte, Constant,
                            Definition, Enum, EnumField, Int, Integer,
                            IntegerConstant, Message, MessageField, Node, Proto,
-                           Scope, StringConstant, Type, Uint, Value)
+                           Scope, SingleType, StringConstant, Type, Uint,
+                           Value)
 from bitproto.errors import InternalError
 from bitproto.utils import (final, keep_case, overridable, pascal_case,
                             snake_case, upper_case)
@@ -139,7 +140,20 @@ class Formatter:
         raise NotImplementedError
 
     @abstractmethod
-    def format_encoder_field_name(self, field: MessageField) -> str:
+    def format_endecoder_message_name(self) -> str:
+        """Returns the message structure definition name in encoder and ecoder."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def format_encoder_item(
+        self, chain: str, si: int, fi: int, shift: int, mask: int, r: int
+    ) -> str:
+        raise NotImplementedError
+
+    @abstractmethod
+    def format_decoder_item(
+        self, chain: str, si: int, fi: int, shift: int, mask: int, r: int
+    ) -> str:
         raise NotImplementedError
 
     # Overridables
@@ -222,6 +236,19 @@ class Formatter:
         from this list. Subclasses could override.
         """
         return (Message, Proto)
+
+    @overridable
+    def format_endecoder_field_name_chain(self, chain: str, name: str) -> str:
+        """Append a name string onto current field name lookup chain."""
+        return chain + "." + name
+
+    @overridable
+    def format_endecoder_field_name_chain_array(
+        self, field_name_chain: str, index: int
+    ) -> str:
+        """Format array index lookup as a name to append on current field name lookup
+        chain."""
+        return field_name_chain + f"[{index}]"
 
     # Finals
 
@@ -408,6 +435,132 @@ class Formatter:
             out_base_name = os.path.splitext(proto_base_name)[0]  # remove extension
         out_filename = out_base_name + "_bp" + extension
         return out_filename
+
+    @final
+    def format_smart_shift(self, n: int) -> str:
+        """Gives result of `format_right_shift`if n > 0.
+        Otherwise gives result of `format_left_shift`.
+        Returns an empty string if n == 0.
+        """
+        if n > 0:
+            return self.format_right_shift(n)
+        elif n < 0:
+            return self.format_left_shift(0 - n)
+        return ""
+
+    @final
+    def get_mask(self, k: int, c: int) -> int:
+        if k == 0:
+            return (1 << c) - 1
+        return (1 << (k + 1 + c) - 1) - (1 << (k + 1) - 1)
+
+    @final
+    def format_encode_single_type(
+        self, t: Type, chain: str, i: int, j: int, c: int
+    ) -> str:
+        shift, mask = ((j % 8) - (i % 8)), self.get_mask(i % 8, c)
+        si, fi, r = int(i / 8), int(j / 8), i % 8
+        return self.format_encoder_item(chain, si, fi, shift, mask, r)
+
+    @final
+    def format_decode_single_type(
+        self, t: Type, chain: str, i: int, j: int, c: int
+    ) -> str:
+        shift, mask = ((i % 8) - (j % 8)), self.get_mask(j % 8, c)
+        si, fi, r = int(i / 8), int(j / 8), j % 8
+        return self.format_decoder_item(chain, si, fi, shift, mask, r)
+
+    @final
+    def format_endecode_single_byte(
+        self, t: Type, chain: str, is_encode: bool, i: int, j: int, c: int
+    ) -> str:
+        if is_encode:
+            return self.format_encode_single_type(t, chain, i, j, c)
+        else:
+            return self.format_decode_single_type(t, chain, i, j, c)
+
+    @final
+    def format_endecode_single_type(
+        self, t: SingleType, chain: str, is_encode: bool, i: List[int]
+    ) -> List[str]:
+        l: List[str] = []
+        j, n = 0, t.nbits()
+        while j < n:
+            c = min(8 - (i[0] % 8), 8 - (j % 8), n - j)
+            s = self.format_endecode_single_byte(t, chain, is_encode, i[0], j, c)
+            l.append(s)
+            j += c
+            i[0] += c
+        return l
+
+    @final
+    def format_endecode_message_field(
+        self, t: Type, chain: str, is_encode: bool, i: List[int]
+    ) -> List[str]:
+        if isinstance(t, SingleType):
+            return self.format_endecode_single_type(t, chain, is_encode, i)
+        elif isinstance(t, Message):
+            return self.format_endecode_message(t, chain, is_encode, i)
+        elif isinstance(t, Array):
+            return self.format_endecode_array(t, chain, is_encode, i)
+        elif isinstance(t, Alias):
+            return self.format_endecode_alias(t, chain, is_encode, i)
+        raise InternalError("format_endecode_message_field got unknown type")
+
+    @final
+    def format_endecode_array(
+        self, t: Array, chain: str, is_encode: bool, i: List[int]
+    ) -> List[str]:
+        t_ = t.element_type
+        l: List[str] = []
+        for index in range(t.cap):
+            l_: List[str]
+            chain_ = self.format_endecoder_field_name_chain_array(chain, index)
+            if isinstance(t_, SingleType):
+                l_ = self.format_endecode_single_type(t_, chain_, is_encode, i)
+            elif isinstance(t_, Message):
+                l_ = self.format_endecode_message(t_, chain_, is_encode, i)
+            elif isinstance(t_, Alias):
+                l_ = self.format_endecode_alias(t_, chain_, is_encode, i)
+            else:
+                raise InternalError("format_endecode_array got unknown element_type")
+            l.extend(l_)
+        return l
+
+    @final
+    def format_endecode_alias(
+        self, t: Alias, chain: str, is_encode: bool, i: List[int]
+    ) -> List[str]:
+        t_ = t.type
+
+        if isinstance(t_, Array):
+            return self.format_endecode_array(t_, chain, is_encode, i)
+        elif isinstance(t_, SingleType):
+            return self.format_endecode_single_type(t_, chain, is_encode, i)
+
+        raise InternalError("format_endecode_alias got unknown aliased type")
+
+    @final
+    def format_endecode_message(
+        self, t: Message, chain: str, is_encode: bool, i: List[int]
+    ) -> List[str]:
+        l: List[str] = []
+        for field in t.sorted_fields():
+            chain_ = self.format_endecoder_field_name_chain(chain, field.name)
+            t_ = field.type
+            l_ = self.format_endecode_message_field(t_, chain_, is_encode, i)
+            l.extend(l_)
+        return l
+
+    @final
+    def format_encode_message(self, message: Message) -> List[str]:
+        field_name_chain = self.format_endecoder_message_name()
+        return self.format_endecode_message(message, field_name_chain, True, [0])
+
+    @final
+    def format_decode_message(self, message: Message) -> List[str]:
+        field_name_chain = self.format_endecoder_message_name()
+        return self.format_endecode_message(message, field_name_chain, False, [0])
 
 
 F = TypeVar("F", bound=Formatter)

@@ -79,5 +79,21 @@ class CFormatter(Formatter):
         return '#include "{0}_bp.h"'.format(t.name)
 
     @override(Formatter)
-    def format_encoder_field_name(self, field: MessageField) -> str:
-        return f"((unsigned char *)&((*m).{field.name}))"
+    def format_endecoder_message_name(self) -> str:
+        return "(*m)"
+
+    @override(Formatter)
+    def format_encoder_item(
+        self, chain: str, si: int, fi: int, shift: int, mask: int, r: int
+    ) -> str:
+        assign = "=" if r == 0 else "|="
+        shift_s = self.format_smart_shift(shift)
+        return f"s[{si}] {assign} (((unsigned char *)&({chain}))[{fi}] {shift_s}) & {mask};"
+
+    @override(Formatter)
+    def format_decoder_item(
+        self, chain: str, si: int, fi: int, shift: int, mask: int, r: int
+    ) -> str:
+        assign = "=" if r == 0 else "|="
+        shift_s = self.format_smart_shift(shift)
+        return f"((unsigned char *)&({chain}))[{fi}] {assign} (s[{si}] {shift_s}) & {mask};"
