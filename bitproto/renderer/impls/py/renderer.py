@@ -250,8 +250,8 @@ class BlockMessageField(BlockBindMessageField[F]):
 
 
 class BlockMessageBase(BlockBindMessage[F]):
+    @override(BlockBindMessage)
     @cached_property
-    # @override(BlockBindMessage) # FIXME: override
     def message_size_constant_name(self) -> str:
         return "BYTES_LENGTH"
 

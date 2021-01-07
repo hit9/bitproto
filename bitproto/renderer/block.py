@@ -340,6 +340,7 @@ class BlockBindMessage(BlockBindDefinition[F, Message]):
         """Returns the formatted representation of the number of bytes of this message."""
         return self.formatter.format_int_value(self.d.nbytes())
 
+    @overridable
     @cached_property
     def message_size_constant_name(self) -> str:
         """Return the formatted name of the message size constant."""
