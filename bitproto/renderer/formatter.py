@@ -241,11 +241,10 @@ class Formatter:
             return self.format_int_value(value)
 
     @overridable
-    def nbits_from_integer_type(self, t: Integer) -> int:
+    def get_nbits(self, t: Integer) -> int:
         """Get number of bits to occupy for an given integer type in a language.
         Special language may override this default implementation.
         """
-        # TODO: FIXME: func naming
         nbytes = t.nbytes()
         if nbytes == 1:
             return 8

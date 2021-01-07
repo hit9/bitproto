@@ -4,9 +4,10 @@ Go formatter
 
 from typing import Optional
 
-from bitproto._ast import Array, Constant, EnumField, Int, Proto, Uint
+from bitproto._ast import (Alias, Array, Bool, Constant, EnumField, Int,
+                           MessageField, Proto, Uint)
 from bitproto.renderer.formatter import CaseStyleMapping, Formatter
-from bitproto.utils import override
+from bitproto.utils import cast_or_raise, override
 
 
 class GoFormatter(Formatter):
@@ -55,11 +56,11 @@ class GoFormatter(Formatter):
 
     @override(Formatter)
     def format_uint_type(self, t: Uint) -> str:
-        return "uint{0}".format(self.nbits_from_integer_type(t))
+        return "uint{0}".format(self.get_nbits(t))
 
     @override(Formatter)
     def format_int_type(self, t: Int) -> str:
-        return "int{0}".format(self.nbits_from_integer_type(t))
+        return "int{0}".format(self.get_nbits(t))
 
     @override(Formatter)
     def format_array_type(self, t: Array, name: Optional[str] = None) -> str:

@@ -4,7 +4,8 @@ C formatter.
 
 from typing import Optional
 
-from bitproto._ast import Array, Constant, EnumField, Int, Message, Proto, Uint
+from bitproto._ast import (Array, Constant, EnumField, Int, Message,
+                           MessageField, Proto, Uint)
 from bitproto.errors import InternalError
 from bitproto.renderer.formatter import CaseStyleMapping, Formatter
 from bitproto.utils import override
@@ -56,11 +57,11 @@ class CFormatter(Formatter):
 
     @override(Formatter)
     def format_uint_type(self, t: Uint) -> str:
-        return "uint{0}_t".format(self.nbits_from_integer_type(t))
+        return "uint{0}_t".format(self.get_nbits(t))
 
     @override(Formatter)
     def format_int_type(self, t: Int) -> str:
-        return "int{0}_t".format(self.nbits_from_integer_type(t))
+        return "int{0}_t".format(self.get_nbits(t))
 
     @override(Formatter)
     def format_array_type(self, t: Array, name: Optional[str] = None) -> str:
@@ -76,3 +77,7 @@ class CFormatter(Formatter):
     @override(Formatter)
     def format_import_statement(self, t: Proto, as_name: Optional[str] = None) -> str:
         return '#include "{0}_bp.h"'.format(t.name)
+
+    @override(Formatter)
+    def format_encoder_field_name(self, field: MessageField) -> str:
+        return f"((unsigned char *)&((*m).{field.name}))"
