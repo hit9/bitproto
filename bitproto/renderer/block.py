@@ -351,7 +351,7 @@ class BlockBindMessageField(BlockBindDefinition[F, MessageField]):
 
     @cached_property
     def message_field_name(self) -> str:
-        return self.d.name
+        return self.formatter.format_message_field_name(self.d)
 
     @cached_property
     def message_field_type(self) -> str:

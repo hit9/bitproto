@@ -14,8 +14,8 @@ from typing import TypeVar, Union, cast
 
 from bitproto._ast import (Alias, Array, Bool, BooleanConstant, Byte, Constant,
                            Definition, Enum, EnumField, Int, Integer,
-                           IntegerConstant, Message, Node, Proto, Scope,
-                           StringConstant, Type, Uint, Value)
+                           IntegerConstant, Message, MessageField, Node, Proto,
+                           Scope, StringConstant, Type, Uint, Value)
 from bitproto.errors import InternalError
 from bitproto.utils import (final, keep_case, overridable, pascal_case,
                             snake_case, upper_case)
@@ -136,6 +136,10 @@ class Formatter:
         """Array type representation in target language.
         :param name: Target language (like C) may require a name for array declaration.
         """
+        raise NotImplementedError
+
+    @abstractmethod
+    def format_encoder_field_name(self, field: MessageField) -> str:
         raise NotImplementedError
 
     # Overridables
@@ -286,15 +290,12 @@ class Formatter:
             return self.delimer_inner_proto().join(items)
 
     @final
-    def format_definition_name(
-        self, d: Definition, class_: Optional[T[Definition]] = None
-    ) -> str:
-        """The _format_definition_name with case converting."""
-        class_ = class_ or d.__class__
-
+    def format_case_style(self, s: str, class_: T[Definition]) -> str:
+        """Format given string s by case converting of class_, using the
+        case_style_mapping.
+        """
         mapping = self.case_style_mapping()
         v = mapping.get(class_, "keep")
-        s = self._format_definition_name(d)
 
         if isinstance(v, str):
             case_style_name = cast(str, v)
@@ -313,6 +314,15 @@ class Formatter:
             return converter(s)
         else:
             raise InternalError(f"invalid case_style mapping value {v}")
+
+    @final
+    def format_definition_name(
+        self, d: Definition, class_: Optional[T[Definition]] = None
+    ) -> str:
+        """The _format_definition_name with case converting."""
+        class_ = class_ or d.__class__
+        name = self._format_definition_name(d)
+        return self.format_case_style(name, class_)
 
     @final
     def format_enum_name(self, t: Enum) -> str:
@@ -343,6 +353,11 @@ class Formatter:
         """Formats the declaration name of given enum field,
         with nested-declaration concern."""
         return self.format_definition_name(f)
+
+    @final
+    def format_message_field_name(self, f: MessageField) -> str:
+        """Formats the declaration name of given message field."""
+        return self.format_case_style(f.name, MessageField)
 
     @final
     def format_type(self, t: Type, name: Optional[str] = None) -> str:
