@@ -5,3 +5,4 @@ parser.out
 *.egg-info
 build
 dist
+*.gch
