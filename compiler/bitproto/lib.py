@@ -6,15 +6,21 @@ Encoding support for generated python files.
 """
 
 from dataclasses import dataclass
-from typing import List, Union
+from typing import Callable, List, Union
 
 Field = Union[bool, int]
+
+FIELD_DESCRIPTOR_TYPE_BOOL = 1
+FIELD_DESCRIPTOR_TYPE_INT = 2
+FIELD_DESCRIPTOR_TYPE_UINT = 3
+FIELD_DESCRIPTOR_TYPE_BYTE = 4
 
 
 @dataclass
 class FieldDescriptor:
     field: Field
     nbits: int
+    type: int
 
 
 def encode(descriptors: List[FieldDescriptor], s: List[int]) -> None:
@@ -51,7 +57,7 @@ def endecode(descriptors: List[FieldDescriptor], s: List[int], is_encode: bool) 
         while j < n:
             c = get_number_of_bits_to_copy(i, j, n)
             s_index = int(i / 8)
-            field_shift = int(j / 8)
+            b_shift = int(j / 8) * 8
             # TODO
             j += c
             i += c
