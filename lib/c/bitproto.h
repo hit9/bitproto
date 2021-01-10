@@ -4,7 +4,6 @@
 #ifndef __BITPROTO_LIB_H__
 #define __BITPROTO_LIB_H__
 
-#include <inttypes.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -30,7 +29,7 @@ struct BpTypeDescriptor {
     // Number of bits this type occupy.
     int nbits;
     // Descriptor of this type.
-    // NULL if the type is a BaseType (Bool,Byte,Int,Uint).
+    // NULL if the type is a BaseType (Bool, Byte, Int, Uint).
     // Otherwise, a pointer to a descriptor struct, one of following:
     // BpAliasDescriptor, BpArrayDescriptor, BpEnumDescriptor,
     // BpMessageDescriptor
@@ -63,8 +62,8 @@ struct BpEnumDescriptor {
 
 // BpMessageFieldDescriptor describes a message field.
 struct BpMessageFieldDescriptor {
-    // Pointer to the field member.
-    void *field;
+    // Pointer to the field data.
+    void *data;
     // Descriptor of the field's type.
     struct BpTypeDescriptor type;
 };
@@ -82,50 +81,55 @@ struct BpMessageDescriptor {
     struct BpMessageFieldDescriptor **field_descriptors;
 };
 
-// Exports
+// Declarations.
+
+// BpEncodeMessage encode the message described by given message descriptor into
+// buffer s.
 void BpEncodeMessage(struct BpMessageDescriptor *message_descriptor,
                      unsigned char *s);
+
+// BpDecodeMessage decode the message described by given message descriptor from
+// buffer s.
 void BpDecodeMessage(struct BpMessageDescriptor *message_descriptor,
                      unsigned char *s);
 
-// Declarations.
 void BpEndecodeMessage(struct BpMessageDescriptor *message_descriptor,
-                       unsigned char *s, bool is_encode);
+                       unsigned char *s, bool is_encode, int *i);
 void BpEndecodeMessageField(struct BpMessageFieldDescriptor *field_descriptor,
-                            unsigned char *s, bool is_encode);
+                            unsigned char *s, bool is_encode, int *i);
 void BpEndecodeBaseType(void *data, int flag, int nbits, unsigned char *s,
-                        bool is_encode);
+                        bool is_encode, int *i);
 void BpEndecodeAlias(struct BpAliasDescriptor *alias_descriptor,
-                     unsigned char *s, bool is_encode);
+                     unsigned char *s, bool is_encode, int *i);
 void BpEndecodeArray(struct BpArrayDescriptor *array_descriptor,
-                     unsigned char *s, bool is_encode);
+                     unsigned char *s, bool is_encode, int *i);
 void BpEndecodeEnum(struct BpEnumDescriptor *enum_descriptor, void *data,
-                    unsigned char *s, bool is_encode);
+                    unsigned char *s, bool is_encode, int *i);
 // Implementation
 
 void BpEndecodeBaseType(void *data, int flag, int nbits, unsigned char *s,
-                        bool is_encode) {
+                        bool is_encode, int *i) {
     // TODO
 }
 
 void BpEndecodeAlias(struct BpAliasDescriptor *alias_descriptor,
-                     unsigned char *s, bool is_encode) {
+                     unsigned char *s, bool is_encode, int *i) {
     // TODO
 }
 void BpEndecodeArray(struct BpArrayDescriptor *array_descriptor,
-                     unsigned char *s, bool is_encode) {
+                     unsigned char *s, bool is_encode, int *i) {
     // TODO
 }
 
 void BpEndecodeEnum(struct BpEnumDescriptor *enum_descriptor, void *data,
-                    unsigned char *s, bool is_encode) {
+                    unsigned char *s, bool is_encode, int *i) {
     // TODO: extensible
     BpEndecodeBaseType(data, enum_descriptor->uint_type.flag,
-                       enum_descriptor->uint_type.nbits, s, is_encode);
+                       enum_descriptor->uint_type.nbits, s, is_encode, i);
 }
 
 void BpEndecodeMessageField(struct BpMessageFieldDescriptor *field_descriptor,
-                            unsigned char *s, bool is_encode) {
+                            unsigned char *s, bool is_encode, int *i) {
     // TODO: i parameter
     void *descriptor = field_descriptor->type.descriptor;
 
@@ -134,46 +138,48 @@ void BpEndecodeMessageField(struct BpMessageFieldDescriptor *field_descriptor,
         case BP_TYPE_INT:
         case BP_TYPE_UINT:
         case BP_TYPE_BYTE:
-            BpEndecodeBaseType(field_descriptor->field,
+            BpEndecodeBaseType(field_descriptor->data,
                                field_descriptor->type.flag,
-                               field_descriptor->type.nbits, s, is_encode);
+                               field_descriptor->type.nbits, s, is_encode, i);
             break;
         case BP_TYPE_MESSAGE:
             BpEndecodeMessage((struct BpMessageDescriptor *)(descriptor), s,
-                              is_encode);
+                              is_encode, i);
             break;
         case BP_TYPE_ARRAY:
             BpEndecodeArray((struct BpArrayDescriptor *)(descriptor), s,
-                            is_encode);
+                            is_encode, i);
             break;
         case BP_TYPE_ALIAS:
             BpEndecodeAlias((struct BpAliasDescriptor *)(descriptor), s,
-                            is_encode);
+                            is_encode, i);
             break;
         case BP_TYPE_ENUM:
             BpEndecodeEnum((struct BpEnumDescriptor *)(descriptor),
-                           field_descriptor->field, s, is_encode);
+                           field_descriptor->data, s, is_encode, i);
             break;
     }
 }
 
 void BpEndecodeMessage(struct BpMessageDescriptor *message_descriptor,
-                       unsigned char *s, bool is_encode) {
-    for (int i = 0; i < message_descriptor->nfields; i++) {
+                       unsigned char *s, bool is_encode, int *i) {
+    for (int k = 0; k < message_descriptor->nfields; k++) {
         struct BpMessageFieldDescriptor *field_descriptor =
-            message_descriptor->field_descriptors[i];
-        BpEndecodeMessageField(field_descriptor, s, is_encode);
+            message_descriptor->field_descriptors[k];
+        BpEndecodeMessageField(field_descriptor, s, is_encode, i);
     }
 }
 
 void BpEncodeMessage(struct BpMessageDescriptor *message_descriptor,
                      unsigned char *s) {
-    BpEndecodeMessage(message_descriptor, s, true);
+    int i = 0;
+    BpEndecodeMessage(message_descriptor, s, true, &i);
 }
 
 void BpDecodeMessage(struct BpMessageDescriptor *message_descriptor,
                      unsigned char *s) {
-    BpEndecodeMessage(message_descriptor, s, false);
+    int i = 0;
+    BpEndecodeMessage(message_descriptor, s, false, &i);
 }
 #if defined(__cplusplus)
 }
