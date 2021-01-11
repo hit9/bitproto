@@ -176,10 +176,11 @@ void BpEndecodeBaseType(struct BpType type, struct BpProcessorContext *ctx,
 
 void BpEndecodeSingleByte(struct BpProcessorContext *ctx, void *data, int j,
                           int c) {
-    if (ctx->is_encode)
+    if (ctx->is_encode) {
         BpEncodeSingleByte(ctx, data, j, c);
-    else
+    } else {
         BpDecodeSingleByte(ctx, data, j, c);
+    }
 }
 
 void BpEncodeSingleByte(struct BpProcessorContext *ctx, void *data, int j,
@@ -190,7 +191,6 @@ void BpEncodeSingleByte(struct BpProcessorContext *ctx, void *data, int j,
     int shift = (j % 8) - (i % 8);
     // Mask value to intercept bits.
     int mask = BpGetMask(i % 8, c);
-
     // Index of current byte in the target base type data.
     int value_index = (int)(j / 8);
     // Get the value at this index as an unsigned char (byte).
@@ -238,10 +238,10 @@ void BpDecodeSingleByte(struct BpProcessorContext *ctx, void *data, int j,
 
 // BpMin returns the smaller one of given two integers.
 int BpMin(int a, int b) {
-    if (a > b) {
-        return b;
+    if (a < b) {
+        return a;
     }
-    return a;
+    return b;
 }
 
 // BpIntSizeFromNbits returns the size of corresponding integer type for given
@@ -298,7 +298,7 @@ int BpGetMask(int k, int c) {
     if (k == 0) {
         return (1 << c) - 1;
     }
-    return ((1 << (k + 1 + c)) - 1) - ((1 << (k + 1)) - 1);
+    return (1 << ((k + 1 + c) - 1)) - (1 << ((k + 1) - 1));
 }
 
 // BpSmartShift shifts given number n by k.
@@ -308,7 +308,7 @@ int BpSmartShift(int n, int k) {
         return n >> k;
     }
     if (k < 0) {
-        return n << k;
+        return n << (0 - k);
     }
     return n;
 }
