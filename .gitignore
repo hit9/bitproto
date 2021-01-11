@@ -6,3 +6,4 @@ parser.out
 build
 dist
 *.gch
+.ccls-cache
