@@ -176,7 +176,11 @@ class Parser:
 
     def p_open_global_scope(self, p: P) -> None:
         """open_global_scope : """
-        proto = Proto(filepath=self.current_filepath(), _bound=None)
+        proto = Proto(
+            filepath=self.current_filepath(),
+            _bound=None,
+            scope_stack=self.current_scope_stack(),
+        )
         self.push_scope(proto)
 
     def p_close_global_scope(self, p: P) -> None:
