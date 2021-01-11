@@ -42,10 +42,7 @@ class BlockIncludeGuard(BlockDeferable[F]):
 class BlockIncludeGeneralHeaders(Block[F]):
     @override(Block)
     def render(self) -> None:
-        self.push("#include <inttypes.h>")
-        self.push("#include <stdbool.h>")
-        self.push("#include <stdint.h>")
-        self.push("#include <stdio.h>")
+        self.push('#include "bitproto.h"')
 
 
 class BlockExternCPlusPlus(BlockDeferable[F]):

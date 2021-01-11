@@ -4,7 +4,7 @@ C formatter.
 
 from typing import Optional
 
-from bitproto._ast import (Array, Constant, EnumField, Int, Message,
+from bitproto._ast import (Array, Constant, Enum, EnumField, Int, Message,
                            MessageField, Proto, Uint)
 from bitproto.errors import InternalError
 from bitproto.renderer.formatter import CaseStyleMapping, Formatter
@@ -78,22 +78,15 @@ class CFormatter(Formatter):
     def format_import_statement(self, t: Proto, as_name: Optional[str] = None) -> str:
         return '#include "{0}_bp.h"'.format(t.name)
 
-    @override(Formatter)
-    def format_endecoder_message_name(self) -> str:
-        return "(*m)"
+    def format_bp_uint(self, t: Uint) -> str:
+        nbits = self.format_int_value(t.nbits())
+        return f"BpUint({nbits})"
 
-    @override(Formatter)
-    def format_encoder_item(
-        self, chain: str, si: int, fi: int, shift: int, mask: int, r: int
-    ) -> str:
-        assign = "=" if r == 0 else "|="
-        shift_s = self.format_smart_shift(shift)
-        return f"s[{si}] {assign} (((unsigned char *)&({chain}))[{fi}] {shift_s}) & {mask};"
+    def format_bp_enum_descriptor(self, t: Enum) -> str:
+        extensible = self.format_bool_value(t.extensible)
+        bp_uint = self.format_bp_uint(t.type)
+        return f"BpEnumDescriptor({extensible}, {bp_uint})"
 
-    @override(Formatter)
-    def format_decoder_item(
-        self, chain: str, si: int, fi: int, shift: int, mask: int, r: int
-    ) -> str:
-        assign = "=" if r == 0 else "|="
-        shift_s = self.format_smart_shift(shift)
-        return f"((unsigned char *)&({chain}))[{fi}] {assign} (s[{si}] {shift_s}) & {mask};"
+    def format_bp_enum_processor_name(self, t: Enum) -> str:
+        enum_name = self.format_enum_name(t)
+        return f"BpProcessor{enum_name}"

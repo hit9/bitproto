@@ -86,19 +86,3 @@ class GoFormatter(Formatter):
     @override(Formatter)
     def format_bool_value_type(self) -> str:
         return "bool"
-
-    @override(Formatter)
-    def format_endecoder_message_name(self) -> str:
-        return "m"
-
-    @override(Formatter)
-    def format_encoder_item(
-        self, chain: str, si: int, fi: int, shift: int, mask: int, r: int
-    ) -> str:
-        pass  # TODO
-
-    @override(Formatter)
-    def format_decoder_item(
-        self, chain: str, si: int, fi: int, shift: int, mask: int, r: int
-    ) -> str:
-        pass  # TODO

@@ -355,14 +355,6 @@ class BlockBindMessage(BlockBindDefinition[F, Message]):
         """Return the formatted name of the message size constant."""
         return f"BYTES_LENGTH_" + upper_case(self.message_name)
 
-    def message_encoder_items(self) -> List[str]:
-        # TODO: docstring
-        return self.formatter.format_encode_message(self.d)
-
-    def message_decoder_items(self) -> List[str]:
-        # TODO: docstring
-        return self.formatter.format_decode_message(self.d)
-
 
 class BlockBindMessageField(BlockBindDefinition[F, MessageField]):
     """Implements the BlockBindDefinition for MessageField."""

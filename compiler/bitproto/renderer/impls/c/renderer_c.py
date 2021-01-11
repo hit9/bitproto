@@ -4,9 +4,10 @@ Renderer for C file.
 
 from typing import List
 
-from bitproto.renderer.block import (Block, BlockAheadNotice, BlockBindMessage,
-                                     BlockComposition, BlockConditional,
-                                     BlockDeferable, BlockWrapper)
+from bitproto.renderer.block import (Block, BlockAheadNotice, BlockBindEnum,
+                                     BlockBindMessage, BlockComposition,
+                                     BlockConditional, BlockDeferable,
+                                     BlockWrapper)
 from bitproto.renderer.impls.c.formatter import CFormatter as F
 from bitproto.renderer.impls.c.renderer_h import (
     BlockMessageDecoderBase, BlockMessageEncoderBase,
@@ -22,139 +23,40 @@ class BlockInclude(Block[F]):
         self.push(f'#include "{header_filename}"')
 
 
-class BlockMessageEncoderFieldList(BlockMessageEncoderBase):
+class BlockAlias(Block[F]):  # TODO
+    pass
+
+
+class BlockEnumProcessorBody(BlockBindEnum[F]):
     @override(Block)
     def render(self) -> None:
-        for item in self.message_encoder_items():
-            self.push(item)
+        descriptor = self.formatter.format_bp_enum_descriptor(self.d)
+        self.push(f"struct BpEnumDescriptor descriptor = {descriptor};")
+        self.push("BpEndecodeEnum(&descriptor, ctx, data);")
 
 
-class BlockMessageEncoderFunctionReturn(Block[F]):
-    @override(Block)
-    def render(self) -> None:
-        self.push("return 0;")
-
-
-class BlockMessageEncoderBody(BlockMessageEncoderBase, BlockComposition[F]):
-    @override(BlockComposition)
-    def blocks(self) -> List[Block[F]]:
-        return [
-            BlockMessageEncoderFieldList(self.d, indent=self.indent),
-            BlockMessageEncoderFunctionReturn(indent=self.indent),
-        ]
-
-    @override(BlockComposition)
-    def separator(self) -> str:
-        return "\n"
-
-
-class BlockMessageEncoder(BlockMessageEncoderBase, BlockWrapper[F]):
+class BlockEnumProcessor(BlockBindEnum[F], BlockWrapper[F]):
     @override(BlockWrapper)
-    def wraps(self) -> Block:
-        return BlockMessageEncoderBody(self.d, indent=4)
+    def wraps(self) -> Block[F]:
+        return BlockEnumProcessorBody(self.d, indent=4)
 
     @override(BlockWrapper)
     def before(self) -> None:
-        self.push_comment(self.function_comment)
-        self.push(f"{self.function_signature} {{")
+        processor_name = self.formatter.format_bp_enum_processor_name(self.d)
+        signature = f"void {processor_name}(void *data, struct BpProcessorContext *ctx)"
+        self.push(f"{signature} {{")
 
     @override(BlockWrapper)
     def after(self) -> None:
         self.push("}")
 
 
-class BlockMessageDecoderFieldList(BlockMessageDecoderBase):
-    @override(Block)
-    def render(self) -> None:
-        for item in self.message_decoder_items():
-            self.push(item)
-
-
-class BlockMessageDecoderFunctionReturn(Block[F]):
-    @override(Block)
-    def render(self) -> None:
-        self.push("return 0;")
-
-
-class BlockMessageDecoderBody(BlockMessageDecoderBase, BlockComposition[F]):
+class BlockEnumProcessorList(BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
         return [
-            BlockMessageDecoderFieldList(self.d, indent=self.indent),
-            BlockMessageDecoderFunctionReturn(indent=self.indent),
-        ]
-
-    @override(BlockComposition)
-    def separator(self) -> str:
-        return "\n"
-
-
-class BlockMessageDecoder(BlockMessageDecoderBase, BlockWrapper[F]):
-    @override(BlockWrapper)
-    def wraps(self) -> Block:
-        return BlockMessageDecoderBody(self.d, indent=4)
-
-    @override(BlockWrapper)
-    def before(self) -> None:
-        self.push_comment(self.function_comment)
-        self.push(f"{self.function_signature} {{")
-
-    @override(BlockWrapper)
-    def after(self) -> None:
-        self.push("}")
-
-
-class BlockMessageJsonFormatterBody(BlockMessageJsonFormatterBase):
-    @override(Block)
-    def render(self) -> None:
-        pass  # TODO
-
-
-class BlockMessageJsonFormatterWrapper(BlockMessageJsonFormatterBase, BlockWrapper[F]):
-    @override(BlockWrapper)
-    def wraps(self) -> Block:
-        return BlockMessageJsonFormatterBody(self.d, indent=4)
-
-    @override(BlockWrapper)
-    def before(self) -> None:
-        self.push_comment(self.function_comment)
-        self.push(f"{self.function_signature} {{")
-
-    @override(BlockWrapper)
-    def after(self) -> None:
-        self.push("}")
-
-
-class BlockMessageJsonFormatter(BlockMessageJsonFormatterBase, BlockConditional[F]):
-    @override(BlockConditional)
-    def condition(self) -> bool:
-        return self.is_enabled()
-
-    @override(BlockConditional)
-    def block(self) -> Block:
-        return BlockMessageJsonFormatterWrapper(self.d)
-
-
-class BlockMessageFunctionList(BlockBindMessage[F], BlockComposition[F]):
-    @override(BlockComposition)
-    def blocks(self) -> List[Block[F]]:
-        return [
-            BlockMessageEncoder(self.d),
-            BlockMessageDecoder(self.d),
-            BlockMessageJsonFormatter(self.d),
-        ]
-
-    @override(BlockComposition)
-    def separator(self) -> str:
-        return "\n\n\n"
-
-
-class BlockFunctionList(BlockComposition[F]):
-    @override(BlockComposition)
-    def blocks(self) -> List[Block[F]]:
-        return [
-            BlockMessageFunctionList(message, name=name)
-            for name, message in self.bound.messages(recursive=True, bound=self.bound)
+            BlockEnumProcessor(d)
+            for _, d in self.bound.enums(recursive=True, bound=self.bound)
         ]
 
     @override(BlockComposition)
@@ -165,7 +67,11 @@ class BlockFunctionList(BlockComposition[F]):
 class BlockList(BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
-        return [BlockAheadNotice(), BlockInclude(), BlockFunctionList()]
+        return [
+            BlockAheadNotice(),
+            BlockInclude(),
+            BlockEnumProcessorList(),
+        ]
 
 
 class RendererC(Renderer[F]):
