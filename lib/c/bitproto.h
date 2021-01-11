@@ -4,6 +4,7 @@
 #ifndef __BITPROTO_LIB_H__
 #define __BITPROTO_LIB_H__
 
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -108,7 +109,7 @@ struct BpProcessorContext BpContext(bool is_encode, unsigned char *s);
 
 // BpType Constructors.
 
-struct BpType Bool();
+struct BpType BpBool();
 struct BpType BpInt(size_t nbits);
 struct BpType BpUint(size_t nbits);
 struct BpType BpByte();
