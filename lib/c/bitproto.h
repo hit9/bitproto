@@ -31,6 +31,7 @@ struct BpProcessorContext {
     // Indicates whether current processing is encoding or decoding.
     bool is_encode;
     // Tracks the total bits processed.
+    // Maintained by function BpEndecodeBaseType.
     int i;
     // Bytes buffer processing. It's the destination buffer under encoding
     // context, and source buffer under decoding context.
@@ -102,6 +103,9 @@ struct BpMessageDescriptor {
 // Declarations
 ////////////////
 
+// Context Constructor.
+struct BpProcessorContext BpContext(bool is_encode, unsigned char *s);
+
 // BpType Constructors.
 
 struct BpType Bool();
@@ -125,6 +129,12 @@ struct BpAliasDescriptor BpAliasDescriptor(struct BpType to);
 
 // Encoding & Decoding
 
+void BpEncodeSingleByte(struct BpProcessorContext *ctx, void *data, int j,
+                        int c);
+void BpDecodeSingleByte(struct BpProcessorContext *ctx, void *data, int j,
+                        int c);
+void BpEndecodeSingleByte(struct BpProcessorContext *ctx, void *data, int j,
+                          int c);
 void BpEndecodeBaseType(struct BpType type, struct BpProcessorContext *ctx,
                         void *data);
 void BpEndecodeMessageField(struct BpMessageFieldDescriptor *descriptor,
@@ -142,6 +152,7 @@ void BpEndecodeArray(struct BpArrayDescriptor *descriptor,
 
 size_t BpIntSizeFromNbits(size_t nbits);
 size_t BpUintSizeFromNbits(size_t nbits);
+int BpMin(int a, int b);
 int BpSmartShift(int n, int k);
 int BpGetMask(int k, int c);
 int BpGetNbitsToCopy(int i, int j, int n);
@@ -149,6 +160,11 @@ int BpGetNbitsToCopy(int i, int j, int n);
 ///////////////////
 // Implementations
 ///////////////////
+
+// BpContext returns a BpProcessorContext.
+struct BpProcessorContext BpContext(bool is_encode, unsigned char *s) {
+    return (struct BpProcessorContext){is_encode, 0, s};
+}
 
 // BpBool returns a bool BpType.
 struct BpType BpBool() {
@@ -214,8 +230,11 @@ struct BpAliasDescriptor BpAliasDescriptor(struct BpType to) {
     return (struct BpAliasDescriptor){to};
 }
 
+// BpEndecodeMessage process given message at data with provided message
+// descriptor. It iterate all message fields to process.
 void BpEndecodeMessage(struct BpMessageDescriptor *descriptor,
                        struct BpProcessorContext *ctx, void *data) {
+    // TODO: extensible.
     for (int k = 0; k < descriptor->nfields; k++) {
         struct BpMessageFieldDescriptor field_descriptor =
             descriptor->field_descriptors[k];
@@ -223,6 +242,7 @@ void BpEndecodeMessage(struct BpMessageDescriptor *descriptor,
     }
 }
 
+// BpEndecodeMessageField dispatch the process by given message field's type.
 void BpEndecodeMessageField(struct BpMessageFieldDescriptor *descriptor,
                             struct BpProcessorContext *ctx, void *data) {
     switch (descriptor->type.flag) {
@@ -241,6 +261,10 @@ void BpEndecodeMessageField(struct BpMessageFieldDescriptor *descriptor,
     }
 }
 
+// BpEndecodeAlias process alias at given data and described by given
+// descriptor. It simply propagates the process to the type it alias to.
+// In bitproto, only types without names can be aliased
+// (bool/int/uint/byte/array).
 void BpEndecodeAlias(struct BpAliasDescriptor *descriptor,
                      struct BpProcessorContext *ctx, void *data) {
     switch (descriptor->to.flag) {
@@ -264,27 +288,115 @@ void BpEndecodeEnum(struct BpEnumDescriptor *descriptor,
 
 void BpEndecodeArray(struct BpArrayDescriptor *descriptor,
                      struct BpProcessorContext *ctx, void *data) {
+    // TODO: extensible.
     for (int k = 0; k < descriptor->cap; k++) {
-        void *data_ =
+        // Lookup the address of this element's data.
+        void *element_data =
             (void *)((unsigned char *)data + k * descriptor->element_type.size);
         switch (descriptor->element_type.flag) {
             case BP_TYPE_BOOL:
             case BP_TYPE_INT:
             case BP_TYPE_UINT:
             case BP_TYPE_BYTE:
-                BpEndecodeBaseType(descriptor->element_type, ctx, data_);
+                BpEndecodeBaseType(descriptor->element_type, ctx, element_data);
                 break;
             case BP_TYPE_ALIAS:
             case BP_TYPE_MESSAGE:
             case BP_TYPE_ENUM:
-                descriptor->element_type.processor(data_, ctx);
+                descriptor->element_type.processor(element_data, ctx);
                 break;
         }
     }
 }
 
+// BpEndecodeBaseType process given base type at given data.
 void BpEndecodeBaseType(struct BpType type, struct BpProcessorContext *ctx,
-                        void *data) {}
+                        void *data) {
+    // Number of bits this type occupy.
+    int n = (int)(type.nbits);
+    // j tracks the number bits processed on current base.
+    int j = 0;
+
+    while (j < n) {
+        // Number of bits to copy.
+        int c = BpGetNbitsToCopy(ctx->i, j, n);
+        // Process single byte copy.
+        BpEndecodeSingleByte(ctx, data, j, c);
+        // Maintain j and i.
+        j += c;
+        ctx->i += c;
+    }
+}
+
+void BpEndecodeSingleByte(struct BpProcessorContext *ctx, void *data, int j,
+                          int c) {
+    if (ctx->is_encode)
+        BpEncodeSingleByte(ctx, data, j, c);
+    else
+        BpDecodeSingleByte(ctx, data, j, c);
+}
+
+void BpEncodeSingleByte(struct BpProcessorContext *ctx, void *data, int j,
+                        int c) {
+    int i = ctx->i;
+
+    // Number of bits to shift.
+    int shift = (j % 8) - (i % 8);
+    // Mask value to intercept bits.
+    int mask = BpGetMask(i % 8, c);
+
+    // Index of current byte in the target base type data.
+    int value_index = (int)(j / 8);
+    // Get the value at this index as an unsigned char (byte).
+    unsigned char value = ((unsigned char *)(data))[value_index];
+
+    // Index of bytes in the target buffer.
+    int buffer_index = (int)(i / 8);
+    // Delta to put on.
+    int delta = BpSmartShift(value, shift) & mask;
+
+    if (i % 8 == 0) {  // Assign if writing at start of a byte.
+        ctx->s[buffer_index] = delta;
+    } else {  // Otherwise, run OR to copy bits.
+        ctx->s[buffer_index] |= delta;
+    }
+}
+
+void BpDecodeSingleByte(struct BpProcessorContext *ctx, void *data, int j,
+                        int c) {
+    int i = ctx->i;
+
+    // Number of bits to shift.
+    int shift = (i % 8) - (j % 8);
+    // Mask value to intercept bits.
+    int mask = BpGetMask(j % 8, c);
+
+    // Index of bytes in the source buffer.
+    int buffer_index = (int)(i / 8);
+    // Get the char at this index from buffer `s`.
+    unsigned char value = ctx->s[buffer_index];
+
+    // Index of current byte in the target base type data.
+    int value_index = (int)(j / 8);
+    unsigned char *data_buffer = (unsigned char *)(data);
+
+    // Delta to put on.
+    int delta = BpSmartShift(value, shift) & mask;
+
+    if (j % 8 == 0) {  // Assign if writing to starting of a byte.
+        data_buffer[value_index] = delta;
+    } else {  // Otherwise, run OR to copy bits.
+        data_buffer[value_index] |= delta;
+    }
+}
+
+// BpMin returns the smaller one of given two integers.
+int BpMin(int a, int b) {
+    if (a > b) {
+        return b;
+    }
+    return a;
+}
 
 // BpIntSizeFromNbits returns the size of corresponding integer type for given
 // bits number.
@@ -320,6 +432,39 @@ size_t BpUintSizeFromNbits(size_t nbits) {
         return sizeof(uint64_t);
     }
     return 0;
+}
+
+// BpGetNbitsToCopy returns the number of bits to copy for current base type
+// processing. Where argument i is the total bits processed in the whole
+// processing contxt, argument j is the number of bits processed in current base
+// type processing, argument n is the number of bits current base type occupy.
+// The result is the smallest value of following numbers:
+//   The remaining bits to process for current base type, n - j;
+//   The remaining bits to process to for current byte, 8 - (j % 8);
+//   The remaining bits to process from for current byte, 8 - (i % 8);
+int BpGetNbitsToCopy(int i, int j, int n) {
+    return BpMin(BpMin(n - j, 8 - (j % 8)), 8 - (i % 8));
+}
+
+// BpGetMask returns the mask value to copy bits inside a single byte.
+// TODO: comments
+int BpGetMask(int k, int c) {
+    if (k == 0) {
+        return (1 << c) - 1;
+    }
+    return ((1 << (k + 1 + c)) - 1) - ((1 << (k + 1)) - 1);
+}
+
+// BpSmartShift shifts given number n by k.
+// If k is larger than 0, performs a right shift, otherwise left.
+int BpSmartShift(int n, int k) {
+    if (k > 0) {
+        return n >> k;
+    }
+    if (k < 0) {
+        return n << k;
+    }
+    return n;
 }
 
 #if defined(__cplusplus)
