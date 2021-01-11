@@ -5,7 +5,7 @@ Go formatter
 from typing import Optional
 
 from bitproto._ast import (Alias, Array, Bool, Constant, EnumField, Int,
-                           MessageField, Proto, Uint)
+                           Message, MessageField, Proto, Uint)
 from bitproto.renderer.formatter import CaseStyleMapping, Formatter
 from bitproto.utils import cast_or_raise, override
 
@@ -19,6 +19,7 @@ class GoFormatter(Formatter):
             Alias: "pascal",
             Constant: "upper",
             EnumField: ("snake", "upper"),
+            Message: "pascal",
             MessageField: "pascal",
         }
 

@@ -941,6 +941,11 @@ class Message(BoundScope, ScopeWithOptions, CompositeType, ExtensibleType):
     MAX_NBITS: ClassVar[int] = 8 * 1024 * 8 - 1  # < 8kb
 
     @cache_if_frozen
+    def nfields(self) -> int:
+        """Returns the number of fields this message contains."""
+        return len(self.fields())
+
+    @cache_if_frozen
     def fields(self) -> List[MessageField]:
         """Returns the MessageField list in this message scope."""
         return [field for _, field in self.message_fields(recursive=False)]
