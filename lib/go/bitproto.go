@@ -37,6 +37,9 @@ type AccessorIndexer struct {
 	a int
 }
 
+func (ai AccessorIndexer) FieldNumber() int       { return ai.f }
+func (ai AccessorIndexer) ArrayElementIndex() int { return ai.a }
+
 func NewAccessorIndexer(f, a int) AccessorIndexer { return AccessorIndexer{f, a} }
 
 var NilAccessorIndexer = NewAccessorIndexer(-1, -1)
@@ -45,21 +48,54 @@ var NilAccessorIndexer = NewAccessorIndexer(-1, -1)
 // GetByte. We don't use reflection (the "encoding/json" way), which slows the
 // performance, bitproto compiler will generate SetByte and GetByte methods
 // for all messages.
+// Accessor only cares about base types and array of them, other type will
+// finally falls to processors of base types.
 type Accessor interface {
 	// SetByte sets given byte b to target data, the data will be lookedup by
 	// given indexer ai from this accessor.
-	// Argument shift is the number of bits to shift before writing applied.
-	// Example of the implementation:
-	//	data |= b >> shift
-	SetByte(ai AccessorIndexer, shift int, b byte)
+	// Argument lshift is the number of bits to shift left on given delta bits
+	// before writing applied.
+	//
+	// Expecting compiler generates this function like following:
+	//
+	//	switch ai.FieldNumber() {
+	//	case 1:          // Not an array.
+	//		m.Field |= ...
+	//	case 2:          // Array of base type
+	//		m.Field[ai.ArrayElementIndex()] |= ...
+	//	default: // Do nothing if not Bool/Uint/Int/Byte/Array (of base)
+	//		panic
+	//	}
+	//
+	// Each item like this:
+	//
+	//	m.Field |= type(b) << ishift    // When the field is a Byte/Uint/Int
+	//	m.Field = byte2bool(b)          // When the field is a Bool
+	//	m.Field = alias(byte2bool(b))   // When the field is a Alias of Bool.
+	SetByte(ai AccessorIndexer, lshift int, b byte)
 
 	// GetByte returns the byte from target data, the data will be lookedup by
 	// given indexer ai from this accessor.
-	// Argument shift is the number of bits to shift before the byte is
-	// returned.
-	// Example of the implementation:
-	//	return byte(data >> shift)
-	GetByte(ai AccessorIndexer, shift int) byte
+	// Argument rshift is the number of bits to shift right on the data before
+	// the byte is returned.
+	//
+	// Expecting compiler generates this function like following:
+	//
+	//	switch ai.FieldNumber() {
+	//	case 1:          // Not an array.
+	//		return ..
+	//	case 2:          // Array of base type
+	//		return ..
+	//	default: // Do nothing if not Bool/Uint/Int/Byte/Array (of base)
+	//		panic
+	//	}
+	//
+	// Each item like this:
+	//
+	//	return byte(data >> rshift)  // When the field is a Byte/Uint/Int
+	//	return bool2byte(data)       // When the field is a Bool
+	//	return bool2byte(bool(data)) // When the field is a Alias of Bool.
+	GetByte(ai AccessorIndexer, rshift int) byte
 }
 
 // Flag of type.
@@ -225,6 +261,7 @@ type MessageField struct {
 func NewMessageField(f int, t Type) *MessageField { return &MessageField{f, t} }
 
 func endecodeArray(a *Array, ctx *ProcessorContext, ai AccessorIndexer, accessor Accessor) {
+	// TODO: extensible
 	for k := 0; k < a.c; k++ {
 		// Rewrite index's array element index `ai.a` to `k`.
 		ai_ := NewAccessorIndexer(ai.f, k)
@@ -247,6 +284,7 @@ func EndecodeAlias(a Alias, ctx *ProcessorContext, ai AccessorIndexer, accessor 
 // For a message, argument `ai` and `accessor` in function Process() will be
 // dropped in inner call of function EndecodeMessage() (replaced indeed).
 func EndecodeMessage(m Message, ctx *ProcessorContext) {
+	// TODO: extensible
 	for _, f := range m.MessageFields() {
 		ai := NewAccessorIndexer(f.f, 0)
 		// for each field, its message is the accessor.
@@ -280,12 +318,61 @@ func endecodeSingleByte(ctx *ProcessorContext, ai AccessorIndexer, accessor Acce
 	}
 }
 
+// TODO: Comment
 func encodeSingleByte(ctx *ProcessorContext, ai AccessorIndexer, accessor Accessor, j, c int) {
-	// TODO
+	i := ctx.i // Assign
+
+	// Number of bits to shift.
+	// The cast is safe: j%8 and i%8 always in [0,8).
+	shift := (j % 8) - (i % 8)
+
+	// Mask value to intercept bits.
+	// The cast is safe: i%8 and c always in [0, 8].
+	mask := byte(getMask(i%8, c))
+
+	// Number of bits to shift right before the original data cast to byte.
+	rshift := int(j/8) * 8
+
+	// Index of byte in the target buffer.
+	bufferIndex := int(i / 8)
+
+	// Get ther byte from internal data.
+	b := accessor.GetByte(ai, rshift)
+
+	// Delta to put on s[bufferIndex].
+	delta := smartShift(b, shift) & byte(mask)
+
+	// Using OR operator to put on delta.
+	ctx.s[bufferIndex] |= delta
 }
 
+// TODO: comment
 func decodeSingleByte(ctx *ProcessorContext, ai AccessorIndexer, accessor Accessor, j, c int) {
-	// TODO
+	i := ctx.i // Assign
+
+	// Number of bits to shift.
+	// The cast is safe: j%8 and i%8 must in [0,8).
+	shift := (i % 8) - (j % 8)
+
+	// Mask value to intercept bits.
+	// The cast is safe: j%8 and c must in [0, 8].
+	mask := byte(getMask(j%8, c))
+
+	// Number of bits to shift left in accessor before
+	// the original data cast to byte.
+	lshift := int(j/8) * 8
+
+	// Index of byte in the target buffer.
+	bufferIndex := int(i / 8)
+
+	// Byte at index bufferIndex in s.
+	b := ctx.s[bufferIndex]
+
+	// Delta to put on internal data.
+	delta := smartShift(b, shift) & byte(mask)
+
+	// Get ther byte from internal data.
+	accessor.SetByte(ai, lshift, delta)
 }
 
 // getNbitsToCopy returns the number of bits to copy for current base type.
@@ -296,11 +383,13 @@ func decodeSingleByte(ctx *ProcessorContext, ai AccessorIndexer, accessor Access
 //   The remaining bits to process for current base type, n - j;
 //   The remaining bits to process to for current byte, 8 - (j % 8);
 //   The remaining bits to process from for current byte, 8 - (i % 8);
+// The returned value always in [0, 8].
 func getNbitsToCopy(i, j, n int) int {
 	return min(min(n-j, 8-(j%8)), 8-(i%8))
 }
 
 // getMask returns the mask value to copy bits inside a single byte.
+// TODO: comment
 func getMask(k, c int) int {
 	if k == 0 {
 		return (1 << c) - 1
@@ -308,7 +397,7 @@ func getMask(k, c int) int {
 	return (1 << ((k + 1 + c) - 1)) - (1 << ((k + 1) - 1))
 }
 
-// Returns the smaller integer of given two.
+// Returns the smaller one of given two integers.
 func min(a, b int) int {
 	if a < b {
 		return a
@@ -316,7 +405,9 @@ func min(a, b int) int {
 	return b
 }
 
-func smartShift(n, k int) int {
+// BpSmartShift shifts given byte n by k bits.
+// If k is larger than 0, performs a right shift, otherwise left.
+func smartShift(n byte, k int) byte {
 	if k > 0 {
 		return n >> k
 	}
