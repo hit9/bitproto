@@ -112,6 +112,10 @@ class CFormatter(Formatter):
         nbits = self.format_int_value(t.nbits())
         return f"BpInt({nbits})"
 
+    def format_bp_uint(self, t: Uint) -> str:
+        nbits = self.format_int_value(t.nbits())
+        return f"BpUint({nbits})"
+
     def format_bp_byte(self) -> str:
         return f"BpByte()"
 
@@ -144,10 +148,6 @@ class CFormatter(Formatter):
         size = self.format_sizeof(alias_type)
         processor = self.format_bp_alias_processor_name(t)
         return f"BpAlias({nbits}, {size}, {processor})"
-
-    def format_bp_uint(self, t: Uint) -> str:
-        nbits = self.format_int_value(t.nbits())
-        return f"BpUint({nbits})"
 
     def format_bp_enum_descriptor(self, t: Enum) -> str:
         extensible = self.format_bool_value(t.extensible)
