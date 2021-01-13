@@ -1,5 +1,9 @@
 // Copyright (c) 2021, hit9. https://github.com/hit9/bitproto
 // Encoding library for bitproto in C language.
+//
+// Implementation Note:
+// * No dynamic memory allocation (malloc).
+// * All structs and functions named starting with 'Bp'.
 
 #ifndef __BITPROTO_LIB_H__
 #define __BITPROTO_LIB_H__ 1
