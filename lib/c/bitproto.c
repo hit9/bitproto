@@ -174,6 +174,7 @@ void BpEndecodeBaseType(struct BpType type, struct BpProcessorContext *ctx,
     }
 }
 
+// TODO: Comment
 void BpEndecodeSingleByte(struct BpProcessorContext *ctx, void *data, int j,
                           int c) {
     if (ctx->is_encode) {
@@ -183,6 +184,7 @@ void BpEndecodeSingleByte(struct BpProcessorContext *ctx, void *data, int j,
     }
 }
 
+// TODO: Comment
 void BpEncodeSingleByte(struct BpProcessorContext *ctx, void *data, int j,
                         int c) {
     int i = ctx->i;
@@ -196,7 +198,7 @@ void BpEncodeSingleByte(struct BpProcessorContext *ctx, void *data, int j,
     // Get the value at this index as an unsigned char (byte).
     unsigned char value = ((unsigned char *)(data))[value_index];
 
-    // Index of bytes in the target buffer.
+    // Index of byte in the target buffer.
     int buffer_index = (int)(i / 8);
     // Delta to put on.
     int delta = BpSmartShift(value, shift) & mask;
@@ -208,6 +210,7 @@ void BpEncodeSingleByte(struct BpProcessorContext *ctx, void *data, int j,
     }
 }
 
+// TODO: Comment
 void BpDecodeSingleByte(struct BpProcessorContext *ctx, void *data, int j,
                         int c) {
     int i = ctx->i;
