@@ -520,6 +520,27 @@ class BlockMessageMethodString(BlockBindMessage[F]):
         self.push("}")
 
 
+class BlockMessageMethodEncode(BlockBindMessage[F]):
+    @override(Block)
+    def render(self) -> None:
+        self.push_comment(f"Encode struct {self.message_name} to bytes buffer.")
+        self.push(f"func (m *{self.message_name}) Encode() []byte {{")
+        self.push(f"s := make([]byte, m.Size())", indent=1)
+        self.push(f"ctx := bp.NewEncodeContext(s)", indent=1)
+        self.push(f"m.XXXProcessor().Process(ctx, nil, m)", indent=1)
+        self.push(f"return ctx.Buffer()", indent=1)
+        self.push("}")
+
+
+class BlockMessageMethodDecode(BlockBindMessage[F]):
+    @override(Block)
+    def render(self) -> None:
+        self.push(f"func (m *{self.message_name}) Decode(s []byte) {{")
+        self.push(f"ctx := bp.NewEncodeContext(s)", indent=1)
+        self.push(f"m.XXXProcessor().Process(ctx, nil, m)", indent=1)
+        self.push("}")
+
+
 class BlockMessage(BlockBindMessage[F], BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
@@ -528,6 +549,8 @@ class BlockMessage(BlockBindMessage[F], BlockComposition[F]):
             BlockMessageSizeConst(self.d),
             BlockMessageMethodSize(self.d),
             BlockMessageMethodString(self.d),
+            BlockMessageMethodEncode(self.d),
+            BlockMessageMethodDecode(self.d),
             BlockMessageMethodXXXProcessor(self.d),
             BlockMessageMethodXXXSetByte(self.d),
             BlockMessageMethodXXXGetByte(self.d),

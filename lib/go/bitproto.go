@@ -47,6 +47,8 @@ func NewDecodeContext(s []byte) *ProcessContext {
 	return &ProcessContext{false, 0, s}
 }
 
+func (ctx *ProcessContext) Buffer() []byte { return ctx.s }
+
 // Processor is the abstraction type that able to process encoding and
 // decoding.
 type Processor interface {
