@@ -85,6 +85,16 @@ class BlockAliasMethodTo(BlockAliasMethodBase):
         self.push_string("}")
 
 
+class BlockAliasMethodProcess(BlockAliasMethodBase):
+    @override(Block)
+    def render(self) -> None:
+        self.push(
+            f"func (m {self.method_receiver}) Process(ctx *bp.ProcessorContext, di bp.DataIndexer, accessor bp.Accessor) {{"
+        )
+        self.push(f"bp.EndecodeAlias(m, ctx, di, accessor)", indent=self.indent + 1)
+        self.push("}")
+
+
 class BlockAliasMethodList(BlockBindAlias[F], BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
@@ -92,6 +102,8 @@ class BlockAliasMethodList(BlockBindAlias[F], BlockComposition[F]):
             BlockAliasMethodFlag(self.d),
             BlockAliasMethodNbits(self.d),
             BlockAliasMethodTo(self.d),
+            BlockEmptyLine(),
+            BlockAliasMethodProcess(self.d),
         ]
 
     @override(BlockComposition)
@@ -180,14 +192,14 @@ class BlockEnumType(BlockBindEnum[F]):
         self.push(f"type {self.enum_name} {self.enum_uint_type}")
 
 
-class BlockEnumStringFunctionCaseItem(BlockBindEnumField[F]):
+class BlockEnumMethodStringCaseItem(BlockBindEnumField[F]):
     @override(Block)
     def render(self) -> None:
         self.push(f"case {self.enum_field_value}:")
         self.push(f'return "{self.enum_field_name}"', indent=self.indent + 1)
 
 
-class BlockEnumStringFunctionCaseDefault(BlockBindEnum[F]):
+class BlockEnumMethodStringCaseDefault(BlockBindEnum[F]):
     @override(Block)
     def render(self) -> None:
         self.push("default:")
@@ -197,14 +209,14 @@ class BlockEnumStringFunctionCaseDefault(BlockBindEnum[F]):
         )
 
 
-class BlockEnumStringFunctionCaseList(BlockBindEnum[F], BlockComposition[F]):
+class BlockEnumMethodStringCaseList(BlockBindEnum[F], BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
         bs: List[Block[F]] = [
-            BlockEnumStringFunctionCaseItem(field, indent=self.indent)
+            BlockEnumMethodStringCaseItem(field, indent=self.indent)
             for field in self.d.fields()
         ]
-        bs.append(BlockEnumStringFunctionCaseDefault(self.d, indent=self.indent))
+        bs.append(BlockEnumMethodStringCaseDefault(self.d, indent=self.indent))
         return bs
 
     @override(BlockComposition)
@@ -238,10 +250,20 @@ class BlockEnumMethodUint(BlockBindEnum[F]):
         self.push_string("}")
 
 
+class BlockEnumMethodProcess(BlockBindEnum[F]):
+    @override(Block)
+    def render(self) -> None:
+        self.push(
+            f"func (m {self.enum_name}) Process(ctx *bp.ProcessorContext, di bp.DataIndexer, accessor bp.Accessor) {{"
+        )
+        self.push(f"bp.EndecodeEnum(m, ctx, di, accessor)", indent=self.indent + 1)
+        self.push("}")
+
+
 class BlockEnumMethodString(BlockBindEnum[F], BlockWrapper[F]):
     @override(BlockWrapper)
     def wraps(self) -> Block:
-        return BlockEnumStringFunctionCaseList(self.d, indent=1)
+        return BlockEnumMethodStringCaseList(self.d, indent=1)
 
     @override(BlockWrapper)
     def before(self) -> None:
@@ -260,6 +282,8 @@ class BlockEnumMethodList(BlockBindEnum[F], BlockComposition[F]):
             BlockEnumMethodFlag(self.d),
             BlockEnumMethodNbits(self.d),
             BlockEnumMethodUint(self.d),
+            BlockEmptyLine(),
+            BlockEnumMethodProcess(self.d),
             BlockEmptyLine(),
             BlockEnumMethodString(self.d),
         ]
@@ -315,7 +339,7 @@ class BlockMessageFieldList(BlockBindMessage[F], BlockComposition[F]):
         return "\n"
 
 
-class BlockMessageSize(BlockBindMessage[F]):
+class BlockMessageSizeConst(BlockBindMessage[F]):
     @override(Block)
     def render(self) -> None:
         self.push_comment(f"Number of bytes to serialize struct {self.message_name}")
@@ -339,16 +363,23 @@ class BlockMessageStruct(BlockBindMessage[F], BlockWrapper[F]):
         self.push("}")
 
 
-class BlockMessageFunctionSize(BlockBindMessage[F]):
+class BlockMessageMethodSize(BlockBindMessage[F]):
     @override(Block)
     def render(self) -> None:
-        self.push_comment(f"Returns struct {self.message_name} size.")
         self.push(f"func (m *{self.message_name}) Size() uint32 {{")
-        self.push(f"return {self.message_nbytes}", indent=1)
-        self.push("}")
+        self.push_string(f"return {self.message_nbytes}")
+        self.push_string("}")
 
 
-class BlockMessageFunctionString(BlockBindMessage[F]):
+class BlockMessageMethodFlag(BlockBindMessage[F]):
+    @override(Block)
+    def render(self) -> None:
+        self.push(f"func (m *{self.message_name}) Flag() bp.TypeFlag {{")
+        self.push_string("return bp.TypeMessage")
+        self.push_string("}")
+
+
+class BlockMessageMethodString(BlockBindMessage[F]):
     @override(Block)
     def render(self) -> None:
         self.push_comment(
@@ -360,14 +391,28 @@ class BlockMessageFunctionString(BlockBindMessage[F]):
         self.push("}")
 
 
+class BlockMessageMethodList(BlockBindMessage[F], BlockComposition[F]):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block[F]]:
+        return [
+            BlockMessageMethodSize(self.d),
+            BlockMessageMethodFlag(self.d),
+            BlockEmptyLine(),
+            BlockMessageMethodString(self.d),
+        ]
+
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n"
+
+
 class BlockMessage(BlockBindMessage[F], BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
         return [
-            BlockMessageSize(self.d),
             BlockMessageStruct(self.d),
-            BlockMessageFunctionSize(self.d),
-            BlockMessageFunctionString(self.d),
+            BlockMessageSizeConst(self.d),
+            BlockMessageMethodList(self.d),
         ]
 
 
