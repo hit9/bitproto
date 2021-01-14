@@ -54,7 +54,7 @@ type Processor interface {
 	Flag() Flag
 	// Process continues the encoding and decoding with given context.
 	// The argument di and accessor is to index data to read and write byte.
-	Process(ctx *ProcessContext, di DataIndexer, accessor Accessor)
+	Process(ctx *ProcessContext, di *DataIndexer, accessor Accessor)
 }
 
 // Accessor is the data container.
@@ -67,40 +67,40 @@ type Accessor interface {
 	// Argument lshift is the number of bits to shift right on b before it's
 	// written onto the indexed data.
 	// This function works only if target data is a single type.
-	XXXSetByte(di DataIndexer, lshift int, b byte)
+	XXXSetByte(di *DataIndexer, lshift int, b byte)
 
 	// XXXGetByte returns the byte from the data lookedup by given indexer di
 	// from this accessor.
 	// Argument rshift is the number of bits to shift left on the data before
 	// it's cast to byte.
 	// This function works only if target data is a single type.
-	XXXGetByte(di DataIndexer, rshift int) byte
+	XXXGetByte(di *DataIndexer, rshift int) byte
 
 	// XXXGetAccessor gets the child accessor data container by indexer di.
 	// This function works only if target data is a message.
-	XXXGetAccessor(di DataIndexer) Accessor
+	XXXGetAccessor(di *DataIndexer) Accessor
 }
 
 // DataIndexer contains the argument to index data from current accessor.
 type DataIndexer struct {
-	fieldNumber       int
-	arrayElementIndex int
+	fnumber int
+	aistack []int // array index stack in case of nested array in a single message.
 }
 
 // NewDataIndexer returns a new DataIndexer.
-func NewDataIndexer(f, a int) DataIndexer     { return DataIndexer{f, a} }
-func (di DataIndexer) FieldNumber() int       { return di.fieldNumber }
-func (di DataIndexer) ArrayElementIndex() int { return di.arrayElementIndex }
-func (di DataIndexer) IsNil() bool            { return di.fieldNumber < 0 }
-
-var NilDataIndexer = NewDataIndexer(-1, 0)
+func NewDataIndexer(fnumber int) *DataIndexer { return &DataIndexer{fnumber, []int{}} }
+func (di *DataIndexer) F() int                { return di.fnumber }
+func (di *DataIndexer) I(n int) int           { return di.aistack[n] }
+func (di *DataIndexer) IndexStackUp()         { di.aistack = append(di.aistack, 0) }
+func (di *DataIndexer) IndexStackDown()       { di.aistack = di.aistack[0 : len(di.aistack)-1] }
+func (di *DataIndexer) IndexReplace(k int)    { di.aistack[len(di.aistack)-1] = k }
 
 // Bool implements Processor for bool type.
 type Bool struct{}
 
 func NewBool() *Bool       { return &Bool{} }
 func (t *Bool) Flag() Flag { return FlagBool }
-func (t *Bool) Process(ctx *ProcessContext, di DataIndexer, accessor Accessor) {
+func (t *Bool) Process(ctx *ProcessContext, di *DataIndexer, accessor Accessor) {
 	processBaseType(1, ctx, di, accessor)
 }
 
@@ -109,7 +109,7 @@ type Int struct{ nbits int }
 
 func NewInt(nbits int) *Int { return &Int{nbits} }
 func (t *Int) Flag() Flag   { return FlagInt }
-func (t *Int) Process(ctx *ProcessContext, di DataIndexer, accessor Accessor) {
+func (t *Int) Process(ctx *ProcessContext, di *DataIndexer, accessor Accessor) {
 	processBaseType(t.nbits, ctx, di, accessor)
 }
 
@@ -118,7 +118,7 @@ type Uint struct{ nbits int }
 
 func NewUint(nbits int) *Uint { return &Uint{nbits} }
 func (t *Uint) Flag() Flag    { return FlagUint }
-func (t *Uint) Process(ctx *ProcessContext, di DataIndexer, accessor Accessor) {
+func (t *Uint) Process(ctx *ProcessContext, di *DataIndexer, accessor Accessor) {
 	processBaseType(t.nbits, ctx, di, accessor)
 }
 
@@ -127,7 +127,7 @@ type Byte struct{}
 
 func NewByte() *Byte       { return &Byte{} }
 func (t *Byte) Flag() Flag { return FlagByte }
-func (t *Byte) Process(ctx *ProcessContext, di DataIndexer, accessor Accessor) {
+func (t *Byte) Process(ctx *ProcessContext, di *DataIndexer, accessor Accessor) {
 	processBaseType(8, ctx, di, accessor)
 }
 
@@ -145,13 +145,15 @@ func NewArray(extensible bool, capacity int, elementProcessor Processor) *Array 
 }
 func (t *Array) Flag() Flag { return FlagArray }
 
-func (t *Array) Process(ctx *ProcessContext, di DataIndexer, accessor Accessor) {
+func (t *Array) Process(ctx *ProcessContext, di *DataIndexer, accessor Accessor) {
 	// TODO: extensible
+	di.IndexStackUp()
+	defer di.IndexStackDown()
 
 	for k := 0; k < t.capacity; k++ {
-		// Rewrite indexer's element tracker.
-		indexer := NewDataIndexer(di.fieldNumber, k)
-		t.elementProcessor.Process(ctx, indexer, accessor)
+		// Rewrite indexer's array index tracker.
+		di.IndexReplace(k)
+		t.elementProcessor.Process(ctx, di, accessor)
 	}
 }
 
@@ -168,7 +170,7 @@ func NewEnumProcessor(extensible bool, ut *Uint) *EnumProcessor {
 
 func (t *EnumProcessor) Flag() Flag { return FlagEnum }
 
-func (t *EnumProcessor) Process(ctx *ProcessContext, di DataIndexer, accessor Accessor) {
+func (t *EnumProcessor) Process(ctx *ProcessContext, di *DataIndexer, accessor Accessor) {
 	// TODO: extensible
 	t.ut.Process(ctx, di, accessor)
 }
@@ -181,7 +183,7 @@ func NewAliasProcessor(to Processor) *AliasProcessor { return &AliasProcessor{to
 
 func (t *AliasProcessor) Flag() Flag { return FlagAlias }
 
-func (t *AliasProcessor) Process(ctx *ProcessContext, di DataIndexer, accessor Accessor) {
+func (t *AliasProcessor) Process(ctx *ProcessContext, di *DataIndexer, accessor Accessor) {
 	// TODO: extensible
 	t.to.Process(ctx, di, accessor)
 }
@@ -198,11 +200,11 @@ func NewMessageFieldProcessor(fieldNumber int, typeProcessor Processor) *Message
 
 func (t *MessageFieldProcessor) Flag() Flag { return FlagMessageField }
 
-func (t *MessageFieldProcessor) Process(ctx *ProcessContext, _ DataIndexer, accessor Accessor) {
+func (t *MessageFieldProcessor) Process(ctx *ProcessContext, _ *DataIndexer, accessor Accessor) {
+	// Ignore data indexer passed in, because accessor is rewrite.
 	// Rewrite data indexer's fieldNumber.
-	indexer := NewDataIndexer(t.fieldNumber, 0)
-	t.typeProcessor.Process(ctx, indexer, accessor)
-
+	di := NewDataIndexer(t.fieldNumber)
+	t.typeProcessor.Process(ctx, di, accessor)
 }
 
 // MessageProcessor implements Processor for message
@@ -217,8 +219,8 @@ func NewMessageProcessor(fieldDescriptors []*MessageFieldProcessor) *MessageProc
 
 func (t *MessageProcessor) Flag() Flag { return FlagMessage }
 
-func (t *MessageProcessor) Process(ctx *ProcessContext, di DataIndexer, accessor Accessor) {
-	if !di.IsNil() {
+func (t *MessageProcessor) Process(ctx *ProcessContext, di *DataIndexer, accessor Accessor) {
+	if di != nil {
 		// As a data item of upper accessor.
 		// Rewrite accessor.
 		accessor = accessor.XXXGetAccessor(di)
@@ -230,7 +232,7 @@ func (t *MessageProcessor) Process(ctx *ProcessContext, di DataIndexer, accessor
 }
 
 // processBaseType process encoding and decoding on a base type.
-func processBaseType(nbits int, ctx *ProcessContext, di DataIndexer, accessor Accessor) {
+func processBaseType(nbits int, ctx *ProcessContext, di *DataIndexer, accessor Accessor) {
 	for j := 0; j < nbits; {
 		// Gets number of bits to copy (0~8).
 		c := getNbitsToCopy(ctx.i, j, nbits)
@@ -243,7 +245,7 @@ func processBaseType(nbits int, ctx *ProcessContext, di DataIndexer, accessor Ac
 }
 
 // processSingleByte dispatch process to encodeSingleByte and decodeSingleByte.
-func processSingleByte(ctx *ProcessContext, di DataIndexer, accessor Accessor, j, c int) {
+func processSingleByte(ctx *ProcessContext, di *DataIndexer, accessor Accessor, j, c int) {
 	if ctx.isEncode {
 		encodeSingleByte(ctx, di, accessor, j, c)
 	} else {
@@ -254,7 +256,7 @@ func processSingleByte(ctx *ProcessContext, di DataIndexer, accessor Accessor, j
 // encodeSingleByte encode number of c bits from data to given buffer s.
 // Where the data is lookedup by data indexer di from data container accessor.
 // And the buffer s is given in ProcessContext ctx.
-func encodeSingleByte(ctx *ProcessContext, di DataIndexer, accessor Accessor, j, c int) {
+func encodeSingleByte(ctx *ProcessContext, di *DataIndexer, accessor Accessor, j, c int) {
 	i := ctx.i
 
 	// Number of bits to shift right to obtain byte from accessor.
@@ -274,7 +276,7 @@ func encodeSingleByte(ctx *ProcessContext, di DataIndexer, accessor Accessor, j,
 // Where the data is lookedup by data indexer di from data container accessor.
 // And the buffer s is given in ProcessContext ctx.
 // Byte decoding is finally done by accessor's generated function XXXSetByte.
-func decodeSingleByte(ctx *ProcessContext, di DataIndexer, accessor Accessor, j, c int) {
+func decodeSingleByte(ctx *ProcessContext, di *DataIndexer, accessor Accessor, j, c int) {
 	i := ctx.i
 
 	b := ctx.s[int(i/8)]
