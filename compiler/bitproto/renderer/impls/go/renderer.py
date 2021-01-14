@@ -508,6 +508,90 @@ class BlockMessageMethodXXXGetByte(BlockBindMessage[F], BlockWrapper[F]):
         self.push("}")
 
 
+class BlockMessageMethodXXXGetAccessorItem(BlockBindMessageField[F]):
+    def __init__(
+        self, d: MessageField, name: Optional[str] = None, indent: int = 0,
+    ) -> None:
+        super().__init__(d, name, indent)
+        self.array_depth: int = 0
+
+    def format_data_ref(self) -> str:
+        array_indexing = "".join(f"[di.I({i})]" for i in range(self.array_depth))
+        return f"m.{self.message_field_name}" + array_indexing
+
+    def render_case(self) -> None:
+        field_number = self.formatter.format_int_value(self.d.number)
+        self.push(f"case {field_number}:")
+
+    def render_array(self, array: Array) -> None:
+        try:
+            self.array_depth += 1
+            if isinstance(array.element_type, Message):
+                return self.render_message(array.element_type)
+            if isinstance(array.element_type, Alias):
+                return self.render_alias(array.element_type)
+        finally:
+            self.array_depth -= 1
+
+    def render_alias(self, alias: Alias) -> None:
+        if isinstance(alias.type, Array):
+            return self.render_array(alias.type)
+
+    def render_message(self, message: Message) -> None:
+        self.render_case()
+        data = self.format_data_ref()
+        self.push(f"return &({data})", indent=self.indent + 1)
+
+    @override(Block)
+    def render(self) -> None:
+        if isinstance(self.d.type, Message):
+            return self.render_message(self.d.type)
+        if isinstance(self.d.type, Array):
+            return self.render_array(self.d.type)
+        if isinstance(self.d.type, Alias):
+            return self.render_alias(self.d.type)
+
+
+class BlockMessageMethodXXXGetAccessorItemDefault(Block[F]):
+    @override(Block)
+    def render(self) -> None:
+        self.push("default:")
+        self.push("return nil", indent=self.indent + 1)
+
+
+class BlockMessageMethodXXXGetAccessorList(BlockBindMessage[F], BlockComposition[F]):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block[F]]:
+        b: List[Block[F]] = [
+            BlockMessageMethodXXXGetAccessorItem(field, indent=self.indent)
+            for field in self.d.sorted_fields()
+        ]
+        b.append(BlockMessageMethodXXXGetAccessorItemDefault(indent=self.indent))
+        return b
+
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n"
+
+
+class BlockMessageMethodXXXGetAccessor(BlockBindMessage[F], BlockWrapper[F]):
+    @override(BlockWrapper)
+    def wraps(self) -> Block[F]:
+        return BlockMessageMethodXXXGetAccessorList(self.d, indent=self.indent + 1)
+
+    @override(BlockWrapper)
+    def before(self) -> None:
+        self.push(
+            f"func (m *{self.message_name}) XXXGetAccessor(di *bp.DataIndexer) bp.Accessor {{"
+        )
+        self.push("switch di.F() {", indent=self.indent + 1)
+
+    @override(BlockWrapper)
+    def after(self) -> None:
+        self.push("}", indent=self.indent + 1)
+        self.push("}")
+
+
 class BlockMessageMethodString(BlockBindMessage[F]):
     @override(Block)
     def render(self) -> None:
@@ -525,8 +609,7 @@ class BlockMessageMethodEncode(BlockBindMessage[F]):
     def render(self) -> None:
         self.push_comment(f"Encode struct {self.message_name} to bytes buffer.")
         self.push(f"func (m *{self.message_name}) Encode() []byte {{")
-        self.push(f"s := make([]byte, m.Size())", indent=1)
-        self.push(f"ctx := bp.NewEncodeContext(s)", indent=1)
+        self.push(f"ctx := bp.NewEncodeContext(int(m.Size()))", indent=1)
         self.push(f"m.XXXProcessor().Process(ctx, nil, m)", indent=1)
         self.push(f"return ctx.Buffer()", indent=1)
         self.push("}")
@@ -536,7 +619,7 @@ class BlockMessageMethodDecode(BlockBindMessage[F]):
     @override(Block)
     def render(self) -> None:
         self.push(f"func (m *{self.message_name}) Decode(s []byte) {{")
-        self.push(f"ctx := bp.NewEncodeContext(s)", indent=1)
+        self.push(f"ctx := bp.NewDecodeContext(s)", indent=1)
         self.push(f"m.XXXProcessor().Process(ctx, nil, m)", indent=1)
         self.push("}")
 
@@ -552,6 +635,7 @@ class BlockMessage(BlockBindMessage[F], BlockComposition[F]):
             BlockMessageMethodEncode(self.d),
             BlockMessageMethodDecode(self.d),
             BlockMessageMethodXXXProcessor(self.d),
+            BlockMessageMethodXXXGetAccessor(self.d),
             BlockMessageMethodXXXSetByte(self.d),
             BlockMessageMethodXXXGetByte(self.d),
         ]

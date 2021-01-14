@@ -38,8 +38,8 @@ type ProcessContext struct {
 }
 
 // NewEncodeContext returns a ProcessContext for encoding to given buffer s.
-func NewEncodeContext(s []byte) *ProcessContext {
-	return &ProcessContext{true, 0, s}
+func NewEncodeContext(nbytes int) *ProcessContext {
+	return &ProcessContext{true, 0, make([]byte, nbytes)}
 }
 
 // NewDecodeContext returns a ProcessContext for decoding from given buffer s.
@@ -262,7 +262,7 @@ func encodeSingleByte(ctx *ProcessContext, di *DataIndexer, accessor Accessor, j
 	i := ctx.i
 
 	// Number of bits to shift right to obtain byte from accessor.
-	rshift := int(j%8) * 8
+	rshift := int(j/8) * 8
 	b := accessor.XXXGetByte(di, rshift)
 
 	shift := (j % 8) - (i % 8)
