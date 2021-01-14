@@ -2,6 +2,7 @@
 Renderer for Go.
 """
 
+from abc import abstractmethod
 from typing import List, Optional
 
 from bitproto._ast import (Alias, Array, Bool, Byte, Enum, Int, Integer,
@@ -332,14 +333,14 @@ class BlockMessageMethodXXXProcessor(BlockBindMessage[F], BlockWrapper[F]):
         self.push("}")
 
 
-class BlockMessageMethodXXXSetByteItem(BlockBindMessageField[F]):
+class BlockMessageMethodXXXGetSetByteItemBase(BlockBindMessageField[F]):
     def __init__(
         self, d: MessageField, name: Optional[str] = None, indent: int = 0,
     ) -> None:
         super().__init__(d, name, indent)
         self.array_depth: int = 0
 
-    def format_left(self) -> str:
+    def format_data_ref(self) -> str:
         array_indexing = "".join(f"[di.I({i})]" for i in range(self.array_depth))
         return f"m.{self.message_field_name}" + array_indexing
 
@@ -347,31 +348,9 @@ class BlockMessageMethodXXXSetByteItem(BlockBindMessageField[F]):
         field_number = self.formatter.format_int_value(self.d.number)
         self.push(f"case {field_number}:")
 
+    @abstractmethod
     def render_single(self, single: SingleType, alias: Optional[Alias] = None) -> None:
-        field_number = self.formatter.format_int_value(self.d.number)
-        left = self.format_left()
-        assign = "|="
-
-        type_name = self.formatter.format_type(single)
-        if alias:
-            type_name = self.formatter.format_type(alias)
-
-        value = f"{type_name}(b)"
-        shift = "<< lshift"
-
-        if isinstance(single, Bool):
-            assign = "="
-            shift = ""
-            value = "bp.Byte2bool(b)"
-            if alias:
-                value = f"{type_name}(bp.Byte2bool(b))"
-
-        self.push(f"case {field_number}:")
-
-        if shift:
-            self.push(f"{left} {assign} ({value} {shift})", indent=self.indent + 1)
-        else:
-            self.push(f"{left} {assign} {value}", indent=self.indent + 1)
+        raise NotImplementedError
 
     def render_array(self, array: Array) -> None:
         try:
@@ -397,6 +376,35 @@ class BlockMessageMethodXXXSetByteItem(BlockBindMessageField[F]):
             return self.render_array(self.d.type)
         if isinstance(self.d.type, Alias):
             return self.render_alias(self.d.type)
+
+
+class BlockMessageMethodXXXSetByteItem(BlockMessageMethodXXXGetSetByteItemBase):
+    @override(BlockMessageMethodXXXGetSetByteItemBase)
+    def render_single(self, single: SingleType, alias: Optional[Alias] = None) -> None:
+        field_number = self.formatter.format_int_value(self.d.number)
+        left = self.format_data_ref()
+        assign = "|="
+
+        type_name = self.formatter.format_type(single)
+        if alias:
+            type_name = self.formatter.format_type(alias)
+
+        value = f"{type_name}(b)"
+        shift = "<< lshift"
+
+        if isinstance(single, Bool):
+            assign = "="
+            shift = ""
+            value = "bp.Byte2bool(b)"
+            if alias:
+                value = f"{type_name}({value})"
+
+        self.push(f"case {field_number}:")
+
+        if shift:
+            self.push(f"{left} {assign} ({value} {shift})", indent=self.indent + 1)
+        else:
+            self.push(f"{left} {assign} {value}", indent=self.indent + 1)
 
 
 class BlockMessageMethodXXXSetByteItemDefault(Block[F]):
@@ -439,6 +447,68 @@ class BlockMessageMethodXXXSetByte(BlockBindMessage[F], BlockWrapper[F]):
         self.push("}")
 
 
+class BlockMessageMethodXXXGetByteItem(BlockMessageMethodXXXGetSetByteItemBase):
+    @override(BlockMessageMethodXXXGetSetByteItemBase)
+    def render_single(self, single: SingleType, alias: Optional[Alias] = None) -> None:
+        field_number = self.formatter.format_int_value(self.d.number)
+        data = self.format_data_ref()
+        shift = ">> lshift"
+
+        type_name = self.formatter.format_type(single)
+        if alias:
+            type_name = self.formatter.format_type(alias)
+
+        value = f"{type_name}({data} {shift})"
+
+        if isinstance(single, Bool):
+            value = "bp.Byte2bool(b)"
+            if alias:
+                value = f"{type_name}({value})"
+
+        self.push(f"case {field_number}:")
+        self.push(f"return {value}", indent=self.indent + 1)
+
+
+class BlockMessageMethodXXXGetByteItemDefault(Block[F]):
+    @override(Block)
+    def render(self) -> None:
+        self.push("default:")
+        self.push("return byte(0)", indent=self.indent + 1)
+
+
+class BlockMessageMethodXXXGetByteItemList(BlockBindMessage[F], BlockComposition[F]):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block[F]]:
+        b: List[Block[F]] = [
+            BlockMessageMethodXXXGetByteItem(field, indent=self.indent)
+            for field in self.d.sorted_fields()
+        ]
+        b.append(BlockMessageMethodXXXGetByteItemDefault(indent=self.indent))
+        return b
+
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n"
+
+
+class BlockMessageMethodXXXGetByte(BlockBindMessage[F], BlockWrapper[F]):
+    @override(BlockWrapper)
+    def wraps(self) -> Block[F]:
+        return BlockMessageMethodXXXGetByteItemList(self.d, indent=self.indent + 2)
+
+    @override(BlockWrapper)
+    def before(self) -> None:
+        self.push(
+            f"func (m *{self.message_name}) XXXGetByte(di *bp.DataIndexer, rshift int) byte {{"
+        )
+        self.push("switch di.F() {", indent=self.indent + 1)
+
+    @override(BlockWrapper)
+    def after(self) -> None:
+        self.push("}", indent=self.indent + 1)
+        self.push("}")
+
+
 class BlockMessageMethodString(BlockBindMessage[F]):
     @override(Block)
     def render(self) -> None:
@@ -461,6 +531,7 @@ class BlockMessage(BlockBindMessage[F], BlockComposition[F]):
             BlockMessageMethodString(self.d),
             BlockMessageMethodXXXProcessor(self.d),
             BlockMessageMethodXXXSetByte(self.d),
+            BlockMessageMethodXXXGetByte(self.d),
         ]
 
 
