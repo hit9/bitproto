@@ -451,19 +451,16 @@ class BlockMessageMethodXXXGetByteItem(BlockMessageMethodXXXGetSetByteItemBase):
     @override(BlockMessageMethodXXXGetSetByteItemBase)
     def render_single(self, single: SingleType, alias: Optional[Alias] = None) -> None:
         field_number = self.formatter.format_int_value(self.d.number)
+        shift = ">> rshift"
+
         data = self.format_data_ref()
-        shift = ">> lshift"
-
-        type_name = self.formatter.format_type(single)
-        if alias:
-            type_name = self.formatter.format_type(alias)
-
-        value = f"{type_name}({data} {shift})"
 
         if isinstance(single, Bool):
-            value = "bp.Byte2bool(b)"
+            value = f"bp.Bool2Byte({data}) {shift}"
             if alias:
-                value = f"{type_name}({value})"
+                value = f"bp.Bool2byte(bool({data})) {shift}"
+        else:
+            value = f"byte({data} {shift})"
 
         self.push(f"case {field_number}:")
         self.push(f"return {value}", indent=self.indent + 1)
