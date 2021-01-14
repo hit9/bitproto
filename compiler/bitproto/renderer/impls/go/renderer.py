@@ -58,9 +58,9 @@ class BlockImportChildProtoList(BlockComposition[F]):
 class BlockAliasMethodBase(BlockBindAlias[F]):
     @cached_property
     def method_receiver(self) -> str:
-        if isinstance(self.d.type, SingleType):
-            return f"{self.alias_name}"
-        return f"*{self.alias_name}"
+        if isinstance(self.d.type, Message):
+            return f"*{self.alias_name}"
+        return f"{self.alias_name}"
 
 
 class BlockAliasMethodXXXProcessor(BlockAliasMethodBase):
@@ -205,10 +205,12 @@ class BlockEnumMethodString(BlockBindEnum[F], BlockWrapper[F]):
     @override(BlockWrapper)
     def before(self) -> None:
         self.push_comment("String returns the name of this enum item.")
-        self.push(f"func (v {self.enum_name}) String() string {{")
+        self.push(f"func (v {self.enum_name}) String() string {{",)
+        self.push("switch v {", indent=1)
 
     @override(BlockWrapper)
     def after(self) -> None:
+        self.push("}", indent=1)
         self.push("}")
 
 
@@ -456,7 +458,7 @@ class BlockMessageMethodXXXGetByteItem(BlockMessageMethodXXXGetSetByteItemBase):
         data = self.format_data_ref()
 
         if isinstance(single, Bool):
-            value = f"bp.Bool2Byte({data}) {shift}"
+            value = f"bp.Bool2byte({data}) {shift}"
             if alias:
                 value = f"bp.Bool2byte(bool({data})) {shift}"
         else:
