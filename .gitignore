@@ -5,3 +5,7 @@ parser.out
 *.egg-info
 build
 dist
+*.gch
+.ccls-cache
+*.gch
+*.out

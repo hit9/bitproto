@@ -9,8 +9,8 @@ from bitproto.renderer.block import (Block, BlockAheadNotice, BlockBindAlias,
                                      BlockBindConstant, BlockBindEnum,
                                      BlockBindEnumField, BlockBindMessage,
                                      BlockBindMessageField, BlockBindProto,
-                                     BlockComposition, BlockConditional,
-                                     BlockDeferable, BlockWrapper)
+                                     BlockComposition, BlockDeferable,
+                                     BlockWrapper)
 from bitproto.renderer.impls.c.formatter import CFormatter as F
 from bitproto.renderer.renderer import Renderer
 from bitproto.utils import (cached_property, cast_or_raise, override,
@@ -44,8 +44,8 @@ class BlockIncludeGeneralHeaders(Block[F]):
     def render(self) -> None:
         self.push("#include <inttypes.h>")
         self.push("#include <stdbool.h>")
+        self.push("#include <stddef.h>")
         self.push("#include <stdint.h>")
-        self.push("#include <stdio.h>")
 
 
 class BlockExternCPlusPlus(BlockDeferable[F]):

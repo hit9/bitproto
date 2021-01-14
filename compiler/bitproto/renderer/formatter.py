@@ -12,10 +12,11 @@ from typing import Callable, Dict, List, Optional, Tuple
 from typing import Type as T
 from typing import TypeVar, Union, cast
 
-from bitproto._ast import (Alias, Array, Bool, BooleanConstant, Byte, Constant,
-                           Definition, Enum, EnumField, Int, Integer,
-                           IntegerConstant, Message, Node, Proto, Scope,
-                           StringConstant, Type, Uint, Value)
+from bitproto._ast import (Alias, Array, Bool, BooleanConstant, BoundScope,
+                           Byte, Constant, Definition, Enum, EnumField, Int,
+                           Integer, IntegerConstant, Message, MessageField,
+                           Node, Proto, Scope, SingleType, StringConstant,
+                           Type, Uint, Value)
 from bitproto.errors import InternalError
 from bitproto.utils import (final, keep_case, overridable, pascal_case,
                             snake_case, upper_case)
@@ -237,11 +238,10 @@ class Formatter:
             return self.format_int_value(value)
 
     @overridable
-    def nbits_from_integer_type(self, t: Integer) -> int:
+    def get_nbits_of_integer(self, t: Integer) -> int:
         """Get number of bits to occupy for an given integer type in a language.
         Special language may override this default implementation.
         """
-        # TODO: FIXME: func naming
         nbytes = t.nbytes()
         if nbytes == 1:
             return 8
@@ -253,48 +253,51 @@ class Formatter:
             return 64
         return nbytes * 8
 
-    @final
-    def _format_definition_name(self, d: Definition) -> str:
-        """Formats the declaration name for given definition in target language.
-        Target languages may disallow nested declarations (such as structs, enums,
-        constants, typedefs).
-        Example output format: "Scope1_Scope2_{definition_name}".
-        """
-        if len(d.scope_stack) == 0:
-            return d.name  # Current bitproto.
-
+    def _get_definition_name(self, d: Definition) -> str:
+        """Get definition name, name defined in its scope or its original name."""
+        if len(d.scope_stack) <= 0:
+            return d.name
         scope = d.scope_stack[-1]
-        definition_name = scope.get_name_by_member(d) or d.name
+        return scope.get_name_by_member(d) or d.name
+
+    def _format_definition_name_inner_proto(self, d: Definition) -> str:
+        """Formats the declaration name for given definition in target language inner a
+        proto. Target languages may disallow nested declarations (such as structs, enums,
+        constants, typedefs), so we join the names of the definition's parent namespace
+        scopes with underscore. Example output format: "Scope1_Scope2_{definition_name}".
+        """
+        definition_name = self._get_definition_name(d)
 
         classes_ = self.scopes_with_namespace()
         namespaces = [scope for scope in d.scope_stack if isinstance(scope, classes_)]
 
-        if len(namespaces) == 0:
-            return definition_name  # Actually couldn't happen.
-        if len(namespaces) == 1 and isinstance(namespaces[0], Proto):
-            return definition_name
+        if len(namespaces) <= 1:
+            return definition_name  # Global definition.
 
-        namespace = namespaces[-1]
+        items: List[str] = [definition_name]
 
-        if isinstance(namespace, Proto):  # Cross proto
-            if not self.support_import_as_member():
-                return definition_name
-            items = [self._format_definition_name(namespace), definition_name]
-            return self.delimer_cross_proto().join(items)
-        else:
-            items = [self._format_definition_name(namespace), definition_name]
-            return self.delimer_inner_proto().join(items)
+        for namespace in namespaces[::-1]:  # Assuming its bound at last.
+            if isinstance(namespace, BoundScope):
+                items.insert(0, self._get_definition_name(namespace))
+            elif isinstance(namespace, Proto):
+                break
+        return self.delimer_inner_proto().join(items)
 
-    @final
-    def format_definition_name(
+    def format_definition_name_inner_proto(
         self, d: Definition, class_: Optional[T[Definition]] = None
     ) -> str:
-        """The _format_definition_name with case converting."""
+        """`_format_definition_name_inner_proto` with case style converting."""
         class_ = class_ or d.__class__
+        name = self._format_definition_name_inner_proto(d)
+        return self.format_case_style(name, class_)
 
+    @final
+    def format_case_style(self, s: str, class_: T[Definition]) -> str:
+        """Format given string s by case converting of class_, using the
+        case_style_mapping.
+        """
         mapping = self.case_style_mapping()
         v = mapping.get(class_, "keep")
-        s = self._format_definition_name(d)
 
         if isinstance(v, str):
             case_style_name = cast(str, v)
@@ -313,6 +316,26 @@ class Formatter:
             return converter(s)
         else:
             raise InternalError(f"invalid case_style mapping value {v}")
+
+    @final
+    def format_definition_name(
+        self, d: Definition, class_: Optional[T[Definition]] = None
+    ) -> str:
+        """Formats the declaration name for given definition in target language.
+        Joins a with a dot delimer if given definition is a definition imported.
+        """
+        definition_name = self.format_definition_name_inner_proto(d, class_)
+        protos = [scope for scope in d.scope_stack if isinstance(scope, Proto)]
+
+        if len(protos) <= 1:
+            return definition_name
+
+        if not self.support_import_as_member():
+            return definition_name
+
+        proto = protos[-1]  # Last is the imported parent.
+        items = [self._get_definition_name(proto), definition_name]
+        return self.delimer_cross_proto().join(items)
 
     @final
     def format_enum_name(self, t: Enum) -> str:
@@ -343,6 +366,11 @@ class Formatter:
         """Formats the declaration name of given enum field,
         with nested-declaration concern."""
         return self.format_definition_name(f)
+
+    @final
+    def format_message_field_name(self, f: MessageField) -> str:
+        """Formats the declaration name of given message field."""
+        return self.format_case_style(f.name, MessageField)
 
     @final
     def format_type(self, t: Type, name: Optional[str] = None) -> str:
