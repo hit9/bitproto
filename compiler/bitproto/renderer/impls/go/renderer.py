@@ -4,14 +4,18 @@ Renderer for Go.
 
 from typing import List
 
+from bitproto._ast import SingleType
 from bitproto.renderer.block import (Block, BlockAheadNotice, BlockBindAlias,
                                      BlockBindConstant, BlockBindEnum,
                                      BlockBindEnumField, BlockBindMessage,
                                      BlockBindMessageField, BlockBindProto,
-                                     BlockComposition, BlockWrapper)
+                                     BlockComposition, BlockEmptyLine,
+                                     BlockWrapper)
 from bitproto.renderer.impls.go.formatter import GoFormatter as F
 from bitproto.renderer.renderer import Renderer
 from bitproto.utils import cached_property, override, snake_case, upper_case
+
+GO_LIB_IMPORT_PATH = "github.com/hit9/bitproto/lib/go"
 
 
 class BlockPackageName(BlockBindProto[F]):
@@ -25,7 +29,7 @@ class BlockGeneralImports(Block):
     @override(Block)
     def render(self) -> None:
         self.push(f'import "strconv"')
-        self.push(f'import "encoding/json"')
+        self.push(f'import bp "{GO_LIB_IMPORT_PATH}"')
 
 
 class BlockImportChildProto(BlockBindProto[F]):
@@ -47,46 +51,72 @@ class BlockImportChildProtoList(BlockComposition[F]):
         return "\n"
 
 
-class BlockGeneralFunctionBool2Byte(Block[F]):
-    @override(Block[F])
-    def render(self) -> None:
-        self.push("func bool2byte(b bool) byte {")
-        self.push("if b {", indent=1)
-        self.push("return 1", indent=2)
-        self.push("}", indent=1)
-        self.push("return 0", indent=1)
-        self.push("}")
+class BlockAliasMethodBase(BlockBindAlias[F]):
+    @cached_property
+    def method_receiver(self) -> str:
+        if isinstance(self.d.type, SingleType):
+            return f"{self.alias_name}"
+        return f"*{self.alias_name}"
 
 
-class BlockGeneralFunctionByte2Bool(Block[F]):
+class BlockAliasMethodFlag(BlockAliasMethodBase):
     @override(Block)
     def render(self) -> None:
-        self.push("func byte2bool(b byte) bool {")
-        self.push("if b > 0 {", indent=1)
-        self.push("return true", indent=2)
-        self.push("}", indent=1)
-        self.push("return false", indent=1)
-        self.push("}")
+        self.push(f"func (m {self.method_receiver}) Flag() bp.TypeFlag {{")
+        self.push_string("return bp.TypeAlias", separator=" ")
+        self.push_string("}")
 
 
-class BlockGeneralGlobalFunctions(BlockComposition[F]):
+class BlockAliasMethodNbits(BlockAliasMethodBase):
+    @override(Block)
+    def render(self) -> None:
+        nbits = self.formatter.format_int_value(self.d.nbits())
+        self.push(f"func (m {self.method_receiver}) Nbits() int {{")
+        self.push_string(f"return {nbits}")
+        self.push_string("}")
+
+
+class BlockAliasMethodTo(BlockAliasMethodBase):
+    @override(Block)
+    def render(self) -> None:
+        to = self.formatter.format_bp_type(self.d.type)
+        self.push(f"func (m {self.method_receiver}) To() bp.Type {{")
+        self.push_string(f"return {to}")
+        self.push_string("}")
+
+
+class BlockAliasMethodList(BlockBindAlias[F], BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
         return [
-            BlockGeneralFunctionBool2Byte(),
-            BlockGeneralFunctionByte2Bool(),
+            BlockAliasMethodFlag(self.d),
+            BlockAliasMethodNbits(self.d),
+            BlockAliasMethodTo(self.d),
+        ]
+
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n"
+
+
+class BlockAliasDef(BlockBindAlias[F]):
+    @override(Block)
+    def render(self) -> None:
+        self.push_definition_comments()
+        self.push(f"type {self.alias_name} {self.aliased_type}")
+
+
+class BlockAlias(BlockBindAlias[F], BlockComposition[F]):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block[F]]:
+        return [
+            BlockAliasDef(self.d),
+            BlockAliasMethodList(self.d),
         ]
 
     @override(BlockComposition)
     def separator(self) -> str:
         return "\n\n"
-
-
-class BlockAlias(BlockBindAlias[F]):
-    @override(Block)
-    def render(self) -> None:
-        self.push_definition_comments()
-        self.push(f"type {self.alias_name} {self.aliased_type}")
 
 
 class BlockAliasList(BlockComposition[F]):
@@ -182,7 +212,33 @@ class BlockEnumStringFunctionCaseList(BlockBindEnum[F], BlockComposition[F]):
         return "\n"
 
 
-class BlockEnumStringFunction(BlockBindEnum[F], BlockWrapper[F]):
+class BlockEnumMethodFlag(BlockBindEnum[F]):
+    @override(Block)
+    def render(self) -> None:
+        self.push(f"func (m {self.enum_name}) Flag() bp.TypeFlag {{")
+        self.push_string("return bp.TypeEnum", separator=" ")
+        self.push_string("}")
+
+
+class BlockEnumMethodNbits(BlockBindEnum[F]):
+    @override(Block)
+    def render(self) -> None:
+        nbits = self.formatter.format_int_value(self.d.nbits())
+        self.push(f"func (m {self.enum_name}) Nbits() int {{")
+        self.push_string(f"return {nbits}")
+        self.push_string("}")
+
+
+class BlockEnumMethodUint(BlockBindEnum[F]):
+    @override(Block)
+    def render(self) -> None:
+        uint = self.formatter.format_bp_uint(self.d.type)
+        self.push(f"func (m {self.enum_name}) Uint() *bp.Uint {{")
+        self.push_string(f"return {uint}")
+        self.push_string("}")
+
+
+class BlockEnumMethodString(BlockBindEnum[F], BlockWrapper[F]):
     @override(BlockWrapper)
     def wraps(self) -> Block:
         return BlockEnumStringFunctionCaseList(self.d, indent=1)
@@ -197,13 +253,29 @@ class BlockEnumStringFunction(BlockBindEnum[F], BlockWrapper[F]):
         self.push("}")
 
 
+class BlockEnumMethodList(BlockBindEnum[F], BlockComposition[F]):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block[F]]:
+        return [
+            BlockEnumMethodFlag(self.d),
+            BlockEnumMethodNbits(self.d),
+            BlockEnumMethodUint(self.d),
+            BlockEmptyLine(),
+            BlockEnumMethodString(self.d),
+        ]
+
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n"
+
+
 class BlockEnum(BlockBindEnum[F], BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
         return [
             BlockEnumType(self.d),
             BlockEnumFieldList(self.d),
-            BlockEnumStringFunction(self.d),
+            BlockEnumMethodList(self.d),
         ]
 
     @override(BlockComposition)
@@ -316,7 +388,6 @@ class BlockList(BlockComposition[F]):
             BlockPackageName(self.bound),
             BlockGeneralImports(),
             BlockImportChildProtoList(),
-            BlockGeneralGlobalFunctions(),
             BlockAliasList(),
             BlockConstantList(),
             BlockEnumList(),

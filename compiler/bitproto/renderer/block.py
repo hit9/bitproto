@@ -487,3 +487,17 @@ class BlockConditional(Block[F]):
         if self.condition():
             block = self.block()
             self._render_from_block(block)
+
+
+#############
+# Block that render simple empty lines.
+#############
+
+
+class BlockEmptyLine(Block[F]):
+    """Block that renders simple empty line."""
+
+    @final
+    @override(Block)
+    def render(self) -> None:
+        self.push_empty_line()
