@@ -25,52 +25,7 @@ class BlockGeneralImports(Block[F]):
     def render(self) -> None:
         self.push("from dataclasses import dataclass, field")
         self.push("from typing import ClassVar, Dict, List")
-
-
-class BlockGeneralFunctionInt8(Block[F]):
-    @override(Block)
-    def render(self) -> None:
-        self.push("def int8(i: int) -> int:")
-        self.push("return i if i < 128 else i - 256", indent=4)
-
-
-class BlockGeneralFunctionInt16(Block[F]):
-    @override(Block)
-    def render(self) -> None:
-        self.push("def int16(i: int) -> int:")
-        self.push("return i if i < 32768 else i - 65536", indent=4)
-
-
-class BlockGeneralFunctionInt32(Block[F]):
-    @override(Block)
-    def render(self) -> None:
-        self.push("def int32(i: int) -> int:")
-        self.push("return i if i < 2147483648 else i - 4294967296", indent=4)
-
-
-class BlockGeneralFunctionInt64(Block[F]):
-    @override(Block)
-    def render(self) -> None:
-        self.push("def int64(i: int) -> int:")
-        self.push(
-            "return i if i < 9223372036854775808 else i - 18446744073709551616",
-            indent=4,
-        )
-
-
-class BlockGeneralGlobalFunctions(BlockComposition[F]):
-    @override(BlockComposition)
-    def separator(self) -> str:
-        return "\n\n\n"
-
-    @override(BlockComposition)
-    def blocks(self) -> List[Block]:
-        return [
-            BlockGeneralFunctionInt8(),
-            BlockGeneralFunctionInt16(),
-            BlockGeneralFunctionInt32(),
-            BlockGeneralFunctionInt64(),
-        ]
+        self.push("import bitproto_lib as bp")
 
 
 class BlockImportChildProto(BlockBindProto[F]):
@@ -341,7 +296,6 @@ class BlockList(BlockComposition[F]):
     def blocks(self) -> List[Block[F]]:
         return [
             BlockHeadList(),
-            BlockGeneralGlobalFunctions(),
             BlockAliasList(),
             BlockConstantList(),
             BlockEnumList(),

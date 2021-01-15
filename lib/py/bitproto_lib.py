@@ -1,5 +1,5 @@
 """
-bitproto.lib
+bitproto_lib
 ~~~~~~~~~~~~~
 
 Encoding support for generated python files.
