@@ -3,6 +3,8 @@ bitprotolib.bp
 ~~~~~~~~~~~~~~
 
 Encoding support for generated python files.
+
+Keep it simple:  No magic.
 """
 
 from abc import abstractmethod
