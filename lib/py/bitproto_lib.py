@@ -224,7 +224,7 @@ class Array(Processor):
 @dataclass
 class EnumProcessor(Processor):
     """Enum implements Processor for enum type.
-    Assuming compiler generates a global function xxx_{enum_name}_processor.
+    Assuming compiler generates a global function xxx_processor_{enum_name}.
 
     :param extensible: Indicates whether this enum is extensible.
     :param ut: The uint type of this enum.
@@ -244,7 +244,7 @@ class EnumProcessor(Processor):
 @dataclass
 class AliasProcessor(Processor):
     """Alias implements Processor for alias type.
-    AssertionError compiler generates a global function xxx_{alias_name}_processor.
+    AssertionError compiler generates a global function xxx_processor_{alias_name}.
 
     :param to: The processor of the type it alias to.
     """
