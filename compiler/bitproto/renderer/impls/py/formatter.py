@@ -202,17 +202,23 @@ class PyFormatter(Formatter):
         et = self.format_processor(t.element_type)
         return f"bp.Array({extensible}, {capacity}, {et})"
 
-    def format_processor_enum(self, t: Enum) -> str:
-        processor_name = self.format_name_related_to_definition(
+    def format_processor_name_enum(self, t: Enum) -> str:
+        return self.format_name_related_to_definition(
             t, "xxx_processor_{definition_name}"
         )
-        return f"({processor_name}()"
+
+    def format_processor_enum(self, t: Enum) -> str:
+        processor_name = self.format_processor_name_enum(t)
+        return f"{processor_name}()"
+
+    def format_processor_name_alias(self, t: Alias) -> str:
+        return self.format_name_related_to_definition(
+            t, "xxx_processor_{definition_name}"
+        )
 
     def format_processor_alias(self, t: Alias) -> str:
-        processor_name = self.format_name_related_to_definition(
-            t, "xxx_processor_{definition_name}"
-        )
-        return f"({processor_name}()"
+        processor_name = self.format_processor_name_alias(t)
+        return f"{processor_name}()"
 
     def format_processor_message(self, t: Message) -> str:
         message_name = self.format_message_name(t)

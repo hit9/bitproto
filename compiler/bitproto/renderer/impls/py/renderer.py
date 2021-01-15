@@ -61,6 +61,15 @@ class BlockImportList(BlockComposition[F]):
         return "\n\n"
 
 
+class BlockAliasMethodXXXProcessor(BlockBindAlias[F]):
+    @override(Block)
+    def render(self) -> None:
+        processor_name = self.formatter.format_processor_name_alias(self.d)
+        to = self.formatter.format_processor(self.d.type)
+        self.push(f"def {processor_name}() -> bp.Processor:")
+        self.push(f"return bp.AliasProcessor({to})", indent=4)
+
+
 class BlockAlias(BlockBindAlias[F]):
     @override(Block)
     def render(self) -> None:
@@ -79,6 +88,19 @@ class BlockAliasList(BlockComposition):
     @override(BlockComposition)
     def separator(self) -> str:
         return "\n"
+
+
+class BlockAliasMethodXXXProcessorList(BlockComposition):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block]:
+        return [
+            BlockAliasMethodXXXProcessor(alias, name=name)
+            for name, alias in self.bound.aliases(recursive=True, bound=self.bound)
+        ]
+
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n\n"
 
 
 class BlockConstant(BlockBindConstant[F]):
@@ -169,12 +191,23 @@ class BlockEnumValueToNameMap(BlockBindEnum[F], BlockWrapper[F]):
         self.push("}")
 
 
+class BlockEnumMethodXXXProcessor(BlockBindEnum[F]):
+    @override(Block)
+    def render(self) -> None:
+        processor_name = self.formatter.format_processor_name_enum(self.d)
+        ut = self.formatter.format_processor_uint(self.d.type)
+        extensible = self.formatter.format_bool_value(self.d.extensible)
+        self.push(f"def {processor_name}() -> bp.Processor:")
+        self.push(f"return bp.EnumProcessor({extensible}, {ut})", indent=4)
+
+
 class BlockEnum(BlockBindEnum[F], BlockComposition[F]):
     @override(BlockComposition[F])
     def blocks(self) -> List[Block]:
         return [
             BlockEnumFieldListWrapper(self.d),
             BlockEnumValueToNameMap(self.d),
+            BlockEnumMethodXXXProcessor(self.d),
         ]
 
 
@@ -297,6 +330,7 @@ class BlockList(BlockComposition[F]):
         return [
             BlockHeadList(),
             BlockAliasList(),
+            BlockAliasMethodXXXProcessorList(),
             BlockConstantList(),
             BlockEnumList(),
             BlockMessageList(),
