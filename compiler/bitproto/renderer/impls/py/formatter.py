@@ -162,3 +162,58 @@ class PyFormatter(Formatter):
         else:
             alias_type = self.format_alias_type(t)
             return self.format_dataclass_field_default(alias_type)
+
+    def format_processor(self, t: Type) -> str:
+        if isinstance(t, Bool):
+            return self.format_processor_bool()
+        elif isinstance(t, Int):
+            return self.format_processor_int(t)
+        elif isinstance(t, Uint):
+            return self.format_processor_uint(t)
+        elif isinstance(t, Byte):
+            return self.format_processor_byte()
+        elif isinstance(t, Array):
+            return self.format_processor_array(t)
+        elif isinstance(t, Enum):
+            return self.format_processor_enum(t)
+        elif isinstance(t, Alias):
+            return self.format_processor_alias(t)
+        elif isinstance(t, Message):
+            return self.format_processor_message(t)
+        raise InternalError("format_bp_type got unexpected t")
+
+    def format_processor_bool(self) -> str:
+        return "bp.Bool()"
+
+    def format_processor_int(self, t: Int) -> str:
+        nbits = self.format_int_value(t.nbits())
+        return f"bp.Int({nbits})"
+
+    def format_processor_uint(self, t: Uint) -> str:
+        nbits = self.format_int_value(t.nbits())
+        return f"bp.Uint({nbits})"
+
+    def format_processor_byte(self) -> str:
+        return f"bp.Byte()"
+
+    def format_processor_array(self, t: Array) -> str:
+        extensible = self.format_bool_value(t.extensible)
+        capacity = self.format_int_value(t.cap)
+        et = self.format_processor(t.element_type)
+        return f"bp.Array({extensible}, {capacity}, {et})"
+
+    def format_processor_enum(self, t: Enum) -> str:
+        processor_name = self.format_name_related_to_definition(
+            t, "xxx_processor_{definition_name}"
+        )
+        return f"({processor_name}()"
+
+    def format_processor_alias(self, t: Alias) -> str:
+        processor_name = self.format_name_related_to_definition(
+            t, "xxx_processor_{definition_name}"
+        )
+        return f"({processor_name}()"
+
+    def format_processor_message(self, t: Message) -> str:
+        message_name = self.format_message_name(t)
+        return f"{message_name}().xxx_processor()"
