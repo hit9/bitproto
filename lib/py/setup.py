@@ -1,13 +1,14 @@
 from setuptools import setup  # type: ignore
 
 setup(
-    name="bitproto_lib",
+    name="bitprotolib",
     version="0.1.0",
     url="https://github.com/hit9/bitproto",
     author="Chao Wang",
     author_email="hit9@icloud.com",
     description="bitproto encoding and decoding library for generated python files.",
-    py_modules=["bitproto_lib"],
+    packages=["bitprotolib"],
+    include_package_data=True,
     python_requires=">=3.7",
     zip_safe=False,
     platforms="any",
