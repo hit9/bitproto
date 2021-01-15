@@ -444,7 +444,8 @@ class BlockWrapper(Block[F]):
     def render(self) -> None:
         self.before()
         block = self.wraps()
-        self._render_from_block(block)
+        if block:
+            self._render_from_block(block)
         self.after()
 
     @abstractmethod

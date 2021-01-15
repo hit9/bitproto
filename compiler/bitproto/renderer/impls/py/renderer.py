@@ -25,7 +25,7 @@ class BlockGeneralImports(Block[F]):
     def render(self) -> None:
         self.push("from dataclasses import dataclass, field")
         self.push("from typing import ClassVar, Dict, List")
-        self.push("import bitproto_lib as bp")
+        self.push("from bitprotolib import bp")
 
 
 class BlockImportChildProto(BlockBindProto[F]):
@@ -287,14 +287,59 @@ class BlockMessageClass(BlockMessageBase, BlockWrapper[F]):
     @override(BlockWrapper)
     def before(self) -> None:
         self.push("@dataclass")
-        self.push(f"class {self.message_name}:")
+        self.push(f"class {self.message_name}(bp.Accessor):")
         self.push_definition_docstring(indent=4)
+
+
+class BlockMessageMethodXXXProcessorFieldItem(BlockBindMessageField[F]):
+    @override(Block)
+    def render(self) -> None:
+        type_processor = self.formatter.format_processor(self.d.type)
+        field_number = self.formatter.format_int_value(self.d.number)
+        self.push(f"bp.MessageFieldProcessor({field_number}, {type_processor}),")
+
+
+class BlockMessageMethodXXXProcessorFieldList(BlockMessageBase, BlockComposition[F]):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block[F]]:
+        return [
+            BlockMessageMethodXXXProcessorFieldItem(d, indent=self.indent)
+            for d in self.d.sorted_fields()
+        ]
+
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n"
+
+
+class BlockMessageMethodXXXProcessor(BlockMessageBase, BlockWrapper[F]):
+    @override(BlockWrapper)
+    def wraps(self) -> Block[F]:
+        return BlockMessageMethodXXXProcessorFieldList(self.d, indent=self.indent + 8)
+
+    @override(BlockWrapper)
+    def before(self) -> None:
+        self.push("def xxx_processor(self) -> bp.Processor:")
+        self.push("field_processors: List[bp.Processor] = [", indent=self.indent + 4)
+
+    @override(BlockWrapper)
+    def after(self) -> None:
+        if self.d.nfields() == 0:
+            self.push_string("]", separator="")
+        else:
+            self.push("]", indent=self.indent + 4)
+        self.push(
+            "return bp.MessageProcessor(field_processors)", indent=self.indent + 4
+        )
 
 
 class BlockMessage(BlockMessageBase, BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
-        return [BlockMessageClass(self.d)]
+        return [
+            BlockMessageClass(self.d),
+            BlockMessageMethodXXXProcessor(self.d, indent=4),
+        ]
 
 
 class BlockMessageList(BlockComposition[F]):
