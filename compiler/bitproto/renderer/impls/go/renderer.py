@@ -328,7 +328,10 @@ class BlockMessageMethodXXXProcessor(BlockBindMessage[F], BlockWrapper[F]):
 
     @override(BlockWrapper)
     def after(self) -> None:
-        self.push("}", indent=self.indent + 1)
+        if self.d.nfields() == 0:
+            self.push_string("}", separator="")
+        else:
+            self.push("}", indent=self.indent + 1)
         self.push(
             "return bp.NewMessageProcessor(fieldDescriptors)", indent=self.indent + 1
         )
