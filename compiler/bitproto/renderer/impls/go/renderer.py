@@ -404,7 +404,7 @@ class BlockMessageMethodXXXSetByteItem(BlockMessageMethodXXXGetSetByteItemBase):
             if alias:
                 value = f"{type_name}({value})"
 
-        self.push(f"case {field_number}:")
+        self.render_case()
 
         if shift:
             self.push(f"{left} {assign} ({value} {shift})", indent=self.indent + 1)
@@ -467,7 +467,7 @@ class BlockMessageMethodXXXGetByteItem(BlockMessageMethodXXXGetSetByteItemBase):
         else:
             value = f"byte({data} {shift})"
 
-        self.push(f"case {field_number}:")
+        self.render_case()
         self.push(f"return {value}", indent=self.indent + 1)
 
 

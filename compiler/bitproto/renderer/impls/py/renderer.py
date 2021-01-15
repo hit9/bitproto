@@ -1,9 +1,11 @@
 """
 Renderer for Python.
 """
-from typing import List
+from abc import abstractmethod
+from typing import List, Optional
 
-from bitproto._ast import MessageField
+from bitproto._ast import (Alias, Array, Bool, Int, Integer, MessageField,
+                           SingleType)
 from bitproto.renderer.block import (Block, BlockAheadNotice, BlockBindAlias,
                                      BlockBindConstant, BlockBindEnum,
                                      BlockBindEnumField, BlockBindMessage,
@@ -333,13 +335,120 @@ class BlockMessageMethodXXXProcessor(BlockMessageBase, BlockWrapper[F]):
         )
 
 
+class BlockMessageMethodXXXGetSetByteItemBase(BlockBindMessageField[F]):
+    def __init__(
+        self, d: MessageField, name: Optional[str] = None, indent: int = 0,
+    ) -> None:
+        super().__init__(d, name, indent)
+        self.array_depth: int = 0
+
+    def format_data_ref(self) -> str:
+        array_indexing = "".join(f"[di.i({i})]" for i in range(self.array_depth))
+        return f"self.{self.message_field_name}" + array_indexing
+
+    def render_case(self) -> None:
+        field_number = self.formatter.format_int_value(self.d.number)
+        self.push(f"if di.field_number == {field_number}:")
+
+    @abstractmethod
+    def render_single(self, single: SingleType) -> None:
+        raise NotImplementedError
+
+    def render_array(self, array: Array) -> None:
+        try:
+            self.array_depth += 1
+            if isinstance(array.element_type, SingleType):
+                return self.render_single(array.element_type)
+            if isinstance(array.element_type, Alias):
+                return self.render_alias(array.element_type)
+        finally:
+            self.array_depth -= 1
+
+    def render_alias(self, alias: Alias) -> None:
+        if isinstance(alias.type, SingleType):
+            return self.render_single(alias.type)
+        if isinstance(alias.type, Array):
+            return self.render_array(alias.type)
+
+    @override(Block)
+    def render(self) -> None:
+        if isinstance(self.d.type, SingleType):
+            return self.render_single(self.d.type)
+        if isinstance(self.d.type, Array):
+            return self.render_array(self.d.type)
+        if isinstance(self.d.type, Alias):
+            return self.render_alias(self.d.type)
+
+
+class BlockMessageMethodXXXSetByteItem(BlockMessageMethodXXXGetSetByteItemBase):
+    @override(BlockMessageMethodXXXGetSetByteItemBase)
+    def render_single(self, single: SingleType) -> None:
+        field_number = self.formatter.format_int_value(self.d.number)
+        left = self.format_data_ref()
+        assign = "|="
+        type_name = self.formatter.format_type(single)
+        shift = "<< lshift"
+        caster = ""
+
+        if isinstance(single, Bool):
+            assign = "="
+            type_name = "bool"
+            shift = ""
+        if isinstance(single, Int):
+            # Cast to signed-int if overflows
+            # Python dosen't have a type for int8, int16..
+            caster = "bp.int{}".format(self.formatter.get_nbits_of_integer(single))
+
+        right = value = f"{type_name}(b)"
+
+        if shift:
+            right = f"({value} {shift})"
+
+        self.render_case()
+
+        if caster:
+            self.push(f"{left} {assign} {caster}({right})", indent=self.indent + 4)
+        else:
+            self.push(f"{left} {assign} {right}", indent=self.indent + 4)
+
+
+class BlockMessageMethodXXXSetByteItemList(BlockMessageBase, BlockComposition[F]):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block[F]]:
+        return [
+            BlockMessageMethodXXXSetByteItem(field, indent=self.indent)
+            for field in self.d.sorted_fields()
+        ]
+
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n"
+
+
+class BlockMessageMethodXXXSetByte(BlockBindMessage[F], BlockWrapper[F]):
+    @override(BlockWrapper)
+    def wraps(self) -> Block[F]:
+        return BlockMessageMethodXXXSetByteItemList(self.d, indent=self.indent + 4)
+
+    @override(BlockWrapper)
+    def before(self) -> None:
+        self.push(
+            f"def xxx_set_byte(self, di: bp.DataIndexer, lshift: int, b: bp.byte):"
+        )
+
+
 class BlockMessage(BlockMessageBase, BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
         return [
             BlockMessageClass(self.d),
             BlockMessageMethodXXXProcessor(self.d, indent=4),
+            BlockMessageMethodXXXSetByte(self.d, indent=4),
         ]
+
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n\n"
 
 
 class BlockMessageList(BlockComposition[F]):
