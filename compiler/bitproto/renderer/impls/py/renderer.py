@@ -411,13 +411,21 @@ class BlockMessageMethodXXXSetByteItem(BlockMessageMethodXXXGetSetByteItemBase):
             self.push(f"{left} {assign} {right}", indent=self.indent + 4)
 
 
+class BlockMessageMethodXXXSetByteItemDefault(Block[F]):
+    @override(Block)
+    def render(self) -> None:
+        self.push(f"return")
+
+
 class BlockMessageMethodXXXSetByteItemList(BlockMessageBase, BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
-        return [
+        b: List[Block[F]] = [
             BlockMessageMethodXXXSetByteItem(field, indent=self.indent)
             for field in self.d.sorted_fields()
         ]
+        b.append(BlockMessageMethodXXXSetByteItemDefault(indent=self.indent))
+        return b
 
     @override(BlockComposition)
     def separator(self) -> str:
