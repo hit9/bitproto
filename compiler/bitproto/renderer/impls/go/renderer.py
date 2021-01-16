@@ -455,7 +455,6 @@ class BlockMessageMethodXXXSetByte(BlockBindMessage[F], BlockWrapper[F]):
 class BlockMessageMethodXXXGetByteItem(BlockMessageMethodXXXGetSetByteItemBase):
     @override(BlockMessageMethodXXXGetSetByteItemBase)
     def render_single(self, single: SingleType, alias: Optional[Alias] = None) -> None:
-        field_number = self.formatter.format_int_value(self.d.number)
         shift = ">> rshift"
 
         data = self.format_data_ref()

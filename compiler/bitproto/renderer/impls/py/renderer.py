@@ -383,7 +383,6 @@ class BlockMessageMethodXXXGetSetByteItemBase(BlockBindMessageField[F]):
 class BlockMessageMethodXXXSetByteItem(BlockMessageMethodXXXGetSetByteItemBase):
     @override(BlockMessageMethodXXXGetSetByteItemBase)
     def render_single(self, single: SingleType) -> None:
-        field_number = self.formatter.format_int_value(self.d.number)
         left = self.format_data_ref()
         assign = "|="
         type_name = self.formatter.format_type(single)
@@ -433,7 +432,53 @@ class BlockMessageMethodXXXSetByte(BlockBindMessage[F], BlockWrapper[F]):
     @override(BlockWrapper)
     def before(self) -> None:
         self.push(
-            f"def xxx_set_byte(self, di: bp.DataIndexer, lshift: int, b: bp.byte):"
+            f"def xxx_set_byte(self, di: bp.DataIndexer, lshift: int, b: bp.byte) -> None:"
+        )
+
+
+class BlockMessageMethodXXXGetByteItem(BlockMessageMethodXXXGetSetByteItemBase):
+    @override(BlockMessageMethodXXXGetSetByteItemBase)
+    def render_single(self, single: SingleType) -> None:
+        shift = ">> rshift"
+        value = data = self.format_data_ref()
+
+        if isinstance(single, Bool):
+            value = f"int({data})"
+
+        self.render_case()
+        self.push(f"return ({value} {shift}) & 255", indent=self.indent + 4)
+
+
+class BlockMessageMethodXXXGetByteItemDefault(Block[F]):
+    @override(Block)
+    def render(self) -> None:
+        self.push(f"return bp.byte(0)")
+
+
+class BlockMessageMethodXXXGetByteItemList(BlockMessageBase, BlockComposition[F]):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block[F]]:
+        b: List[Block[F]] = [
+            BlockMessageMethodXXXGetByteItem(field, indent=self.indent)
+            for field in self.d.sorted_fields()
+        ]
+        b.append(BlockMessageMethodXXXGetByteItemDefault(indent=self.indent))
+        return b
+
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n"
+
+
+class BlockMessageMethodXXXGetByte(BlockMessageBase, BlockWrapper[F]):
+    @override(BlockWrapper)
+    def wraps(self) -> Block[F]:
+        return BlockMessageMethodXXXGetByteItemList(self.d, indent=self.indent + 4)
+
+    @override(BlockWrapper)
+    def before(self) -> None:
+        self.push(
+            f"def xxx_get_byte(self, di: bp.DataIndexer, rshift: int) -> bp.byte:"
         )
 
 
@@ -444,6 +489,7 @@ class BlockMessage(BlockMessageBase, BlockComposition[F]):
             BlockMessageClass(self.d),
             BlockMessageMethodXXXProcessor(self.d, indent=4),
             BlockMessageMethodXXXSetByte(self.d, indent=4),
+            BlockMessageMethodXXXGetByte(self.d, indent=4),
         ]
 
     @override(BlockComposition)
