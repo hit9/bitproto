@@ -72,6 +72,16 @@ class BlockAliasMethodXXXProcessor(BlockBindAlias[F]):
         self.push(f"return bp.AliasProcessor({to})", indent=4)
 
 
+class BlockAliasMethodXXXDefaultFactory(BlockBindAlias[F]):
+    @override(Block)
+    def render(self) -> None:
+        factory_name = self.formatter.formart_default_factory_alias(self.d)
+        alias_type = self.formatter.format_alias_type(self.d)
+        default_value = self.formatter.format_default_value(self.d.type)
+        self.push(f"def {factory_name}() -> {alias_type}:")
+        self.push(f"return {default_value}", indent=4)
+
+
 class BlockAlias(BlockBindAlias[F]):
     @override(Block)
     def render(self) -> None:
@@ -97,6 +107,19 @@ class BlockAliasMethodXXXProcessorList(BlockComposition):
     def blocks(self) -> List[Block]:
         return [
             BlockAliasMethodXXXProcessor(alias, name=name)
+            for name, alias in self.bound.aliases(recursive=True, bound=self.bound)
+        ]
+
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n\n"
+
+
+class BlockAliasMethodXXXDefaultFactoryList(BlockComposition):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block]:
+        return [
+            BlockAliasMethodXXXDefaultFactory(alias, name=name)
             for name, alias in self.bound.aliases(recursive=True, bound=self.bound)
         ]
 
@@ -410,6 +433,8 @@ class BlockMessageMethodXXXSetByteItem(BlockMessageMethodXXXGetSetByteItemBase):
         else:
             self.push(f"{left} {assign} {right}", indent=self.indent + 4)
 
+        self.push("return", indent=self.indent + 4)
+
 
 class BlockMessageMethodXXXSetByteItemDefault(Block[F]):
     @override(Block)
@@ -651,6 +676,7 @@ class BlockList(BlockComposition[F]):
             BlockHeadList(),
             BlockAliasList(),
             BlockAliasMethodXXXProcessorList(),
+            BlockAliasMethodXXXDefaultFactoryList(),
             BlockConstantList(),
             BlockEnumList(),
             BlockMessageList(),

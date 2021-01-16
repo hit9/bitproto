@@ -103,65 +103,102 @@ class PyFormatter(Formatter):
         enum_name = self.format_enum_name(enum)
         return upper_case("_{0}_VALUE_TO_NAME_MAP".format(enum_name))
 
+    def format_default_value_bool(self) -> str:
+        return "False"
+
+    def format_default_value_byte(self) -> str:
+        return "bp.byte(0)"
+
+    def format_default_value_uint(self) -> str:
+        return "0"
+
+    def format_default_value_int(self) -> str:
+        return "0"
+
+    def format_default_value_message(self, t: Message) -> str:
+        factory = self.formart_default_factory_message(t)
+        return f"{factory}()"
+
+    def format_default_value_enum(self, t: Enum) -> str:
+        return "0"
+
+    def format_default_value_array(self, t: Array) -> str:
+        cap = self.format_int_value(t.cap)
+        if isinstance(t.element_type, Byte):
+            return f"bytearray({cap})"
+        element_default_value = self.format_default_value(t.element_type)
+        return f"[{element_default_value} for _ in range({cap})]"
+
+    def format_default_value_alias(self, t: Alias) -> str:
+        factory = self.formart_default_factory_alias(t)
+        return f"{factory}()"
+
+    @final
+    def format_default_value(self, t: Type) -> str:
+        if isinstance(t, Bool):
+            return self.format_default_value_bool()
+        elif isinstance(t, Byte):
+            return self.format_default_value_byte()
+        elif isinstance(t, Uint):
+            return self.format_default_value_uint()
+        elif isinstance(t, Int):
+            return self.format_default_value_int()
+        elif isinstance(t, Array):
+            return self.format_default_value_array(t)
+        elif isinstance(t, Enum):
+            return self.format_default_value_enum(t)
+        elif isinstance(t, Message):
+            return self.format_default_value_message(t)
+        elif isinstance(t, Alias):
+            return self.format_default_value_alias(t)
+        raise InternalError(f"format_default_value got unexpected type {t}")
+
+    def format_field_with_default_factory(self, default_factory: str) -> str:
+        return f"field(default_factory={default_factory})"
+
+    def formart_default_factory_alias(self, t: Alias) -> str:
+        return self.format_name_related_to_definition(
+            t, "xxx_default_factory_{definition_name}"
+        )
+
+    def format_field_default_alias(self, t: Alias) -> str:
+        factory = self.formart_default_factory_alias(t)
+        return self.format_field_with_default_factory(factory)
+
+    def formart_default_factory_message(self, t: Message) -> str:
+        return self.format_message_type(t)
+
+    def format_field_default_message(self, t: Message) -> str:
+        factory = self.formart_default_factory_message(t)
+        return self.format_field_with_default_factory(factory)
+
+    def formart_default_factory_array(self, t: Array) -> str:
+        value = self.format_default_value_array(t)
+        return f"lambda: {value}"
+
+    def format_field_default_array(self, t: Array) -> str:
+        factory = self.formart_default_factory_array(t)
+        return self.format_field_with_default_factory(factory)
+
     @final
     def format_field_default_value(self, t: Type) -> str:
         if isinstance(t, Bool):
-            return self.format_field_default_value_bool()
+            return self.format_default_value_bool()
         elif isinstance(t, Byte):
-            return self.format_field_default_value_byte()
+            return self.format_default_value_byte()
         elif isinstance(t, Uint):
-            return self.format_field_default_value_uint()
+            return self.format_default_value_uint()
         elif isinstance(t, Int):
-            return self.format_field_default_value_int()
+            return self.format_default_value_int()
         elif isinstance(t, Array):
-            return self.format_field_default_value_array(t)
+            return self.format_field_default_array(t)
         elif isinstance(t, Enum):
-            return self.format_field_default_value_enum(t)
+            return self.format_default_value_enum(t)
         elif isinstance(t, Message):
-            return self.format_field_default_value_message(t)
+            return self.format_field_default_message(t)
         elif isinstance(t, Alias):
-            return self.format_field_default_value_alias(t)
-        raise InternalError(f"got unexpected type {t}")
-
-    def format_dataclass_field_default(self, default_factory: str = "") -> str:
-        return f"field(default_factory={default_factory})"
-
-    def format_field_default_value_bool(self) -> str:
-        return "False"
-
-    def format_field_default_value_byte(self) -> str:
-        return '""'
-
-    def format_field_default_value_uint(self) -> str:
-        return "0"
-
-    def format_field_default_value_int(self) -> str:
-        return "0"
-
-    def format_field_default_value_array(self, t: Array) -> str:
-        if isinstance(t.element_type, Byte):
-            return self.format_dataclass_field_default(f"lambda: bytearray({t.cap})")
-        return self.format_dataclass_field_default("list")
-
-    def format_field_default_value_enum(self, t: Enum) -> str:
-        return "0"
-
-    def format_field_default_value_message(self, t: Message) -> str:
-        message_type = self.format_message_type(t)
-        return self.format_dataclass_field_default(message_type)
-
-    def format_field_default_value_alias(self, t: Alias) -> str:
-        if isinstance(t.type, Bool):
-            return self.format_field_default_value_bool()
-        elif isinstance(t.type, Uint):
-            return self.format_field_default_value_uint()
-        elif isinstance(t.type, Int):
-            return self.format_field_default_value_int()
-        elif isinstance(t.type, Array):
-            return self.format_field_default_value_array(t.type)
-        else:
-            alias_type = self.format_alias_type(t)
-            return self.format_dataclass_field_default(alias_type)
+            return self.format_field_default_alias(t)
+        raise InternalError(f"format_field_default_value got unexpected type {t}")
 
     def format_processor(self, t: Type) -> str:
         if isinstance(t, Bool):
