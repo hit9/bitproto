@@ -338,6 +338,27 @@ class Formatter:
         return self.delimer_cross_proto().join(items)
 
     @final
+    def format_name_related_to_definition(
+        self, d: Definition, fmt: str, class_: Optional[T[Definition]] = None
+    ) -> str:
+        """Format a name related to given definition d from given formatter fmt.
+        Example fmt: 'XXX{definition_name}'.
+        Output format: {proto}.XXX{definition_name}
+        """
+        definition_name = self.format_definition_name_inner_proto(d, class_)
+        formatted_name = fmt.format(definition_name=definition_name)
+        protos = [scope for scope in d.scope_stack if isinstance(scope, Proto)]
+        if len(protos) <= 1:
+            return formatted_name
+
+        if not self.support_import_as_member():
+            return formatted_name
+
+        proto = protos[-1]  # Last is the imported parent.
+        items = [self._get_definition_name(proto), formatted_name]
+        return self.delimer_cross_proto().join(items)
+
+    @final
     def format_enum_name(self, t: Enum) -> str:
         """Formats the declaration name of given enum,
         with nested-declaration concern."""

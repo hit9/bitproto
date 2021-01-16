@@ -2,7 +2,7 @@
 
 // Package bitproto is the encoding library for bitproto in Go language.
 //
-// Implementation Note:
+// Keep it simple:
 //	* Pure golang.
 //	* No reflection.
 //	* No type assertion.

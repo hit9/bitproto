@@ -328,7 +328,10 @@ class BlockMessageMethodXXXProcessor(BlockBindMessage[F], BlockWrapper[F]):
 
     @override(BlockWrapper)
     def after(self) -> None:
-        self.push("}", indent=self.indent + 1)
+        if self.d.nfields() == 0:
+            self.push_string("}", separator="")
+        else:
+            self.push("}", indent=self.indent + 1)
         self.push(
             "return bp.NewMessageProcessor(fieldDescriptors)", indent=self.indent + 1
         )
@@ -401,7 +404,7 @@ class BlockMessageMethodXXXSetByteItem(BlockMessageMethodXXXGetSetByteItemBase):
             if alias:
                 value = f"{type_name}({value})"
 
-        self.push(f"case {field_number}:")
+        self.render_case()
 
         if shift:
             self.push(f"{left} {assign} ({value} {shift})", indent=self.indent + 1)
@@ -452,7 +455,6 @@ class BlockMessageMethodXXXSetByte(BlockBindMessage[F], BlockWrapper[F]):
 class BlockMessageMethodXXXGetByteItem(BlockMessageMethodXXXGetSetByteItemBase):
     @override(BlockMessageMethodXXXGetSetByteItemBase)
     def render_single(self, single: SingleType, alias: Optional[Alias] = None) -> None:
-        field_number = self.formatter.format_int_value(self.d.number)
         shift = ">> rshift"
 
         data = self.format_data_ref()
@@ -464,7 +466,7 @@ class BlockMessageMethodXXXGetByteItem(BlockMessageMethodXXXGetSetByteItemBase):
         else:
             value = f"byte({data} {shift})"
 
-        self.push(f"case {field_number}:")
+        self.render_case()
         self.push(f"return {value}", indent=self.indent + 1)
 
 

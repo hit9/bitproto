@@ -31,7 +31,7 @@ from bitproto._ast import (Alias, Comment, Constant, D, Definition, Enum,
 from bitproto.errors import InternalError
 from bitproto.renderer.formatter import F, Formatter
 from bitproto.utils import (cached_property, final, overridable, override,
-                            upper_case)
+                            snake_case, upper_case)
 
 #############
 # Block base
@@ -353,7 +353,7 @@ class BlockBindMessage(BlockBindDefinition[F, Message]):
     @cached_property
     def message_size_constant_name(self) -> str:
         """Return the formatted name of the message size constant."""
-        return f"BYTES_LENGTH_" + upper_case(self.message_name)
+        return f"BYTES_LENGTH_" + upper_case(snake_case(self.message_name))
 
 
 class BlockBindMessageField(BlockBindDefinition[F, MessageField]):
@@ -444,7 +444,8 @@ class BlockWrapper(Block[F]):
     def render(self) -> None:
         self.before()
         block = self.wraps()
-        self._render_from_block(block)
+        if block:
+            self._render_from_block(block)
         self.after()
 
     @abstractmethod

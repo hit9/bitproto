@@ -1,0 +1,9 @@
+include setup.py bitprotolib/py.typed
+recursive-include bitprotolib *.py
+recursive-exclude venv *
+recursive-exclude dist *
+recursive-exclude build *
+recursive-exclude *.egg-info *
+recursive-exclude .git *
+recursive-exclude .mypy_cache *
+recursive-exclude __pycache__ *
