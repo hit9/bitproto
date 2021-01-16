@@ -234,6 +234,31 @@ class MessageSizeOverflows(GrammarError):
 
 
 @dataclass
+class AliasInMessageUnsupported(GrammarError):
+    """Unsupported to declare alias type inside message."""
+
+
+@dataclass
+class ConstInMessageUnsupported(GrammarError):
+    """Unsupported to declare constant inside message."""
+
+
+@dataclass
+class ImportInMessageUnsupported(GrammarError):
+    """Unsupported to import proto inside message."""
+
+
+@dataclass
+class UnsupportedToDeclareProtoNameOutofProtoScope(GrammarError):
+    """Cannot declare proto name out of global scope."""
+
+
+@dataclass
+class StatementInMessageUnsupported(GrammarError):
+    """Unsupported statement inside message."""
+
+
+@dataclass
 class LintWarning(_TokenBound, Warning):
     """Some warning occurred during bitproto linting."""
 

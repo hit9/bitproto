@@ -22,11 +22,16 @@ from bitproto._ast import (Alias, Array, BooleanConstant, Comment, Constant,
                            Definition, Enum, EnumField, IntegerConstant,
                            Message, MessageField, Option, Proto, Scope,
                            StringConstant, Type)
-from bitproto.errors import (CalculationExpressionError, CyclicImport,
-                             GrammarError, InternalError, InvalidArrayCap,
+from bitproto.errors import (AliasInMessageUnsupported,
+                             CalculationExpressionError,
+                             ConstInMessageUnsupported, CyclicImport,
+                             GrammarError, ImportInMessageUnsupported,
+                             InternalError, InvalidArrayCap,
                              ReferencedConstantNotDefined,
                              ReferencedNotConstant, ReferencedNotType,
-                             ReferencedTypeNotDefined)
+                             ReferencedTypeNotDefined,
+                             StatementInMessageUnsupported,
+                             UnsupportedToDeclareProtoNameOutofProtoScope)
 from bitproto.lexer import Lexer
 
 
@@ -211,9 +216,15 @@ class Parser:
 
     def p_proto(self, p: P) -> None:
         """proto : PROTO IDENTIFIER optional_semicolon"""
-        proto = cast(Proto, self.current_scope())
-        proto.set_name(p[2])
-        proto.set_comment_block(self.collect_comment_block())
+        scope = self.current_scope()
+        if isinstance(scope, Proto):
+            proto = cast(Proto, self.current_scope())
+            proto.set_name(p[2])
+            proto.set_comment_block(self.collect_comment_block())
+        else:
+            raise UnsupportedToDeclareProtoNameOutofProtoScope(
+                lineno=p.lineno(1), filepath=self.current_filepath()
+            )
 
     def p_comment(self, p: P) -> None:
         """comment : COMMENT NEWLINE"""
@@ -264,7 +275,7 @@ class Parser:
                 lineno=p.lineno(2),
             )
         # Parse.
-        child = self.parse_child(filepath)
+        p[0] = child = self.parse_child(filepath)
         name = child.name
         if len(p) == 5:  # Importing as `name`
             name = p[2]
@@ -274,7 +285,7 @@ class Parser:
     def p_option(self, p: P) -> None:
         """option : OPTION dotted_identifier '=' option_value optional_semicolon"""
         name, value = p[2], p[4]
-        option = Option.from_value(
+        p[0] = option = Option.from_value(
             value=value,
             name=name,
             scope_stack=self.current_scope_stack(),
@@ -296,7 +307,7 @@ class Parser:
     def p_alias(self, p: P) -> None:
         """alias : TYPE IDENTIFIER '=' type optional_semicolon"""
         name, type = p[2], p[4]
-        alias = Alias(
+        p[0] = alias = Alias(
             name=name,
             type=type,
             filepath=self.current_filepath(),
@@ -321,7 +332,7 @@ class Parser:
             # Unwrap if value is a referenced constant.
             value = constant_.unwrap()
 
-        constant = Constant.from_value(
+        p[0] = constant = Constant.from_value(
             value=value,
             name=name,
             scope_stack=self.current_scope_stack(),
@@ -599,16 +610,32 @@ class Parser:
                         | enum
                         | message_field
                         | message
+                        | message_item_unsupported
                         | comment
                         | newline"""
         p[0] = p[1]
+
+    def p_message_item_unsupported(self, p: P) -> None:
+        """message_item_unsupported : alias
+                                    | const
+                                    | proto
+                                    | import"""
+        if isinstance(p[1], Alias):
+            raise AliasInMessageUnsupported.from_token(token=p[1])
+        if isinstance(p[1], Constant):
+            raise ConstInMessageUnsupported.from_token(token=p[1])
+        if isinstance(p[1], Proto):
+            raise ImportInMessageUnsupported.from_token(token=p[0])
+        raise StatementInMessageUnsupported(
+            lineno=p.lineno(1), filepath=self.current_filepath()
+        )
 
     def p_message_field(self, p: P) -> None:
         """message_field : type IDENTIFIER '=' INT_LITERAL optional_semicolon"""
         name = p[2]
         type = p[1]
         field_number = p[4]
-        message_field = MessageField(
+        p[0] = message_field = MessageField(
             name=name,
             type=type,
             number=field_number,
