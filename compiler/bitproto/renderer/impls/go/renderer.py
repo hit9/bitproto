@@ -474,7 +474,7 @@ class BlockMessageMethodXXXGetByteItemDefault(Block[F]):
     @override(Block)
     def render(self) -> None:
         self.push("default:")
-        self.push("return byte(0)", indent=self.indent + 1)
+        self.push("return byte(0) // Won't reached", indent=self.indent + 1)
 
 
 class BlockMessageMethodXXXGetByteItemList(BlockBindMessage[F], BlockComposition[F]):
@@ -558,7 +558,7 @@ class BlockMessageMethodXXXGetAccessorItemDefault(Block[F]):
     @override(Block)
     def render(self) -> None:
         self.push("default:")
-        self.push("return nil", indent=self.indent + 1)
+        self.push("return nil  // Won't reached", indent=self.indent + 1)
 
 
 class BlockMessageMethodXXXGetAccessorList(BlockBindMessage[F], BlockComposition[F]):

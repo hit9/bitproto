@@ -48,10 +48,6 @@ class Error(Exception):
     """Error occurred during bitproto encoding or decoding."""
 
 
-class UnexpectedFieldNumber(Error):
-    """Unxpected field number is reached."""
-
-
 class NotEnoughBytes(Error):
     """Given bytearray is not enough to process."""
 
@@ -143,6 +139,17 @@ class Accessor:
         only if target data is a message.
         """
         raise NotImplementedError
+
+
+class NilAccessor(Accessor):
+    def xxx_set_byte(self, di: DataIndexer, lshift: int, b: byte) -> None:
+        pass
+
+    def xxx_get_byte(self, di: DataIndexer, lshift: int) -> byte:
+        return byte(0)
+
+    def xxx_get_accessor(self, di: DataIndexer) -> "Accessor":
+        return self
 
 
 class Processor:

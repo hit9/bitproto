@@ -433,13 +433,11 @@ class BlockMessageMethodXXXSetByteItem(BlockMessageMethodXXXGetSetByteItemBase):
         else:
             self.push(f"{left} {assign} {right}", indent=self.indent + 4)
 
-        self.push("return", indent=self.indent + 4)
-
 
 class BlockMessageMethodXXXSetByteItemDefault(Block[F]):
     @override(Block)
     def render(self) -> None:
-        self.push(f"raise bp.UnexpectedFieldNumber()")
+        self.push(f"return")
 
 
 class BlockMessageMethodXXXSetByteItemList(BlockMessageBase, BlockComposition[F]):
@@ -485,7 +483,7 @@ class BlockMessageMethodXXXGetByteItem(BlockMessageMethodXXXGetSetByteItemBase):
 class BlockMessageMethodXXXGetByteItemDefault(Block[F]):
     @override(Block)
     def render(self) -> None:
-        self.push(f"raise bp.UnexpectedFieldNumber()")
+        self.push(f"return bp.byte(0)  # Won't reached")
 
 
 class BlockMessageMethodXXXGetByteItemList(BlockMessageBase, BlockComposition[F]):
@@ -562,7 +560,7 @@ class BlockMessageMethodXXXGetAccessorItem(BlockBindMessageField[F]):
 class BlockMessageMethodXXXGetAccessorItemDefault(Block[F]):
     @override(Block)
     def render(self) -> None:
-        self.push(f"raise bp.UnexpectedFieldNumber()")
+        self.push(f"return bp.NilAccessor() # Won't reached")
 
 
 class BlockMessageMethodXXXGetAccessorList(BlockBindMessage[F], BlockComposition[F]):
