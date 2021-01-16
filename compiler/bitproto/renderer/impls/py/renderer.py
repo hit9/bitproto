@@ -565,6 +565,40 @@ class BlockMessageMethodXXXGetAccessor(BlockMessageBase, BlockWrapper[F]):
         self.push(f"def xxx_get_accessor(self, di: bp.DataIndexer) -> bp.Accessor:")
 
 
+class BlockMessageMethodEncode(BlockMessageBase):
+    @override(Block)
+    def render(self) -> None:
+        self.push(f"def encode(self) -> bytearray:")
+        self.push_docstring("Encode this object to bytearray.", indent=self.indent + 4)
+        self.push(f"s = bytearray(self.BYTES_LENGTH)", indent=self.indent + 4)
+        self.push(f"ctx = bp.ProcessContext(True, s)", indent=self.indent + 4)
+        self.push(
+            f"self.xxx_processor().process(ctx, bp.NIL_DATA_INDEXER, self)",
+            indent=self.indent + 4,
+        )
+        self.push(f"return ctx.s", indent=self.indent + 4)
+
+
+class BlockMessageMethodDecode(BlockMessageBase):
+    @override(Block)
+    def render(self) -> None:
+        self.push(f"def decode(self, s: bytearray) -> None:")
+        self.push_docstring(
+            "Decode given bytearray s to this object.",
+            ":param s: A bytearray with length at least `BYTES_LENGTH`.",
+            indent=self.indent + 4,
+        )
+        self.push(
+            f"assert len(s) >= self.BYTES_LENGTH, bp.NotEnoughBytes()",
+            indent=self.indent + 4,
+        )
+        self.push(f"ctx = bp.ProcessContext(False, s)", indent=self.indent + 4)
+        self.push(
+            f"self.xxx_processor().process(ctx, bp.NIL_DATA_INDEXER, self)",
+            indent=self.indent + 4,
+        )
+
+
 class BlockMessage(BlockMessageBase, BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
@@ -574,6 +608,8 @@ class BlockMessage(BlockMessageBase, BlockComposition[F]):
             BlockMessageMethodXXXSetByte(self.d, indent=4),
             BlockMessageMethodXXXGetByte(self.d, indent=4),
             BlockMessageMethodXXXGetAccessor(self.d, indent=4),
+            BlockMessageMethodEncode(self.d, indent=4),
+            BlockMessageMethodDecode(self.d, indent=4),
         ]
 
     @override(BlockComposition)

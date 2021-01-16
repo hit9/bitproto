@@ -52,6 +52,10 @@ class UnexpectedFieldNumber(Error):
     """Unxpected field number is reached."""
 
 
+class NotEnoughBytes(Error):
+    """Given bytearray is not enough to process."""
+
+
 @dataclass
 class ProcessContext:
     """ProcessContext is the context across all processor functions in a encoding or
