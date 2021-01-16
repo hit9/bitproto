@@ -4,8 +4,8 @@ Renderer for Python.
 from abc import abstractmethod
 from typing import List, Optional
 
-from bitproto._ast import (Alias, Array, Bool, Int, Integer, MessageField,
-                           SingleType)
+from bitproto._ast import (Alias, Array, Bool, Int, Integer, Message,
+                           MessageField, SingleType)
 from bitproto.renderer.block import (Block, BlockAheadNotice, BlockBindAlias,
                                      BlockBindConstant, BlockBindEnum,
                                      BlockBindEnumField, BlockBindMessage,
@@ -414,7 +414,7 @@ class BlockMessageMethodXXXSetByteItem(BlockMessageMethodXXXGetSetByteItemBase):
 class BlockMessageMethodXXXSetByteItemDefault(Block[F]):
     @override(Block)
     def render(self) -> None:
-        self.push(f"return")
+        self.push(f"raise bp.UnexpectedFieldNumber()")
 
 
 class BlockMessageMethodXXXSetByteItemList(BlockMessageBase, BlockComposition[F]):
@@ -460,7 +460,7 @@ class BlockMessageMethodXXXGetByteItem(BlockMessageMethodXXXGetSetByteItemBase):
 class BlockMessageMethodXXXGetByteItemDefault(Block[F]):
     @override(Block)
     def render(self) -> None:
-        self.push(f"return bp.byte(0)")
+        self.push(f"raise bp.UnexpectedFieldNumber()")
 
 
 class BlockMessageMethodXXXGetByteItemList(BlockMessageBase, BlockComposition[F]):
@@ -490,6 +490,81 @@ class BlockMessageMethodXXXGetByte(BlockMessageBase, BlockWrapper[F]):
         )
 
 
+class BlockMessageMethodXXXGetAccessorItem(BlockBindMessageField[F]):
+    def __init__(
+        self, d: MessageField, name: Optional[str] = None, indent: int = 0,
+    ) -> None:
+        super().__init__(d, name, indent)
+        self.array_depth: int = 0
+
+    def format_data_ref(self) -> str:
+        array_indexing = "".join(f"[di.i({i})]" for i in range(self.array_depth))
+        return f"self.{self.message_field_name}" + array_indexing
+
+    def render_case(self) -> None:
+        field_number = self.formatter.format_int_value(self.d.number)
+        self.push(f"if di.field_number == {field_number}:")
+
+    def render_array(self, array: Array) -> None:
+        try:
+            self.array_depth += 1
+            if isinstance(array.element_type, Message):
+                return self.render_message(array.element_type)
+            if isinstance(array.element_type, Alias):
+                return self.render_alias(array.element_type)
+        finally:
+            self.array_depth -= 1
+
+    def render_alias(self, alias: Alias) -> None:
+        if isinstance(alias.type, Array):
+            return self.render_array(alias.type)
+
+    def render_message(self, message: Message) -> None:
+        self.render_case()
+        data = self.format_data_ref()
+        self.push(f"return {data}", indent=self.indent + 4)
+
+    @override(Block)
+    def render(self) -> None:
+        if isinstance(self.d.type, Message):
+            return self.render_message(self.d.type)
+        if isinstance(self.d.type, Array):
+            return self.render_array(self.d.type)
+        if isinstance(self.d.type, Alias):
+            return self.render_alias(self.d.type)
+
+
+class BlockMessageMethodXXXGetAccessorItemDefault(Block[F]):
+    @override(Block)
+    def render(self) -> None:
+        self.push(f"raise bp.UnexpectedFieldNumber()")
+
+
+class BlockMessageMethodXXXGetAccessorList(BlockBindMessage[F], BlockComposition[F]):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block[F]]:
+        b: List[Block[F]] = [
+            BlockMessageMethodXXXGetAccessorItem(field, indent=self.indent)
+            for field in self.d.sorted_fields()
+        ]
+        b.append(BlockMessageMethodXXXGetAccessorItemDefault(indent=self.indent))
+        return b
+
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n"
+
+
+class BlockMessageMethodXXXGetAccessor(BlockMessageBase, BlockWrapper[F]):
+    @override(BlockWrapper)
+    def wraps(self) -> Block[F]:
+        return BlockMessageMethodXXXGetAccessorList(self.d, indent=self.indent + 4)
+
+    @override(BlockWrapper)
+    def before(self) -> None:
+        self.push(f"def xxx_get_accessor(self, di: bp.DataIndexer) -> bp.Accessor:")
+
+
 class BlockMessage(BlockMessageBase, BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
@@ -498,6 +573,7 @@ class BlockMessage(BlockMessageBase, BlockComposition[F]):
             BlockMessageMethodXXXProcessor(self.d, indent=4),
             BlockMessageMethodXXXSetByte(self.d, indent=4),
             BlockMessageMethodXXXGetByte(self.d, indent=4),
+            BlockMessageMethodXXXGetAccessor(self.d, indent=4),
         ]
 
     @override(BlockComposition)

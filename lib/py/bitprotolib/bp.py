@@ -44,6 +44,14 @@ def int64(i: int) -> int:
     return i if i < 9223372036854775808 else i - 18446744073709551616
 
 
+class Error(Exception):
+    """Error occurred during bitproto encoding or decoding."""
+
+
+class UnexpectedFieldNumber(Error):
+    """Unxpected field number is reached."""
+
+
 @dataclass
 class ProcessContext:
     """ProcessContext is the context across all processor functions in a encoding or
