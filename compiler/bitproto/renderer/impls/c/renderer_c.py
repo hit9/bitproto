@@ -2,9 +2,10 @@
 Renderer for C file.
 """
 
-from typing import List
+from typing import List, Optional
 
-from bitproto._ast import Array, Definition
+from bitproto._ast import (Alias, Array, BoundDefinition, Definition, Enum,
+                           Message)
 from bitproto.renderer.block import (Block, BlockAheadNotice, BlockBindAlias,
                                      BlockBindEnum, BlockBindMessage,
                                      BlockBindMessageField, BlockComposition,
@@ -102,19 +103,6 @@ class BlockAliasProcessor_(BlockBindAlias[F], BlockComposition[F]):
         return "\n\n"
 
 
-class BlockAliasProcessorList(BlockComposition[F]):
-    @override(BlockComposition)
-    def blocks(self) -> List[Block[F]]:
-        return [
-            BlockAliasProcessor_(d)
-            for _, d in self.bound.aliases(recursive=True, bound=self.bound)
-        ]
-
-    @override(BlockComposition)
-    def separator(self) -> str:
-        return "\n\n\n"
-
-
 class BlockEnumProcessorBody(BlockBindEnum[F]):
     @override(Block)
     def render(self) -> None:
@@ -137,19 +125,6 @@ class BlockEnumProcessor(BlockBindEnum[F], BlockWrapper[F]):
     @override(BlockWrapper)
     def after(self) -> None:
         self.push("}")
-
-
-class BlockEnumProcessorList(BlockComposition[F]):
-    @override(BlockComposition)
-    def blocks(self) -> List[Block[F]]:
-        return [
-            BlockEnumProcessor(d)
-            for _, d in self.bound.enums(recursive=True, bound=self.bound)
-        ]
-
-    @override(BlockComposition)
-    def separator(self) -> str:
-        return "\n\n\n"
 
 
 class BlockArrayProcessorForMessageField(BlockBindMessageField[F], BlockConditional[F]):
@@ -263,17 +238,26 @@ class BlockMessageFunctions(BlockBindMessage[F], BlockComposition[F]):
         ]
 
 
-class BlockMessageFunctionsList(BlockComposition[F]):
-    @override(BlockComposition)
+class BlockBoundDefinitionList(BlockComposition[F]):
+    @override(BlockComposition[F])
     def blocks(self) -> List[Block[F]]:
-        return [
-            BlockMessageFunctions(d)
-            for _, d in self.bound.messages(recursive=True, bound=self.bound)
-        ]
+        b: List[Block[F]] = []
+        for _, d in self.bound.filter(
+            BoundDefinition, recursive=True, bound=self.bound
+        ):
+            block = self.dispatch(d)
+            if block:
+                b.append(block)
+        return b
 
-    @override(BlockComposition)
-    def separator(self) -> str:
-        return "\n\n\n"
+    def dispatch(self, d: BoundDefinition) -> Optional[Block[F]]:
+        if isinstance(d, Alias):
+            return BlockAliasProcessor_(d)
+        if isinstance(d, Enum):
+            return BlockEnumProcessor(d)
+        if isinstance(d, Message):
+            return BlockMessageFunctions(d)
+        return None
 
 
 class BlockList(BlockComposition[F]):
@@ -282,9 +266,7 @@ class BlockList(BlockComposition[F]):
         return [
             BlockAheadNotice(),
             BlockInclude(),
-            BlockEnumProcessorList(),
-            BlockAliasProcessorList(),
-            BlockMessageFunctionsList(),
+            BlockBoundDefinitionList(),
         ]
 
 
