@@ -5,8 +5,9 @@ Renderer for Go.
 from abc import abstractmethod
 from typing import List, Optional
 
-from bitproto._ast import (Alias, Array, Bool, Byte, Enum, Int, Integer,
-                           Message, MessageField, SingleType, Uint)
+from bitproto._ast import (Alias, Array, Bool, BoundDefinition, Byte, Constant,
+                           Enum, Int, Integer, Message, MessageField,
+                           SingleType, Uint)
 from bitproto.renderer.block import (Block, BlockAheadNotice, BlockBindAlias,
                                      BlockBindConstant, BlockBindEnum,
                                      BlockBindEnumField, BlockBindMessage,
@@ -92,17 +93,6 @@ class BlockAlias(BlockBindAlias[F], BlockComposition[F]):
         return "\n\n"
 
 
-class BlockAliasList(BlockComposition[F]):
-    @override(BlockComposition)
-    def blocks(self) -> List[Block[F]]:
-        return [
-            BlockAlias(alias, name)
-            for name, alias in self.bound.aliases(recursive=True, bound=self.bound)
-        ]
-
-    @override(BlockComposition)
-    def separator(self) -> str:
-        return "\n\n"
 
 
 class BlockConstant(BlockBindConstant[F]):
@@ -114,17 +104,6 @@ class BlockConstant(BlockBindConstant[F]):
         )
 
 
-class BlockConstantList(BlockComposition[F]):
-    @override(BlockComposition)
-    def blocks(self) -> List[Block[F]]:
-        return [
-            BlockConstant(constant, name)
-            for name, constant in self.bound.constants(recursive=True, bound=self.bound)
-        ]
-
-    @override(BlockComposition)
-    def separator(self) -> str:
-        return "\n\n"
 
 
 class BlockEnumField(BlockBindEnumField[F]):
@@ -229,13 +208,6 @@ class BlockEnum(BlockBindEnum[F], BlockComposition[F]):
         return "\n\n"
 
 
-class BlockEnumList(BlockComposition):
-    @override(BlockComposition)
-    def blocks(self) -> List[Block[F]]:
-        return [
-            BlockEnum(enum, name)
-            for name, enum in self.bound.enums(recursive=True, bound=self.bound)
-        ]
 
 
 class BlockMessageField(BlockBindMessageField[F]):
@@ -643,13 +615,29 @@ class BlockMessage(BlockBindMessage[F], BlockComposition[F]):
         ]
 
 
-class BlockMessageList(BlockComposition[F]):
-    @override(BlockComposition)
+
+class BlockBoundDefinitionList(BlockComposition[F]):
+    @override(BlockComposition[F])
     def blocks(self) -> List[Block[F]]:
-        return [
-            BlockMessage(message, name)
-            for name, message in self.bound.messages(recursive=True, bound=self.bound)
-        ]
+        b: List[Block[F]] = []
+        for _, d in self.bound.filter(
+            BoundDefinition, recursive=True, bound=self.bound
+        ):
+            block = self.dispatch(d)
+            if block:
+                b.append(block)
+        return b
+
+    def dispatch(self, d: BoundDefinition) -> Optional[Block[F]]:
+        if isinstance(d, Alias):
+            return BlockAlias(d)
+        if isinstance(d, Constant):
+            return BlockConstant(d)
+        if isinstance(d, Enum):
+            return BlockEnum(d)
+        if isinstance(d, Message):
+            return BlockMessage(d)
+        return None
 
 
 class BlockList(BlockComposition[F]):
@@ -660,10 +648,7 @@ class BlockList(BlockComposition[F]):
             BlockPackageName(self.bound),
             BlockGeneralImports(),
             BlockImportChildProtoList(),
-            BlockAliasList(),
-            BlockConstantList(),
-            BlockEnumList(),
-            BlockMessageList(),
+            BlockBoundDefinitionList(),
         ]
 
 
