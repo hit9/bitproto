@@ -259,6 +259,41 @@ class StatementInMessageUnsupported(GrammarError):
 
 
 @dataclass
+class AliasInEnumUnsupported(GrammarError):
+    """Unsupported to declare alias type inside enum."""
+
+
+@dataclass
+class ConstInEnumUnsupported(GrammarError):
+    """Unsupported to declare constant inside enum."""
+
+
+@dataclass
+class ImportInEnumUnsupported(GrammarError):
+    """Unsupported to import proto inside enum."""
+
+
+@dataclass
+class OptionInEnumUnsupported(GrammarError):
+    """Unsupported to declare option inside enum."""
+
+
+@dataclass
+class EnumInEnumUnsupported(GrammarError):
+    """Unsupported to declare enum inside enum."""
+
+
+@dataclass
+class MessageInEnumUnsupported(GrammarError):
+    """Unsupported to declare message inside enum."""
+
+
+@dataclass
+class MessageFieldInEnumUnsupported(GrammarError):
+    """Unsupported to declare message field inside enum."""
+
+
+@dataclass
 class LintWarning(_TokenBound, Warning):
     """Some warning occurred during bitproto linting."""
 

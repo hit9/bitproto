@@ -22,11 +22,14 @@ from bitproto._ast import (Alias, Array, BooleanConstant, Comment, Constant,
                            Definition, Enum, EnumField, IntegerConstant,
                            Message, MessageField, Option, Proto, Scope,
                            StringConstant, Type)
-from bitproto.errors import (AliasInMessageUnsupported,
+from bitproto.errors import (AliasInEnumUnsupported, AliasInMessageUnsupported,
                              CalculationExpressionError,
-                             ConstInMessageUnsupported, CyclicImport,
-                             GrammarError, ImportInMessageUnsupported,
-                             InternalError, InvalidArrayCap,
+                             ConstInEnumUnsupported, ConstInMessageUnsupported,
+                             CyclicImport, EnumInEnumUnsupported, GrammarError,
+                             ImportInEnumUnsupported,
+                             ImportInMessageUnsupported, InternalError,
+                             InvalidArrayCap, MessageFieldInEnumUnsupported,
+                             MessageInEnumUnsupported, OptionInEnumUnsupported,
                              ReferencedConstantNotDefined,
                              ReferencedNotConstant, ReferencedNotType,
                              ReferencedTypeNotDefined,
@@ -549,9 +552,37 @@ class Parser:
 
     def p_enum_item(self, p: P) -> None:
         """enum_item : enum_field
+                     | enum_item_unsupported
                      | comment
                      | newline"""
         p[0] = p[1]
+
+    def p_enum_item_unsupported(self, p: P) -> None:
+        """enum_item_unsupported : alias
+                                 | const
+                                 | proto
+                                 | import
+                                 | option
+                                 | enum
+                                 | message
+                                 | message_field"""
+        if isinstance(p[1], Alias):
+            raise AliasInEnumUnsupported.from_token(token=p[1])
+        if isinstance(p[1], Constant):
+            raise ConstInEnumUnsupported.from_token(token=p[1])
+        if isinstance(p[1], Proto):
+            raise ImportInEnumUnsupported.from_token(token=p[1])
+        if isinstance(p[1], Option):
+            raise OptionInEnumUnsupported.from_token(token=p[1])
+        if isinstance(p[1], Enum):
+            raise EnumInEnumUnsupported.from_token(token=p[1])
+        if isinstance(p[1], Message):
+            raise MessageInEnumUnsupported.from_token(token=p[1])
+        if isinstance(p[1], MessageField):
+            raise MessageFieldInEnumUnsupported.from_token(token=p[1])
+        raise StatementInMessageUnsupported(
+            lineno=p.lineno(1), filepath=self.current_filepath()
+        )
 
     def p_enum_field(self, p: P) -> None:
         """enum_field : IDENTIFIER '=' INT_LITERAL optional_semicolon"""
