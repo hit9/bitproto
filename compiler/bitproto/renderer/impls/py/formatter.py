@@ -158,7 +158,7 @@ class PyFormatter(Formatter):
 
     def formart_default_factory_alias(self, t: Alias) -> str:
         return self.format_name_related_to_definition(
-            t, "xxx_default_factory_{definition_name}"
+            t, "bp_default_factory_{definition_name}"
         )
 
     def format_field_default_alias(self, t: Alias) -> str:
@@ -241,7 +241,7 @@ class PyFormatter(Formatter):
 
     def format_processor_name_enum(self, t: Enum) -> str:
         return self.format_name_related_to_definition(
-            t, "xxx_processor_{definition_name}"
+            t, "bp_processor_{definition_name}"
         )
 
     def format_processor_enum(self, t: Enum) -> str:
@@ -250,7 +250,7 @@ class PyFormatter(Formatter):
 
     def format_processor_name_alias(self, t: Alias) -> str:
         return self.format_name_related_to_definition(
-            t, "xxx_processor_{definition_name}"
+            t, "bp_processor_{definition_name}"
         )
 
     def format_processor_alias(self, t: Alias) -> str:
@@ -259,4 +259,4 @@ class PyFormatter(Formatter):
 
     def format_processor_message(self, t: Message) -> str:
         message_name = self.format_message_name(t)
-        return f"{message_name}().xxx_processor()"
+        return f"{message_name}().bp_processor()"
