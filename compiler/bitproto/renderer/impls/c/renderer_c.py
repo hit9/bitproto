@@ -14,8 +14,9 @@ from bitproto.renderer.block import (Block, BlockAheadNotice, BlockBindAlias,
                                      BlockDeferable, BlockWrapper)
 from bitproto.renderer.impls.c.formatter import CFormatter as F
 from bitproto.renderer.impls.c.renderer_h import (
-    BlockMessageDecoderBase, BlockMessageEncoderBase,
-    BlockMessageJsonFormatterBase, RendererCHeader)
+    BlockAliasProcessorBase, BlockEnumProcessorBase, BlockMessageDecoderBase,
+    BlockMessageEncoderBase, BlockMessageJsonFormatterBase,
+    BlockMessageProcessorBase, RendererCHeader)
 from bitproto.renderer.renderer import Renderer
 from bitproto.utils import cast_or_raise, override
 
@@ -78,23 +79,21 @@ class BlockAliasProcessorBody(BlockBindAlias[F]):
         self.push("BpEndecodeAlias(&descriptor, ctx, data);")
 
 
-class BlockAliasProcessor(BlockBindAlias[F], BlockWrapper[F]):
+class BlockAliasProcessor(BlockAliasProcessorBase, BlockWrapper[F]):
     @override(BlockWrapper)
     def wraps(self) -> Block[F]:
         return BlockAliasProcessorBody(self.d, indent=4)
 
     @override(BlockWrapper)
     def before(self) -> None:
-        processor_name = self.formatter.format_bp_alias_processor_name(self.d)
-        signature = f"void {processor_name}(void *data, struct BpProcessorContext *ctx)"
-        self.push(f"{signature} {{")
+        self.push(f"{self.function_signature} {{")
 
     @override(BlockWrapper)
     def after(self) -> None:
         self.push("}")
 
 
-class BlockAliasProcessor_(BlockBindAlias[F], BlockComposition[F]):
+class BlockAliasProcessors(BlockBindAlias[F], BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
         return [BlockArrayProcessorForAlias(self.d), BlockAliasProcessor(self.d)]
@@ -112,16 +111,14 @@ class BlockEnumProcessorBody(BlockBindEnum[F]):
         self.push("BpEndecodeEnum(&descriptor, ctx, data);")
 
 
-class BlockEnumProcessor(BlockBindEnum[F], BlockWrapper[F]):
+class BlockEnumProcessor(BlockEnumProcessorBase, BlockWrapper[F]):
     @override(BlockWrapper)
     def wraps(self) -> Block[F]:
         return BlockEnumProcessorBody(self.d, indent=4)
 
     @override(BlockWrapper)
     def before(self) -> None:
-        processor_name = self.formatter.format_bp_enum_processor_name(self.d)
-        signature = f"void {processor_name}(void *data, struct BpProcessorContext *ctx)"
-        self.push(f"{signature} {{")
+        self.push(f"{self.function_signature} {{")
 
     @override(BlockWrapper)
     def after(self) -> None:
@@ -190,16 +187,14 @@ class BlockMessageProcessorBody(BlockBindMessage[F], BlockWrapper[F]):
         self.push("BpEndecodeMessage(&descriptor, ctx, data);")
 
 
-class BlockMessageProcessor(BlockBindMessage[F], BlockWrapper[F]):
+class BlockMessageProcessor(BlockMessageProcessorBase, BlockWrapper[F]):
     @override(BlockWrapper)
     def wraps(self) -> Block[F]:
         return BlockMessageProcessorBody(self.d, indent=4)
 
     @override(BlockWrapper)
     def before(self) -> None:
-        processor_name = self.formatter.format_bp_message_processor_name(self.d)
-        signature = f"void {processor_name}(void *data, struct BpProcessorContext *ctx)"
-        self.push(f"{signature} {{")
+        self.push(f"{self.function_signature} {{")
 
     @override(BlockWrapper)
     def after(self) -> None:
@@ -243,7 +238,7 @@ class BlockBoundDefinitionList(BlockBoundDefinitionDispatcher[F]):
     @override(BlockBoundDefinitionDispatcher)
     def dispatch(self, d: BoundDefinition) -> Optional[Block[F]]:
         if isinstance(d, Alias):
-            return BlockAliasProcessor_(d)
+            return BlockAliasProcessors(d)
         if isinstance(d, Enum):
             return BlockEnumProcessor(d)
         if isinstance(d, Message):

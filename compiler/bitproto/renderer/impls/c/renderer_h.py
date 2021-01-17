@@ -34,8 +34,8 @@ class BlockIncludeGuard(BlockDeferable[F]):
     @override(Block)
     def render(self) -> None:
         macro_name = self.format_proto_macro_name()
-        self.push(f"#ifndef  {macro_name}")
-        self.push(f"#define  {macro_name} 1")
+        self.push(f"#ifndef {macro_name}")
+        self.push(f"#define {macro_name} 1")
 
     @override(BlockDeferable)
     def defer(self) -> None:
@@ -49,6 +49,8 @@ class BlockIncludeGeneralHeaders(Block[F]):
         self.push("#include <stdbool.h>")
         self.push("#include <stddef.h>")
         self.push("#include <stdint.h>")
+        self.push_empty_line()
+        self.push('#include "bitproto.h"')
 
 
 class BlockExternCPlusPlus(BlockDeferable[F]):
@@ -81,7 +83,23 @@ class BlockConstant(BlockBindConstant[F]):
         self.render_constant_define()
 
 
-class BlockAlias(BlockBindAlias[F]):
+class BlockAliasProcessorBase(BlockBindAlias[F]):
+    @cached_property
+    def function_name(self) -> str:
+        return self.formatter.format_bp_alias_processor_name(self.d)
+
+    @cached_property
+    def function_signature(self) -> str:
+        return f"void {self.function_name}(void *data, struct BpProcessorContext *ctx)"
+
+
+class BlockAliasProcessorDeclaration(BlockAliasProcessorBase):
+    @override(Block)
+    def render(self) -> None:
+        self.push(f"{self.function_signature};")
+
+
+class BlockAliasDef(BlockBindAlias[F]):
     def render_alias_typedef_to_array(self) -> None:
         self.push(f"typedef {self.aliased_type};")
 
@@ -98,6 +116,16 @@ class BlockAlias(BlockBindAlias[F]):
     def render(self) -> None:
         self.push_definition_comments()
         self.render_alias_typedef()
+
+
+class BlockAlias(BlockBindAlias[F], BlockComposition[F]):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block[F]]:
+        return [BlockAliasDef(self.d), BlockAliasProcessorDeclaration(self.d)]
+
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n"
 
 
 class BlockEnumField(BlockBindEnumField[F]):
@@ -120,18 +148,41 @@ class BlockEnumFieldList(BlockBindEnum[F], BlockComposition[F]):
         return "\n"
 
 
-class BlockEnum(BlockBindEnum[F], BlockWrapper[F]):
-    @override(BlockWrapper[F])
-    def before(self) -> None:
+class BlockEnumProcessorBase(BlockBindEnum[F]):
+    @cached_property
+    def function_name(self) -> str:
+        return self.formatter.format_bp_enum_processor_name(self.d)
+
+    @cached_property
+    def function_signature(self) -> str:
+        return f"void {self.function_name}(void *data, struct BpProcessorContext *ctx)"
+
+
+class BlockEnumProcessorDeclaration(BlockEnumProcessorBase):
+    @override(Block)
+    def render(self) -> None:
+        self.push(f"{self.function_signature};")
+
+
+class BlockEnumDef(BlockBindEnum[F]):
+    @override(Block)
+    def render(self) -> None:
         self.push_definition_comments()
-        self.render_enum_typedef()
-
-    @override(BlockWrapper[F])
-    def wraps(self) -> Block:
-        return BlockEnumFieldList(self.d)
-
-    def render_enum_typedef(self) -> None:
         self.push(f"typedef {self.enum_uint_type} {self.enum_name};")
+
+
+class BlockEnum(BlockBindEnum[F], BlockComposition[F]):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block[F]]:
+        return [
+            BlockEnumDef(self.d),
+            BlockEnumFieldList(self.d),
+            BlockEnumProcessorDeclaration(self.d),
+        ]
+
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n"
 
 
 class BlockMessageField(BlockBindMessageField[F]):
@@ -259,15 +310,44 @@ class BlockMessageJsonFormatterFunctionDeclaration(BlockMessageJsonFormatterBase
         self.push(f"{self.function_signature};")
 
 
+class BlockMessageProcessorBase(BlockBindMessage[F]):
+    @cached_property
+    def function_name(self) -> str:
+        return self.formatter.format_bp_message_processor_name(self.d)
+
+    @cached_property
+    def function_signature(self) -> str:
+        return f"void {self.function_name}(void *data, struct BpProcessorContext *ctx)"
+
+
+class BlockMessageProcessorDeclaration(BlockMessageProcessorBase):
+    @override(Block)
+    def render(self) -> None:
+        self.push(f"{self.function_signature};")
+
+
+class BlockMessageFunctionDeclarations(BlockBindMessage[F], BlockComposition[F]):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block[F]]:
+        return [
+            BlockMessageEncoderFunctionDeclaration(self.d),
+            BlockMessageDecoderFunctionDeclaration(self.d),
+            BlockMessageJsonFormatterFunctionDeclaration(self.d),
+            BlockMessageProcessorDeclaration(self.d),
+        ]
+
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n"
+
+
 class BlockMessage(BlockBindMessage[F], BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
         return [
             BlockMessageLengthMacro(self.d),
             BlockMessageStruct(self.d),
-            BlockMessageEncoderFunctionDeclaration(self.d),
-            BlockMessageDecoderFunctionDeclaration(self.d),
-            BlockMessageJsonFormatterFunctionDeclaration(self.d),
+            BlockMessageFunctionDeclarations(self.d),
         ]
 
 
@@ -296,6 +376,10 @@ class BlockBoundDefinitionList(BlockBoundDefinitionDispatcher[F]):
         if isinstance(d, Message):
             return BlockMessage(d)
         return None
+
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n\n"
 
 
 class BlockList(BlockComposition[F]):
