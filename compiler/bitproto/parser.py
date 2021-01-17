@@ -30,12 +30,13 @@ from bitproto.errors import (AliasInEnumUnsupported, AliasInMessageUnsupported,
                              ImportInMessageUnsupported, InternalError,
                              InvalidArrayCap, MessageFieldInEnumUnsupported,
                              MessageInEnumUnsupported, OptionInEnumUnsupported,
-                             ReferencedConstantNotDefined,
+                             ProtoNameUndefined, ReferencedConstantNotDefined,
                              ReferencedNotConstant, ReferencedNotType,
                              ReferencedTypeNotDefined,
                              StatementInMessageUnsupported,
                              UnsupportedToDeclareProtoNameOutofProtoScope)
 from bitproto.lexer import Lexer
+from bitproto.utils import cast_or_raise
 
 
 class Parser:
@@ -193,7 +194,11 @@ class Parser:
 
     def p_close_global_scope(self, p: P) -> None:
         """close_global_scope :"""
-        self.pop_scope().freeze()
+        scope = self.pop_scope()
+        proto = cast_or_raise(Proto, scope)
+        if not proto.name:
+            raise ProtoNameUndefined(filepath=self.current_filepath())
+        proto.freeze()
 
     def p_global_scope(self, p: P) -> None:
         """global_scope : global_scope_definitions"""

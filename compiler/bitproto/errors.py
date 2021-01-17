@@ -294,6 +294,11 @@ class MessageFieldInEnumUnsupported(GrammarError):
 
 
 @dataclass
+class ProtoNameUndefined(GrammarError):
+    """Proto name undefined."""
+
+
+@dataclass
 class LintWarning(_TokenBound, Warning):
     """Some warning occurred during bitproto linting."""
 
