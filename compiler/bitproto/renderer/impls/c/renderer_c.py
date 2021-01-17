@@ -8,9 +8,10 @@ from bitproto._ast import (Alias, Array, BoundDefinition, Definition, Enum,
                            Message)
 from bitproto.renderer.block import (Block, BlockAheadNotice, BlockBindAlias,
                                      BlockBindEnum, BlockBindMessage,
-                                     BlockBindMessageField, BlockComposition,
-                                     BlockConditional, BlockDeferable,
-                                     BlockWrapper)
+                                     BlockBindMessageField,
+                                     BlockBoundDefinitionDispatcher,
+                                     BlockComposition, BlockConditional,
+                                     BlockDeferable, BlockWrapper)
 from bitproto.renderer.impls.c.formatter import CFormatter as F
 from bitproto.renderer.impls.c.renderer_h import (
     BlockMessageDecoderBase, BlockMessageEncoderBase,
@@ -238,18 +239,8 @@ class BlockMessageFunctions(BlockBindMessage[F], BlockComposition[F]):
         ]
 
 
-class BlockBoundDefinitionList(BlockComposition[F]):
-    @override(BlockComposition[F])
-    def blocks(self) -> List[Block[F]]:
-        b: List[Block[F]] = []
-        for _, d in self.bound.filter(
-            BoundDefinition, recursive=True, bound=self.bound
-        ):
-            block = self.dispatch(d)
-            if block:
-                b.append(block)
-        return b
-
+class BlockBoundDefinitionList(BlockBoundDefinitionDispatcher[F]):
+    @override(BlockBoundDefinitionDispatcher)
     def dispatch(self, d: BoundDefinition) -> Optional[Block[F]]:
         if isinstance(d, Alias):
             return BlockAliasProcessor_(d)

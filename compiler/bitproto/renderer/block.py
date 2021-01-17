@@ -26,8 +26,9 @@ from typing import Generic, Iterator, List, Optional
 from typing import Type as T
 from typing import TypeVar, Union, cast
 
-from bitproto._ast import (Alias, Comment, Constant, D, Definition, Enum,
-                           EnumField, Message, MessageField, Proto)
+from bitproto._ast import (Alias, BoundDefinition, Comment, Constant, D,
+                           Definition, Enum, EnumField, Message, MessageField,
+                           Proto)
 from bitproto.errors import InternalError
 from bitproto.renderer.formatter import F, Formatter
 from bitproto.utils import (cached_property, final, overridable, override,
@@ -502,3 +503,31 @@ class BlockEmptyLine(Block[F]):
     @override(Block)
     def render(self) -> None:
         self.push_empty_line()
+
+
+###########
+# Block that dispatches BoundDefinition.
+###########
+
+
+class BlockBoundDefinitionDispatcher(BlockComposition[F]):
+    """Block that dispatch BoundDefinition in current processing proto to specific block
+    and composite them into a BlockComposition.
+    """
+
+    @final
+    @override(BlockComposition)
+    def blocks(self) -> List[Block[F]]:
+        b: List[Block[F]] = []
+        for _, d in self.bound.filter(
+            BoundDefinition, recursive=True, bound=self.bound
+        ):
+            block = self.dispatch(d)
+            if block:
+                b.append(block)
+        return b
+
+    @abstractmethod
+    def dispatch(self, d: BoundDefinition) -> Optional[Block[F]]:
+        """Returns a specific block instance by given bound definition d."""
+        raise NotImplementedError

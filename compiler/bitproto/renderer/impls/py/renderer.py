@@ -10,6 +10,7 @@ from bitproto.renderer.block import (Block, BlockAheadNotice, BlockBindAlias,
                                      BlockBindConstant, BlockBindEnum,
                                      BlockBindEnumField, BlockBindMessage,
                                      BlockBindMessageField, BlockBindProto,
+                                     BlockBoundDefinitionDispatcher,
                                      BlockComposition, BlockWrapper)
 from bitproto.renderer.impls.py.formatter import PyFormatter as F
 from bitproto.renderer.renderer import Renderer
@@ -587,18 +588,8 @@ class BlockMessage(BlockMessageBase, BlockComposition[F]):
         return "\n\n"
 
 
-class BlockBoundDefinitionList(BlockComposition[F]):
-    @override(BlockComposition[F])
-    def blocks(self) -> List[Block[F]]:
-        b: List[Block[F]] = []
-        for _, d in self.bound.filter(
-            BoundDefinition, recursive=True, bound=self.bound
-        ):
-            block = self.dispatch(d)
-            if block:
-                b.append(block)
-        return b
-
+class BlockBoundDefinitionList(BlockBoundDefinitionDispatcher):
+    @override(BlockBoundDefinitionDispatcher)
     def dispatch(self, d: BoundDefinition) -> Optional[Block[F]]:
         if isinstance(d, Alias):
             return BlockAlias(d)

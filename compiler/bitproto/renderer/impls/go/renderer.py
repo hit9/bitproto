@@ -12,6 +12,7 @@ from bitproto.renderer.block import (Block, BlockAheadNotice, BlockBindAlias,
                                      BlockBindConstant, BlockBindEnum,
                                      BlockBindEnumField, BlockBindMessage,
                                      BlockBindMessageField, BlockBindProto,
+                                     BlockBoundDefinitionDispatcher,
                                      BlockComposition, BlockEmptyLine,
                                      BlockWrapper)
 from bitproto.renderer.impls.go.formatter import GoFormatter as F
@@ -609,18 +610,8 @@ class BlockMessage(BlockBindMessage[F], BlockComposition[F]):
         ]
 
 
-class BlockBoundDefinitionList(BlockComposition[F]):
-    @override(BlockComposition[F])
-    def blocks(self) -> List[Block[F]]:
-        b: List[Block[F]] = []
-        for _, d in self.bound.filter(
-            BoundDefinition, recursive=True, bound=self.bound
-        ):
-            block = self.dispatch(d)
-            if block:
-                b.append(block)
-        return b
-
+class BlockBoundDefinitionList(BlockBoundDefinitionDispatcher[F]):
+    @override(BlockBoundDefinitionDispatcher)
     def dispatch(self, d: BoundDefinition) -> Optional[Block[F]]:
         if isinstance(d, Alias):
             return BlockAlias(d)
