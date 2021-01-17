@@ -93,8 +93,6 @@ class BlockAlias(BlockBindAlias[F], BlockComposition[F]):
         return "\n\n"
 
 
-
-
 class BlockConstant(BlockBindConstant[F]):
     @override(Block)
     def render(self) -> None:
@@ -102,8 +100,6 @@ class BlockConstant(BlockBindConstant[F]):
         self.push(
             f"const {self.constant_name} {self.constant_value_type} = {self.constant_value}"
         )
-
-
 
 
 class BlockEnumField(BlockBindEnumField[F]):
@@ -206,8 +202,6 @@ class BlockEnum(BlockBindEnum[F], BlockComposition[F]):
     @override(BlockComposition)
     def separator(self) -> str:
         return "\n\n"
-
-
 
 
 class BlockMessageField(BlockBindMessageField[F]):
@@ -613,7 +607,6 @@ class BlockMessage(BlockBindMessage[F], BlockComposition[F]):
             BlockMessageMethodXXXSetByte(self.d),
             BlockMessageMethodXXXGetByte(self.d),
         ]
-
 
 
 class BlockBoundDefinitionList(BlockComposition[F]):

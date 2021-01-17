@@ -4,8 +4,8 @@ Renderer for Python.
 from abc import abstractmethod
 from typing import List, Optional
 
-from bitproto._ast import (Alias, Array, Bool, Int, Integer, Message,
-                           MessageField, SingleType)
+from bitproto._ast import (Alias, Array, Bool, BoundDefinition, Constant, Enum,
+                           Int, Integer, Message, MessageField, SingleType)
 from bitproto.renderer.block import (Block, BlockAheadNotice, BlockBindAlias,
                                      BlockBindConstant, BlockBindEnum,
                                      BlockBindEnumField, BlockBindMessage,
@@ -82,50 +82,25 @@ class BlockAliasMethodXXXDefaultFactory(BlockBindAlias[F]):
         self.push(f"return {default_value}", indent=4)
 
 
-class BlockAlias(BlockBindAlias[F]):
+class BlockAliasDef(BlockBindAlias[F]):
     @override(Block)
     def render(self) -> None:
         self.push_definition_comments()
         self.push(f"{self.alias_name} = {self.aliased_type}")
 
 
-class BlockAliasList(BlockComposition):
+class BlockAlias(BlockBindAlias[F], BlockComposition):
     @override(BlockComposition)
     def blocks(self) -> List[Block]:
         return [
-            BlockAlias(alias, name=name)
-            for name, alias in self.bound.aliases(recursive=True, bound=self.bound)
+            BlockAliasDef(self.d),
+            BlockAliasMethodXXXProcessor(self.d),
+            BlockAliasMethodXXXDefaultFactory(self.d),
         ]
 
     @override(BlockComposition)
     def separator(self) -> str:
         return "\n"
-
-
-class BlockAliasMethodXXXProcessorList(BlockComposition):
-    @override(BlockComposition)
-    def blocks(self) -> List[Block]:
-        return [
-            BlockAliasMethodXXXProcessor(alias, name=name)
-            for name, alias in self.bound.aliases(recursive=True, bound=self.bound)
-        ]
-
-    @override(BlockComposition)
-    def separator(self) -> str:
-        return "\n\n"
-
-
-class BlockAliasMethodXXXDefaultFactoryList(BlockComposition):
-    @override(BlockComposition)
-    def blocks(self) -> List[Block]:
-        return [
-            BlockAliasMethodXXXDefaultFactory(alias, name=name)
-            for name, alias in self.bound.aliases(recursive=True, bound=self.bound)
-        ]
-
-    @override(BlockComposition)
-    def separator(self) -> str:
-        return "\n\n"
 
 
 class BlockConstant(BlockBindConstant[F]):
@@ -135,19 +110,6 @@ class BlockConstant(BlockBindConstant[F]):
         self.push(
             f"{self.constant_name}: {self.constant_value_type} = {self.constant_value}"
         )
-
-
-class BlockConstantList(BlockComposition[F]):
-    @override(BlockComposition)
-    def blocks(self) -> List[Block]:
-        return [
-            BlockConstant(constant, name=name)
-            for name, constant in self.bound.constants(recursive=True, bound=self.bound)
-        ]
-
-    @override(BlockComposition)
-    def separator(self) -> str:
-        return "\n"
 
 
 class BlockEnumField(BlockBindEnumField[F]):
@@ -234,19 +196,6 @@ class BlockEnum(BlockBindEnum[F], BlockComposition[F]):
             BlockEnumValueToNameMap(self.d),
             BlockEnumMethodXXXProcessor(self.d),
         ]
-
-
-class BlockEnumList(BlockComposition[F]):
-    @override(BlockComposition[F])
-    def blocks(self) -> List[Block]:
-        return [
-            BlockEnum(enum)
-            for name, enum in self.bound.enums(recursive=True, bound=self.bound)
-        ]
-
-    @override(BlockComposition)
-    def separator(self) -> str:
-        return "\n\n\n"
 
 
 class BlockMessageField(BlockBindMessageField[F]):
@@ -640,44 +589,38 @@ class BlockMessage(BlockMessageBase, BlockComposition[F]):
         return "\n\n"
 
 
-class BlockMessageList(BlockComposition[F]):
-    @override(BlockComposition)
+class BlockBoundDefinitionList(BlockComposition[F]):
+    @override(BlockComposition[F])
     def blocks(self) -> List[Block[F]]:
-        return [
-            BlockMessage(message, name=name)
-            for name, message in self.bound.messages(recursive=True, bound=self.bound)
-        ]
+        b: List[Block[F]] = []
+        for _, d in self.bound.filter(
+            BoundDefinition, recursive=True, bound=self.bound
+        ):
+            block = self.dispatch(d)
+            if block:
+                b.append(block)
+        return b
 
-    @override(BlockComposition)
-    def separator(self) -> str:
-        return "\n\n\n"
-
-
-class BlockHeadList(BlockComposition[F]):
-    @override(BlockComposition)
-    def blocks(self) -> List[Block[F]]:
-        return [
-            BlockAheadNotice(),
-            BlockProtoDocstring(self.bound),
-            BlockImportList(),
-        ]
-
-    @override(BlockComposition)
-    def separator(self) -> str:
-        return "\n\n"
+    def dispatch(self, d: BoundDefinition) -> Optional[Block[F]]:
+        if isinstance(d, Alias):
+            return BlockAlias(d)
+        if isinstance(d, Constant):
+            return BlockConstant(d)
+        if isinstance(d, Enum):
+            return BlockEnum(d)
+        if isinstance(d, Message):
+            return BlockMessage(d)
+        return None
 
 
 class BlockList(BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
         return [
-            BlockHeadList(),
-            BlockAliasList(),
-            BlockAliasMethodXXXProcessorList(),
-            BlockAliasMethodXXXDefaultFactoryList(),
-            BlockConstantList(),
-            BlockEnumList(),
-            BlockMessageList(),
+            BlockAheadNotice(),
+            BlockProtoDocstring(self.bound),
+            BlockImportList(),
+            BlockBoundDefinitionList(),
         ]
 
     @override(BlockComposition)
