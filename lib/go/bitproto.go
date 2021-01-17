@@ -64,23 +64,23 @@ type Processor interface {
 // We don't use reflection (the "encoding/json" way, which slows the
 // performance) since there's already a bitproto compiler to generate code.
 type Accessor interface {
-	// XXXSetByte sets given byte b to target data, the data will be lookedup
+	// BpSetByte sets given byte b to target data, the data will be lookedup
 	// by given indexer di from this accessor.
 	// Argument lshift is the number of bits to shift right on b before it's
 	// written onto the indexed data.
 	// This function works only if target data is a single type.
-	XXXSetByte(di *DataIndexer, lshift int, b byte)
+	BpSetByte(di *DataIndexer, lshift int, b byte)
 
-	// XXXGetByte returns the byte from the data lookedup by given indexer di
+	// BpGetByte returns the byte from the data lookedup by given indexer di
 	// from this accessor.
 	// Argument rshift is the number of bits to shift left on the data before
 	// it's cast to byte.
 	// This function works only if target data is a single type.
-	XXXGetByte(di *DataIndexer, rshift int) byte
+	BpGetByte(di *DataIndexer, rshift int) byte
 
-	// XXXGetAccessor gets the child accessor data container by indexer di.
+	// BpGetAccessor gets the child accessor data container by indexer di.
 	// This function works only if target data is a message.
-	XXXGetAccessor(di *DataIndexer) Accessor
+	BpGetAccessor(di *DataIndexer) Accessor
 }
 
 // DataIndexer contains the argument to index data from current accessor.
@@ -160,7 +160,7 @@ func (t *Array) Process(ctx *ProcessContext, di *DataIndexer, accessor Accessor)
 }
 
 // EnumProcessor implements Processor for enum.
-// Assuming compiler generates Enum a method: XXXProcessor to returns this.
+// Assuming compiler generates Enum a method: BpProcessor to returns this.
 type EnumProcessor struct {
 	extensible bool
 	ut         *Uint
@@ -178,7 +178,7 @@ func (t *EnumProcessor) Process(ctx *ProcessContext, di *DataIndexer, accessor A
 }
 
 // AliasProcessor implements Processor for alias.
-// Assuming compiler generates Alias a method: XXXProcessor to returns this.
+// Assuming compiler generates Alias a method: BpProcessor to returns this.
 type AliasProcessor struct{ to Processor }
 
 func NewAliasProcessor(to Processor) *AliasProcessor { return &AliasProcessor{to} }
@@ -210,7 +210,7 @@ func (t *MessageFieldProcessor) Process(ctx *ProcessContext, _ *DataIndexer, acc
 }
 
 // MessageProcessor implements Processor for message
-// Assuming compiler generates Message a method: XXXProcessor to returns this.
+// Assuming compiler generates Message a method: BpProcessor to returns this.
 type MessageProcessor struct {
 	fieldDescriptors []*MessageFieldProcessor
 }
@@ -225,7 +225,7 @@ func (t *MessageProcessor) Process(ctx *ProcessContext, di *DataIndexer, accesso
 	if di != nil {
 		// As a data item of upper accessor.
 		// Rewrite accessor.
-		accessor = accessor.XXXGetAccessor(di)
+		accessor = accessor.BpGetAccessor(di)
 	}
 
 	for _, fieldDescriptor := range t.fieldDescriptors {
@@ -263,7 +263,7 @@ func encodeSingleByte(ctx *ProcessContext, di *DataIndexer, accessor Accessor, j
 
 	// Number of bits to shift right to obtain byte from accessor.
 	rshift := int(j/8) * 8
-	b := accessor.XXXGetByte(di, rshift)
+	b := accessor.BpGetByte(di, rshift)
 
 	shift := (j % 8) - (i % 8)
 	mask := byte(getMask(i%8, c)) // safe cast: i%8 and c always in [0,8]
@@ -277,7 +277,7 @@ func encodeSingleByte(ctx *ProcessContext, di *DataIndexer, accessor Accessor, j
 // decodeSingleByte decode number of c bits from buffer s to target data.
 // Where the data is lookedup by data indexer di from data container accessor.
 // And the buffer s is given in ProcessContext ctx.
-// Byte decoding is finally done by accessor's generated function XXXSetByte.
+// Byte decoding is finally done by accessor's generated function BpSetByte.
 func decodeSingleByte(ctx *ProcessContext, di *DataIndexer, accessor Accessor, j, c int) {
 	i := ctx.i
 
@@ -289,7 +289,7 @@ func decodeSingleByte(ctx *ProcessContext, di *DataIndexer, accessor Accessor, j
 
 	// Number of bits to shift left to set byte to accessor.
 	lshift := int(j/8) * 8
-	accessor.XXXSetByte(di, lshift, d)
+	accessor.BpSetByte(di, lshift, d)
 }
 
 // Returns the number of bits to copy during a single byte process.
