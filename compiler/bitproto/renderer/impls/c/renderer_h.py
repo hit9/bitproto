@@ -2,13 +2,16 @@
 Renderer for C header file.
 """
 
-from typing import Any, List
+from typing import Any, List, Optional
 
-from bitproto._ast import Array, Proto
+from bitproto._ast import (Alias, Array, BoundDefinition, Constant, Enum,
+                           Message, Proto)
+from bitproto.errors import InternalError
 from bitproto.renderer.block import (Block, BlockAheadNotice, BlockBindAlias,
                                      BlockBindConstant, BlockBindEnum,
                                      BlockBindEnumField, BlockBindMessage,
                                      BlockBindMessageField, BlockBindProto,
+                                     BlockBoundDefinitionDispatcher,
                                      BlockComposition, BlockDeferable,
                                      BlockWrapper)
 from bitproto.renderer.impls.c.formatter import CFormatter as F
@@ -66,12 +69,6 @@ class BlockIncludeChildProtoHeader(BlockBindProto[F]):
     @override(Block)
     def render(self) -> None:
         self.push(self.formatter.format_import_statement(self.d))
-
-
-class BlockGeneralMacroDefines(Block[F]):
-    @override(Block)
-    def render(self) -> None:
-        self.push('#define btoa(x) ((x) ? "true" : "false")')
 
 
 class BlockConstant(BlockBindConstant[F]):
@@ -275,60 +272,30 @@ class BlockMessage(BlockBindMessage[F], BlockComposition[F]):
 
 
 class BlockImportList(BlockComposition[F]):
-    @override(BlockComposition[F])
+    @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
         return [
             BlockIncludeChildProtoHeader(proto, name=name)
             for name, proto in self.bound.protos(recursive=False)
         ]
 
-    @override(BlockComposition[F])
-    def separator(self) -> str:
-        return "\n"
-
-
-class BlockConstantList(BlockComposition[F]):
-    @override(BlockComposition)
-    def blocks(self) -> List[Block[F]]:
-        return [
-            BlockConstant(constant, name=name)
-            for name, constant in self.bound.constants(recursive=True, bound=self.bound)
-        ]
-
     @override(BlockComposition)
     def separator(self) -> str:
         return "\n"
 
 
-class BlockAliasList(BlockComposition[F]):
-    @override(BlockComposition)
-    def blocks(self) -> List[Block[F]]:
-        return [
-            BlockAlias(alias, name=name)
-            for name, alias in self.bound.aliases(recursive=True, bound=self.bound)
-        ]
-
-    @override(BlockComposition)
-    def separator(self) -> str:
-        return "\n"
-
-
-class BlockEnumList(BlockComposition[F]):
-    @override(BlockComposition)
-    def blocks(self) -> List[Block[F]]:
-        return [
-            BlockEnum(enum, name=name)
-            for name, enum in self.bound.enums(recursive=True, bound=self.bound)
-        ]
-
-
-class BlockMessageList(BlockComposition[F]):
-    @override(BlockComposition[F])
-    def blocks(self) -> List[Block[F]]:
-        return [
-            BlockMessage(message, name=name)
-            for name, message in self.bound.messages(recursive=True, bound=self.bound)
-        ]
+class BlockBoundDefinitionList(BlockBoundDefinitionDispatcher[F]):
+    @override(BlockBoundDefinitionDispatcher)
+    def dispatch(self, d: BoundDefinition) -> Optional[Block[F]]:
+        if isinstance(d, Alias):
+            return BlockAlias(d)
+        if isinstance(d, Constant):
+            return BlockConstant(d)
+        if isinstance(d, Enum):
+            return BlockEnum(d)
+        if isinstance(d, Message):
+            return BlockMessage(d)
+        return None
 
 
 class BlockList(BlockComposition[F]):
@@ -341,11 +308,7 @@ class BlockList(BlockComposition[F]):
             BlockIncludeGeneralHeaders(),
             BlockExternCPlusPlus(),
             BlockImportList(),
-            BlockGeneralMacroDefines(),
-            BlockAliasList(),
-            BlockConstantList(),
-            BlockEnumList(),
-            BlockMessageList(),
+            BlockBoundDefinitionList(),
         ]
 
 

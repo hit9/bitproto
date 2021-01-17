@@ -4,12 +4,13 @@ Renderer for Python.
 from abc import abstractmethod
 from typing import List, Optional
 
-from bitproto._ast import (Alias, Array, Bool, Int, Integer, Message,
-                           MessageField, SingleType)
+from bitproto._ast import (Alias, Array, Bool, BoundDefinition, Constant, Enum,
+                           Int, Integer, Message, MessageField, SingleType)
 from bitproto.renderer.block import (Block, BlockAheadNotice, BlockBindAlias,
                                      BlockBindConstant, BlockBindEnum,
                                      BlockBindEnumField, BlockBindMessage,
                                      BlockBindMessageField, BlockBindProto,
+                                     BlockBoundDefinitionDispatcher,
                                      BlockComposition, BlockWrapper)
 from bitproto.renderer.impls.py.formatter import PyFormatter as F
 from bitproto.renderer.renderer import Renderer
@@ -63,7 +64,7 @@ class BlockImportList(BlockComposition[F]):
         return "\n\n"
 
 
-class BlockAliasMethodXXXProcessor(BlockBindAlias[F]):
+class BlockAliasMethodProcessor(BlockBindAlias[F]):
     @override(Block)
     def render(self) -> None:
         processor_name = self.formatter.format_processor_name_alias(self.d)
@@ -72,7 +73,7 @@ class BlockAliasMethodXXXProcessor(BlockBindAlias[F]):
         self.push(f"return bp.AliasProcessor({to})", indent=4)
 
 
-class BlockAliasMethodXXXDefaultFactory(BlockBindAlias[F]):
+class BlockAliasMethodDefaultFactory(BlockBindAlias[F]):
     @override(Block)
     def render(self) -> None:
         factory_name = self.formatter.formart_default_factory_alias(self.d)
@@ -82,45 +83,20 @@ class BlockAliasMethodXXXDefaultFactory(BlockBindAlias[F]):
         self.push(f"return {default_value}", indent=4)
 
 
-class BlockAlias(BlockBindAlias[F]):
+class BlockAliasDef(BlockBindAlias[F]):
     @override(Block)
     def render(self) -> None:
         self.push_definition_comments()
         self.push(f"{self.alias_name} = {self.aliased_type}")
 
 
-class BlockAliasList(BlockComposition):
+class BlockAlias(BlockBindAlias[F], BlockComposition):
     @override(BlockComposition)
     def blocks(self) -> List[Block]:
         return [
-            BlockAlias(alias, name=name)
-            for name, alias in self.bound.aliases(recursive=True, bound=self.bound)
-        ]
-
-    @override(BlockComposition)
-    def separator(self) -> str:
-        return "\n"
-
-
-class BlockAliasMethodXXXProcessorList(BlockComposition):
-    @override(BlockComposition)
-    def blocks(self) -> List[Block]:
-        return [
-            BlockAliasMethodXXXProcessor(alias, name=name)
-            for name, alias in self.bound.aliases(recursive=True, bound=self.bound)
-        ]
-
-    @override(BlockComposition)
-    def separator(self) -> str:
-        return "\n\n"
-
-
-class BlockAliasMethodXXXDefaultFactoryList(BlockComposition):
-    @override(BlockComposition)
-    def blocks(self) -> List[Block]:
-        return [
-            BlockAliasMethodXXXDefaultFactory(alias, name=name)
-            for name, alias in self.bound.aliases(recursive=True, bound=self.bound)
+            BlockAliasDef(self.d),
+            BlockAliasMethodProcessor(self.d),
+            BlockAliasMethodDefaultFactory(self.d),
         ]
 
     @override(BlockComposition)
@@ -135,19 +111,6 @@ class BlockConstant(BlockBindConstant[F]):
         self.push(
             f"{self.constant_name}: {self.constant_value_type} = {self.constant_value}"
         )
-
-
-class BlockConstantList(BlockComposition[F]):
-    @override(BlockComposition)
-    def blocks(self) -> List[Block]:
-        return [
-            BlockConstant(constant, name=name)
-            for name, constant in self.bound.constants(recursive=True, bound=self.bound)
-        ]
-
-    @override(BlockComposition)
-    def separator(self) -> str:
-        return "\n"
 
 
 class BlockEnumField(BlockBindEnumField[F]):
@@ -216,7 +179,7 @@ class BlockEnumValueToNameMap(BlockBindEnum[F], BlockWrapper[F]):
         self.push("}")
 
 
-class BlockEnumMethodXXXProcessor(BlockBindEnum[F]):
+class BlockEnumMethodProcessor(BlockBindEnum[F]):
     @override(Block)
     def render(self) -> None:
         processor_name = self.formatter.format_processor_name_enum(self.d)
@@ -232,21 +195,8 @@ class BlockEnum(BlockBindEnum[F], BlockComposition[F]):
         return [
             BlockEnumFieldListWrapper(self.d),
             BlockEnumValueToNameMap(self.d),
-            BlockEnumMethodXXXProcessor(self.d),
+            BlockEnumMethodProcessor(self.d),
         ]
-
-
-class BlockEnumList(BlockComposition[F]):
-    @override(BlockComposition[F])
-    def blocks(self) -> List[Block]:
-        return [
-            BlockEnum(enum)
-            for name, enum in self.bound.enums(recursive=True, bound=self.bound)
-        ]
-
-    @override(BlockComposition)
-    def separator(self) -> str:
-        return "\n\n\n"
 
 
 class BlockMessageField(BlockBindMessageField[F]):
@@ -316,7 +266,7 @@ class BlockMessageClass(BlockMessageBase, BlockWrapper[F]):
         self.push_definition_docstring(indent=4)
 
 
-class BlockMessageMethodXXXProcessorFieldItem(BlockBindMessageField[F]):
+class BlockMessageMethodProcessorFieldItem(BlockBindMessageField[F]):
     @override(Block)
     def render(self) -> None:
         type_processor = self.formatter.format_processor(self.d.type)
@@ -324,11 +274,11 @@ class BlockMessageMethodXXXProcessorFieldItem(BlockBindMessageField[F]):
         self.push(f"bp.MessageFieldProcessor({field_number}, {type_processor}),")
 
 
-class BlockMessageMethodXXXProcessorFieldList(BlockMessageBase, BlockComposition[F]):
+class BlockMessageMethodProcessorFieldList(BlockMessageBase, BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
         return [
-            BlockMessageMethodXXXProcessorFieldItem(d, indent=self.indent)
+            BlockMessageMethodProcessorFieldItem(d, indent=self.indent)
             for d in self.d.sorted_fields()
         ]
 
@@ -337,14 +287,14 @@ class BlockMessageMethodXXXProcessorFieldList(BlockMessageBase, BlockComposition
         return "\n"
 
 
-class BlockMessageMethodXXXProcessor(BlockMessageBase, BlockWrapper[F]):
+class BlockMessageMethodProcessor(BlockMessageBase, BlockWrapper[F]):
     @override(BlockWrapper)
     def wraps(self) -> Block[F]:
-        return BlockMessageMethodXXXProcessorFieldList(self.d, indent=self.indent + 8)
+        return BlockMessageMethodProcessorFieldList(self.d, indent=self.indent + 8)
 
     @override(BlockWrapper)
     def before(self) -> None:
-        self.push("def xxx_processor(self) -> bp.Processor:")
+        self.push("def bp_processor(self) -> bp.Processor:")
         self.push("field_processors: List[bp.Processor] = [", indent=self.indent + 4)
 
     @override(BlockWrapper)
@@ -358,7 +308,7 @@ class BlockMessageMethodXXXProcessor(BlockMessageBase, BlockWrapper[F]):
         )
 
 
-class BlockMessageMethodXXXGetSetByteItemBase(BlockBindMessageField[F]):
+class BlockMessageMethodGetSetByteItemBase(BlockBindMessageField[F]):
     def __init__(
         self, d: MessageField, name: Optional[str] = None, indent: int = 0,
     ) -> None:
@@ -403,8 +353,8 @@ class BlockMessageMethodXXXGetSetByteItemBase(BlockBindMessageField[F]):
             return self.render_alias(self.d.type)
 
 
-class BlockMessageMethodXXXSetByteItem(BlockMessageMethodXXXGetSetByteItemBase):
-    @override(BlockMessageMethodXXXGetSetByteItemBase)
+class BlockMessageMethodSetByteItem(BlockMessageMethodGetSetByteItemBase):
+    @override(BlockMessageMethodGetSetByteItemBase)
     def render_single(self, single: SingleType) -> None:
         left = self.format_data_ref()
         assign = "|="
@@ -434,20 +384,20 @@ class BlockMessageMethodXXXSetByteItem(BlockMessageMethodXXXGetSetByteItemBase):
             self.push(f"{left} {assign} {right}", indent=self.indent + 4)
 
 
-class BlockMessageMethodXXXSetByteItemDefault(Block[F]):
+class BlockMessageMethodSetByteItemDefault(Block[F]):
     @override(Block)
     def render(self) -> None:
         self.push(f"return")
 
 
-class BlockMessageMethodXXXSetByteItemList(BlockMessageBase, BlockComposition[F]):
+class BlockMessageMethodSetByteItemList(BlockMessageBase, BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
         b: List[Block[F]] = [
-            BlockMessageMethodXXXSetByteItem(field, indent=self.indent)
+            BlockMessageMethodSetByteItem(field, indent=self.indent)
             for field in self.d.sorted_fields()
         ]
-        b.append(BlockMessageMethodXXXSetByteItemDefault(indent=self.indent))
+        b.append(BlockMessageMethodSetByteItemDefault(indent=self.indent))
         return b
 
     @override(BlockComposition)
@@ -455,20 +405,20 @@ class BlockMessageMethodXXXSetByteItemList(BlockMessageBase, BlockComposition[F]
         return "\n"
 
 
-class BlockMessageMethodXXXSetByte(BlockBindMessage[F], BlockWrapper[F]):
+class BlockMessageMethodSetByte(BlockBindMessage[F], BlockWrapper[F]):
     @override(BlockWrapper)
     def wraps(self) -> Block[F]:
-        return BlockMessageMethodXXXSetByteItemList(self.d, indent=self.indent + 4)
+        return BlockMessageMethodSetByteItemList(self.d, indent=self.indent + 4)
 
     @override(BlockWrapper)
     def before(self) -> None:
         self.push(
-            f"def xxx_set_byte(self, di: bp.DataIndexer, lshift: int, b: bp.byte) -> None:"
+            f"def bp_set_byte(self, di: bp.DataIndexer, lshift: int, b: bp.byte) -> None:"
         )
 
 
-class BlockMessageMethodXXXGetByteItem(BlockMessageMethodXXXGetSetByteItemBase):
-    @override(BlockMessageMethodXXXGetSetByteItemBase)
+class BlockMessageMethodGetByteItem(BlockMessageMethodGetSetByteItemBase):
+    @override(BlockMessageMethodGetSetByteItemBase)
     def render_single(self, single: SingleType) -> None:
         shift = ">> rshift"
         value = data = self.format_data_ref()
@@ -480,20 +430,20 @@ class BlockMessageMethodXXXGetByteItem(BlockMessageMethodXXXGetSetByteItemBase):
         self.push(f"return ({value} {shift}) & 255", indent=self.indent + 4)
 
 
-class BlockMessageMethodXXXGetByteItemDefault(Block[F]):
+class BlockMessageMethodGetByteItemDefault(Block[F]):
     @override(Block)
     def render(self) -> None:
         self.push(f"return bp.byte(0)  # Won't reached")
 
 
-class BlockMessageMethodXXXGetByteItemList(BlockMessageBase, BlockComposition[F]):
+class BlockMessageMethodGetByteItemList(BlockMessageBase, BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
         b: List[Block[F]] = [
-            BlockMessageMethodXXXGetByteItem(field, indent=self.indent)
+            BlockMessageMethodGetByteItem(field, indent=self.indent)
             for field in self.d.sorted_fields()
         ]
-        b.append(BlockMessageMethodXXXGetByteItemDefault(indent=self.indent))
+        b.append(BlockMessageMethodGetByteItemDefault(indent=self.indent))
         return b
 
     @override(BlockComposition)
@@ -501,19 +451,17 @@ class BlockMessageMethodXXXGetByteItemList(BlockMessageBase, BlockComposition[F]
         return "\n"
 
 
-class BlockMessageMethodXXXGetByte(BlockMessageBase, BlockWrapper[F]):
+class BlockMessageMethodGetByte(BlockMessageBase, BlockWrapper[F]):
     @override(BlockWrapper)
     def wraps(self) -> Block[F]:
-        return BlockMessageMethodXXXGetByteItemList(self.d, indent=self.indent + 4)
+        return BlockMessageMethodGetByteItemList(self.d, indent=self.indent + 4)
 
     @override(BlockWrapper)
     def before(self) -> None:
-        self.push(
-            f"def xxx_get_byte(self, di: bp.DataIndexer, rshift: int) -> bp.byte:"
-        )
+        self.push(f"def bp_get_byte(self, di: bp.DataIndexer, rshift: int) -> bp.byte:")
 
 
-class BlockMessageMethodXXXGetAccessorItem(BlockBindMessageField[F]):
+class BlockMessageMethodGetAccessorItem(BlockBindMessageField[F]):
     def __init__(
         self, d: MessageField, name: Optional[str] = None, indent: int = 0,
     ) -> None:
@@ -557,20 +505,20 @@ class BlockMessageMethodXXXGetAccessorItem(BlockBindMessageField[F]):
             return self.render_alias(self.d.type)
 
 
-class BlockMessageMethodXXXGetAccessorItemDefault(Block[F]):
+class BlockMessageMethodGetAccessorItemDefault(Block[F]):
     @override(Block)
     def render(self) -> None:
         self.push(f"return bp.NilAccessor() # Won't reached")
 
 
-class BlockMessageMethodXXXGetAccessorList(BlockBindMessage[F], BlockComposition[F]):
+class BlockMessageMethodGetAccessorList(BlockBindMessage[F], BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
         b: List[Block[F]] = [
-            BlockMessageMethodXXXGetAccessorItem(field, indent=self.indent)
+            BlockMessageMethodGetAccessorItem(field, indent=self.indent)
             for field in self.d.sorted_fields()
         ]
-        b.append(BlockMessageMethodXXXGetAccessorItemDefault(indent=self.indent))
+        b.append(BlockMessageMethodGetAccessorItemDefault(indent=self.indent))
         return b
 
     @override(BlockComposition)
@@ -578,14 +526,14 @@ class BlockMessageMethodXXXGetAccessorList(BlockBindMessage[F], BlockComposition
         return "\n"
 
 
-class BlockMessageMethodXXXGetAccessor(BlockMessageBase, BlockWrapper[F]):
+class BlockMessageMethodGetAccessor(BlockMessageBase, BlockWrapper[F]):
     @override(BlockWrapper)
     def wraps(self) -> Block[F]:
-        return BlockMessageMethodXXXGetAccessorList(self.d, indent=self.indent + 4)
+        return BlockMessageMethodGetAccessorList(self.d, indent=self.indent + 4)
 
     @override(BlockWrapper)
     def before(self) -> None:
-        self.push(f"def xxx_get_accessor(self, di: bp.DataIndexer) -> bp.Accessor:")
+        self.push(f"def bp_get_accessor(self, di: bp.DataIndexer) -> bp.Accessor:")
 
 
 class BlockMessageMethodEncode(BlockMessageBase):
@@ -596,7 +544,7 @@ class BlockMessageMethodEncode(BlockMessageBase):
         self.push(f"s = bytearray(self.BYTES_LENGTH)", indent=self.indent + 4)
         self.push(f"ctx = bp.ProcessContext(True, s)", indent=self.indent + 4)
         self.push(
-            f"self.xxx_processor().process(ctx, bp.NIL_DATA_INDEXER, self)",
+            f"self.bp_processor().process(ctx, bp.NIL_DATA_INDEXER, self)",
             indent=self.indent + 4,
         )
         self.push(f"return ctx.s", indent=self.indent + 4)
@@ -617,7 +565,7 @@ class BlockMessageMethodDecode(BlockMessageBase):
         )
         self.push(f"ctx = bp.ProcessContext(False, s)", indent=self.indent + 4)
         self.push(
-            f"self.xxx_processor().process(ctx, bp.NIL_DATA_INDEXER, self)",
+            f"self.bp_processor().process(ctx, bp.NIL_DATA_INDEXER, self)",
             indent=self.indent + 4,
         )
 
@@ -627,10 +575,10 @@ class BlockMessage(BlockMessageBase, BlockComposition[F]):
     def blocks(self) -> List[Block[F]]:
         return [
             BlockMessageClass(self.d),
-            BlockMessageMethodXXXProcessor(self.d, indent=4),
-            BlockMessageMethodXXXSetByte(self.d, indent=4),
-            BlockMessageMethodXXXGetByte(self.d, indent=4),
-            BlockMessageMethodXXXGetAccessor(self.d, indent=4),
+            BlockMessageMethodProcessor(self.d, indent=4),
+            BlockMessageMethodSetByte(self.d, indent=4),
+            BlockMessageMethodGetByte(self.d, indent=4),
+            BlockMessageMethodGetAccessor(self.d, indent=4),
             BlockMessageMethodEncode(self.d, indent=4),
             BlockMessageMethodDecode(self.d, indent=4),
         ]
@@ -640,44 +588,32 @@ class BlockMessage(BlockMessageBase, BlockComposition[F]):
         return "\n\n"
 
 
-class BlockMessageList(BlockComposition[F]):
-    @override(BlockComposition)
-    def blocks(self) -> List[Block[F]]:
-        return [
-            BlockMessage(message, name=name)
-            for name, message in self.bound.messages(recursive=True, bound=self.bound)
-        ]
+class BlockBoundDefinitionList(BlockBoundDefinitionDispatcher):
+    @override(BlockBoundDefinitionDispatcher)
+    def dispatch(self, d: BoundDefinition) -> Optional[Block[F]]:
+        if isinstance(d, Alias):
+            return BlockAlias(d)
+        if isinstance(d, Constant):
+            return BlockConstant(d)
+        if isinstance(d, Enum):
+            return BlockEnum(d)
+        if isinstance(d, Message):
+            return BlockMessage(d)
+        return None
 
     @override(BlockComposition)
     def separator(self) -> str:
         return "\n\n\n"
 
 
-class BlockHeadList(BlockComposition[F]):
+class BlockList(BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
         return [
             BlockAheadNotice(),
             BlockProtoDocstring(self.bound),
             BlockImportList(),
-        ]
-
-    @override(BlockComposition)
-    def separator(self) -> str:
-        return "\n\n"
-
-
-class BlockList(BlockComposition[F]):
-    @override(BlockComposition)
-    def blocks(self) -> List[Block[F]]:
-        return [
-            BlockHeadList(),
-            BlockAliasList(),
-            BlockAliasMethodXXXProcessorList(),
-            BlockAliasMethodXXXDefaultFactoryList(),
-            BlockConstantList(),
-            BlockEnumList(),
-            BlockMessageList(),
+            BlockBoundDefinitionList(),
         ]
 
     @override(BlockComposition)

@@ -131,7 +131,7 @@ class GoFormatter(Formatter):
 
     def format_processor_enum(self, t: Enum) -> str:
         enum_name = self.format_enum_name(t)
-        return f"({enum_name}(0)).XXXProcessor()"
+        return f"({enum_name}(0)).BpProcessor()"
 
     def format_processor_alias(self, t: Alias) -> str:
         alias_name = self.format_alias_name(t)
@@ -144,8 +144,8 @@ class GoFormatter(Formatter):
             s = f"{alias_name}{{}}"
         else:
             raise InternalError("format_bp_alias got unexpected alias type")
-        return f"({s}).XXXProcessor()"
+        return f"({s}).BpProcessor()"
 
     def format_processor_message(self, t: Message) -> str:
         message_name = self.format_message_name(t)
-        return f"(&{message_name}{{}}).XXXProcessor()"
+        return f"(&{message_name}{{}}).BpProcessor()"

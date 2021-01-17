@@ -115,7 +115,7 @@ class Accessor:
     """
 
     @abstractmethod
-    def xxx_set_byte(self, di: DataIndexer, lshift: int, b: byte) -> None:
+    def bp_set_byte(self, di: DataIndexer, lshift: int, b: byte) -> None:
         """Sets given byte to target data, where the data will be lookedup by given
         indexer di from this accessor.
         This method is called only if target data is a single type.
@@ -126,7 +126,7 @@ class Accessor:
         raise NotImplementedError
 
     @abstractmethod
-    def xxx_get_byte(self, di: DataIndexer, lshift: int) -> byte:
+    def bp_get_byte(self, di: DataIndexer, lshift: int) -> byte:
         """Returns the byte from the data lookedup by given indexer di from the accessor.
         Argument rshift is the number of bits to shift left on the data before it's cast
         to byte. This method is called only if target data is a single type.
@@ -134,7 +134,7 @@ class Accessor:
         raise NotImplementedError
 
     @abstractmethod
-    def xxx_get_accessor(self, di: DataIndexer) -> "Accessor":
+    def bp_get_accessor(self, di: DataIndexer) -> "Accessor":
         """Gets the child accessor data container by indexer di. This method is called
         only if target data is a message.
         """
@@ -142,13 +142,13 @@ class Accessor:
 
 
 class NilAccessor(Accessor):
-    def xxx_set_byte(self, di: DataIndexer, lshift: int, b: byte) -> None:
+    def bp_set_byte(self, di: DataIndexer, lshift: int, b: byte) -> None:
         pass
 
-    def xxx_get_byte(self, di: DataIndexer, lshift: int) -> byte:
+    def bp_get_byte(self, di: DataIndexer, lshift: int) -> byte:
         return byte(0)
 
-    def xxx_get_accessor(self, di: DataIndexer) -> "Accessor":
+    def bp_get_accessor(self, di: DataIndexer) -> "Accessor":
         return self
 
 
@@ -245,7 +245,7 @@ class Array(Processor):
 @dataclass
 class EnumProcessor(Processor):
     """Enum implements Processor for enum type.
-    Assuming compiler generates a global function xxx_processor_{enum_name}.
+    Assuming compiler generates a global function bp_processor_{enum_name}.
 
     :param extensible: Indicates whether this enum is extensible.
     :param ut: The uint type of this enum.
@@ -265,7 +265,7 @@ class EnumProcessor(Processor):
 @dataclass
 class AliasProcessor(Processor):
     """Alias implements Processor for alias type.
-    AssertionError compiler generates a global function xxx_processor_{alias_name}.
+    AssertionError compiler generates a global function bp_processor_{alias_name}.
 
     :param to: The processor of the type it alias to.
     """
@@ -303,7 +303,7 @@ class MessageFieldProcessor(Processor):
 @dataclass
 class MessageProcessor(Processor):
     """MessageProcessor implements Processor for message.
-    Assuming compiler generates Message a method: xxx_processor to returns this.
+    Assuming compiler generates Message a method: bp_processor to returns this.
 
     :param field_processors:  List of message field's processors.
     """
@@ -321,7 +321,7 @@ class MessageProcessor(Processor):
             # MessageFieldProcessor of this message and never be NIL_DATA_INDEXER again.
             #
             # Rewrite accessor if this message processor is called from a upper accessor.
-            accessor = accessor.xxx_get_accessor(di)
+            accessor = accessor.bp_get_accessor(di)
         for field_processor in self.field_processors:
             field_processor.process(ctx, di, accessor)
 
@@ -362,7 +362,7 @@ def encode_single_byte(
     """
     # Number of bits to shift right to obtain byte from accessor.
     rshift = int(j / 8) * 8
-    b = accessor.xxx_get_byte(di, rshift)
+    b = accessor.bp_get_byte(di, rshift)
     shift = (j % 8) - (ctx.i % 8)
     mask = get_mask(ctx.i % 8, c)
     # Shift and then take mask to get bits to copy.
@@ -377,7 +377,7 @@ def decode_single_byte(
     """Decode number of c bits from buffer s to target data.
     Where the data is lookedup by data indexer di from data container accessor.
     And the buffer s is given in ProcessContext ctx.
-    Byte decoding is finally done by accessor's generated function xxx_set_byte.
+    Byte decoding is finally done by accessor's generated function bp_set_byte.
     """
     b = ctx.s[int(ctx.i / 8)]
     shift = (ctx.i % 8) - (j % 8)
@@ -386,7 +386,7 @@ def decode_single_byte(
     d = smart_shift(b, shift) & mask
     # Number of bits to shift left to set byte to accessor.
     lshift = int(j / 8) * 8
-    accessor.xxx_set_byte(di, lshift, d)
+    accessor.bp_set_byte(di, lshift, d)
 
 
 def process_single_byte(
