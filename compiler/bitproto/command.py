@@ -80,8 +80,8 @@ def run_bitproto() -> None:
         proto = parse(args.filepath)
     except ParserError as error:
         args_parser.exit(1, message=error.colored())
-    except FileNotFoundError:
-        args_parser.exit(1, message="file not found")
+    except IOError as error:
+        args_parser.exit(1, message="{0} => {1}".format(args.filepath, str(error)))
 
     if not args.disable_linter:
         if lint(proto) > 0:
