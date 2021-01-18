@@ -174,7 +174,8 @@ void BpEndecodeBaseType(struct BpType type, struct BpProcessorContext *ctx,
     }
 }
 
-// TODO: Comment
+// BpEndecodeSingleByte dispatch process to BpEncodeSingleByte or
+// BpDecodeSingleByte by context.
 void BpEndecodeSingleByte(struct BpProcessorContext *ctx, void *data, int j,
                           int c) {
     if (ctx->is_encode) {
@@ -184,7 +185,8 @@ void BpEndecodeSingleByte(struct BpProcessorContext *ctx, void *data, int j,
     }
 }
 
-// TODO: Comment
+// BpEncodeSingleByte encode number of c bits in a single byte of data to target
+// buffer s in given context ctx.
 void BpEncodeSingleByte(struct BpProcessorContext *ctx, void *data, int j,
                         int c) {
     int i = ctx->i;
@@ -210,7 +212,8 @@ void BpEncodeSingleByte(struct BpProcessorContext *ctx, void *data, int j,
     }
 }
 
-// TODO: Comment
+// BpDecodeSingleByte decode number of c bits from buffer s in given context ctx
+// to target data.
 void BpDecodeSingleByte(struct BpProcessorContext *ctx, void *data, int j,
                         int c) {
     int i = ctx->i;
@@ -296,7 +299,15 @@ int BpGetNbitsToCopy(int i, int j, int n) {
 }
 
 // BpGetMask returns the mask value to copy bits inside a single byte.
-// TODO: comments
+// The argument k is the start bit index in the byte, argument c is the number
+// of bits to copy.
+//
+// Examples of returned mask:
+//
+//   Returns                Arguments
+//   00001111               k=0, c=4
+//   01111100               k=2, c=5
+//   00111100               k=2, c=4
 int BpGetMask(int k, int c) {
     if (k == 0) {
         return (1 << c) - 1;
