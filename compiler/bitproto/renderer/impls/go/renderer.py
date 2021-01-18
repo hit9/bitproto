@@ -295,12 +295,16 @@ class BlockMessageMethodBpProcessor(BlockBindMessage[F], BlockWrapper[F]):
 
     @override(BlockWrapper)
     def after(self) -> None:
+        nbits = self.formatter.format_int_value(self.d.nbits())
+        extensible = self.formatter.format_bool_value(self.d.extensible)
+
         if self.d.nfields() == 0:
             self.push_string("}", separator="")
         else:
             self.push("}", indent=self.indent + 1)
         self.push(
-            "return bp.NewMessageProcessor(fieldDescriptors)", indent=self.indent + 1
+            f"return bp.NewMessageProcessor({extensible}, {nbits}, fieldDescriptors)",
+            indent=self.indent + 1,
         )
         self.push("}")
 

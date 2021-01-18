@@ -126,7 +126,7 @@ class Accessor:
         raise NotImplementedError
 
     @abstractmethod
-    def bp_get_byte(self, di: DataIndexer, lshift: int) -> byte:
+    def bp_get_byte(self, di: DataIndexer, rshift: int) -> byte:
         """Returns the byte from the data lookedup by given indexer di from the accessor.
         Argument rshift is the number of bits to shift left on the data before it's cast
         to byte. This method is called only if target data is a single type.
@@ -142,14 +142,37 @@ class Accessor:
 
 
 class NilAccessor(Accessor):
+    """NilAccessor is a special accessor implementation, represents that this accessor is
+    invalid and shouldn't be used further.
+    """
+
     def bp_set_byte(self, di: DataIndexer, lshift: int, b: byte) -> None:
         pass
 
-    def bp_get_byte(self, di: DataIndexer, lshift: int) -> byte:
+    def bp_get_byte(self, di: DataIndexer, rshift: int) -> byte:
         return byte(0)
 
     def bp_get_accessor(self, di: DataIndexer) -> "Accessor":
         return self
+
+
+@dataclass
+class IntAccessor(Accessor):
+    """IntAccessor implements Accessor for int encoding and decoding."""
+
+    data: int = 0
+
+    def bp_set_byte(self, di: DataIndexer, lshift: int, b: byte) -> None:
+        if di.field_number == 1:
+            self.data |= int(b) << lshift
+
+    def bp_get_byte(self, di: DataIndexer, rshift: int) -> byte:
+        if di.field_number == 1:
+            return (self.data >> rshift) & 255
+        return byte(0)
+
+    def bp_get_accessor(self, di: DataIndexer) -> "Accessor":
+        return NilAccessor()
 
 
 class Processor:
@@ -235,11 +258,43 @@ class Array(Processor):
         return FLAG_ARRAY
 
     def process(self, ctx: ProcessContext, di: DataIndexer, accessor: Accessor) -> None:
-        # TODO: extensible
         with di.index_stack_maintain():
+            # Record current number of bits processed.
+            i = ctx.i
+            # Opponent array capacity if extensible set.
+            ahead = 0
+
+            if self.extensible:
+                if ctx.is_encode:
+                    # Encode extensible ahead  if extensible.
+                    self.encode_extensible_ahead(ctx)
+                else:
+                    # Decode extensible ahead  if extensible.
+                    ahead = self.decode_extensible_ahead(ctx)
+
+            # Process array elements.
             for k in range(self.capacity):
                 di.index_stack_replace(k)
                 self.element_processor.process(ctx, di, accessor)
+
+            # Skip redundant bits post decoding.
+            if self.extensible and not ctx.is_encode:
+                ito = i + ahead * self.capacity
+                if ito >= ctx.i:
+                    ctx.i = ito
+
+    def encode_extensible_ahead(self, ctx: ProcessContext) -> None:
+        """Encode the array capacity as the ahead flag to current bit encoding stream."""
+        accessor = IntAccessor(data=self.capacity)
+        di = DataIndexer(field_number=1)
+        process_base_type(16, ctx, di, accessor)
+
+    def decode_extensible_ahead(Self, ctx: ProcessContext) -> int:
+        """Decode the ahead flag as the array capacity from current decoding stream."""
+        accessor = IntAccessor()
+        di = DataIndexer(field_number=1)
+        process_base_type(16, ctx, di, accessor)
+        return accessor.data
 
 
 @dataclass
@@ -258,8 +313,40 @@ class EnumProcessor(Processor):
         return FLAG_ENUM
 
     def process(self, ctx: ProcessContext, di: DataIndexer, accessor: Accessor) -> None:
-        # TODO: extensible
+        # Record current number of bits processed.
+        i = ctx.i
+        # Opponent array capacity if extensible set.
+        ahead = 0
+
+        if self.extensible:
+            if ctx.is_encode:
+                # Encode extensible ahead  if extensible.
+                self.encode_extensible_ahead(ctx)
+            else:
+                # Decode extensible ahead  if extensible.
+                ahead = self.decode_extensible_ahead(ctx)
+
+        # Process inner uint.
         self.ut.process(ctx, di, accessor)
+
+        # Skip redundant bits post decoding.
+        if self.extensible and not ctx.is_encode:
+            ito = i + ahead
+            if ito >= ctx.i:
+                ctx.i = ito
+
+    def encode_extensible_ahead(self, ctx: ProcessContext) -> None:
+        """Encode enum ahead flag into current encoding buffer in given ctx."""
+        accessor = IntAccessor(data=self.ut.nbits)
+        di = DataIndexer(field_number=1)
+        process_base_type(8, ctx, di, accessor)
+
+    def decode_extensible_ahead(self, ctx: ProcessContext) -> int:
+        """Decode enum ahead flag from current decoding buffer in given ctx."""
+        accessor = IntAccessor()
+        di = DataIndexer(field_number=1)
+        process_base_type(8, ctx, di, accessor)
+        return accessor.data
 
 
 @dataclass
@@ -308,6 +395,8 @@ class MessageProcessor(Processor):
     :param field_processors:  List of message field's processors.
     """
 
+    extensible: bool
+    nbits: int
     field_processors: List[Processor] = dataclass_field(default_factory=list)
 
     def flag(self) -> int:
@@ -322,8 +411,42 @@ class MessageProcessor(Processor):
             #
             # Rewrite accessor if this message processor is called from a upper accessor.
             accessor = accessor.bp_get_accessor(di)
+
+        # Record current number of bits processed.
+        i = ctx.i
+        # Opponent message nbits if extensible set.
+        ahead = 0
+
+        if self.extensible:
+            if ctx.is_encode:
+                # Encode extensible ahead  if extensible.
+                self.encode_extensible_ahead(ctx)
+            else:
+                # Decode extensible ahead  if extensible.
+                ahead = self.decode_extensible_ahead(ctx)
+
+        # Process fields.
         for field_processor in self.field_processors:
             field_processor.process(ctx, di, accessor)
+
+        # Skip redundant bits post decoding.
+        if self.extensible and not ctx.is_encode:
+            ito = i + ahead
+            if ito >= ctx.i:
+                ctx.i = ito
+
+    def encode_extensible_ahead(self, ctx: ProcessContext) -> None:
+        """Encode the message nbits as the ahead flag to current bit encoding stream."""
+        accessor = IntAccessor(data=self.nbits)
+        di = DataIndexer(field_number=1)
+        process_base_type(16, ctx, di, accessor)
+
+    def decode_extensible_ahead(self, ctx: ProcessContext) -> int:
+        """Decode the message ahead flag as the nbits from current bit decoding stream."""
+        accessor = IntAccessor()
+        di = DataIndexer(field_number=1)
+        process_base_type(16, ctx, di, accessor)
+        return accessor.data
 
 
 def smart_shift(n: byte, k: int) -> byte:
@@ -338,7 +461,18 @@ def smart_shift(n: byte, k: int) -> byte:
 
 
 def get_mask(k: int, c: int) -> int:
-    """Returns the mask value to copy bits inside a single byte."""
+    """Returns the mask value to copy bits inside a single byte.
+
+    :param k: The start bit index in the byte.
+    :param c: The number of bits to copy.
+
+    Examples of returned mask:
+
+        Returns                Arguments
+        00001111               k=0, c=4
+        01111100               k=2, c=5
+        00111100               k=2, c=4
+    """
     if k == 0:
         return (1 << c) - 1
     return (1 << ((k + 1 + c) - 1)) - (1 << ((k + 1) - 1))

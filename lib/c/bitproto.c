@@ -55,9 +55,10 @@ struct BpType BpAlias(size_t nbits, size_t size, BpProcessor processor) {
 
 // BpMessageFieldDescriptor returns a descriptor for a message.
 struct BpMessageDescriptor BpMessageDescriptor(
-    bool extensible, int nfields,
+    bool extensible, int nfields, size_t nbits,
     struct BpMessageFieldDescriptor *field_descriptors) {
-    return (struct BpMessageDescriptor){extensible, nfields, field_descriptors};
+    return (struct BpMessageDescriptor){extensible, nfields, nbits,
+                                        field_descriptors};
 }
 
 // BpEnumDescriptor returns a descriptor for an enum.
@@ -80,11 +81,34 @@ struct BpAliasDescriptor BpAliasDescriptor(struct BpType to) {
 // descriptor. It iterate all message fields to process.
 void BpEndecodeMessage(struct BpMessageDescriptor *descriptor,
                        struct BpProcessorContext *ctx, void *data) {
-    // TODO: extensible.
+    // Keep current number of bits total processed.
+    int i = ctx->i;
+    // Opponent message nbits if extensible is set.
+    uint16_t ahead = 0;
+
+    if (descriptor->extensible) {
+        if (ctx->is_encode) {
+            // Encode extensible ahead if extensible.
+            BpEncodeMessageExtensibleAhead(descriptor, ctx);
+        } else {
+            // Decode extensible ahead if extensible.
+            ahead = BpDecodeMessageExtensibleAhead(descriptor, ctx);
+        }
+    }
+
+    // Process message fields.
     for (int k = 0; k < descriptor->nfields; k++) {
         struct BpMessageFieldDescriptor field_descriptor =
             descriptor->field_descriptors[k];
         BpEndecodeMessageField(&field_descriptor, ctx, NULL);
+    }
+
+    // Skip redundant bits if decoding.
+    if (descriptor->extensible && (!ctx->is_encode)) {
+        int ito = i + (int)ahead;
+        if (ito >= ctx->i) {
+            ctx->i = ito;
+        }
     }
 }
 
@@ -128,17 +152,56 @@ void BpEndecodeAlias(struct BpAliasDescriptor *descriptor,
 
 void BpEndecodeEnum(struct BpEnumDescriptor *descriptor,
                     struct BpProcessorContext *ctx, void *data) {
-    // TODO: extensible.
+    // Keep current number of bits total processed.
+    int i = ctx->i;
+    // Opponent enum nbits if extensible is set.
+    uint8_t ahead = 0;
+
+    if (descriptor->extensible) {
+        if (ctx->is_encode) {
+            // Encode extensible ahead if extensible.
+            BpEncodeEnumExtensibleAhead(descriptor, ctx);
+        } else {
+            // Decode extensible ahead if extensible.
+            ahead = BpDecodeEnumExtensibleAhead(descriptor, ctx);
+        }
+    }
+
+    // Process inner uint.
     BpEndecodeBaseType(descriptor->uint, ctx, data);
+
+    // Skip redundant bits if decoding.
+    if (descriptor->extensible && (!ctx->is_encode)) {
+        int ito = i + (int)ahead;
+        if (ito >= ctx->i) {
+            ctx->i = ito;
+        }
+    }
 }
 
 void BpEndecodeArray(struct BpArrayDescriptor *descriptor,
                      struct BpProcessorContext *ctx, void *data) {
-    // TODO: extensible.
+    // Keep current number of bits total processed.
+    int i = ctx->i;
+    // Opponent array capacity if extensible is set.
+    uint16_t ahead = 0;
+
+    if (descriptor->extensible) {
+        if (ctx->is_encode) {
+            // Encode extensible ahead if extensible.
+            BpEncodeArrayExtensibleAhead(descriptor, ctx);
+        } else {
+            // Decode extensible ahead if extensible.
+            ahead = BpDecodeArrayExtensibleAhead(descriptor, ctx);
+        }
+    }
+
+    // Process array elements.
     for (int k = 0; k < descriptor->cap; k++) {
         // Lookup the address of this element's data.
         void *element_data =
             (void *)((unsigned char *)data + k * descriptor->element_type.size);
+
         switch (descriptor->element_type.flag) {
             case BP_TYPE_BOOL:
             case BP_TYPE_INT:
@@ -151,6 +214,14 @@ void BpEndecodeArray(struct BpArrayDescriptor *descriptor,
             case BP_TYPE_ENUM:
                 descriptor->element_type.processor(element_data, ctx);
                 break;
+        }
+    }
+
+    // Skip redundant bits if decoding.
+    if (descriptor->extensible && (!ctx->is_encode)) {
+        int ito = i + (((int)ahead) * descriptor->cap);
+        if (ito >= ctx->i) {
+            ctx->i = ito;
         }
     }
 }
@@ -174,7 +245,8 @@ void BpEndecodeBaseType(struct BpType type, struct BpProcessorContext *ctx,
     }
 }
 
-// TODO: Comment
+// BpEndecodeSingleByte dispatch process to BpEncodeSingleByte or
+// BpDecodeSingleByte by context.
 void BpEndecodeSingleByte(struct BpProcessorContext *ctx, void *data, int j,
                           int c) {
     if (ctx->is_encode) {
@@ -184,7 +256,8 @@ void BpEndecodeSingleByte(struct BpProcessorContext *ctx, void *data, int j,
     }
 }
 
-// TODO: Comment
+// BpEncodeSingleByte encode number of c bits in a single byte of data to target
+// buffer s in given context ctx.
 void BpEncodeSingleByte(struct BpProcessorContext *ctx, void *data, int j,
                         int c) {
     int i = ctx->i;
@@ -210,7 +283,8 @@ void BpEncodeSingleByte(struct BpProcessorContext *ctx, void *data, int j,
     }
 }
 
-// TODO: Comment
+// BpDecodeSingleByte decode number of c bits from buffer s in given context ctx
+// to target data.
 void BpDecodeSingleByte(struct BpProcessorContext *ctx, void *data, int j,
                         int c) {
     int i = ctx->i;
@@ -237,6 +311,64 @@ void BpDecodeSingleByte(struct BpProcessorContext *ctx, void *data, int j,
     } else {  // Otherwise, run OR to copy bits.
         data_buffer[value_index] |= delta;
     }
+}
+
+// BpEncodeEnumExtensibleAhead encode enum's bit capacity value to current bit
+// encoding stream.
+void BpEncodeEnumExtensibleAhead(struct BpEnumDescriptor *descriptor,
+                                 struct BpProcessorContext *ctx) {
+    // Safe to cast to uint8_t:
+    // the number of bits of enum always not larger than 64.
+    uint8_t data = (uint8_t)(descriptor->uint.nbits);
+    // Encode this data as a base type.
+    BpEndecodeBaseType(BpUint(8), ctx, (void *)&data);
+}
+
+// BpDecodeEnumExtensibleAhead decode enum's bit capacity value from current
+// decoding buffer.
+uint8_t BpDecodeEnumExtensibleAhead(struct BpEnumDescriptor *descriptor,
+                                    struct BpProcessorContext *ctx) {
+    uint8_t data = 0;
+    BpEndecodeBaseType(BpUint(8), ctx, (void *)&data);
+    return data;
+}
+
+// BpEncodeArrayExtensibleAhead encode the array capacity as the ahead flag to
+// current bit encoding stream.
+void BpEncodeArrayExtensibleAhead(struct BpArrayDescriptor *descriptor,
+                                  struct BpProcessorContext *ctx) {
+    // Safe to cast to uint16_t:
+    // the capacity of an array always <= 65535.
+    uint16_t data = (uint16_t)(descriptor->cap);
+    BpEndecodeBaseType(BpUint(16), ctx, (void *)&data);
+}
+
+// BpDecodeArrayExtensibleAhead decode the ahead flag as the array capacity from
+// current bit decoding buffer.
+uint16_t BpDecodeArrayExtensibleAhead(struct BpArrayDescriptor *descriptor,
+                                      struct BpProcessorContext *ctx) {
+    uint16_t data = 0;
+    BpEndecodeBaseType(BpUint(16), ctx, (void *)&data);
+    return data;
+}
+
+// BpEncodeMessageExtensibleAhead encode the message number of bits as the ahead
+// flag to current bit encoding stream.
+void BpEncodeMessageExtensibleAhead(struct BpMessageDescriptor *descriptor,
+                                    struct BpProcessorContext *ctx) {
+    // Safe to cast to uint16_t:
+    // The bitproto compiler constraints message size up to 65535 bits.
+    uint16_t data = (uint16_t)(descriptor->nbits);
+    BpEndecodeBaseType(BpUint(16), ctx, (void *)&data);
+}
+
+// BpDecodeMessageExtensibleAhead decode the ahead flag as message's number of
+// bits from current decoding buffer.
+uint16_t BpDecodeMessageExtensibleAhead(struct BpMessageDescriptor *descriptor,
+                                        struct BpProcessorContext *ctx) {
+    uint16_t data = 0;
+    BpEndecodeBaseType(BpUint(16), ctx, (void *)&data);
+    return data;
 }
 
 // BpMin returns the smaller one of given two integers.
@@ -296,7 +428,15 @@ int BpGetNbitsToCopy(int i, int j, int n) {
 }
 
 // BpGetMask returns the mask value to copy bits inside a single byte.
-// TODO: comments
+// The argument k is the start bit index in the byte, argument c is the number
+// of bits to copy.
+//
+// Examples of returned mask:
+//
+//   Returns                Arguments
+//   00001111               k=0, c=4
+//   01111100               k=2, c=5
+//   00111100               k=2, c=4
 int BpGetMask(int k, int c) {
     if (k == 0) {
         return (1 << c) - 1;

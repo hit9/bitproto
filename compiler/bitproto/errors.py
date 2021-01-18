@@ -150,7 +150,7 @@ class CalculationExpressionError(GrammarError):
 
 @dataclass
 class InvalidArrayCap(GrammarError):
-    """Invalid array capacity, should between (0, 1023]."""
+    """Invalid array capacity, should between (0, 65536)."""
 
 
 @dataclass
@@ -230,7 +230,7 @@ class InvalidOptionValue(GrammarError):
 
 @dataclass
 class MessageSizeOverflows(GrammarError):
-    """Message size overflows constraint."""
+    """Message size overflows constraint, should < 65535 bits (about 8kb)."""
 
 
 @dataclass
