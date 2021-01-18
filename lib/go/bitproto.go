@@ -35,20 +35,16 @@ type ProcessContext struct {
 	// When encoding, s is the destination buffer to write.
 	// When decoding, s is the source buffer to read.
 	s []byte
-	// The value to skip to for i.
-	// Sets before decoding an extensible type.
-	// Clears after decoding an extensible type.
-	ito int
 }
 
 // NewEncodeContext returns a ProcessContext for encoding to given buffer s.
 func NewEncodeContext(nbytes int) *ProcessContext {
-	return &ProcessContext{true, 0, make([]byte, nbytes), 0}
+	return &ProcessContext{true, 0, make([]byte, nbytes)}
 }
 
 // NewDecodeContext returns a ProcessContext for decoding from given buffer s.
 func NewDecodeContext(s []byte) *ProcessContext {
-	return &ProcessContext{false, 0, s, 0}
+	return &ProcessContext{false, 0, s}
 }
 
 func (ctx *ProcessContext) Buffer() []byte { return ctx.s }
