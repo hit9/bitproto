@@ -646,16 +646,12 @@ class Uint(Integer):
 
     cap: int = 0
 
-    # Max value of cap.
-    MAX_CAP: ClassVar[int] = 64
-
     @override(Node)
     def validate(self) -> None:
         if self._is_missing:
             return
-        if not (0 < self.cap <= self.MAX_CAP):
-            message = f"Invalid bits capacity for a uint type, should between [1, {self.MAX_CAP}]"
-            raise InvalidUintCap.from_token(token=self, message=message)
+        if not (0 < self.cap <= 64):
+            raise InvalidUintCap.from_token(token=self)
 
     @override(Type)
     def nbits(self) -> int:
@@ -702,14 +698,9 @@ class ExtensibleType(Type):
     extensible: bool = False
 
     @overridable
-    def ahead_value_max(self) -> int:
-        """Returns the ahead value max."""
-        raise NotImplementedError
-
-    @final
     def ahead_nbits(self) -> int:
-        """Returns number of bits the ahead value takes."""
-        return self.ahead_value_max().bit_length()
+        """Returns the number of bits the ahead flag occupy."""
+        raise NotImplementedError
 
 
 @final
@@ -720,15 +711,11 @@ class Array(CompositeType, ExtensibleType):
     :param type: The type of array element.
     :param cap: Max value of number of elements.
 
-    Constraint: the pattern "array of array" (the 2D array type)
-    is not supported, otherwise that would complex the encoding handling.
+    Constraint: Capacity of array should be smaller than 65536.
     """
 
     element_type: Type = _TYPE_MISSING
     cap: int = 0
-
-    # Max value of array cap.
-    MAX_CAP: ClassVar[int] = 1024 - 1
 
     @classmethod
     def element_type_constraints(cls) -> Tuple[T[Type], ...]:
@@ -748,24 +735,20 @@ class Array(CompositeType, ExtensibleType):
         self.validate_array_element_type()
 
     def validate_array_cap(self) -> None:
-        if not (0 < self.cap <= self.MAX_CAP):
-            message = f"Invalid array capacity, should between (0, {self.MAX_CAP}]"
-            raise InvalidArrayCap.from_token(token=self, message=message)
+        if not (0 < self.cap < 65536):
+            raise InvalidArrayCap.from_token(token=self)
 
     def validate_array_element_type(self) -> None:
         if not isinstance(self.element_type, self.element_type_constraints()):
             raise UnsupportedArrayType.from_token(token=self)
 
     @override(ExtensibleType)
-    def ahead_value_max(self) -> int:
-        """Array's ahead_value stores the array capacity."""
-        return self.MAX_CAP
+    def ahead_nbits(self) -> int:
+        return 16
 
     @override(Type)
     @cache_if_frozen
     def nbits(self) -> int:
-        if self.element_type is None:
-            raise InternalError("array's element_type is None")
         n = self.cap * self.element_type.nbits()
         if not self.extensible:
             return n
@@ -861,9 +844,8 @@ class Enum(BoundScope, SingleType, ExtensibleType):
         return f"<enum {self.name}{extensible_flag}>"
 
     @override(ExtensibleType)
-    def ahead_value_max(self) -> int:
-        """Enum's ahead_value stores number of bits of the enum's uint type."""
-        return Uint.MAX_CAP
+    def ahead_nbits(self) -> int:
+        return 8
 
     @override(Type)
     def nbits(self) -> int:
@@ -938,7 +920,6 @@ class Message(BoundScope, ScopeWithOptions, CompositeType, ExtensibleType):
     name: str = ""
 
     __option_descriptors__: ClassVar[OptionDescriptors] = MESSAGE_OPTIONS
-    MAX_NBITS: ClassVar[int] = 8 * 1024 * 8 - 1  # < 8kb
 
     @cache_if_frozen
     def nfields(self) -> int:
@@ -956,9 +937,8 @@ class Message(BoundScope, ScopeWithOptions, CompositeType, ExtensibleType):
         return sorted(self.fields(), key=lambda field: field.number)
 
     @override(ExtensibleType)
-    def ahead_value_max(self) -> int:
-        """Message's ahead_value stores the number of bits of this message."""
-        return self.MAX_NBITS
+    def ahead_nbits(self) -> int:
+        return 16
 
     @override(Type)
     @cache_if_frozen
@@ -984,9 +964,8 @@ class Message(BoundScope, ScopeWithOptions, CompositeType, ExtensibleType):
 
     @override(Node)
     def validate(self) -> None:
-        if self.nbits() > self.MAX_NBITS:
-            message = f"Message size overflows constraint ({self.MAX_NBITS} bit)"
-            raise MessageSizeOverflows.from_token(token=self, message=message)
+        if self.nbits() > 65535:
+            raise MessageSizeOverflows.from_token(token=self)
 
     @override(Scope)
     def validate_member_on_push(

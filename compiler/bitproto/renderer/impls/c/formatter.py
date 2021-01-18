@@ -164,7 +164,8 @@ class CFormatter(Formatter):
     ) -> str:
         extensible = self.format_bool_value(t.extensible)
         nfields = self.format_int_value(t.nfields())
-        return f"BpMessageDescriptor({extensible}, {nfields}, {field_descriptors})"
+        nbits = self.format_int_value(t.nbits())
+        return f"BpMessageDescriptor({extensible}, {nfields}, {nbits}, {field_descriptors})"
 
     def format_bp_message_processor_name(self, t: Message) -> str:
         message_name = self.format_message_name(t)

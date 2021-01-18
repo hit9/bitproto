@@ -104,6 +104,8 @@ struct BpMessageDescriptor {
     bool extensible;
     // Number of fields this message contains.
     int nfields;
+    // Number of bits this message occupy.
+    size_t nbits;
     // List of descriptors of the message fields.
     struct BpMessageFieldDescriptor *field_descriptors;
 };
@@ -129,7 +131,7 @@ struct BpType BpAlias(size_t nbits, size_t size, BpProcessor processor);
 // Descriptor Constructors.
 
 struct BpMessageDescriptor BpMessageDescriptor(
-    bool extensible, int nfields,
+    bool extensible, int nfields, size_t nbits,
     struct BpMessageFieldDescriptor *field_descriptors);
 struct BpEnumDescriptor BpEnumDescriptor(bool extensible, struct BpType uint);
 struct BpArrayDescriptor BpArrayDescriptor(bool extensible, size_t cap,
@@ -167,6 +169,24 @@ void BpEndecodeEnumExtensibleAhead(struct BpEnumDescriptor *descriptor,
                                    struct BpProcessorContext *ctx);
 void BpPostDecodeEnum(struct BpEnumDescriptor *descriptor,
                       struct BpProcessorContext *ctx);
+
+void BpEncodeArrayExtensibleAhead(struct BpArrayDescriptor *descriptor,
+                                  struct BpProcessorContext *ctx);
+uint16_t BpDecodeArrayExtensibleAhead(struct BpArrayDescriptor *descriptor,
+                                      struct BpProcessorContext *ctx);
+void BpEndecodeArrayExtensibleAhead(struct BpArrayDescriptor *descriptor,
+                                    struct BpProcessorContext *ctx);
+void BpPostDecodeArray(struct BpArrayDescriptor *descriptor,
+                       struct BpProcessorContext *ctx);
+
+void BpEncodeMessageExtensibleAhead(struct BpMessageDescriptor *descriptor,
+                                    struct BpProcessorContext *ctx);
+uint16_t BpDecodeMessageExtensibleAhead(struct BpMessageDescriptor *descriptor,
+                                        struct BpProcessorContext *ctx);
+void BpEndecodeMessageExtensibleAhead(struct BpMessageDescriptor *descriptor,
+                                      struct BpProcessorContext *ctx);
+void BpPostDecodeMessage(struct BpMessageDescriptor *descriptor,
+                         struct BpProcessorContext *ctx);
 
 // Utils
 

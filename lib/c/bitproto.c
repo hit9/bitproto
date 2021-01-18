@@ -55,9 +55,10 @@ struct BpType BpAlias(size_t nbits, size_t size, BpProcessor processor) {
 
 // BpMessageFieldDescriptor returns a descriptor for a message.
 struct BpMessageDescriptor BpMessageDescriptor(
-    bool extensible, int nfields,
+    bool extensible, int nfields, size_t nbits,
     struct BpMessageFieldDescriptor *field_descriptors) {
-    return (struct BpMessageDescriptor){extensible, nfields, field_descriptors};
+    return (struct BpMessageDescriptor){extensible, nfields, nbits,
+                                        field_descriptors};
 }
 
 // BpEnumDescriptor returns a descriptor for an enum.
@@ -80,12 +81,15 @@ struct BpAliasDescriptor BpAliasDescriptor(struct BpType to) {
 // descriptor. It iterate all message fields to process.
 void BpEndecodeMessage(struct BpMessageDescriptor *descriptor,
                        struct BpProcessorContext *ctx, void *data) {
-    // TODO: extensible.
+    BpEndecodeMessageExtensibleAhead(descriptor, ctx);
+
     for (int k = 0; k < descriptor->nfields; k++) {
         struct BpMessageFieldDescriptor field_descriptor =
             descriptor->field_descriptors[k];
         BpEndecodeMessageField(&field_descriptor, ctx, NULL);
     }
+
+    BpPostDecodeMessage(descriptor, ctx);
 }
 
 // BpEndecodeMessageField dispatch the process by given message field's type.
@@ -135,7 +139,8 @@ void BpEndecodeEnum(struct BpEnumDescriptor *descriptor,
 
 void BpEndecodeArray(struct BpArrayDescriptor *descriptor,
                      struct BpProcessorContext *ctx, void *data) {
-    // TODO: extensible.
+    BpEndecodeArrayExtensibleAhead(descriptor, ctx);
+
     for (int k = 0; k < descriptor->cap; k++) {
         // Lookup the address of this element's data.
         void *element_data =
@@ -154,6 +159,8 @@ void BpEndecodeArray(struct BpArrayDescriptor *descriptor,
                 break;
         }
     }
+
+    BpPostDecodeArray(descriptor, ctx);
 }
 
 // BpEndecodeBaseType process given base type at given data.
@@ -273,8 +280,9 @@ void BpEndecodeEnumExtensibleAhead(struct BpEnumDescriptor *descriptor,
             BpEncodeEnumExtensibleAhead(descriptor, ctx);
         } else {
             // Decode the opponent's capacity.
+            int i = ctx->i;
             uint8_t ahead = BpDecodeEnumExtensibleAhead(descriptor, ctx);
-            ctx->ito = ctx->i + (int)ahead;  // cast is safe.
+            ctx->ito = i + (int)ahead;  // cast is safe.
         }
     }
 }
@@ -282,7 +290,97 @@ void BpEndecodeEnumExtensibleAhead(struct BpEnumDescriptor *descriptor,
 // BpPostDecodeEnum process an extensible enum after this enum has been decoded.
 void BpPostDecodeEnum(struct BpEnumDescriptor *descriptor,
                       struct BpProcessorContext *ctx) {
-    if (descriptor->extensible && (!ctx->is_encode) && ctx->ito > 0) {
+    if (descriptor->extensible && (!ctx->is_encode) && ctx->ito >= ctx->i) {
+        ctx->i = ctx->ito;
+        ctx->ito = 0;
+    }
+}
+
+// BpEncodeArrayExtensibleAhead encode the array capacity as the ahead flag to
+// current bit encoding stream.
+void BpEncodeArrayExtensibleAhead(struct BpArrayDescriptor *descriptor,
+                                  struct BpProcessorContext *ctx) {
+    // Safe to cast to uint16_t:
+    // the capacity of an array always <= 65535.
+    uint16_t data = (uint16_t)(descriptor->cap);
+    BpEndecodeBaseType(BpUint(16), ctx, (void *)&data);
+}
+
+// BpDecodeArrayExtensibleAhead decode the ahead flag as the array capacity from
+// current bit decoding buffer.
+uint16_t BpDecodeArrayExtensibleAhead(struct BpArrayDescriptor *descriptor,
+                                      struct BpProcessorContext *ctx) {
+    uint16_t data = 0;
+    BpEndecodeBaseType(BpUint(16), ctx, (void *)&data);
+    return data;
+}
+
+// BpEndecodeArrayExtensibleAhead process the ahead flag before an extensible
+// array is going to be processed.
+void BpEndecodeArrayExtensibleAhead(struct BpArrayDescriptor *descriptor,
+                                    struct BpProcessorContext *ctx) {
+    if (descriptor->extensible) {
+        if (ctx->is_encode) {
+            // Encode extensible ahead.
+            BpEncodeArrayExtensibleAhead(descriptor, ctx);
+        } else {
+            int i = ctx->i;
+            // Decode the opponent's capacity.
+            uint16_t ahead = BpDecodeArrayExtensibleAhead(descriptor, ctx);
+            // The array's ahead flag is the opponent's capacity.
+            ctx->ito = i + (((int)ahead) * descriptor->cap);
+        }
+    }
+}
+
+// BpPostDecodeArray process an extensible array after this array has been
+// decoded.
+void BpPostDecodeArray(struct BpArrayDescriptor *descriptor,
+                       struct BpProcessorContext *ctx) {
+    if (descriptor->extensible && (!ctx->is_encode) && ctx->ito >= ctx->i) {
+        ctx->i = ctx->ito;
+        ctx->ito = 0;
+    }
+}
+
+// BpEncodeMessageExtensibleAhead encode the message number of bits as the ahead
+// flag to current bit encoding stream.
+void BpEncodeMessageExtensibleAhead(struct BpMessageDescriptor *descriptor,
+                                    struct BpProcessorContext *ctx) {
+    // Safe to cast to uint16_t:
+    // The bitproto compiler constraints message size up to 65535 bits.
+    uint16_t data = (uint16_t)(descriptor->nbits);
+    BpEndecodeBaseType(BpUint(16), ctx, (void *)&data);
+}
+
+// BpDecodeMessageExtensibleAhead decode the ahead flag as message's number of
+// bits from current decoding buffer.
+uint16_t BpDecodeMessageExtensibleAhead(struct BpMessageDescriptor *descriptor,
+                                        struct BpProcessorContext *ctx) {
+    uint16_t data = 0;
+    BpEndecodeBaseType(BpUint(16), ctx, (void *)&data);
+    return data;
+}
+
+// BpEndecodeMessageExtensibleAhead process the message before it's going to be
+// processed.
+void BpEndecodeMessageExtensibleAhead(struct BpMessageDescriptor *descriptor,
+                                      struct BpProcessorContext *ctx) {
+    if (descriptor->extensible) {
+        if (ctx->is_encode) {
+            BpEncodeMessageExtensibleAhead(descriptor, ctx);
+        } else {
+            int i = ctx->i;
+            uint16_t ahead = BpDecodeMessageExtensibleAhead(descriptor, ctx);
+            ctx->ito = i + (int)ahead;
+        }
+    }
+}
+
+// BpPostDecodeMessage process the message before it has been decoded.
+void BpPostDecodeMessage(struct BpMessageDescriptor *descriptor,
+                         struct BpProcessorContext *ctx) {
+    if (descriptor->extensible && (!ctx->is_encode) && ctx->ito >= ctx->i) {
         ctx->i = ctx->ito;
         ctx->ito = 0;
     }
