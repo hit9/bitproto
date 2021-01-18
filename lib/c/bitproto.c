@@ -9,7 +9,7 @@
 
 // BpContext returns a BpProcessorContext.
 struct BpProcessorContext BpContext(bool is_encode, unsigned char *s) {
-    return (struct BpProcessorContext){is_encode, 0, s};
+    return (struct BpProcessorContext){is_encode, 0, s, 0};
 }
 
 // BpBool returns a bool BpType.
@@ -128,8 +128,9 @@ void BpEndecodeAlias(struct BpAliasDescriptor *descriptor,
 
 void BpEndecodeEnum(struct BpEnumDescriptor *descriptor,
                     struct BpProcessorContext *ctx, void *data) {
-    // TODO: extensible.
+    BpEndecodeEnumExtensibleAhead(descriptor, ctx);
     BpEndecodeBaseType(descriptor->uint, ctx, data);
+    BpPostDecodeEnum(descriptor, ctx);
 }
 
 void BpEndecodeArray(struct BpArrayDescriptor *descriptor,
@@ -239,6 +240,51 @@ void BpDecodeSingleByte(struct BpProcessorContext *ctx, void *data, int j,
         data_buffer[value_index] = delta;
     } else {  // Otherwise, run OR to copy bits.
         data_buffer[value_index] |= delta;
+    }
+}
+
+// BpEncodeEnumExtensibleAhead encode enum's bit capacity value to current bit
+// encoding stream.
+void BpEncodeEnumExtensibleAhead(struct BpEnumDescriptor *descriptor,
+                                 struct BpProcessorContext *ctx) {
+    // Safe to cast to uint8_t:
+    // the number of bits of enum always not larger than 64.
+    uint8_t data = (uint8_t)(descriptor->uint.nbits);
+    // Encode this data as a base type.
+    BpEndecodeBaseType(BpUint(8), ctx, (void *)&data);
+}
+
+// BpDecodeEnumExtensibleAhead decode enum's bit capacity value from current
+// decoding buffer.
+uint8_t BpDecodeEnumExtensibleAhead(struct BpEnumDescriptor *descriptor,
+                                    struct BpProcessorContext *ctx) {
+    uint8_t data = 0;
+    BpEndecodeBaseType(BpUint(8), ctx, (void *)&data);
+    return data;
+}
+
+// BpEndecodeEnumExtensibleAhead process an extensible enum before this enum is
+// going to be processed.
+void BpEndecodeEnumExtensibleAhead(struct BpEnumDescriptor *descriptor,
+                                   struct BpProcessorContext *ctx) {
+    if (descriptor->extensible) {
+        if (ctx->is_encode) {
+            // Encode extensible ahead.
+            BpEncodeEnumExtensibleAhead(descriptor, ctx);
+        } else {
+            // Decode the opponent's capacity.
+            uint8_t ahead = BpDecodeEnumExtensibleAhead(descriptor, ctx);
+            ctx->ito = ctx->i + (int)ahead;  // cast is safe.
+        }
+    }
+}
+
+// BpPostDecodeEnum process an extensible enum after this enum has been decoded.
+void BpPostDecodeEnum(struct BpEnumDescriptor *descriptor,
+                      struct BpProcessorContext *ctx) {
+    if (descriptor->extensible && (!ctx->is_encode) && ctx->ito > 0) {
+        ctx->i = ctx->ito;
+        ctx->ito = 0;
     }
 }
 
