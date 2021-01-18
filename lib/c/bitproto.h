@@ -41,10 +41,6 @@ struct BpProcessorContext {
     // Bytes buffer processing. It's the destination buffer under encoding
     // context, and source buffer under decoding context.
     unsigned char *s;
-    // The value to skip to for i.
-    // Sets before decoding an extensible type.
-    // Clears after decoding an extensible type.
-    int ito;
 };
 
 // BpProcessor function first constructs its own descriptor, and then continues
@@ -165,28 +161,16 @@ void BpEncodeEnumExtensibleAhead(struct BpEnumDescriptor *descriptor,
                                  struct BpProcessorContext *ctx);
 uint8_t BpDecodeEnumExtensibleAhead(struct BpEnumDescriptor *descriptor,
                                     struct BpProcessorContext *ctx);
-void BpEndecodeEnumExtensibleAhead(struct BpEnumDescriptor *descriptor,
-                                   struct BpProcessorContext *ctx);
-void BpPostDecodeEnum(struct BpEnumDescriptor *descriptor,
-                      struct BpProcessorContext *ctx);
 
 void BpEncodeArrayExtensibleAhead(struct BpArrayDescriptor *descriptor,
                                   struct BpProcessorContext *ctx);
 uint16_t BpDecodeArrayExtensibleAhead(struct BpArrayDescriptor *descriptor,
                                       struct BpProcessorContext *ctx);
-void BpEndecodeArrayExtensibleAhead(struct BpArrayDescriptor *descriptor,
-                                    struct BpProcessorContext *ctx);
-void BpPostDecodeArray(struct BpArrayDescriptor *descriptor,
-                       struct BpProcessorContext *ctx);
 
 void BpEncodeMessageExtensibleAhead(struct BpMessageDescriptor *descriptor,
                                     struct BpProcessorContext *ctx);
 uint16_t BpDecodeMessageExtensibleAhead(struct BpMessageDescriptor *descriptor,
                                         struct BpProcessorContext *ctx);
-void BpEndecodeMessageExtensibleAhead(struct BpMessageDescriptor *descriptor,
-                                      struct BpProcessorContext *ctx);
-void BpPostDecodeMessage(struct BpMessageDescriptor *descriptor,
-                         struct BpProcessorContext *ctx);
 
 // Utils
 
