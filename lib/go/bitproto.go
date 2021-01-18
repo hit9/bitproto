@@ -193,13 +193,35 @@ func (t *Array) Process(ctx *ProcessContext, di *DataIndexer, accessor Accessor)
 	di.IndexStackUp()
 	defer di.IndexStackDown()
 
-	t.ProcessExtensibleAhead(ctx)
-	defer t.PostDecode(ctx)
+	// Record current number of bits processed.
+	i := ctx.i
+	// Opponent array capacity if extensible set.
+	ahead := uint16(0)
 
+	if t.extensible {
+		if ctx.isEncode {
+			// Encode ahead flag if extensible.
+			t.EncodeExtensibleAhead(ctx)
+		} else {
+			// Decode ahead flag if extensible.
+			ahead = t.DecodeExtensibleAhead(ctx)
+		}
+	}
+
+	// Process array elements.
 	for k := 0; k < t.capacity; k++ {
 		// Rewrite indexer's array index tracker.
 		di.IndexReplace(k)
 		t.elementProcessor.Process(ctx, di, accessor)
+	}
+
+	// Skip redundant bits post decoding.
+	if t.extensible && !ctx.isEncode {
+		// Skip redundant bits.
+		ito := i + int(ahead)*t.capacity
+		if ito >= ctx.i {
+			ctx.i = ito
+		}
 	}
 }
 
@@ -223,31 +245,6 @@ func (t *Array) DecodeExtensibleAhead(ctx *ProcessContext) uint16 {
 	return accessor.data
 }
 
-// ProcessExtensibleAhead process an extensible array before it's going to be
-// processed.
-func (t *Array) ProcessExtensibleAhead(ctx *ProcessContext) {
-	if t.extensible {
-		if ctx.isEncode {
-			// Encode extensible ahead flag.
-			t.EncodeExtensibleAhead(ctx)
-		} else {
-			i := ctx.i
-			// Decode the opponent's capacity.
-			ahead := t.DecodeExtensibleAhead(ctx)
-			// The array's ahead flag is the opponent's capacity.
-			ctx.ito = i + (int(ahead) * t.capacity)
-		}
-	}
-}
-
-// PostDecode process an extensible array after it has been processed.
-func (t *Array) PostDecode(ctx *ProcessContext) {
-	if t.extensible && !ctx.isEncode && ctx.ito >= ctx.i {
-		ctx.i = ctx.ito
-		ctx.ito = 0
-	}
-}
-
 // EnumProcessor implements Processor for enum.
 // Assuming compiler generates Enum a method: BpProcessor to returns this.
 type EnumProcessor struct {
@@ -262,9 +259,33 @@ func NewEnumProcessor(extensible bool, ut *Uint) *EnumProcessor {
 func (t *EnumProcessor) Flag() Flag { return FlagEnum }
 
 func (t *EnumProcessor) Process(ctx *ProcessContext, di *DataIndexer, accessor Accessor) {
-	t.ProcessExtensibleAhead(ctx)
+
+	// Record current number of bits processed.
+	i := ctx.i
+	// Opponent enum bits if extensible set.
+	ahead := uint8(0)
+
+	if t.extensible {
+		if ctx.isEncode {
+			// Encode ahead flag if extensible.
+			t.EncodeExtensibleAhead(ctx)
+		} else {
+			// Decode ahead flag if extensible.
+			ahead = t.DecodeExtensibleAhead(ctx)
+		}
+	}
+
+	// Process inner uint.
 	t.ut.Process(ctx, di, accessor)
-	t.PostDecode(ctx)
+
+	// Skip redundant bits post decoding.
+	if t.extensible && !ctx.isEncode {
+		// Skip redundant bits.
+		ito := i + int(ahead)
+		if ito >= ctx.i {
+			ctx.i = ito
+		}
+	}
 }
 
 // EncodeExtensibleAhead encode enum ahead flag into current encoding buffer in
@@ -285,30 +306,6 @@ func (t *EnumProcessor) DecodeExtensibleAhead(ctx *ProcessContext) uint8 {
 	return accessor.data
 }
 
-// ProcessExtensibleAhead process an extensible enum before this enum is going
-// to be processed.
-func (t *EnumProcessor) ProcessExtensibleAhead(ctx *ProcessContext) {
-	if t.extensible {
-		if ctx.isEncode {
-			// Encode extensible ahead flag.
-			t.EncodeExtensibleAhead(ctx)
-		} else {
-			// Decode the opponent's capacity.
-			i := ctx.i
-			ahead := t.DecodeExtensibleAhead(ctx)
-			ctx.ito = i + int(ahead) // cast is safe.
-		}
-	}
-}
-
-// Process an extensible enum after this enum has been decoded.
-func (t *EnumProcessor) PostDecode(ctx *ProcessContext) {
-	if t.extensible && !ctx.isEncode && ctx.ito >= ctx.i {
-		ctx.i = ctx.ito
-		ctx.ito = 0
-	}
-}
-
 // AliasProcessor implements Processor for alias.
 // Assuming compiler generates Alias a method: BpProcessor to returns this.
 type AliasProcessor struct{ to Processor }
@@ -318,7 +315,6 @@ func NewAliasProcessor(to Processor) *AliasProcessor { return &AliasProcessor{to
 func (t *AliasProcessor) Flag() Flag { return FlagAlias }
 
 func (t *AliasProcessor) Process(ctx *ProcessContext, di *DataIndexer, accessor Accessor) {
-	// TODO: extensible
 	t.to.Process(ctx, di, accessor)
 }
 
@@ -344,11 +340,13 @@ func (t *MessageFieldProcessor) Process(ctx *ProcessContext, _ *DataIndexer, acc
 // MessageProcessor implements Processor for message
 // Assuming compiler generates Message a method: BpProcessor to returns this.
 type MessageProcessor struct {
+	extensible       bool
+	nbits            int
 	fieldDescriptors []*MessageFieldProcessor
 }
 
-func NewMessageProcessor(fieldDescriptors []*MessageFieldProcessor) *MessageProcessor {
-	return &MessageProcessor{fieldDescriptors}
+func NewMessageProcessor(extensible bool, nbits int, fieldDescriptors []*MessageFieldProcessor) *MessageProcessor {
+	return &MessageProcessor{extensible, nbits, fieldDescriptors}
 }
 
 func (t *MessageProcessor) Flag() Flag { return FlagMessage }
@@ -360,9 +358,54 @@ func (t *MessageProcessor) Process(ctx *ProcessContext, di *DataIndexer, accesso
 		accessor = accessor.BpGetAccessor(di)
 	}
 
+	// Record current number of bits processed.
+	i := ctx.i
+	// Opponent nbits if extensible set.
+	ahead := uint16(0)
+
+	if t.extensible {
+		if ctx.isEncode {
+			// Encode ahead flag if extensible.
+			t.EncodeExtensibleAhead(ctx)
+		} else {
+			// Decode ahead flag if extensible.
+			ahead = t.DecodeExtensibleAhead(ctx)
+		}
+	}
+
+	// Process fields.
 	for _, fieldDescriptor := range t.fieldDescriptors {
 		fieldDescriptor.Process(ctx, di, accessor)
 	}
+
+	// Skip redundant bits post decoding.
+	if t.extensible && !ctx.isEncode {
+		// Skip redundant bits.
+		ito := i + int(ahead)
+		if ito >= ctx.i {
+			ctx.i = ito
+		}
+	}
+}
+
+// EncodeExtensibleAhead encode the message number of bits as the ahead flag to
+// current bit encoding stream.
+func (t *MessageProcessor) EncodeExtensibleAhead(ctx *ProcessContext) {
+	// Safe to cast:
+	// the nbits of a message always <= 65535.
+	data := uint16(t.nbits)
+	accessor := &Uint16Accessor{data}
+	di := NewDataIndexer(1)
+	processBaseType(16, ctx, di, accessor)
+}
+
+// DecodeExtensibleAhead decode the ahead flag as the nbits of this message from
+// current decoding stream.
+func (t *MessageProcessor) DecodeExtensibleAhead(ctx *ProcessContext) uint16 {
+	accessor := &Uint16Accessor{}
+	di := NewDataIndexer(1)
+	processBaseType(16, ctx, di, accessor)
+	return accessor.data
 }
 
 // processBaseType process encoding and decoding on a base type.
@@ -435,7 +478,15 @@ func getNbitsToCopy(i, j, n int) int {
 }
 
 // getMask returns the mask value to copy bits inside a single byte.
-// TODO: comment
+// The argument k is the start bit index in the byte, argument c is the number
+// of bits to copy.
+//
+// Examples of returned mask:
+//
+//   Returns                Arguments
+//   00001111               k=0, c=4
+//   01111100               k=2, c=5
+//   00111100               k=2, c=4
 func getMask(k, c int) int {
 	if k == 0 {
 		return (1 << c) - 1
