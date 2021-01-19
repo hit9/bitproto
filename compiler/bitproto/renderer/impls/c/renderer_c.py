@@ -5,7 +5,7 @@ Renderer for C file.
 from typing import List, Optional
 
 from bitproto._ast import (Alias, Array, BoundDefinition, Definition, Enum,
-                           Message)
+                           Message, MessageField)
 from bitproto.renderer.block import (Block, BlockAheadNotice, BlockBindAlias,
                                      BlockBindEnum, BlockBindMessage,
                                      BlockBindMessageField,
@@ -14,11 +14,13 @@ from bitproto.renderer.block import (Block, BlockAheadNotice, BlockBindAlias,
                                      BlockDeferable, BlockWrapper)
 from bitproto.renderer.impls.c.formatter import CFormatter as F
 from bitproto.renderer.impls.c.renderer_h import (
-    BlockAliasProcessorBase, BlockEnumProcessorBase, BlockMessageDecoderBase,
-    BlockMessageEncoderBase, BlockMessageJsonFormatterBase,
-    BlockMessageProcessorBase, RendererCHeader)
+    BlockAliasJsonFormatterBase, BlockAliasProcessorBase,
+    BlockEnumJsonFormatterBase, BlockEnumProcessorBase,
+    BlockMessageBpJsonFormatterBase, BlockMessageDecoderBase,
+    BlockMessageEncoderBase, BlockMessageFieldDescriptorsIniterBase,
+    BlockMessageJsonFormatterBase, BlockMessageProcessorBase, RendererCHeader)
 from bitproto.renderer.renderer import Renderer
-from bitproto.utils import cast_or_raise, override
+from bitproto.utils import cached_property, cast_or_raise, override
 
 
 class BlockInclude(Block[F]):
@@ -29,22 +31,25 @@ class BlockInclude(Block[F]):
         self.push(f'#include "{header_filename}"')
 
 
-class BlockArrayProcessorBase(Block[F]):
+class BlockArrayBpFunctionBase(Block[F]):
     def __init__(self, t: Array, d: Definition, indent: int = 0) -> None:
         super().__init__(indent)
         self.t = t
         self.d = d
 
+    @cached_property
+    def array_descriptor(self) -> str:
+        return self.formatter.format_bp_array_descriptor(self.t)
 
-class BlockArrayProcessorBody(BlockArrayProcessorBase):
+
+class BlockArrayProcessorBody(BlockArrayBpFunctionBase):
     @override(Block)
     def render(self) -> None:
-        descriptor = self.formatter.format_bp_array_descriptor(self.t)
-        self.push(f"struct BpArrayDescriptor descriptor = {descriptor};")
+        self.push(f"struct BpArrayDescriptor descriptor = {self.array_descriptor};")
         self.push("BpEndecodeArray(&descriptor, ctx, data);")
 
 
-class BlockArrayProcessor(BlockArrayProcessorBase, BlockWrapper[F]):
+class BlockArrayProcessor(BlockArrayBpFunctionBase, BlockWrapper[F]):
     @override(BlockWrapper)
     def wraps(self) -> Block[F]:
         return BlockArrayProcessorBody(self.t, self.d, indent=4)
@@ -53,6 +58,33 @@ class BlockArrayProcessor(BlockArrayProcessorBase, BlockWrapper[F]):
     def before(self) -> None:
         processor_name = self.formatter.format_bp_array_processor_name(self.t, self.d)
         signature = f"void {processor_name}(void *data, struct BpProcessorContext *ctx)"
+        self.push(f"{signature} {{")
+
+    @override(BlockWrapper)
+    def after(self) -> None:
+        self.push("}")
+
+
+class BlockArrayJsonFormatterBody(BlockArrayBpFunctionBase):
+    @override(Block)
+    def render(self) -> None:
+        self.push(f"struct BpArrayDescriptor descriptor = {self.array_descriptor};")
+        self.push("BpJsonFormatArray(&descriptor, ctx, data);")
+
+
+class BlockArrayJsonFormatter(BlockArrayBpFunctionBase, BlockWrapper[F]):
+    @override(BlockWrapper)
+    def wraps(self) -> Block[F]:
+        return BlockArrayJsonFormatterBody(self.t, self.d, indent=4)
+
+    @override(BlockWrapper)
+    def before(self) -> None:
+        json_formatter_name = self.formatter.format_bp_array_json_formatter_name(
+            self.t, self.d
+        )
+        signature = (
+            f"void {json_formatter_name}(void *data, struct BpJsonFormatContext *ctx)"
+        )
         self.push(f"{signature} {{")
 
     @override(BlockWrapper)
@@ -69,6 +101,17 @@ class BlockArrayProcessorForAlias(BlockBindAlias[F], BlockConditional[F]):
     def block(self) -> Block[F]:
         array_type = cast_or_raise(Array, self.d.type)
         return BlockArrayProcessor(array_type, self.d)
+
+
+class BlockArrayJsonFormatterForAlias(BlockBindAlias[F], BlockConditional[F]):
+    @override(BlockConditional)
+    def condition(self) -> bool:
+        return isinstance(self.d.type, Array)
+
+    @override(BlockConditional)
+    def block(self) -> Block[F]:
+        array_type = cast_or_raise(Array, self.d.type)
+        return BlockArrayJsonFormatter(array_type, self.d)
 
 
 class BlockAliasProcessorBody(BlockBindAlias[F]):
@@ -93,14 +136,41 @@ class BlockAliasProcessor(BlockAliasProcessorBase, BlockWrapper[F]):
         self.push("}")
 
 
-class BlockAliasProcessors(BlockBindAlias[F], BlockComposition[F]):
+class BlockAliasFunctions(BlockBindAlias[F], BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
-        return [BlockArrayProcessorForAlias(self.d), BlockAliasProcessor(self.d)]
+        return [
+            BlockArrayProcessorForAlias(self.d),
+            BlockArrayJsonFormatterForAlias(self.d),
+            BlockAliasProcessor(self.d),
+            BlockAliasJsonFormatter(self.d),
+        ]
 
     @override(BlockComposition)
     def separator(self) -> str:
         return "\n\n"
+
+
+class BlockAliasJsonFormatterBody(BlockBindAlias[F]):
+    @override(Block)
+    def render(self) -> None:
+        descriptor = self.formatter.format_bp_alias_descriptor(self.d)
+        self.push(f"struct BpAliasDescriptor descriptor = {descriptor};")
+        self.push("BpJsonFormatAlias(&descriptor, ctx, data);")
+
+
+class BlockAliasJsonFormatter(BlockAliasJsonFormatterBase, BlockWrapper[F]):
+    @override(BlockWrapper)
+    def wraps(self) -> Block[F]:
+        return BlockAliasJsonFormatterBody(self.d, indent=4)
+
+    @override(BlockWrapper)
+    def before(self) -> None:
+        self.push(f"{self.function_signature} {{")
+
+    @override(BlockWrapper)
+    def after(self) -> None:
+        self.push("}")
 
 
 class BlockEnumProcessorBody(BlockBindEnum[F]):
@@ -125,6 +195,34 @@ class BlockEnumProcessor(BlockEnumProcessorBase, BlockWrapper[F]):
         self.push("}")
 
 
+class BlockEnumJsonFormatterBody(BlockBindEnum[F]):
+    @override(Block)
+    def render(self) -> None:
+        descriptor = self.formatter.format_bp_enum_descriptor(self.d)
+        self.push(f"struct BpEnumDescriptor descriptor = {descriptor};")
+        self.push("BpJsonFormatEnum(&descriptor, ctx, data);")
+
+
+class BlockEnumJsonFormatter(BlockEnumJsonFormatterBase, BlockWrapper[F]):
+    @override(BlockWrapper)
+    def wraps(self) -> Block[F]:
+        return BlockEnumJsonFormatterBody(self.d, indent=4)
+
+    @override(BlockWrapper)
+    def before(self) -> None:
+        self.push(f"{self.function_signature} {{")
+
+    @override(BlockWrapper)
+    def after(self) -> None:
+        self.push("}")
+
+
+class BlockEnumFunctions(BlockBindEnum[F], BlockComposition[F]):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block[F]]:
+        return [BlockEnumProcessor(self.d), BlockEnumJsonFormatter(self.d)]
+
+
 class BlockArrayProcessorForMessageField(BlockBindMessageField[F], BlockConditional[F]):
     @override(BlockConditional)
     def condition(self) -> bool:
@@ -146,22 +244,59 @@ class BlockArrayProcessorForMessageFieldList(BlockBindMessage[F], BlockCompositi
         return "\n\n"
 
 
+class BlockArrayJsonFormatterForMessageField(
+    BlockBindMessageField[F], BlockConditional[F]
+):
+    @override(BlockConditional)
+    def condition(self) -> bool:
+        return isinstance(self.d.type, Array)
+
+    @override(BlockConditional)
+    def block(self) -> Block[F]:
+        array_type = cast_or_raise(Array, self.d.type)
+        return BlockArrayJsonFormatter(array_type, self.d)
+
+
+class BlockArrayJsonFormatterForMessageFieldList(
+    BlockBindMessage[F], BlockComposition[F]
+):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block[F]]:
+        return [
+            BlockArrayJsonFormatterForMessageField(d) for d in self.d.sorted_fields()
+        ]
+
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n\n"
+
+
 class BlockMessageProcessorFieldItem(BlockBindMessageField[F]):
+    def __init__(
+        self, d: MessageField, name: Optional[str] = None, indent: int = 0, i: int = 0
+    ) -> None:
+        super().__init__(d, name, indent)
+        self.i: int = i
+
     @override(Block)
     def render(self) -> None:
         bp_type = self.formatter.format_bp_type(self.d.type, self.d)
-        self.push("{")
-        self.push_string(f"(void *)&(m->{self.message_field_name})")
+        index = self.formatter.format_int_value(self.i)
+        name = self.formatter.format_str_value(self.d.name)
+        self.push(f"fds[{index}] =")
+        self.push_string("BpMessageFieldDescriptor(")
+        self.push_string(f"(void *)&(m->{self.message_field_name})", separator="")
         self.push_string(f"{bp_type}", separator=", ")
-        self.push_string("},")
+        self.push_string(f"{name}", separator=", ")
+        self.push_string(");", separator="")
 
 
 class BlockMessageProcessorFieldList(BlockBindMessage[F], BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
         return [
-            BlockMessageProcessorFieldItem(d, indent=self.indent)
-            for d in self.d.sorted_fields()
+            BlockMessageProcessorFieldItem(d, indent=self.indent, i=i)
+            for i, d in enumerate(self.d.sorted_fields())
         ]
 
     @override(BlockComposition)
@@ -169,28 +304,12 @@ class BlockMessageProcessorFieldList(BlockBindMessage[F], BlockComposition[F]):
         return "\n"
 
 
-class BlockMessageProcessorBody(BlockBindMessage[F], BlockWrapper[F]):
+class BlockMessageFieldDescriptorsIniter(
+    BlockMessageFieldDescriptorsIniterBase, BlockWrapper[F]
+):
     @override(BlockWrapper)
     def wraps(self) -> Block[F]:
         return BlockMessageProcessorFieldList(self.d, indent=self.indent + 4)
-
-    @override(BlockWrapper)
-    def before(self) -> None:
-        self.push(f"{self.message_type} *m = ({self.message_type} *)(data);")
-        self.push("struct BpMessageFieldDescriptor field_descriptors[] = {")
-
-    @override(BlockWrapper)
-    def after(self) -> None:
-        bp_type = self.formatter.format_bp_message_descriptor(self.d)
-        self.push("};")
-        self.push(f"struct BpMessageDescriptor descriptor = {bp_type};")
-        self.push("BpEndecodeMessage(&descriptor, ctx, data);")
-
-
-class BlockMessageProcessor(BlockMessageProcessorBase, BlockWrapper[F]):
-    @override(BlockWrapper)
-    def wraps(self) -> Block[F]:
-        return BlockMessageProcessorBody(self.d, indent=4)
 
     @override(BlockWrapper)
     def before(self) -> None:
@@ -201,12 +320,57 @@ class BlockMessageProcessor(BlockMessageProcessorBase, BlockWrapper[F]):
         self.push("}")
 
 
+class BlockMessageDescriptorBuild(BlockMessageFieldDescriptorsIniterBase):
+    @override(Block)
+    def render(self) -> None:
+        nfields = self.formatter.format_int_value(self.d.nfields())
+        bp_type = self.formatter.format_bp_message_descriptor(self.d)
+        initer = self.formatter.format_bp_message_field_descriptor_initer(self.d)
+
+        self.push(f"{self.message_type} *m = ({self.message_type} *)(data);")
+        self.push(f"struct BpMessageFieldDescriptor field_descriptors[{nfields}];")
+        self.push(f"{initer}(m, field_descriptors);")
+        self.push(f"struct BpMessageDescriptor descriptor = {bp_type};")
+
+
+class BlockMessageProcessor(BlockMessageProcessorBase, BlockWrapper[F]):
+    @override(BlockWrapper)
+    def wraps(self) -> Block[F]:
+        return BlockMessageDescriptorBuild(self.d, indent=4)
+
+    @override(BlockWrapper)
+    def before(self) -> None:
+        self.push(f"{self.function_signature} {{")
+
+    @override(BlockWrapper)
+    def after(self) -> None:
+        self.push("BpEndecodeMessage(&descriptor, ctx, data);", indent=4)
+        self.push("}")
+
+
+class BlockMessageBpJsonFormatter(BlockMessageBpJsonFormatterBase, BlockWrapper[F]):
+    @override(BlockWrapper)
+    def wraps(self) -> Block[F]:
+        return BlockMessageDescriptorBuild(self.d, indent=4)
+
+    @override(BlockWrapper)
+    def before(self) -> None:
+        self.push(f"{self.function_signature} {{")
+
+    @override(BlockWrapper)
+    def after(self) -> None:
+        self.push("BpJsonFormatMessage(&descriptor, ctx, data);", indent=4)
+        self.push("}")
+
+
 class BlockMessageEncoder(BlockMessageEncoderBase):
     @override(Block)
     def render(self) -> None:
         processor_name = self.formatter.format_bp_message_processor_name(self.d)
         self.push(f"{self.function_signature} {{")
-        self.push("struct BpProcessorContext ctx = BpContext(true, s);", indent=4)
+        self.push(
+            "struct BpProcessorContext ctx = BpProcessorContext(true, s);", indent=4
+        )
         self.push(f"{processor_name}((void *)m, &ctx);", indent=4)
         self.push("return 0;", indent=4)
         self.push("}")
@@ -217,9 +381,24 @@ class BlockMessageDecoder(BlockMessageDecoderBase):
     def render(self) -> None:
         processor_name = self.formatter.format_bp_message_processor_name(self.d)
         self.push(f"{self.function_signature} {{")
-        self.push("struct BpProcessorContext ctx = BpContext(false, s);", indent=4)
+        self.push(
+            "struct BpProcessorContext ctx = BpProcessorContext(false, s);", indent=4
+        )
         self.push(f"{processor_name}((void *)m, &ctx);", indent=4)
         self.push("return 0;", indent=4)
+        self.push("}")
+
+
+class BlockMessageJsonFormatter(BlockMessageJsonFormatterBase):
+    @override(Block)
+    def render(self) -> None:
+        json_formatter_name = self.formatter.format_bp_message_json_formatter_name(
+            self.d
+        )
+        self.push(f"{self.function_signature} {{")
+        self.push("struct BpJsonFormatContext ctx = BpJsonFormatContext(s);", indent=4)
+        self.push(f"{json_formatter_name}((void *)m, &ctx);", indent=4)
+        self.push("return ctx.n;", indent=4)
         self.push("}")
 
 
@@ -228,9 +407,13 @@ class BlockMessageFunctions(BlockBindMessage[F], BlockComposition[F]):
     def blocks(self) -> List[Block[F]]:
         return [
             BlockArrayProcessorForMessageFieldList(self.d),
+            BlockArrayJsonFormatterForMessageFieldList(self.d),
+            BlockMessageFieldDescriptorsIniter(self.d),
             BlockMessageProcessor(self.d),
+            BlockMessageBpJsonFormatter(self.d),
             BlockMessageEncoder(self.d),
             BlockMessageDecoder(self.d),
+            BlockMessageJsonFormatter(self.d),
         ]
 
 
@@ -238,9 +421,9 @@ class BlockBoundDefinitionList(BlockBoundDefinitionDispatcher[F]):
     @override(BlockBoundDefinitionDispatcher)
     def dispatch(self, d: BoundDefinition) -> Optional[Block[F]]:
         if isinstance(d, Alias):
-            return BlockAliasProcessors(d)
+            return BlockAliasFunctions(d)
         if isinstance(d, Enum):
-            return BlockEnumProcessor(d)
+            return BlockEnumFunctions(d)
         if isinstance(d, Message):
             return BlockMessageFunctions(d)
         return None

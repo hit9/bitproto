@@ -8,57 +8,73 @@
 ///////////////////
 
 // BpContext returns a BpProcessorContext.
-struct BpProcessorContext BpContext(bool is_encode, unsigned char *s) {
+struct BpProcessorContext BpProcessorContext(bool is_encode, unsigned char *s) {
     return (struct BpProcessorContext){is_encode, 0, s};
+}
+// BpJsonFormatContext returns a BpJsonFormatContext.
+struct BpJsonFormatContext BpJsonFormatContext(char *s) {
+    return (struct BpJsonFormatContext){0, s};
 }
 
 // BpBool returns a bool BpType.
 struct BpType BpBool() {
-    return (struct BpType){BP_TYPE_BOOL, 1, sizeof(bool), NULL};
+    return (struct BpType){BP_TYPE_BOOL, 1, sizeof(bool), NULL, NULL};
 }
 
 // BpInt returns a int BpType for given nbits.
 struct BpType BpInt(size_t nbits) {
-    return (struct BpType){BP_TYPE_INT, nbits, BpIntSizeFromNbits(nbits), NULL};
+    return (struct BpType){BP_TYPE_INT, nbits, BpIntSizeFromNbits(nbits), NULL,
+                           NULL};
 }
 
 // BpUint returns a uint BpType for given nbits.
 struct BpType BpUint(size_t nbits) {
     return (struct BpType){BP_TYPE_UINT, nbits, BpUintSizeFromNbits(nbits),
-                           NULL};
+                           NULL, NULL};
 }
 
 // BpByte returns a byte BpType for given nbits.
 struct BpType BpByte() {
-    return (struct BpType){BP_TYPE_BYTE, 8, sizeof(unsigned char), NULL};
+    return (struct BpType){BP_TYPE_BYTE, 8, sizeof(unsigned char), NULL, NULL};
 }
 
 // BpMessage returns a message BpType.
-struct BpType BpMessage(size_t nbits, size_t size, BpProcessor processor) {
-    return (struct BpType){BP_TYPE_MESSAGE, nbits, size, processor};
+struct BpType BpMessage(size_t nbits, size_t size, BpProcessor processor,
+                        BpJsonFormatter formatter) {
+    return (struct BpType){BP_TYPE_MESSAGE, nbits, size, processor, formatter};
 }
 
 // BpEnum returns an enum BpType.
-struct BpType BpEnum(size_t nbits, size_t size, BpProcessor processor) {
-    return (struct BpType){BP_TYPE_ENUM, nbits, size, processor};
+struct BpType BpEnum(size_t nbits, size_t size, BpProcessor processor,
+                     BpJsonFormatter formatter) {
+    return (struct BpType){BP_TYPE_ENUM, nbits, size, processor, formatter};
 }
 
 // BpArray returns an array BpType.
-struct BpType BpArray(size_t nbits, size_t size, BpProcessor processor) {
-    return (struct BpType){BP_TYPE_ARRAY, nbits, size, processor};
+struct BpType BpArray(size_t nbits, size_t size, BpProcessor processor,
+                      BpJsonFormatter formatter) {
+    return (struct BpType){BP_TYPE_ARRAY, nbits, size, processor, formatter};
 }
 
 // BpAlias returns an alias BpType.
-struct BpType BpAlias(size_t nbits, size_t size, BpProcessor processor) {
-    return (struct BpType){BP_TYPE_ALIAS, nbits, size, processor};
+struct BpType BpAlias(size_t nbits, size_t size, BpProcessor processor,
+                      BpJsonFormatter formatter) {
+    return (struct BpType){BP_TYPE_ALIAS, nbits, size, processor, formatter};
 }
 
-// BpMessageFieldDescriptor returns a descriptor for a message.
+// BpMessageDescriptor returns a descriptor for a message.
 struct BpMessageDescriptor BpMessageDescriptor(
     bool extensible, int nfields, size_t nbits,
     struct BpMessageFieldDescriptor *field_descriptors) {
     return (struct BpMessageDescriptor){extensible, nfields, nbits,
                                         field_descriptors};
+}
+
+// BpMessageFieldDescriptor returns a descriptor for a message field.
+struct BpMessageFieldDescriptor BpMessageFieldDescriptor(void *data,
+                                                         struct BpType type,
+                                                         char *name) {
+    return (struct BpMessageFieldDescriptor){data, type, name};
 }
 
 // BpEnumDescriptor returns a descriptor for an enum.
@@ -454,4 +470,154 @@ int BpSmartShift(int n, int k) {
         return n << (0 - k);
     }
     return n;
+}
+
+// BpJsonFormatString is a simple wrapper on sprintf that accepts
+// BpJsonFormatContext as an argment.
+void BpJsonFormatString(struct BpJsonFormatContext *ctx, const char *format,
+                        ...) {
+    va_list va;
+    va_start(va, format);
+    ctx->n += vsprintf((char *)&(ctx->s[ctx->n]), format, va);
+    va_end(va);
+}
+
+// BpJsonFormatMessage formats the message with given descriptor to json format
+// string and writes the formatted string into buffer given by ctx.
+void BpJsonFormatMessage(struct BpMessageDescriptor *descriptor,
+                         struct BpJsonFormatContext *ctx, void *data) {
+    // Formats left brace.
+    BpJsonFormatString(ctx, "{");
+
+    // Format key values.
+    for (int k = 0; k < descriptor->nfields; k++) {
+        struct BpMessageFieldDescriptor field_descriptor =
+            descriptor->field_descriptors[k];
+
+        BpJsonFormatMessageField(&field_descriptor, ctx);
+
+        if (k + 1 < descriptor->nfields) {
+            BpJsonFormatString(ctx, ", ");
+        }
+    }
+
+    // Formats right brace.
+    BpJsonFormatString(ctx, "}");
+}
+
+// BpJsonFormatMessageField formats a message field with given descriptor to
+// json format into target buffer in given ctx.
+void BpJsonFormatMessageField(struct BpMessageFieldDescriptor *descriptor,
+                              struct BpJsonFormatContext *ctx) {
+    // Format key.
+    BpJsonFormatString(ctx, "\"%s\": ", descriptor->name);
+
+    // Format value.
+    switch (descriptor->type.flag) {
+        case BP_TYPE_BOOL:
+        case BP_TYPE_INT:
+        case BP_TYPE_UINT:
+        case BP_TYPE_BYTE:
+            BpJsonFormatBaseType(descriptor->type, ctx, descriptor->data);
+            break;
+        case BP_TYPE_ARRAY:
+        case BP_TYPE_ENUM:
+        case BP_TYPE_ALIAS:
+        case BP_TYPE_MESSAGE:
+            descriptor->type.json_formatter(descriptor->data, ctx);
+            break;
+    }
+}
+
+// BpJsonFormatBaseType formats a data in base type to json format.
+void BpJsonFormatBaseType(struct BpType type, struct BpJsonFormatContext *ctx,
+                          void *data) {
+    switch (type.flag) {
+        case BP_TYPE_BOOL:
+            // Bool
+            BpJsonFormatString(ctx, "%s",
+                               (*((bool *)(data))) ? "true" : "false");
+            break;
+        case BP_TYPE_INT:
+            // Int
+            // FIXME 32bit differs with 64bit
+            if (type.nbits <= 8) {
+                BpJsonFormatString(ctx, "%d", (*((int8_t *)(data))));
+            } else if (type.nbits <= 16) {
+                BpJsonFormatString(ctx, "%d", (*((int16_t *)(data))));
+            } else if (type.nbits <= 32) {
+                BpJsonFormatString(ctx, "%d", (*((int32_t *)(data))));
+            } else {
+                BpJsonFormatString(ctx, "%ld", (*(int64_t *)(data)));
+            }
+            break;
+        case BP_TYPE_UINT:
+            // Uint
+            // FIXME 32bit differs with 64bit
+            if (type.nbits <= 32) {
+                BpJsonFormatString(ctx, "%lu", (*(uint32_t *)(data)));
+            } else {
+                BpJsonFormatString(ctx, "%llu", (*(uint64_t *)(data)));
+            }
+            break;
+        case BP_TYPE_BYTE:
+            // Byte
+            BpJsonFormatString(ctx, "%u", (*(unsigned char *)(data)));
+            break;
+    }
+}
+
+// BpJsonFormatEnum formats an enum with given descriptor to json format.
+void BpJsonFormatEnum(struct BpEnumDescriptor *descriptor,
+                      struct BpJsonFormatContext *ctx, void *data) {
+    BpJsonFormatBaseType(descriptor->uint, ctx, data);
+}
+
+// BpJsonFormatEnum formats an alias with given descriptor to json format.
+void BpJsonFormatAlias(struct BpAliasDescriptor *descriptor,
+                       struct BpJsonFormatContext *ctx, void *data) {
+    switch (descriptor->to.flag) {
+        case BP_TYPE_BOOL:
+        case BP_TYPE_INT:
+        case BP_TYPE_UINT:
+        case BP_TYPE_BYTE:
+            BpJsonFormatBaseType(descriptor->to, ctx, data);
+            break;
+        case BP_TYPE_ARRAY:
+            descriptor->to.json_formatter(data, ctx);
+            break;
+    }
+}
+
+// BpJsonFormatEnum formats an array with given descriptor to json format.
+void BpJsonFormatArray(struct BpArrayDescriptor *descriptor,
+                       struct BpJsonFormatContext *ctx, void *data) {
+    BpJsonFormatString(ctx, "[");
+
+    // Format array elements.
+    for (int k = 0; k < descriptor->cap; k++) {
+        // Lookup the address of this element's data.
+        void *element_data =
+            (void *)((unsigned char *)data + k * descriptor->element_type.size);
+        switch (descriptor->element_type.flag) {
+            case BP_TYPE_BOOL:
+            case BP_TYPE_INT:
+            case BP_TYPE_UINT:
+            case BP_TYPE_BYTE:
+                BpJsonFormatBaseType(descriptor->element_type, ctx,
+                                     element_data);
+                break;
+            case BP_TYPE_ALIAS:
+            case BP_TYPE_MESSAGE:
+            case BP_TYPE_ENUM:
+                descriptor->element_type.json_formatter(element_data, ctx);
+                break;
+        }
+
+        if (k + 1 < descriptor->cap) {
+            BpJsonFormatString(ctx, ", ");
+        }
+    }
+
+    BpJsonFormatString(ctx, "]");
 }

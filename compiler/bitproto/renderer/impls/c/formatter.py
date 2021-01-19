@@ -82,8 +82,11 @@ class CFormatter(Formatter):
     def format_sizeof(self, t: str) -> str:
         return f"sizeof({t})"
 
-    def bp_process_name_prefix(self) -> str:
-        return "BpProcess"
+    def bp_processor_name_prefix(self) -> str:
+        return "BpXXXProcess"
+
+    def bp_json_formatter_name_prefix(self) -> str:
+        return "BpXXXJsonFormat"
 
     def format_bp_type(self, t: Type, d: Optional[Definition] = None) -> str:
         if isinstance(t, Bool):
@@ -124,14 +127,16 @@ class CFormatter(Formatter):
         message_type = self.format_message_type(t)
         size = self.format_sizeof(message_type)
         processor = self.format_bp_message_processor_name(t)
-        return f"BpMessage({nbits}, {size}, {processor})"
+        formatter = self.format_bp_message_json_formatter_name(t)
+        return f"BpMessage({nbits}, {size}, {processor}, {formatter})"
 
     def format_bp_enum(self, t: Enum) -> str:
         nbits = self.format_int_value(t.nbits())
         enum_type = self.format_enum_type(t)
         size = self.format_sizeof(enum_type)
         processor = self.format_bp_enum_processor_name(t)
-        return f"BpEnum({nbits}, {size}, {processor})"
+        formatter = self.format_bp_enum_json_formatter_name(t)
+        return f"BpEnum({nbits}, {size}, {processor}, {formatter})"
 
     def format_bp_array(self, t: Array, d: Definition) -> str:
         nbits = self.format_int_value(t.nbits())
@@ -140,14 +145,16 @@ class CFormatter(Formatter):
         capacity = self.format_int_value(t.cap)
         size = f"{capacity} * {size_element}"
         processor = self.format_bp_array_processor_name(t, d)
-        return f"BpArray({nbits}, {size}, {processor})"
+        formatter = self.format_bp_array_json_formatter_name(t, d)
+        return f"BpArray({nbits}, {size}, {processor}, {formatter})"
 
     def format_bp_alias(self, t: Alias) -> str:
         nbits = self.format_int_value(t.nbits())
         alias_type = self.format_alias_type(t)
         size = self.format_sizeof(alias_type)
         processor = self.format_bp_alias_processor_name(t)
-        return f"BpAlias({nbits}, {size}, {processor})"
+        formatter = self.format_bp_alias_json_formatter_name(t)
+        return f"BpAlias({nbits}, {size}, {processor}, {formatter})"
 
     def format_bp_enum_descriptor(self, t: Enum) -> str:
         extensible = self.format_bool_value(t.extensible)
@@ -156,7 +163,7 @@ class CFormatter(Formatter):
 
     def format_bp_enum_processor_name(self, t: Enum) -> str:
         enum_name = self.format_enum_name(t)
-        prefix = self.bp_process_name_prefix()
+        prefix = self.bp_processor_name_prefix()
         return f"{prefix}{enum_name}"
 
     def format_bp_message_descriptor(
@@ -169,7 +176,7 @@ class CFormatter(Formatter):
 
     def format_bp_message_processor_name(self, t: Message) -> str:
         message_name = self.format_message_name(t)
-        prefix = self.bp_process_name_prefix()
+        prefix = self.bp_processor_name_prefix()
         return f"{prefix}{message_name}"
 
     def format_bp_alias_descriptor(self, t: Alias) -> str:
@@ -178,7 +185,7 @@ class CFormatter(Formatter):
 
     def format_bp_alias_processor_name(self, t: Alias) -> str:
         alias_name = self.format_alias_name(t)
-        prefix = self.bp_process_name_prefix()
+        prefix = self.bp_processor_name_prefix()
         return f"{prefix}{alias_name}"
 
     def format_bp_array_descriptor(self, t: Array) -> str:
@@ -200,10 +207,50 @@ class CFormatter(Formatter):
         self, t: Array, d: MessageField
     ) -> str:
         message_name = self.format_message_name(d.message)
-        prefix = self.bp_process_name_prefix()
+        prefix = self.bp_processor_name_prefix()
         return f"{prefix}Array{message_name}{d.number}"
 
     def format_bp_array_processor_name_from_alias(self, t: Array, d: Alias) -> str:
         alias_name = self.format_alias_name(d)
-        prefix = self.bp_process_name_prefix()
+        prefix = self.bp_processor_name_prefix()
+        return f"{prefix}Array{alias_name}"
+
+    def format_bp_message_field_descriptor_initer(self, t: Message) -> str:
+        message_name = self.format_message_name(t)
+        return f"BpFieldDescriptorsInit{message_name}"
+
+    def format_bp_message_json_formatter_name(self, t: Message) -> str:
+        message_name = self.format_message_name(t)
+        prefix = self.bp_json_formatter_name_prefix()
+        return f"{prefix}{message_name}"
+
+    def format_bp_enum_json_formatter_name(self, t: Enum) -> str:
+        enum_name = self.format_enum_name(t)
+        prefix = self.bp_json_formatter_name_prefix()
+        return f"{prefix}{enum_name}"
+
+    def format_bp_alias_json_formatter_name(self, t: Alias) -> str:
+        alias_name = self.format_alias_name(t)
+        prefix = self.bp_json_formatter_name_prefix()
+        return f"{prefix}{alias_name}"
+
+    def format_bp_array_json_formatter_name(self, t: Array, d: Definition) -> str:
+        if isinstance(d, MessageField):
+            return self.format_bp_array_json_formatter_name_from_message_field(t, d)
+        if isinstance(d, Alias):
+            return self.format_bp_array_json_formatter_name_from_alias(t, d)
+        raise InternalError(
+            "format_bp_array_json_formatter_name got unexpected defintion type"
+        )
+
+    def format_bp_array_json_formatter_name_from_message_field(
+        self, t: Array, d: MessageField
+    ) -> str:
+        message_name = self.format_message_name(d.message)
+        prefix = self.bp_json_formatter_name_prefix()
+        return f"{prefix}Array{message_name}{d.number}"
+
+    def format_bp_array_json_formatter_name_from_alias(self, t: Array, d: Alias) -> str:
+        alias_name = self.format_alias_name(d)
+        prefix = self.bp_json_formatter_name_prefix()
         return f"{prefix}Array{alias_name}"

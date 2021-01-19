@@ -99,6 +99,22 @@ class BlockAliasProcessorDeclaration(BlockAliasProcessorBase):
         self.push(f"{self.function_signature};")
 
 
+class BlockAliasJsonFormatterBase(BlockBindAlias[F]):
+    @cached_property
+    def function_name(self) -> str:
+        return self.formatter.format_bp_alias_json_formatter_name(self.d)
+
+    @cached_property
+    def function_signature(self) -> str:
+        return f"void {self.function_name}(void *data, struct BpJsonFormatContext *ctx)"
+
+
+class BlockAliasJsonFormatterDeclaration(BlockAliasJsonFormatterBase):
+    @override(Block)
+    def render(self) -> None:
+        self.push(f"{self.function_signature};")
+
+
 class BlockAliasDef(BlockBindAlias[F]):
     def render_alias_typedef_to_array(self) -> None:
         self.push(f"typedef {self.aliased_type};")
@@ -121,7 +137,11 @@ class BlockAliasDef(BlockBindAlias[F]):
 class BlockAlias(BlockBindAlias[F], BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
-        return [BlockAliasDef(self.d), BlockAliasProcessorDeclaration(self.d)]
+        return [
+            BlockAliasDef(self.d),
+            BlockAliasProcessorDeclaration(self.d),
+            BlockAliasJsonFormatterDeclaration(self.d),
+        ]
 
     @override(BlockComposition)
     def separator(self) -> str:
@@ -164,6 +184,22 @@ class BlockEnumProcessorDeclaration(BlockEnumProcessorBase):
         self.push(f"{self.function_signature};")
 
 
+class BlockEnumJsonFormatterBase(BlockBindEnum[F]):
+    @cached_property
+    def function_name(self) -> str:
+        return self.formatter.format_bp_enum_json_formatter_name(self.d)
+
+    @cached_property
+    def function_signature(self) -> str:
+        return f"void {self.function_name}(void *data, struct BpJsonFormatContext *ctx)"
+
+
+class BlockEnumJsonFormatterDeclaration(BlockEnumJsonFormatterBase):
+    @override(Block)
+    def render(self) -> None:
+        self.push(f"{self.function_signature};")
+
+
 class BlockEnumDef(BlockBindEnum[F]):
     @override(Block)
     def render(self) -> None:
@@ -178,6 +214,7 @@ class BlockEnum(BlockBindEnum[F], BlockComposition[F]):
             BlockEnumDef(self.d),
             BlockEnumFieldList(self.d),
             BlockEnumProcessorDeclaration(self.d),
+            BlockEnumJsonFormatterDeclaration(self.d),
         ]
 
     @override(BlockComposition)
@@ -283,6 +320,22 @@ class BlockMessageDecoderFunctionDeclaration(BlockMessageDecoderBase):
         self.push(f"{self.function_signature};")
 
 
+class BlockMessageBpJsonFormatterBase(BlockBindMessage[F]):
+    @cached_property
+    def function_name(self) -> str:
+        return self.formatter.format_bp_message_json_formatter_name(self.d)
+
+    @cached_property
+    def function_signature(self) -> str:
+        return f"void {self.function_name}(void *data, struct BpJsonFormatContext *ctx)"
+
+
+class BlockMessageBpJsonFormatterDeclaration(BlockMessageBpJsonFormatterBase):
+    @override(Block)
+    def render(self) -> None:
+        self.push(f"{self.function_signature};")
+
+
 class BlockMessageJsonFormatterBase(BlockBindMessage[F]):
     @cached_property
     def function_name(self) -> str:
@@ -310,6 +363,16 @@ class BlockMessageJsonFormatterFunctionDeclaration(BlockMessageJsonFormatterBase
         self.push(f"{self.function_signature};")
 
 
+class BlockMessageFieldDescriptorsIniterBase(BlockBindMessage[F]):
+    @cached_property
+    def function_name(self) -> str:
+        return self.formatter.format_bp_message_field_descriptor_initer(self.d)
+
+    @cached_property
+    def function_signature(self) -> str:
+        return f"void {self.function_name}({self.message_type} *m, struct BpMessageFieldDescriptor *fds)"
+
+
 class BlockMessageProcessorBase(BlockBindMessage[F]):
     @cached_property
     def function_name(self) -> str:
@@ -334,6 +397,7 @@ class BlockMessageFunctionDeclarations(BlockBindMessage[F], BlockComposition[F])
             BlockMessageDecoderFunctionDeclaration(self.d),
             BlockMessageJsonFormatterFunctionDeclaration(self.d),
             BlockMessageProcessorDeclaration(self.d),
+            BlockMessageBpJsonFormatterDeclaration(self.d),
         ]
 
     @override(BlockComposition)
