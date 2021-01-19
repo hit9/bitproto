@@ -36,22 +36,10 @@ MESSAGE_OPTIONS: OptionDescriptors = (
 # Proto Options
 PROTO_OPTTIONS: OptionDescriptors = (
     OptionDescriptor(
-        "c.target_platform_bits",
-        32,
-        lambda v: v in (32, 64),
-        "C language target machine bits, 32 or 64",
-    ),
-    OptionDescriptor(
         "c.struct_packing_alignment",
         0,
         lambda v: 0 <= v <= 8,
         "C language struct packing alignment, defaults to 1",
-    ),
-    OptionDescriptor(
-        "c.enable_render_json_formatter",
-        True,
-        None,
-        "Whether render json formatter function for structs in C language, defaults to false",
     ),
     OptionDescriptor(
         "go.package_path",
