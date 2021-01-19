@@ -131,7 +131,8 @@ struct BpMessageDescriptor {
 ////////////////
 
 // Context Constructor.
-struct BpProcessorContext BpContext(bool is_encode, unsigned char *s);
+struct BpProcessorContext BpProcessorContext(bool is_encode, unsigned char *s);
+struct BpJsonFormatContext BpJsonFormatContext(char *s);
 
 // BpType Constructors.
 
@@ -139,16 +140,23 @@ struct BpType BpBool();
 struct BpType BpInt(size_t nbits);
 struct BpType BpUint(size_t nbits);
 struct BpType BpByte();
-struct BpType BpMessage(size_t nbits, size_t size, BpProcessor processor);
-struct BpType BpEnum(size_t nbits, size_t size, BpProcessor processor);
-struct BpType BpArray(size_t nbits, size_t size, BpProcessor processor);
-struct BpType BpAlias(size_t nbits, size_t size, BpProcessor processor);
+struct BpType BpMessage(size_t nbits, size_t size, BpProcessor processor,
+                        BpJsonFormatter formatter);
+struct BpType BpEnum(size_t nbits, size_t size, BpProcessor processor,
+                     BpJsonFormatter formatter);
+struct BpType BpArray(size_t nbits, size_t size, BpProcessor processor,
+                      BpJsonFormatter formatter);
+struct BpType BpAlias(size_t nbits, size_t size, BpProcessor processor,
+                      BpJsonFormatter formatter);
 
 // Descriptor Constructors.
 
 struct BpMessageDescriptor BpMessageDescriptor(
     bool extensible, int nfields, size_t nbits,
     struct BpMessageFieldDescriptor *field_descriptors);
+struct BpMessageFieldDescriptor BpMessageFieldDescriptor(void *data,
+                                                         struct BpType type,
+                                                         char *name);
 struct BpEnumDescriptor BpEnumDescriptor(bool extensible, struct BpType uint);
 struct BpArrayDescriptor BpArrayDescriptor(bool extensible, size_t cap,
                                            struct BpType element_type);
@@ -197,7 +205,7 @@ uint16_t BpDecodeMessageExtensibleAhead(struct BpMessageDescriptor *descriptor,
 void BpJsonFormatString(struct BpJsonFormatContext *ctx, const char *format,
                         ...);
 void BpJsonFormatMessage(struct BpMessageDescriptor *descriptor,
-                         struct BpJsonFormatContext *ctx);
+                         struct BpJsonFormatContext *ctx, void *data);
 void BpJsonFormatBaseType(struct BpType type, struct BpJsonFormatContext *ctx,
                           void *data);
 void BpJsonFormatAlias(struct BpAliasDescriptor *descriptor,
