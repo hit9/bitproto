@@ -542,27 +542,31 @@ void BpJsonFormatBaseType(struct BpType type, struct BpJsonFormatContext *ctx,
             // Int
             // FIXME 32bit differs with 64bit
             if (type.nbits <= 8) {
-                BpJsonFormatString(ctx, "%d", (*((int8_t *)(data))));
+                BpJsonFormatString(ctx, "%d", (*((int8_t *)data)));
             } else if (type.nbits <= 16) {
-                BpJsonFormatString(ctx, "%d", (*((int16_t *)(data))));
+                BpJsonFormatString(ctx, "%d", (*((int16_t *)data)));
             } else if (type.nbits <= 32) {
-                BpJsonFormatString(ctx, "%d", (*((int32_t *)(data))));
+                BpJsonFormatString(ctx, "%d", (*((int32_t *)data)));
             } else {
-                BpJsonFormatString(ctx, "%ld", (*(int64_t *)(data)));
+                BpJsonFormatString(ctx, "%ld", (*((int64_t *)data)));
             }
             break;
         case BP_TYPE_UINT:
             // Uint
             // FIXME 32bit differs with 64bit
-            if (type.nbits <= 32) {
-                BpJsonFormatString(ctx, "%lu", (*(uint32_t *)(data)));
+            if (type.nbits <= 8) {
+                BpJsonFormatString(ctx, "%u", (*((uint8_t *)data)));
+            } else if (type.nbits <= 16) {
+                BpJsonFormatString(ctx, "%u", (*((uint16_t *)data)));
+            } else if (type.nbits <= 32) {
+                BpJsonFormatString(ctx, "%lu", (*((uint32_t *)data)));
             } else {
-                BpJsonFormatString(ctx, "%llu", (*(uint64_t *)(data)));
+                BpJsonFormatString(ctx, "%llu", (*((uint64_t *)data)));
             }
             break;
         case BP_TYPE_BYTE:
             // Byte
-            BpJsonFormatString(ctx, "%u", (*(unsigned char *)(data)));
+            BpJsonFormatString(ctx, "%u", (*((unsigned char *)data)));
             break;
     }
 }
