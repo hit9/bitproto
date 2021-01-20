@@ -52,7 +52,9 @@ message Power {
 }
 
 message Network {
+    //  Degree of signal, between 1~10.
     uint4 signal = 1;
+    // The timestamp of the last time received heartbeat packet.
     Timestamp heartbeat_at = 2;
 }
 
@@ -66,6 +68,7 @@ message Position {
     uint32 altitude = 3;
 }
 
+// Pose in flight. https://en.wikipedia.org/wiki/Aircraft_principal_axes
 message Pose {
     int32 yaw = 1;
     int32 pitch = 2;
@@ -74,7 +77,9 @@ message Pose {
 
 message Flight {
     Pose pose = 1;
+    // Velocity at X, Y, Z axis.
     TernaryInt32 velocity = 2;
+    // Acceleration at X, Y, Z axis.
     TernaryInt32 acceleration = 3;
 }
 

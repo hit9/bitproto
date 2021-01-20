@@ -1,4 +1,4 @@
 build:
-	bitproto c example.bitproto gen-c
-	bitproto go example.bitproto gen-go
-	bitproto py example.bitproto gen-py
+	bitproto c example.bitproto C
+	bitproto go example.bitproto Go/gen-bp
+	bitproto py example.bitproto Python

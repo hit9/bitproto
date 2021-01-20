@@ -101,7 +101,9 @@ void BpXXXJsonFormatPower(void *data, struct BpJsonFormatContext *ctx);
 #define BYTES_LENGTH_NETWORK 9
 
 struct Network {
+    // Degree of signal, between 1~10.
     uint8_t signal;
+    // The timestamp of the last time received heartbeat packet.
     Timestamp heartbeat_at;
 };
 
@@ -151,6 +153,7 @@ void BpXXXJsonFormatPosition(void *data, struct BpJsonFormatContext *ctx);
 // Number of bytes to encode struct Pose
 #define BYTES_LENGTH_POSE 12
 
+// Pose in flight. https://en.wikipedia.org/wiki/Aircraft_principal_axes
 struct Pose {
     int32_t yaw;
     int32_t pitch;
@@ -171,7 +174,9 @@ void BpXXXJsonFormatPose(void *data, struct BpJsonFormatContext *ctx);
 
 struct Flight {
     struct Pose pose;
+    // Velocity at X, Y, Z axis.
     TernaryInt32 velocity;
+    // Acceleration at X, Y, Z axis.
     TernaryInt32 acceleration;
 };
 

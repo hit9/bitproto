@@ -288,7 +288,9 @@ func (m *Power) BpGetByte(di *bp.DataIndexer, rshift int) byte {
 }
 
 type Network struct {
+	// Degree of signal, between 1~10.
 	Signal uint8 `json:"signal"`
+	// The timestamp of the last time received heartbeat packet.
 	HeartbeatAt Timestamp `json:"heartbeat_at"`
 }
 
@@ -482,6 +484,7 @@ func (m *Position) BpGetByte(di *bp.DataIndexer, rshift int) byte {
 	}
 }
 
+// Pose in flight. https://en.wikipedia.org/wiki/Aircraft_principal_axes
 type Pose struct {
 	Yaw int32 `json:"yaw"`
 	Pitch int32 `json:"pitch"`
@@ -555,7 +558,9 @@ func (m *Pose) BpGetByte(di *bp.DataIndexer, rshift int) byte {
 
 type Flight struct {
 	Pose Pose `json:"pose"`
+	// Velocity at X, Y, Z axis.
 	Velocity TernaryInt32 `json:"velocity"`
+	// Acceleration at X, Y, Z axis.
 	Acceleration TernaryInt32 `json:"acceleration"`
 }
 

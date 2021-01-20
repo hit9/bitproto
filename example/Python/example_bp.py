@@ -227,7 +227,9 @@ class Network(bp.Accessor):
     # Number of bytes to serialize class Network
     BYTES_LENGTH: ClassVar[int] = 9
 
+    # Degree of signal, between 1~10.
     signal: int = 0
+    # The timestamp of the last time received heartbeat packet.
     heartbeat_at: Timestamp = field(default_factory=bp_default_factory_Timestamp)
 
     def bp_processor(self) -> bp.Processor:
@@ -377,6 +379,9 @@ class Position(bp.Accessor):
 
 @dataclass
 class Pose(bp.Accessor):
+    """
+    Pose in flight. https://en.wikipedia.org/wiki/Aircraft_principal_axes
+    """
     # Number of bytes to serialize class Pose
     BYTES_LENGTH: ClassVar[int] = 12
 
@@ -438,7 +443,9 @@ class Flight(bp.Accessor):
     BYTES_LENGTH: ClassVar[int] = 36
 
     pose: Pose = field(default_factory=Pose)
+    # Velocity at X, Y, Z axis.
     velocity: TernaryInt32 = field(default_factory=bp_default_factory_TernaryInt32)
+    # Acceleration at X, Y, Z axis.
     acceleration: TernaryInt32 = field(default_factory=bp_default_factory_TernaryInt32)
 
     def bp_processor(self) -> bp.Processor:
