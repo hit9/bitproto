@@ -349,16 +349,10 @@ class BlockMessageJsonFormatterBase(BlockBindMessage[F]):
     def function_signature(self) -> str:
         return f"int {self.function_name}({self.message_type} *m, char *s)"
 
-    def is_enabled(self) -> bool:
-        option_name = "c.enable_render_json_formatter"
-        return self.bound.get_option_as_bool_or_raise(option_name)
-
 
 class BlockMessageJsonFormatterFunctionDeclaration(BlockMessageJsonFormatterBase):
     @override(Block)
     def render(self) -> None:
-        if not self.is_enabled():
-            return
         self.push_comment(self.function_comment)
         self.push(f"{self.function_signature};")
 
