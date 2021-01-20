@@ -168,6 +168,11 @@ def frozen(
                 raise AttributeError("Cannot freeze frozen instance")
             setattr(class_self, "__frozen__", True)
 
+            if hasattr(class_self, "__post_freeze__"):
+                post_freeze = getattr(class_self, "__post_freeze__")
+                if callable(post_freeze):
+                    post_freeze()
+
         def __setattr__(self, name, value):
             if getattr(self, "__frozen__", False):
                 raise AttributeError("Cant setattr on frozen instance")
