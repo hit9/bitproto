@@ -4,6 +4,7 @@
 proto drone;
 
 type Timestamp = int64;
+
 type TernaryInt32 = int32[3]
 
 enum DroneStatus : uint3 {
@@ -47,6 +48,7 @@ message Propeller {
 message Power {
     uint8 battery = 1;
     PowerStatus status = 2;
+    bool is_charging = 3;
 }
 
 message Network {
@@ -72,8 +74,8 @@ message Pose {
 
 message Flight {
     Pose pose = 1;
-    TernaryInt32 velocity = 4;
-    TernaryInt32 acceleration = 5;
+    TernaryInt32 velocity = 2;
+    TernaryInt32 acceleration = 3;
 }
 
 message Drone {

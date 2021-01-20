@@ -219,6 +219,7 @@ func (m *Propeller) BpGetByte(di *bp.DataIndexer, rshift int) byte {
 type Power struct {
 	Battery uint8 `json:"battery"`
 	Status PowerStatus `json:"status"`
+	IsCharging bool `json:"is_charging"`
 }
 
 // Number of bytes to serialize struct Power
@@ -248,8 +249,9 @@ func (m *Power) BpProcessor() bp.Processor {
 	fieldDescriptors := []*bp.MessageFieldProcessor{
 		bp.NewMessageFieldProcessor(1, bp.NewUint(8)),
 		bp.NewMessageFieldProcessor(2, (PowerStatus(0)).BpProcessor()),
+		bp.NewMessageFieldProcessor(3, bp.NewBool()),
 	}
-	return bp.NewMessageProcessor(false, 10, fieldDescriptors)
+	return bp.NewMessageProcessor(false, 11, fieldDescriptors)
 }
 
 func (m *Power) BpGetAccessor(di *bp.DataIndexer) bp.Accessor {
@@ -265,6 +267,8 @@ func (m *Power) BpSetByte(di *bp.DataIndexer, lshift int, b byte) {
 			m.Battery |= (uint8(b) << lshift)
 		case 2:
 			m.Status |= (PowerStatus(b) << lshift)
+		case 3:
+			m.IsCharging = bp.Byte2bool(b)
 		default:
 			return
 	}
@@ -276,6 +280,8 @@ func (m *Power) BpGetByte(di *bp.DataIndexer, rshift int) byte {
 			return byte(m.Battery >> rshift)
 		case 2:
 			return byte(m.Status >> rshift)
+		case 3:
+			return bp.Bool2byte(m.IsCharging) >> rshift
 		default:
 			return byte(0) // Won't reached
 	}
@@ -579,8 +585,8 @@ func (m *Flight) Decode(s []byte) {
 func (m *Flight) BpProcessor() bp.Processor {
 	fieldDescriptors := []*bp.MessageFieldProcessor{
 		bp.NewMessageFieldProcessor(1, (&Pose{}).BpProcessor()),
-		bp.NewMessageFieldProcessor(4, (TernaryInt32{}).BpProcessor()),
-		bp.NewMessageFieldProcessor(5, (TernaryInt32{}).BpProcessor()),
+		bp.NewMessageFieldProcessor(2, (TernaryInt32{}).BpProcessor()),
+		bp.NewMessageFieldProcessor(3, (TernaryInt32{}).BpProcessor()),
 	}
 	return bp.NewMessageProcessor(false, 288, fieldDescriptors)
 }
@@ -596,9 +602,9 @@ func (m *Flight) BpGetAccessor(di *bp.DataIndexer) bp.Accessor {
 
 func (m *Flight) BpSetByte(di *bp.DataIndexer, lshift int, b byte) {
 	switch di.F() {
-		case 4:
+		case 2:
 			m.Velocity[di.I(0)] |= (int32(b) << lshift)
-		case 5:
+		case 3:
 			m.Acceleration[di.I(0)] |= (int32(b) << lshift)
 		default:
 			return
@@ -607,9 +613,9 @@ func (m *Flight) BpSetByte(di *bp.DataIndexer, lshift int, b byte) {
 
 func (m *Flight) BpGetByte(di *bp.DataIndexer, rshift int) byte {
 	switch di.F() {
-		case 4:
+		case 2:
 			return byte(m.Velocity[di.I(0)] >> rshift)
-		case 5:
+		case 3:
 			return byte(m.Acceleration[di.I(0)] >> rshift)
 		default:
 			return byte(0) // Won't reached
@@ -659,7 +665,7 @@ func (m *Drone) BpProcessor() bp.Processor {
 		bp.NewMessageFieldProcessor(6, (&Network{}).BpProcessor()),
 		bp.NewMessageFieldProcessor(7, (&LandingGear{}).BpProcessor()),
 	}
-	return bp.NewMessageProcessor(false, 515, fieldDescriptors)
+	return bp.NewMessageProcessor(false, 516, fieldDescriptors)
 }
 
 func (m *Drone) BpGetAccessor(di *bp.DataIndexer) bp.Accessor {

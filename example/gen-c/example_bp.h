@@ -85,6 +85,7 @@ void BpXXXJsonFormatPropeller(void *data, struct BpJsonFormatContext *ctx);
 struct Power {
     uint8_t battery;
     PowerStatus status;
+    bool is_charging;
 };
 
 // Encode struct Power to given buffer s.

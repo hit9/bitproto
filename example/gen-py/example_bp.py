@@ -172,19 +172,23 @@ class Power(bp.Accessor):
 
     battery: int = 0
     status: PowerStatus = 0
+    is_charging: bool = False
 
     def bp_processor(self) -> bp.Processor:
         field_processors: List[bp.Processor] = [
             bp.MessageFieldProcessor(1, bp.Uint(8)),
             bp.MessageFieldProcessor(2, bp_processor_PowerStatus()),
+            bp.MessageFieldProcessor(3, bp.Bool()),
         ]
-        return bp.MessageProcessor(False, 10, field_processors)
+        return bp.MessageProcessor(False, 11, field_processors)
 
     def bp_set_byte(self, di: bp.DataIndexer, lshift: int, b: bp.byte) -> None:
         if di.field_number == 1:
             self.battery |= (int(b) << lshift)
         if di.field_number == 2:
             self.status |= (PowerStatus(b) << lshift)
+        if di.field_number == 3:
+            self.is_charging = bool(b)
         return
 
     def bp_get_byte(self, di: bp.DataIndexer, rshift: int) -> bp.byte:
@@ -192,6 +196,8 @@ class Power(bp.Accessor):
             return (self.battery >> rshift) & 255
         if di.field_number == 2:
             return (self.status >> rshift) & 255
+        if di.field_number == 3:
+            return (int(self.is_charging) >> rshift) & 255
         return bp.byte(0)  # Won't reached
 
     def bp_get_accessor(self, di: bp.DataIndexer) -> bp.Accessor:
@@ -438,22 +444,22 @@ class Flight(bp.Accessor):
     def bp_processor(self) -> bp.Processor:
         field_processors: List[bp.Processor] = [
             bp.MessageFieldProcessor(1, Pose().bp_processor()),
-            bp.MessageFieldProcessor(4, bp_processor_TernaryInt32()),
-            bp.MessageFieldProcessor(5, bp_processor_TernaryInt32()),
+            bp.MessageFieldProcessor(2, bp_processor_TernaryInt32()),
+            bp.MessageFieldProcessor(3, bp_processor_TernaryInt32()),
         ]
         return bp.MessageProcessor(False, 288, field_processors)
 
     def bp_set_byte(self, di: bp.DataIndexer, lshift: int, b: bp.byte) -> None:
-        if di.field_number == 4:
+        if di.field_number == 2:
             self.velocity[di.i(0)] |= bp.int32((int(b) << lshift))
-        if di.field_number == 5:
+        if di.field_number == 3:
             self.acceleration[di.i(0)] |= bp.int32((int(b) << lshift))
         return
 
     def bp_get_byte(self, di: bp.DataIndexer, rshift: int) -> bp.byte:
-        if di.field_number == 4:
+        if di.field_number == 2:
             return (self.velocity[di.i(0)] >> rshift) & 255
-        if di.field_number == 5:
+        if di.field_number == 3:
             return (self.acceleration[di.i(0)] >> rshift) & 255
         return bp.byte(0)  # Won't reached
 
@@ -504,7 +510,7 @@ class Drone(bp.Accessor):
             bp.MessageFieldProcessor(6, Network().bp_processor()),
             bp.MessageFieldProcessor(7, LandingGear().bp_processor()),
         ]
-        return bp.MessageProcessor(False, 515, field_processors)
+        return bp.MessageProcessor(False, 516, field_processors)
 
     def bp_set_byte(self, di: bp.DataIndexer, lshift: int, b: bp.byte) -> None:
         if di.field_number == 1:
