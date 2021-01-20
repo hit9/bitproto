@@ -110,12 +110,12 @@ class Node:
     def is_frozen(self) -> bool:
         return self.__frozen__
 
-    def __post_init__(self) -> None:
-        self.validate()
+    def __post_freeze__(self) -> None:
+        self.validate_post_freeze()
 
     @overridable
-    def validate(self) -> None:
-        """Validator hook function, invoked after node init."""
+    def validate_post_freeze(self) -> None:
+        """Validator hook function, invoked after node freezed."""
         pass
 
     def freeze(self) -> None:
@@ -157,7 +157,7 @@ class Definition(Node):
     scope_stack: Tuple["Scope", ...] = tuple()
     comment_block: Tuple[Comment, ...] = tuple()
     indent: int = 0  # <0 for invalid.
-    _bound: Optional["Proto"] = None
+    _bound: Optional["Proto"] = None  # None for Proto.
 
     def __repr__(self) -> str:
         class_repr = repr(type(self))
@@ -461,7 +461,7 @@ class ScopeWithOptions(Scope):
             raise InternalError("no __option_descriptors__ defined")
 
     def options(self) -> List[Tuple[str, Option]]:
-        return self.filter(Option, recursive=False, bound=None)
+        return self.filter(Option, recursive=False, bound=self._bound)
 
     @cache_if_frozen
     def options_as_dict(self) -> "dict_[str, Option]":
@@ -647,7 +647,7 @@ class Uint(Integer):
     cap: int = 0
 
     @override(Node)
-    def validate(self) -> None:
+    def validate_post_freeze(self) -> None:
         if self._is_missing:
             return
         if not (0 < self.cap <= 64):
@@ -675,7 +675,7 @@ class Int(Integer):
     cap: int = 0
 
     @override(Node)
-    def validate(self) -> None:
+    def validate_post_freeze(self) -> None:
         if self.cap not in (8, 16, 32, 64):
             raise InvalidIntCap.from_token(token=self)
 
@@ -730,7 +730,7 @@ class Array(CompositeType, ExtensibleType):
         )
 
     @override(Node)
-    def validate(self) -> None:
+    def validate_post_freeze(self) -> None:
         self.validate_array_cap()
         self.validate_array_element_type()
 
@@ -785,7 +785,7 @@ class Alias(Type, BoundDefinition):
             raise InvalidAliasedType.from_token(token=self, message=message)
 
     @override(Node)
-    def validate(self) -> None:
+    def validate_post_freeze(self) -> None:
         self.validate_type()
 
     @override(Type)
@@ -815,7 +815,7 @@ class EnumField(Field):
         return f"<enum-field {self.name}={self.value}>"
 
     @override(Node)
-    def validate(self) -> None:
+    def validate_post_freeze(self) -> None:
         if self.value < 0:
             raise InvalidEnumFieldValue.from_token(token=self)
 
@@ -905,7 +905,7 @@ class MessageField(Field):
         raise InternalError("message_field's last scope not message")
 
     @override(Node)
-    def validate(self) -> None:
+    def validate_post_freeze(self) -> None:
         """Constraint message field number from 1 to 255."""
         if not (0 < self.number < 256):
             raise InvalidMessageFieldNumber.from_token(token=self)
@@ -963,9 +963,14 @@ class Message(BoundScope, ScopeWithOptions, CompositeType, ExtensibleType):
         return dict_((field.number, field) for field in self.sorted_fields())
 
     @override(Node)
-    def validate(self) -> None:
+    def validate_post_freeze(self) -> None:
         if self.nbits() > 65535:
             raise MessageSizeOverflows.from_token(token=self)
+
+        max_bytes = self.get_option_as_int_or_raise("max_bytes")
+        if max_bytes > 0 and self.nbytes() > max_bytes:
+            message = f"Message size overflows constraint option, which configured to {max_bytes}bytes"
+            raise MessageSizeOverflows.from_token(token=self, message=message)
 
     @override(Scope)
     def validate_member_on_push(
