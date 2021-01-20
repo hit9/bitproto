@@ -3,7 +3,7 @@ Renderer for Go.
 """
 
 from abc import abstractmethod
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from bitproto._ast import (Alias, Array, Bool, BoundDefinition, Byte, Constant,
                            Enum, Int, Integer, Message, MessageField,
@@ -33,9 +33,12 @@ class BlockPackageName(BlockBindProto[F]):
 class BlockGeneralImports(Block):
     @override(Block)
     def render(self) -> None:
-        self.push(f'import "strconv"')
-        self.push(f'import "encoding/json"')
-        self.push(f'import bp "{GO_LIB_IMPORT_PATH}"')
+        self.push(f"import (")
+        self.push(f'"strconv"', indent=1)
+        self.push(f'"encoding/json"', indent=1)
+        self.push_empty_line()
+        self.push(f'bp "{GO_LIB_IMPORT_PATH}"', indent=1)
+        self.push(f")")
 
 
 class BlockImportChildProto(BlockBindProto[F]):
@@ -104,22 +107,47 @@ class BlockConstant(BlockBindConstant[F]):
 
 
 class BlockEnumField(BlockBindEnumField[F]):
+    def __init__(self, *args: Any, i: int = 0, **kwds: Any) -> None:
+        super().__init__(*args, **kwds)
+        self.i = i
+
     @override(Block)
     def render(self) -> None:
         self.push_definition_comments()
-        self.push(
-            f"const {self.enum_field_name} {self.enum_field_type} = {self.enum_field_value}"
-        )
+
+        field_type: str = self.enum_field_type
+
+        if self.i == 0:
+            self.push(f"{self.enum_field_name} {field_type} = {self.enum_field_value}")
+        else:
+            self.push(f"{self.enum_field_name} = {self.enum_field_value}")
 
 
 class BlockEnumFieldList(BlockBindEnum[F], BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
-        return [BlockEnumField(field) for field in self.d.fields()]
+        return [
+            BlockEnumField(field, indent=self.indent, i=i)
+            for i, field in enumerate(self.d.fields())
+        ]
 
     @override(BlockComposition)
     def separator(self) -> str:
         return "\n"
+
+
+class BlockEnumFieldListWrapped(BlockBindEnum[F], BlockWrapper[F]):
+    @override(BlockWrapper)
+    def wraps(self) -> Block[F]:
+        return BlockEnumFieldList(self.d, indent=self.indent + 1)
+
+    @override(BlockWrapper)
+    def before(self) -> None:
+        self.push("const (")
+
+    @override(BlockWrapper)
+    def after(self) -> None:
+        self.push(")")
 
 
 class BlockEnumType(BlockBindEnum[F]):
@@ -195,7 +223,7 @@ class BlockEnum(BlockBindEnum[F], BlockComposition[F]):
     def blocks(self) -> List[Block[F]]:
         return [
             BlockEnumType(self.d),
-            BlockEnumFieldList(self.d),
+            BlockEnumFieldListWrapped(self.d),
             BlockEnumMethodBpProcessor(self.d),
             BlockEnumMethodString(self.d),
         ]

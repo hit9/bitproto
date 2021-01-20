@@ -3,9 +3,12 @@
 // Proto drone describes the structure of the drone.
 package drone
 
-import "strconv"
-import "encoding/json"
-import bp "github.com/hit9/bitproto/lib/go"
+import (
+	"strconv"
+	"encoding/json"
+
+	bp "github.com/hit9/bitproto/lib/go"
+)
 
 type Timestamp int64
 
@@ -21,11 +24,13 @@ func (m TernaryInt32) BpProcessor() bp.Processor {
 
 type DroneStatus uint8
 
-const DRONE_STATUS_UNKNOWN DroneStatus = 0
-const DRONE_STATUS_STANDBY DroneStatus = 1
-const DRONE_STATUS_RISING DroneStatus = 2
-const DRONE_STATUS_LANDING DroneStatus = 3
-const DRONE_STATUS_FLYING DroneStatus = 4
+const (
+	DRONE_STATUS_UNKNOWN DroneStatus = 0
+	DRONE_STATUS_STANDBY = 1
+	DRONE_STATUS_RISING = 2
+	DRONE_STATUS_LANDING = 3
+	DRONE_STATUS_FLYING = 4
+)
 
 func (m DroneStatus) BpProcessor() bp.Processor {
 	return bp.NewEnumProcessor(false, bp.NewUint(3))
@@ -51,9 +56,11 @@ func (v DroneStatus) String() string {
 
 type PropellerStatus uint8
 
-const PROPELLER_STATUS_UNKNOWN PropellerStatus = 0
-const PROPELLER_STATUS_IDLE PropellerStatus = 1
-const PROPELLER_STATUS_ROTATING PropellerStatus = 2
+const (
+	PROPELLER_STATUS_UNKNOWN PropellerStatus = 0
+	PROPELLER_STATUS_IDLE = 1
+	PROPELLER_STATUS_ROTATING = 2
+)
 
 func (m PropellerStatus) BpProcessor() bp.Processor {
 	return bp.NewEnumProcessor(false, bp.NewUint(2))
@@ -75,9 +82,11 @@ func (v PropellerStatus) String() string {
 
 type RotatingDirection uint8
 
-const ROTATING_DIRECTION_UNKNOWN RotatingDirection = 0
-const ROTATING_DIRECTION_CLOCK_WISE RotatingDirection = 1
-const ROTATING_DIRECTION_ANTI_CLOCK_WISE RotatingDirection = 2
+const (
+	ROTATING_DIRECTION_UNKNOWN RotatingDirection = 0
+	ROTATING_DIRECTION_CLOCK_WISE = 1
+	ROTATING_DIRECTION_ANTI_CLOCK_WISE = 2
+)
 
 func (m RotatingDirection) BpProcessor() bp.Processor {
 	return bp.NewEnumProcessor(false, bp.NewUint(2))
@@ -99,9 +108,11 @@ func (v RotatingDirection) String() string {
 
 type PowerStatus uint8
 
-const POWER_STATUS_UNKNOWN PowerStatus = 0
-const POWER_STATUS_OFF PowerStatus = 1
-const POWER_STATUS_ON PowerStatus = 2
+const (
+	POWER_STATUS_UNKNOWN PowerStatus = 0
+	POWER_STATUS_OFF = 1
+	POWER_STATUS_ON = 2
+)
 
 func (m PowerStatus) BpProcessor() bp.Processor {
 	return bp.NewEnumProcessor(false, bp.NewUint(2))
@@ -123,9 +134,11 @@ func (v PowerStatus) String() string {
 
 type LandingGearStatus uint8
 
-const LANDING_GEAR_STATUS_UNKNOWN LandingGearStatus = 0
-const LANDING_GEAR_STATUS_UNFOLDED LandingGearStatus = 1
-const LANDING_GEAR_STATUS_FOLDED LandingGearStatus = 2
+const (
+	LANDING_GEAR_STATUS_UNKNOWN LandingGearStatus = 0
+	LANDING_GEAR_STATUS_UNFOLDED = 1
+	LANDING_GEAR_STATUS_FOLDED = 2
+)
 
 func (m LandingGearStatus) BpProcessor() bp.Processor {
 	return bp.NewEnumProcessor(false, bp.NewUint(2))
