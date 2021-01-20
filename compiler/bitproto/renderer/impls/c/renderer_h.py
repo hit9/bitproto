@@ -134,11 +134,10 @@ class BlockAliasDef(BlockBindAlias[F]):
         self.render_alias_typedef()
 
 
-class BlockAlias(BlockBindAlias[F], BlockComposition[F]):
+class BlockAliasFunctionDeclarationsForInternal(BlockBindAlias[F], BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
         return [
-            BlockAliasDef(self.d),
             BlockAliasProcessorDeclaration(self.d),
             BlockAliasJsonFormatterDeclaration(self.d),
         ]
@@ -207,12 +206,19 @@ class BlockEnumDef(BlockBindEnum[F]):
         self.push(f"typedef {self.enum_uint_type} {self.enum_name};")
 
 
-class BlockEnum(BlockBindEnum[F], BlockComposition[F]):
+class BlockEnumDefs(BlockBindEnum[F], BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
         return [
             BlockEnumDef(self.d),
             BlockEnumFieldList(self.d),
+        ]
+
+
+class BlockEnumFunctionDeclarationsForInternal(BlockBindEnum[F], BlockComposition[F]):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block[F]]:
+        return [
             BlockEnumProcessorDeclaration(self.d),
             BlockEnumJsonFormatterDeclaration(self.d),
         ]
@@ -383,13 +389,26 @@ class BlockMessageProcessorDeclaration(BlockMessageProcessorBase):
         self.push(f"{self.function_signature};")
 
 
-class BlockMessageFunctionDeclarations(BlockBindMessage[F], BlockComposition[F]):
+class BlockMessageFunctionDeclarationsForUser(BlockBindMessage[F], BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
         return [
             BlockMessageEncoderFunctionDeclaration(self.d),
             BlockMessageDecoderFunctionDeclaration(self.d),
             BlockMessageJsonFormatterFunctionDeclaration(self.d),
+        ]
+
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n"
+
+
+class BlockMessageFunctionDeclarationsForInternal(
+    BlockBindMessage[F], BlockComposition[F]
+):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block[F]]:
+        return [
             BlockMessageProcessorDeclaration(self.d),
             BlockMessageBpJsonFormatterDeclaration(self.d),
         ]
@@ -399,13 +418,12 @@ class BlockMessageFunctionDeclarations(BlockBindMessage[F], BlockComposition[F])
         return "\n"
 
 
-class BlockMessage(BlockBindMessage[F], BlockComposition[F]):
+class BlockMessageDef(BlockBindMessage[F], BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
         return [
             BlockMessageLengthMacro(self.d),
             BlockMessageStruct(self.d),
-            BlockMessageFunctionDeclarations(self.d),
         ]
 
 
@@ -422,22 +440,38 @@ class BlockImportList(BlockComposition[F]):
         return "\n"
 
 
-class BlockBoundDefinitionList(BlockBoundDefinitionDispatcher[F]):
+class BlockDataStructuresList(BlockBoundDefinitionDispatcher[F]):
     @override(BlockBoundDefinitionDispatcher)
     def dispatch(self, d: BoundDefinition) -> Optional[Block[F]]:
         if isinstance(d, Alias):
-            return BlockAlias(d)
+            return BlockAliasDef(d)
         if isinstance(d, Constant):
             return BlockConstant(d)
         if isinstance(d, Enum):
-            return BlockEnum(d)
+            return BlockEnumDefs(d)
         if isinstance(d, Message):
-            return BlockMessage(d)
+            return BlockMessageDef(d)
         return None
 
-    @override(BlockComposition)
-    def separator(self) -> str:
-        return "\n\n"
+
+class BlockFunctionDeclarationsForUserList(BlockBoundDefinitionDispatcher[F]):
+    @override(BlockBoundDefinitionDispatcher)
+    def dispatch(self, d: BoundDefinition) -> Optional[Block[F]]:
+        if isinstance(d, Message):
+            return BlockMessageFunctionDeclarationsForUser(d)
+        return None
+
+
+class BlockFunctionDeclarationsForInternalList(BlockBoundDefinitionDispatcher[F]):
+    @override(BlockBoundDefinitionDispatcher)
+    def dispatch(self, d: BoundDefinition) -> Optional[Block[F]]:
+        if isinstance(d, Alias):
+            return BlockAliasFunctionDeclarationsForInternal(d)
+        if isinstance(d, Enum):
+            return BlockEnumFunctionDeclarationsForInternal(d)
+        if isinstance(d, Message):
+            return BlockMessageFunctionDeclarationsForInternal(d)
+        return None
 
 
 class BlockList(BlockComposition[F]):
@@ -450,7 +484,9 @@ class BlockList(BlockComposition[F]):
             BlockIncludeGeneralHeaders(),
             BlockExternCPlusPlus(),
             BlockImportList(),
-            BlockBoundDefinitionList(),
+            BlockDataStructuresList(),
+            BlockFunctionDeclarationsForUserList(),
+            BlockFunctionDeclarationsForInternalList(),
         ]
 
 
