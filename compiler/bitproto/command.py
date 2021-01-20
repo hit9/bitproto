@@ -90,6 +90,9 @@ def run_bitproto() -> None:
     if args.check:  #  Checks only.
         args_parser.exit(exit_code)
 
+    if not args.language:
+        args_parser.exit(1, message="No language specific.")
+
     # Render
     try:
         render(proto, args.language, outdir=args.outdir)
