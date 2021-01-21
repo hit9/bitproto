@@ -2,8 +2,9 @@ import os
 from typing import Union as Fixture
 
 import pytest
-from bitproto._ast import Array, Bool, Enum, Message, MessageField, Proto
-from bitproto.parser import parse
+from bitproto._ast import (Alias, Array, Bool, Enum, Message, MessageField,
+                           Proto)
+from bitproto.parser import GrammarError, parse
 from bitproto.utils import cast_or_raise
 
 
@@ -190,7 +191,8 @@ def test_parse_extensible() -> None:
 
 
 def test_parse_array_cap_constraint() -> None:
-    pass
+    with pytest.raises(GrammarError):
+        parse(bitproto_filepath("array_cap_constraint.bitproto"))
 
 
 def test_parse_message_size_constraint() -> None:
@@ -198,12 +200,32 @@ def test_parse_message_size_constraint() -> None:
 
 
 def test_parse_2d_array() -> None:
-    pass
+    proto = parse(bitproto_filepath("_2d_array.bitproto"))
+
+    alias_slice = cast_or_raise(Alias, proto.get_member("Slice"))
+    alias_matrix = cast_or_raise(Alias, proto.get_member("Matrix"))
+    message_a = cast_or_raise(Message, proto.get_member("A"))
+
+    assert alias_slice.nbits() == 4 * 8
+    assert alias_matrix.nbits() == 4 * 4 * 8
+    assert message_a.nbits() == alias_matrix.nbits()
+    assert message_a.fields()[0].type is alias_matrix
+
+
+def test_parse_2d_array_e() -> None:
+    with pytest.raises(GrammarError):
+        parse(bitproto_filepath("_2d_array_e.bitproto"))
 
 
 def test_parse_import() -> None:
     pass
 
 
-def test_parse_empty() -> None:
-    pass
+def test_parse_empty_message() -> None:
+    proto = parse(bitproto_filepath("empty_message.bitproto"))
+
+    message_empty = cast_or_raise(Message, proto.get_member("Empty"))
+    message_a = cast_or_raise(Message, proto.get_member("A"))
+
+    assert message_empty.nbits() == 0
+    assert message_a.nbits() == 0

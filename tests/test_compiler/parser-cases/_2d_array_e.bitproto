@@ -1,0 +1,5 @@
+proto _2d_array_e
+
+message A {
+    byte[4][4] matrix = 1;
+}
