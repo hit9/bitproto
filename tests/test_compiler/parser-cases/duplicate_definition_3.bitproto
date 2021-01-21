@@ -1,0 +1,7 @@
+proto duplicate_definition_3
+
+enum A : uint3 {}
+
+enum B : uint3 {}
+
+message A {}

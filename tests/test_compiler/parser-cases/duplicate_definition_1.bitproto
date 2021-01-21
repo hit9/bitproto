@@ -1,0 +1,4 @@
+proto duplicate_definition_1
+
+const A = 1
+const A = 2

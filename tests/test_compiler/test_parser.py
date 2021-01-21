@@ -2,9 +2,9 @@ import os
 from typing import Union as Fixture
 
 import pytest
-from bitproto._ast import (Alias, Array, Bool, Constant, Enum, IntegerConstant,
-                           Message, MessageField, Option, Proto,
-                           StringConstant)
+from bitproto._ast import (Alias, Array, Bool, Constant, Enum, Int,
+                           IntegerConstant, Message, MessageField, Option,
+                           Proto, StringConstant)
 from bitproto.parser import GrammarError, parse
 from bitproto.utils import cast_or_raise
 
@@ -101,6 +101,11 @@ def test_parse_drone() -> None:
     assert array_of_propellers.cap == 4
     assert array_of_propellers.nbits() == 4 * array_of_propellers.element_type.nbits()
     assert not array_of_propellers.extensible
+
+    # Test alias
+    alias_timestamp = cast_or_raise(Alias, proto.get_member("Timestamp"))
+    assert alias_timestamp
+    assert isinstance(alias_timestamp.type, Int)
 
 
 def test_parse_optional_semicolon() -> None:
@@ -310,3 +315,12 @@ def test_parse_escaping_char() -> None:
     assert constant_b.value == 'simple char "V"'
     assert constant_c.value == "simple char \\"
     assert constant_d.value == "simple char '''"
+
+
+def test_parse_duplicate_definition() -> None:
+    with pytest.raises(GrammarError):
+        parse(bitproto_filepath("duplicate_definition_1.bitproto"))
+    with pytest.raises(GrammarError):
+        parse(bitproto_filepath("duplicate_definition_2.bitproto"))
+    with pytest.raises(GrammarError):
+        parse(bitproto_filepath("duplicate_definition_3.bitproto"))
