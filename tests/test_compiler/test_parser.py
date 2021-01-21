@@ -2,8 +2,8 @@ import os
 from typing import Union as Fixture
 
 import pytest
-from bitproto._ast import (Alias, Array, Bool, Enum, Message, MessageField,
-                           Proto)
+from bitproto._ast import (Alias, Array, Bool, Constant, Enum, IntegerConstant,
+                           Message, MessageField, Option, Proto)
 from bitproto.parser import GrammarError, parse
 from bitproto.utils import cast_or_raise
 
@@ -183,11 +183,48 @@ def test_parse_nested_enum() -> None:
 
 
 def test_parse_option() -> None:
-    pass
+    proto = parse(bitproto_filepath("option_.bitproto"))
+
+    option = proto.get_option_or_raise("c.struct_packing_alignment")
+    assert option is not None
+
+    option_c_alignment = proto.get_option_as_int_or_raise("c.struct_packing_alignment")
+    assert option_c_alignment and option_c_alignment == 1
+
+    message_a = cast_or_raise(Message, proto.get_member("A"))
+
+    option_max_bytes = message_a.get_option_as_int_or_raise("max_bytes")
+    assert option_max_bytes and option_max_bytes == 3
+
+
+def test_parse_option_not_supported() -> None:
+    with pytest.raises(GrammarError):
+        parse(bitproto_filepath("option_not_supported.bitproto"))
 
 
 def test_parse_extensible() -> None:
-    pass
+    proto = parse(bitproto_filepath("extensible.bitproto"))
+
+    enum_c = cast_or_raise(Enum, proto.get_member("C"))
+    enum_f = cast_or_raise(Enum, proto.get_member("F"))
+    message_a = cast_or_raise(Message, proto.get_member("A"))
+    message_b = cast_or_raise(Message, proto.get_member("B"))
+    message_d = cast_or_raise(Message, proto.get_member("D"))
+    message_e = cast_or_raise(Message, proto.get_member("E"))
+
+    assert enum_c.extensible
+    assert not enum_f.extensible
+    assert message_a.extensible
+    assert not message_b.extensible
+    assert not message_d.extensible
+    assert not message_e.extensible
+
+    assert enum_c.nbits() == 3 + 8
+    assert enum_f.nbits() == 3
+    assert message_a.nbits() == 1 + 16
+    assert message_b.nbits() == 1
+    assert message_d.nbits() == enum_c.nbits()
+    assert message_e.nbits() == message_a.nbits()
 
 
 def test_parse_array_cap_constraint() -> None:
@@ -196,7 +233,13 @@ def test_parse_array_cap_constraint() -> None:
 
 
 def test_parse_message_size_constraint() -> None:
-    pass
+    with pytest.raises(GrammarError):
+        parse(bitproto_filepath("message_size_constraint.bitproto"))
+
+
+def test_parse_message_size_constraint_by_option() -> None:
+    with pytest.raises(GrammarError):
+        parse(bitproto_filepath("message_size_constraint_by_option.bitproto"))
 
 
 def test_parse_2d_array() -> None:
@@ -218,7 +261,26 @@ def test_parse_2d_array_e() -> None:
 
 
 def test_parse_import() -> None:
-    pass
+    proto = parse(bitproto_filepath("import_.bitproto"))
+
+    message_a = cast_or_raise(Message, proto.get_member("A"))
+    constant_pi = cast_or_raise(IntegerConstant, proto.get_member("Pi"))
+    proto_shared = cast_or_raise(Proto, proto.get_member("base"))
+    proto_color = cast_or_raise(Proto, proto.get_member("color"))
+    alias_slice = cast_or_raise(Alias, proto.get_member("base", "Slice"))
+    enum_color = cast_or_raise(Enum, proto.get_member("color", "Color"))
+    message_container = cast_or_raise(Message, proto.get_member("base", "Container"))
+
+    assert proto_shared.name == "shared"
+    assert constant_pi.value == 314
+
+    field_container = message_a.fields()[0]
+    field_slice = message_a.fields()[1]
+    field_color = message_a.fields()[2]
+
+    assert field_container.type is message_container
+    assert field_slice.type is alias_slice
+    assert field_color.type is enum_color
 
 
 def test_parse_empty_message() -> None:
@@ -229,3 +291,8 @@ def test_parse_empty_message() -> None:
 
     assert message_empty.nbits() == 0
     assert message_a.nbits() == 0
+
+
+def test_parse_enum_size_constraint() -> None:
+    with pytest.raises(GrammarError):
+        parse(bitproto_filepath("enum_size_constraint.bitproto"))

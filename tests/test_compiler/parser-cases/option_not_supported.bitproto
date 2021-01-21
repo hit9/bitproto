@@ -1,0 +1,7 @@
+proto option_not_supported;
+
+option some_option_not_supported = 1;
+
+message A {
+    option some_option_not_supported = 1;
+}

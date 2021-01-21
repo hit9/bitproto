@@ -1,0 +1,10 @@
+proto option_
+
+
+option c.struct_packing_alignment = 1;
+
+message A {
+    option max_bytes = 3;
+
+    bool is_ok = 1;
+}

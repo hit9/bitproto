@@ -1,0 +1,6 @@
+proto message_size_constraint_by_option
+
+message A {
+    option max_size = 1;
+    byte[2] a = 1;
+}
