@@ -187,6 +187,10 @@ class Option(BoundDefinition):
         return "<option {0}={1}>".format(self.name, self.value)
 
     @classmethod
+    def type_name(cls) -> str:
+        return "option"
+
+    @classmethod
     def from_value(cls, value: Value, **kwds: Any) -> "Option":
         """Creates an option from value with a right subclass."""
         class_ = cls.reflect_subclass_by_value_or_raise(value)
@@ -216,6 +220,10 @@ class Option(BoundDefinition):
 class IntegerOption(Option):
     value: int = 0
 
+    @classmethod
+    def type_name(cls) -> str:
+        return "integer"
+
 
 @final
 @frozen
@@ -223,12 +231,20 @@ class IntegerOption(Option):
 class BooleanOption(Option):
     value: bool = False
 
+    @classmethod
+    def type_name(cls) -> str:
+        return "boolean"
+
 
 @final
 @frozen
 @dataclass
 class StringOption(Option):
     value: str = ""
+
+    @classmethod
+    def type_name(cls) -> str:
+        return "string"
 
 
 @dataclass(frozen=True)
@@ -545,7 +561,7 @@ class ScopeWithOptions(Scope):
         # Validate type.
         class_ = descriptor.class_
         if not isinstance(option, class_):
-            message = f"invalid option type, requires {class_}"
+            message = f"invalid option type, requires {class_.type_name()}"
             raise InvalidOptionValue.from_token(message=message, token=option)
 
         # Validate value

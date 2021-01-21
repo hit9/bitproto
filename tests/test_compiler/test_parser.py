@@ -476,5 +476,10 @@ def test_parse_hex_value() -> None:
     assert enum_b.fields()[0].value == 0xF
 
 
+def test_option_wrong_type() -> None:
+    with pytest.raises(GrammarError):
+        parse(bitproto_filepath("option_wrong_type.bitproto"))
+
+
 def test_constants() -> None:
     pass

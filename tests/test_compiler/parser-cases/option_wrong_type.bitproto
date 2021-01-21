@@ -1,0 +1,8 @@
+proto option_wrong_type;
+
+
+message A {
+    option max_bytes = "3";
+
+    bool is_ok = 1;
+}
