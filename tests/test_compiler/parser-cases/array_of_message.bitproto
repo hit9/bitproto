@@ -1,0 +1,13 @@
+proto array_of_message
+
+message A {
+    bool ok = 1;
+}
+
+type C = A[3]
+
+message B {
+    A[2] a = 1;
+    C[3] c = 2;
+    C d = 3;
+}

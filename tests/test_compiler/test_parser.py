@@ -344,3 +344,34 @@ def test_parse_reference_constant() -> None:
     assert isinstance(field_c_b.type, Array)
     array_type = cast_or_raise(Array, field_c_b.type)
     assert array_type.cap == constant_b.value
+
+
+def test_parse_array_of_message() -> None:
+    proto = parse(bitproto_filepath("array_of_message.bitproto"))
+
+    message_a = cast_or_raise(Message, proto.get_member("A"))
+    message_b = cast_or_raise(Message, proto.get_member("B"))
+    alias_c = cast_or_raise(Alias, proto.get_member("C"))
+
+    assert message_a.nbits() == 1
+    assert isinstance(alias_c.type, Array)
+
+    array_of_a = cast_or_raise(Array, alias_c.type)
+    field_b_a = message_b.fields()[0]
+    field_b_c = message_b.fields()[1]
+    field_b_d = message_b.fields()[2]
+
+    assert array_of_a.cap == 3
+    assert array_of_a.element_type is message_a
+
+    assert field_b_d.type is alias_c
+    assert isinstance(field_b_a.type, Array)
+    assert isinstance(field_b_c.type, Array)
+
+    array_of_field_b_a = cast_or_raise(Array, field_b_a.type)
+    array_of_field_b_c = cast_or_raise(Array, field_b_c.type)
+    assert array_of_field_b_a.element_type is message_a
+    assert array_of_field_b_c.element_type is alias_c
+
+    assert alias_c.nbits() == 3 * 1
+    assert message_b.nbits() == 2 * 1 + 3 * 1 * 3 + 3 * 1
