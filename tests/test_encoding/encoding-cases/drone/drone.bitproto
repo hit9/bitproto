@@ -1,0 +1,94 @@
+// This is an example for bitproto.
+
+// Proto drone describes the structure of the drone.
+proto drone;
+
+type Timestamp = int64;
+
+type TernaryInt32 = int32[3]
+
+enum DroneStatus : uint3 {
+    DRONE_STATUS_UNKNOWN = 0;
+    DRONE_STATUS_STANDBY = 1;
+    DRONE_STATUS_RISING = 2;
+    DRONE_STATUS_LANDING = 3;
+    DRONE_STATUS_FLYING = 4;
+}
+
+enum PropellerStatus : uint2 {
+    PROPELLER_STATUS_UNKNOWN = 0;
+    PROPELLER_STATUS_IDLE = 1;
+    PROPELLER_STATUS_ROTATING = 2;
+}
+
+enum RotatingDirection : uint2 {
+    ROTATING_DIRECTION_UNKNOWN = 0;
+    ROTATING_DIRECTION_CLOCK_WISE = 1;
+    ROTATING_DIRECTION_ANTI_CLOCK_WISE = 2;
+}
+
+enum PowerStatus : uint2 {
+    POWER_STATUS_UNKNOWN = 0;
+    POWER_STATUS_OFF = 1;
+    POWER_STATUS_ON = 2;
+}
+
+enum LandingGearStatus : uint2 {
+    LANDING_GEAR_STATUS_UNKNOWN = 0;
+    LANDING_GEAR_STATUS_UNFOLDED = 1;
+    LANDING_GEAR_STATUS_FOLDED = 2;
+}
+
+message Propeller {
+    uint8 id = 1;
+    PropellerStatus status = 2;
+    RotatingDirection direction = 3;
+}
+
+message Power {
+    uint8 battery = 1;
+    PowerStatus status = 2;
+    bool is_charging = 3;
+}
+
+message Network {
+    //  Degree of signal, between 1~10.
+    uint4 signal = 1;
+    // The timestamp of the last time received heartbeat packet.
+    Timestamp heartbeat_at = 2;
+}
+
+message LandingGear {
+    LandingGearStatus status = 1;
+}
+
+message Position {
+    uint32 latitude = 1;
+    uint32 longitude = 2;
+    uint32 altitude = 3;
+}
+
+// Pose in flight. https://en.wikipedia.org/wiki/Aircraft_principal_axes
+message Pose {
+    int32 yaw = 1;
+    int32 pitch = 2;
+    int32 roll = 3;
+}
+
+message Flight {
+    Pose pose = 1;
+    // Velocity at X, Y, Z axis.
+    TernaryInt32 velocity = 2;
+    // Acceleration at X, Y, Z axis.
+    TernaryInt32 acceleration = 3;
+}
+
+message Drone {
+    DroneStatus status = 1;
+    Position position = 2;
+    Flight flight = 3;
+    Propeller[4] propellers = 4;
+    Power power = 5;
+    Network network = 6;
+    LandingGear landing_gear = 7;
+}

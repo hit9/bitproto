@@ -42,7 +42,3 @@ def test_constant() -> None:
     assert isinstance(Constant.from_value(1), IntegerConstant)
     assert isinstance(Constant.from_value(False), BooleanConstant)
     assert isinstance(Constant.from_value(""), StringConstant)
-
-
-def test_scope_push_member() -> None:
-    pass
