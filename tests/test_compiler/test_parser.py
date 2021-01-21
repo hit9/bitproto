@@ -3,7 +3,8 @@ from typing import Union as Fixture
 
 import pytest
 from bitproto._ast import (Alias, Array, Bool, Constant, Enum, IntegerConstant,
-                           Message, MessageField, Option, Proto)
+                           Message, MessageField, Option, Proto,
+                           StringConstant)
 from bitproto.parser import GrammarError, parse
 from bitproto.utils import cast_or_raise
 
@@ -296,3 +297,16 @@ def test_parse_empty_message() -> None:
 def test_parse_enum_size_constraint() -> None:
     with pytest.raises(GrammarError):
         parse(bitproto_filepath("enum_size_constraint.bitproto"))
+
+
+def test_parse_escaping_char() -> None:
+    proto = parse(bitproto_filepath("escaping_char.bitproto"))
+    constant_a = cast_or_raise(StringConstant, proto.get_member("A"))
+    constant_b = cast_or_raise(StringConstant, proto.get_member("B"))
+    constant_c = cast_or_raise(StringConstant, proto.get_member("C"))
+    constant_d = cast_or_raise(StringConstant, proto.get_member("D"))
+
+    assert constant_a.value == "simple char \t"
+    assert constant_b.value == 'simple char "V"'
+    assert constant_c.value == "simple char \\"
+    assert constant_d.value == "simple char '''"
