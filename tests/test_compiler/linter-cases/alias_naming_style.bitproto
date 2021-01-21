@@ -1,0 +1,3 @@
+proto alias_naming_style
+
+type t = uint3

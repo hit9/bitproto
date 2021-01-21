@@ -5,7 +5,8 @@ import pytest
 from bitproto._ast import (Alias, Array, Bool, BooleanConstant, Constant, Enum,
                            Int, IntegerConstant, Message, MessageField, Option,
                            Proto, StringConstant)
-from bitproto.parser import GrammarError, parse
+from bitproto.errors import GrammarError
+from bitproto.parser import parse
 from bitproto.utils import cast_or_raise
 
 

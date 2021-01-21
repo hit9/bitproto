@@ -1,0 +1,3 @@
+proto message_naming_style
+
+message a {}

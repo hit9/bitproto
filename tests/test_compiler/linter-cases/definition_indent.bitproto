@@ -1,0 +1,6 @@
+proto definition_indent
+
+message A {
+    int32 a = 1
+        int32 b = 2
+}

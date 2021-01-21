@@ -1,0 +1,3 @@
+proto constant_naming_style
+
+const pi = 314

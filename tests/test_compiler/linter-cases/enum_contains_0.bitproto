@@ -1,0 +1,5 @@
+proto enum_contains_0
+
+enum Color : uint3 {
+    COLOR_RED = 1
+}
