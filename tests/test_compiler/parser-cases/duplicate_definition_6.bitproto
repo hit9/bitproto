@@ -1,0 +1,6 @@
+proto duplicate_definition_6
+
+message A {
+    byte a = 1;
+    bool a = 2;
+}

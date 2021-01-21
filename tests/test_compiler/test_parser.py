@@ -328,6 +328,10 @@ def test_parse_duplicate_definition() -> None:
         parse(bitproto_filepath("duplicate_definition_4.bitproto"))
     with pytest.raises(GrammarError):
         parse(bitproto_filepath("duplicate_definition_5.bitproto"))
+    with pytest.raises(GrammarError):
+        parse(bitproto_filepath("duplicate_definition_6.bitproto"))
+    with pytest.raises(GrammarError):
+        parse(bitproto_filepath("duplicate_definition_7.bitproto"))
 
 
 def test_parse_reference_constant() -> None:
@@ -443,3 +447,34 @@ def test_parse_nested_import() -> None:
     assert field_a_record.type is message_record
     assert field_a_created_at.type is alias_timestamp
     assert field_a_c.type is message_c
+
+
+def test_parse_message_field_number_constraint() -> None:
+    with pytest.raises(GrammarError):
+        parse(bitproto_filepath("message_field_number_constraint.bitproto"))
+
+
+def test_parse_duplicate_message_field_number() -> None:
+    with pytest.raises(GrammarError):
+        parse(bitproto_filepath("duplicate_message_field_number.bitproto"))
+
+
+def test_parse_dupliate_enum_field_value() -> None:
+    with pytest.raises(GrammarError):
+        parse(bitproto_filepath("duplicate_enum_field_value.bitproto"))
+
+
+def test_parse_hex_value() -> None:
+    proto = parse(bitproto_filepath("hex_value.bitproto"))
+
+    constant_a = cast_or_raise(IntegerConstant, proto.get_member("A"))
+    constant_c = cast_or_raise(Constant, proto.get_member("C"))
+    enum_b = cast_or_raise(Enum, proto.get_member("B"))
+
+    assert constant_a.value == 0xF
+    assert constant_c.value == 0x40
+    assert enum_b.fields()[0].value == 0xF
+
+
+def test_constants() -> None:
+    pass

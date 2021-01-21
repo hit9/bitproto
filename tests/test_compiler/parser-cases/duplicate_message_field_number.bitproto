@@ -1,0 +1,7 @@
+proto duplicate_message_field_number;
+
+message A {
+    byte a = 1;
+    byte[3] b = 2;
+    int32 c = 2;
+}

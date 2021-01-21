@@ -1,0 +1,6 @@
+proto duplicate_definition_7
+
+enum A : uint3 {
+    A_1 = 1;
+    A_1 = 2;
+}

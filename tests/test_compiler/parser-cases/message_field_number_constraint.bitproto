@@ -1,0 +1,5 @@
+proto message_field_number_constraint
+
+message A {
+    uint3 a = 256
+}

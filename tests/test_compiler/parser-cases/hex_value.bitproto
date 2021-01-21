@@ -1,0 +1,9 @@
+proto hex_value
+
+const A = 0xF
+
+enum B : uint8 {
+    B_F = 0xF
+}
+
+const C = 0x40

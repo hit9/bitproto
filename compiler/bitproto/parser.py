@@ -617,7 +617,7 @@ class Parser:
         )
 
     def p_enum_field(self, p: P) -> None:
-        """enum_field : IDENTIFIER '=' INT_LITERAL optional_semicolon"""
+        """enum_field : IDENTIFIER '=' integer_literal optional_semicolon"""
         name = p[1]
         value = p[3]
         field = EnumField(
