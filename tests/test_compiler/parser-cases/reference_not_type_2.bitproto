@@ -1,0 +1,7 @@
+proto reference_not_type_2
+
+const A = 3 + 2
+
+message C {
+    A a = 1;
+}

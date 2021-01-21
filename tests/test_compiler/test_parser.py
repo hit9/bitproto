@@ -375,3 +375,10 @@ def test_parse_array_of_message() -> None:
 
     assert alias_c.nbits() == 3 * 1
     assert message_b.nbits() == 2 * 1 + 3 * 1 * 3 + 3 * 1
+
+
+def test_parse_reference_not_type() -> None:
+    with pytest.raises(GrammarError):
+        parse(bitproto_filepath("reference_not_type_1.bitproto"))
+    with pytest.raises(GrammarError):
+        parse(bitproto_filepath("reference_not_type_2.bitproto"))
