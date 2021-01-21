@@ -36,7 +36,7 @@ from bitproto.errors import (AliasInEnumUnsupported, AliasInMessageUnsupported,
                              StatementInMessageUnsupported,
                              UnsupportedToDeclareProtoNameOutofProtoScope)
 from bitproto.lexer import Lexer
-from bitproto.utils import cast_or_raise
+from bitproto.utils import cast_or_raise, write_stderr
 
 
 class Parser:
@@ -313,14 +313,23 @@ class Parser:
         p[0] = p[1]
 
     def p_alias(self, p: P) -> None:
-        """alias : TYPE IDENTIFIER '=' type optional_semicolon"""
-        name, type = p[2], p[4]
+        """alias : TYPE IDENTIFIER '=' type optional_semicolon
+                 | TYPEDEF type IDENTIFIER optional_semicolon"""
+
+        if len(p) == 6:
+            name, type, lineno, token = p[2], p[4], p.lineno(2), p[2]
+        else:
+            name, type, lineno, token = p[3], p[2], p.lineno(3), p[3]
+            write_stderr(
+                f"syntax warning: keyword typedef deprecated, suggestion: type {name} = ..."
+            )
+
         p[0] = alias = Alias(
             name=name,
             type=type,
             filepath=self.current_filepath(),
-            lineno=p.lineno(2),
-            token=p[2],
+            lineno=lineno,
+            token=token,
             indent=self.current_indent(p),
             scope_stack=self.current_scope_stack(),
             comment_block=self.collect_comment_block(),

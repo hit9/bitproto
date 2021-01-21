@@ -273,6 +273,11 @@ def write_file(filepath: str, s: str) -> None:
         f.write(s)
 
 
+def write_stderr(s: str) -> None:
+    """Write a line of string to stderr."""
+    sys.stderr.write(s + "\n")
+
+
 @unique
 class Color(Enum):
     BLACK: int = 0
