@@ -324,3 +324,23 @@ def test_parse_duplicate_definition() -> None:
         parse(bitproto_filepath("duplicate_definition_2.bitproto"))
     with pytest.raises(GrammarError):
         parse(bitproto_filepath("duplicate_definition_3.bitproto"))
+
+
+def test_parse_reference_constant() -> None:
+    proto = parse(bitproto_filepath("reference_constant.bitproto"))
+
+    constant_a = cast_or_raise(IntegerConstant, proto.get_member("A"))
+    constant_b = cast_or_raise(IntegerConstant, proto.get_member("B"))
+    message_c = cast_or_raise(Message, proto.get_member("C"))
+    constant_d = cast_or_raise(StringConstant, proto.get_member("D"))
+    constant_e = cast_or_raise(StringConstant, proto.get_member("E"))
+
+    assert constant_a.value == 2
+    assert constant_b.value == 2 * 3
+    assert constant_d.value == "abcde"
+    assert constant_e.value == "abcde"
+
+    field_c_b = message_c.fields()[0]
+    assert isinstance(field_c_b.type, Array)
+    array_type = cast_or_raise(Array, field_c_b.type)
+    assert array_type.cap == constant_b.value
