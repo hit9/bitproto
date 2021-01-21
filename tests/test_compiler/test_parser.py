@@ -2,8 +2,8 @@ import os
 from typing import Union as Fixture
 
 import pytest
-from bitproto._ast import (Alias, Array, Bool, Constant, Enum, Int,
-                           IntegerConstant, Message, MessageField, Option,
+from bitproto._ast import (Alias, Array, Bool, BooleanConstant, Constant, Enum,
+                           Int, IntegerConstant, Message, MessageField, Option,
                            Proto, StringConstant)
 from bitproto.parser import GrammarError, parse
 from bitproto.utils import cast_or_raise
@@ -468,7 +468,7 @@ def test_parse_hex_value() -> None:
     proto = parse(bitproto_filepath("hex_value.bitproto"))
 
     constant_a = cast_or_raise(IntegerConstant, proto.get_member("A"))
-    constant_c = cast_or_raise(Constant, proto.get_member("C"))
+    constant_c = cast_or_raise(IntegerConstant, proto.get_member("C"))
     enum_b = cast_or_raise(Enum, proto.get_member("B"))
 
     assert constant_a.value == 0xF
@@ -482,4 +482,16 @@ def test_option_wrong_type() -> None:
 
 
 def test_constants() -> None:
-    pass
+    proto = parse(bitproto_filepath("constants.bitproto"))
+
+    constant_a = cast_or_raise(IntegerConstant, proto.get_member("A"))
+    constant_b = cast_or_raise(StringConstant, proto.get_member("B"))
+    constant_c = cast_or_raise(BooleanConstant, proto.get_member("C"))
+    constant_d = cast_or_raise(BooleanConstant, proto.get_member("D"))
+    constant_e = cast_or_raise(BooleanConstant, proto.get_member("E"))
+
+    assert constant_a.value == 1
+    assert constant_b.value == "B"
+    assert constant_c.value is False
+    assert constant_d.value is True
+    assert constant_e.value is False
