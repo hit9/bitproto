@@ -2,7 +2,7 @@ import os
 from typing import Union as Fixture
 
 import pytest
-from bitproto._ast import Array, Enum, Message, MessageField, Proto
+from bitproto._ast import Array, Bool, Enum, Message, MessageField, Proto
 from bitproto.parser import parse
 from bitproto.utils import cast_or_raise
 
@@ -108,9 +108,77 @@ def test_parse_optional_semicolon() -> None:
 def test_parse_nested_message() -> None:
     proto = parse(bitproto_filepath("nested_message.bitproto"))
 
+    message_a = cast_or_raise(Message, proto.get_member("A"))
+    message_b = cast_or_raise(Message, proto.get_member("A", "B"))
+    message_c = cast_or_raise(Message, proto.get_member("A", "B", "C"))
+
+    field_a_b = message_a.sorted_fields()[0]
+    field_a_c = message_a.sorted_fields()[1]
+    field_b_c = message_b.sorted_fields()[0]
+    field_c_is_ok = message_c.sorted_fields()[0]
+
+    assert field_a_b.type is message_b
+    assert field_a_c.type is message_c
+    assert field_b_c.type is message_c
+    assert isinstance(field_c_is_ok.type, Bool)
+
+    assert message_c.nbits() == 1
+    assert message_b.nbits() == 1
+    assert message_a.nbits() == 1 + 1
+
+
+def test_parse_reference_message() -> None:
+    proto = parse(bitproto_filepath("reference_message.bitproto"))
+
+    message_a = cast_or_raise(Message, proto.get_member("A"))
+    message_b = cast_or_raise(Message, proto.get_member("A", "B"))
+    message_c = cast_or_raise(Message, proto.get_member("A", "B", "C"))
+    message_d = cast_or_raise(Message, proto.get_member("D"))
+    message_e = cast_or_raise(Message, proto.get_member("E"))
+    message_f = cast_or_raise(Message, proto.get_member("E", "F"))
+
+    field_a_b = message_a.sorted_fields()[0]
+    field_a_c = message_a.sorted_fields()[1]
+    field_b_c = message_b.sorted_fields()[0]
+    field_c_is_ok = message_c.sorted_fields()[0]
+    field_d_a = message_d.sorted_fields()[0]
+    field_d_b = message_d.sorted_fields()[1]
+    field_d_c = message_d.sorted_fields()[2]
+    field_f_c = message_f.sorted_fields()[0]
+
+    assert field_a_b.type is message_b
+    assert field_a_c.type is message_c
+    assert field_b_c.type is message_c
+    assert isinstance(field_c_is_ok.type, Bool)
+    assert field_d_a.type is message_a
+    assert field_d_b.type is message_b
+    assert field_d_c.type is message_c
+    assert field_f_c.type is message_c
+
+    assert message_c.nbits() == 1
+    assert message_b.nbits() == 1
+    assert message_a.nbits() == 1 + 1
+    assert message_d.nbits() == (1 + 1) + 1 + 1
+    assert message_f.nbits() == 1
+
 
 def test_parse_nested_enum() -> None:
-    pass
+    proto = parse(bitproto_filepath("nested_enum.bitproto"))
+
+    message_a = cast_or_raise(Message, proto.get_member("A"))
+    message_b = cast_or_raise(Message, proto.get_member("A", "B"))
+    enum_c = cast_or_raise(Enum, proto.get_member("A", "B", "C"))
+    message_d = cast_or_raise(Message, proto.get_member("D"))
+
+    field_a_c = message_a.sorted_fields()[0]
+    field_b_c = message_b.sorted_fields()[0]
+    field_d_c = message_d.sorted_fields()[0]
+
+    assert field_a_c.type is enum_c
+    assert field_b_c.type is enum_c
+    assert field_d_c.type is enum_c
+
+    assert len(enum_c.fields()) == 3
 
 
 def test_parse_option() -> None:
@@ -130,4 +198,12 @@ def test_parse_message_size_constraint() -> None:
 
 
 def test_parse_2d_array() -> None:
+    pass
+
+
+def test_parse_import() -> None:
+    pass
+
+
+def test_parse_empty() -> None:
     pass

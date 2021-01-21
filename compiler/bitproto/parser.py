@@ -412,15 +412,13 @@ class Parser:
           * Otherwise, lookup from the scope stack reversively (in current proto).
         """
         names = identifier.split(".")
-        if len(names) > 1:  # Contains dots
-            proto = self.current_proto()
-            return proto.get_member(*names)
-        else:  # No dot.
-            for scope in self.scope_stack_in_current_proto()[::-1]:
-                d = scope.get_member(identifier)
-                if d is not None:
-                    return d
-            return None
+
+        for scope in self.scope_stack_in_current_proto()[::-1]:
+            # Lookup in scopes bound to current proto reversively.
+            d = scope.get_member(*names)
+            if d is not None:
+                return d
+        return None
 
     def p_constant_reference(self, p: P) -> None:
         """constant_reference : dotted_identifier"""
