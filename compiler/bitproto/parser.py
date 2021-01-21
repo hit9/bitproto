@@ -25,8 +25,9 @@ from bitproto._ast import (Alias, Array, BooleanConstant, Comment, Constant,
 from bitproto.errors import (AliasInEnumUnsupported, AliasInMessageUnsupported,
                              CalculationExpressionError,
                              ConstInEnumUnsupported, ConstInMessageUnsupported,
-                             CyclicImport, EnumInEnumUnsupported, GrammarError,
-                             ImportInEnumUnsupported,
+                             CyclicImport, DuplicatedDefinition,
+                             DuplicatedImport, EnumInEnumUnsupported,
+                             GrammarError, ImportInEnumUnsupported,
                              ImportInMessageUnsupported, InternalError,
                              InvalidArrayCap, MessageFieldInEnumUnsupported,
                              MessageInEnumUnsupported, OptionInEnumUnsupported,
@@ -274,6 +275,7 @@ class Parser:
         # Get filepath to import.
         importing_path = p[len(p) - 2]
         filepath = self._get_child_filepath(importing_path)
+
         # Check if this filepath already in parsing.
         if self._check_parsing_file(filepath):
             raise CyclicImport(
@@ -282,11 +284,29 @@ class Parser:
                 token=importing_path,
                 lineno=p.lineno(2),
             )
+
+        # Check if this filepath already parsed by current proto.
+        for _, proto in self.current_proto().protos(recursive=False):
+            if os.path.samefile(proto.filepath, filepath):
+                raise DuplicatedImport(
+                    filepath=self.current_filepath(), token=filepath, lineno=p.lineno(1)
+                )
+
         # Parse.
         p[0] = child = self.parse_child(filepath)
         name = child.name
         if len(p) == 5:  # Importing as `name`
             name = p[2]
+
+        # Check if import (as) name already taken.
+        if name in self.current_proto().members:
+            raise DuplicatedDefinition(
+                message="imported proto name already used",
+                token=name,
+                lineno=p.lineno(1),
+                filepath=self.current_filepath(),
+            )
+
         # Push to current scope
         self.current_scope().push_member(child, name)
 

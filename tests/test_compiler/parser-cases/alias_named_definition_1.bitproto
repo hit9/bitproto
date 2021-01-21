@@ -1,0 +1,5 @@
+proto alias_named_definition_1
+
+message A {}
+
+type B = A

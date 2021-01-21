@@ -1,0 +1,8 @@
+proto reference_type_undefined_1
+
+message A {
+    message B {
+        message C {}
+    }
+    C c = 1;
+}

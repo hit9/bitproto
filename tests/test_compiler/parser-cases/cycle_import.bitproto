@@ -1,0 +1,3 @@
+proto cycle_import
+
+import "shared_1.bitproto"

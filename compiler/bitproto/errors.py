@@ -166,6 +166,11 @@ class DuplicatedDefinition(GrammarError):
 
 
 @dataclass
+class DuplicatedImport(GrammarError):
+    """Duplicated import."""
+
+
+@dataclass
 class ReferencedConstantNotDefined(GrammarError):
     """Referenced constant not defined."""
 

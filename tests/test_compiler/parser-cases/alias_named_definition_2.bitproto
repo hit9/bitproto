@@ -1,0 +1,5 @@
+proto alias_named_definition_2
+
+enum A : uint3 {}
+
+type B = A

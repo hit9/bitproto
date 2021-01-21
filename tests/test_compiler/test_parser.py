@@ -324,6 +324,10 @@ def test_parse_duplicate_definition() -> None:
         parse(bitproto_filepath("duplicate_definition_2.bitproto"))
     with pytest.raises(GrammarError):
         parse(bitproto_filepath("duplicate_definition_3.bitproto"))
+    with pytest.raises(GrammarError):
+        parse(bitproto_filepath("duplicate_definition_4.bitproto"))
+    with pytest.raises(GrammarError):
+        parse(bitproto_filepath("duplicate_definition_5.bitproto"))
 
 
 def test_parse_reference_constant() -> None:
@@ -382,3 +386,51 @@ def test_parse_reference_not_type() -> None:
         parse(bitproto_filepath("reference_not_type_1.bitproto"))
     with pytest.raises(GrammarError):
         parse(bitproto_filepath("reference_not_type_2.bitproto"))
+
+
+def test_parse_reference_type_undefined() -> None:
+    with pytest.raises(GrammarError):
+        parse(bitproto_filepath("reference_type_undefined_1.bitproto"))
+    with pytest.raises(GrammarError):
+        parse(bitproto_filepath("reference_type_undefined_2.bitproto"))
+    with pytest.raises(GrammarError):
+        parse(bitproto_filepath("reference_type_undefined_3.bitproto"))
+
+
+def test_parse_alias_named_definition() -> None:
+    with pytest.raises(GrammarError):
+        parse(bitproto_filepath("alias_named_definition_1.bitproto"))
+    with pytest.raises(GrammarError):
+        parse(bitproto_filepath("alias_named_definition_2.bitproto"))
+
+
+def test_parse_cycle_import() -> None:
+    with pytest.raises(GrammarError):
+        parse(bitproto_filepath("cycle_import.bitproto"))
+
+
+def test_parse_nested_import() -> None:
+    proto = parse(bitproto_filepath("nested_import.bitproto"))
+
+    proto_shared_3 = cast_or_raise(Proto, proto.get_member("shared_3"))
+    proto_shared_4 = cast_or_raise(Proto, proto.get_member("shared_4"))
+    message_a = cast_or_raise(Message, proto.get_member("A"))
+
+    alias_timestamp = cast_or_raise(Alias, proto.get_member("shared_4", "Timestamp"))
+    assert alias_timestamp is proto_shared_4.get_member("Timestamp")
+    assert alias_timestamp.bound is proto_shared_4
+    assert len(alias_timestamp.scope_stack) == 2
+
+    message_record = cast_or_raise(Message, proto.get_member("shared_3", "Record"))
+    assert message_record is proto_shared_3.get_member("Record")
+    assert message_record.bound is proto_shared_3
+    assert len(message_record.scope_stack) == 2
+
+    enum_color = cast_or_raise(Enum, proto.get_member("shared_3", "Color"))
+    assert enum_color is proto_shared_3.get_member("Color")
+    assert enum_color.bound is proto_shared_3
+    assert len(enum_color.scope_stack) == 2
+
+    assert message_a.bound is proto
+
+    # shared_3 import the same shared_4 with proto `nested_import`
