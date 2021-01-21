@@ -415,6 +415,7 @@ def test_parse_nested_import() -> None:
     proto_shared_3 = cast_or_raise(Proto, proto.get_member("shared_3"))
     proto_shared_4 = cast_or_raise(Proto, proto.get_member("shared_4"))
     message_a = cast_or_raise(Message, proto.get_member("A"))
+    message_c = cast_or_raise(Message, proto_shared_3.get_member("B", "C"))
 
     alias_timestamp = cast_or_raise(Alias, proto.get_member("shared_4", "Timestamp"))
     assert alias_timestamp is proto_shared_4.get_member("Timestamp")
@@ -433,4 +434,12 @@ def test_parse_nested_import() -> None:
 
     assert message_a.bound is proto
 
-    # shared_3 import the same shared_4 with proto `nested_import`
+    field_a_color = message_a.fields()[0]
+    field_a_record = message_a.fields()[1]
+    field_a_created_at = message_a.fields()[2]
+    field_a_c = message_a.fields()[3]
+
+    assert field_a_color.type is enum_color
+    assert field_a_record.type is message_record
+    assert field_a_created_at.type is alias_timestamp
+    assert field_a_c.type is message_c
