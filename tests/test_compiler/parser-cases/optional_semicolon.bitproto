@@ -1,0 +1,11 @@
+proto optional_semicolon;
+
+
+type TernaryInt32 = int32[3];  // Ends with semicolon
+type Timestamp = int64 // End without semicolon
+
+enum PropellerStatus : uint2 {
+    PROPELLER_STATUS_UNKNOWN = 0;
+    PROPELLER_STATUS_IDLE = 1  // End without semicolon
+    PROPELLER_STATUS_ROTATING = 2;
+}
