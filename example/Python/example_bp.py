@@ -7,17 +7,16 @@ Proto drone describes the structure of the drone.
 
 
 import json
-from dataclasses import asdict, dataclass, field
-from typing import Any, ClassVar, Dict, List, Optional, Tuple
+from dataclasses import dataclass, field
+from typing import ClassVar, Dict, List
 
 from bitprotolib import bp
 
-Timestamp = int
 
+Timestamp = int
 
 def bp_processor_Timestamp() -> bp.Processor:
     return bp.AliasProcessor(bp.Int(64))
-
 
 def bp_default_factory_Timestamp() -> Timestamp:
     return 0
@@ -25,10 +24,8 @@ def bp_default_factory_Timestamp() -> Timestamp:
 
 TernaryInt32 = List[int]
 
-
 def bp_processor_TernaryInt32() -> bp.Processor:
     return bp.AliasProcessor(bp.Array(False, 3, bp.Int(32)))
-
 
 def bp_default_factory_TernaryInt32() -> TernaryInt32:
     return [0 for _ in range(3)]
@@ -49,7 +46,6 @@ _DRONESTATUS_VALUE_TO_NAME_MAP: Dict[DroneStatus, str] = {
     4: "DRONE_STATUS_FLYING",
 }
 
-
 def bp_processor_DroneStatus() -> bp.Processor:
     return bp.EnumProcessor(False, bp.Uint(3))
 
@@ -64,7 +60,6 @@ _PROPELLERSTATUS_VALUE_TO_NAME_MAP: Dict[PropellerStatus, str] = {
     1: "PROPELLER_STATUS_IDLE",
     2: "PROPELLER_STATUS_ROTATING",
 }
-
 
 def bp_processor_PropellerStatus() -> bp.Processor:
     return bp.EnumProcessor(False, bp.Uint(2))
@@ -81,7 +76,6 @@ _ROTATINGDIRECTION_VALUE_TO_NAME_MAP: Dict[RotatingDirection, str] = {
     2: "ROTATING_DIRECTION_ANTI_CLOCK_WISE",
 }
 
-
 def bp_processor_RotatingDirection() -> bp.Processor:
     return bp.EnumProcessor(False, bp.Uint(2))
 
@@ -96,7 +90,6 @@ _POWERSTATUS_VALUE_TO_NAME_MAP: Dict[PowerStatus, str] = {
     1: "POWER_STATUS_OFF",
     2: "POWER_STATUS_ON",
 }
-
 
 def bp_processor_PowerStatus() -> bp.Processor:
     return bp.EnumProcessor(False, bp.Uint(2))
@@ -113,13 +106,12 @@ _LANDINGGEARSTATUS_VALUE_TO_NAME_MAP: Dict[LandingGearStatus, str] = {
     2: "LANDING_GEAR_STATUS_FOLDED",
 }
 
-
 def bp_processor_LandingGearStatus() -> bp.Processor:
     return bp.EnumProcessor(False, bp.Uint(2))
 
 
 @dataclass
-class Propeller(bp.Accessor):
+class Propeller(bp.MessageBase):
     # Number of bytes to serialize class Propeller
     BYTES_LENGTH: ClassVar[int] = 2
 
@@ -137,11 +129,11 @@ class Propeller(bp.Accessor):
 
     def bp_set_byte(self, di: bp.DataIndexer, lshift: int, b: bp.byte) -> None:
         if di.field_number == 1:
-            self.id |= int(b) << lshift
+            self.id |= (int(b) << lshift)
         if di.field_number == 2:
-            self.status |= PropellerStatus(b) << lshift
+            self.status |= (PropellerStatus(b) << lshift)
         if di.field_number == 3:
-            self.direction |= RotatingDirection(b) << lshift
+            self.direction |= (RotatingDirection(b) << lshift)
         return
 
     def bp_get_byte(self, di: bp.DataIndexer, rshift: int) -> bp.byte:
@@ -154,7 +146,7 @@ class Propeller(bp.Accessor):
         return bp.byte(0)  # Won't reached
 
     def bp_get_accessor(self, di: bp.DataIndexer) -> bp.Accessor:
-        return bp.NilAccessor()  # Won't reached
+        return bp.NilAccessor() # Won't reached
 
     def encode(self) -> bytearray:
         """
@@ -174,17 +166,9 @@ class Propeller(bp.Accessor):
         ctx = bp.ProcessContext(False, s)
         self.bp_processor().process(ctx, bp.NIL_DATA_INDEXER, self)
 
-    def to_dict(self) -> Dict[str, Any]:
-        return asdict(self)
-
-    def to_json(
-        self, indent: Optional[int] = None, separators: Optional[Tuple[str, str]] = None
-    ) -> str:
-        return json.dumps(self.to_dict(), indent=indent, separators=separators)
-
 
 @dataclass
-class Power(bp.Accessor):
+class Power(bp.MessageBase):
     # Number of bytes to serialize class Power
     BYTES_LENGTH: ClassVar[int] = 2
 
@@ -202,9 +186,9 @@ class Power(bp.Accessor):
 
     def bp_set_byte(self, di: bp.DataIndexer, lshift: int, b: bp.byte) -> None:
         if di.field_number == 1:
-            self.battery |= int(b) << lshift
+            self.battery |= (int(b) << lshift)
         if di.field_number == 2:
-            self.status |= PowerStatus(b) << lshift
+            self.status |= (PowerStatus(b) << lshift)
         if di.field_number == 3:
             self.is_charging = bool(b)
         return
@@ -219,7 +203,7 @@ class Power(bp.Accessor):
         return bp.byte(0)  # Won't reached
 
     def bp_get_accessor(self, di: bp.DataIndexer) -> bp.Accessor:
-        return bp.NilAccessor()  # Won't reached
+        return bp.NilAccessor() # Won't reached
 
     def encode(self) -> bytearray:
         """
@@ -239,17 +223,9 @@ class Power(bp.Accessor):
         ctx = bp.ProcessContext(False, s)
         self.bp_processor().process(ctx, bp.NIL_DATA_INDEXER, self)
 
-    def to_dict(self) -> Dict[str, Any]:
-        return asdict(self)
-
-    def to_json(
-        self, indent: Optional[int] = None, separators: Optional[Tuple[str, str]] = None
-    ) -> str:
-        return json.dumps(self.to_dict(), indent=indent, separators=separators)
-
 
 @dataclass
-class Network(bp.Accessor):
+class Network(bp.MessageBase):
     # Number of bytes to serialize class Network
     BYTES_LENGTH: ClassVar[int] = 9
 
@@ -267,7 +243,7 @@ class Network(bp.Accessor):
 
     def bp_set_byte(self, di: bp.DataIndexer, lshift: int, b: bp.byte) -> None:
         if di.field_number == 1:
-            self.signal |= int(b) << lshift
+            self.signal |= (int(b) << lshift)
         if di.field_number == 2:
             self.heartbeat_at |= bp.int64((int(b) << lshift))
         return
@@ -280,7 +256,7 @@ class Network(bp.Accessor):
         return bp.byte(0)  # Won't reached
 
     def bp_get_accessor(self, di: bp.DataIndexer) -> bp.Accessor:
-        return bp.NilAccessor()  # Won't reached
+        return bp.NilAccessor() # Won't reached
 
     def encode(self) -> bytearray:
         """
@@ -300,17 +276,9 @@ class Network(bp.Accessor):
         ctx = bp.ProcessContext(False, s)
         self.bp_processor().process(ctx, bp.NIL_DATA_INDEXER, self)
 
-    def to_dict(self) -> Dict[str, Any]:
-        return asdict(self)
-
-    def to_json(
-        self, indent: Optional[int] = None, separators: Optional[Tuple[str, str]] = None
-    ) -> str:
-        return json.dumps(self.to_dict(), indent=indent, separators=separators)
-
 
 @dataclass
-class LandingGear(bp.Accessor):
+class LandingGear(bp.MessageBase):
     # Number of bytes to serialize class LandingGear
     BYTES_LENGTH: ClassVar[int] = 1
 
@@ -324,7 +292,7 @@ class LandingGear(bp.Accessor):
 
     def bp_set_byte(self, di: bp.DataIndexer, lshift: int, b: bp.byte) -> None:
         if di.field_number == 1:
-            self.status |= LandingGearStatus(b) << lshift
+            self.status |= (LandingGearStatus(b) << lshift)
         return
 
     def bp_get_byte(self, di: bp.DataIndexer, rshift: int) -> bp.byte:
@@ -333,7 +301,7 @@ class LandingGear(bp.Accessor):
         return bp.byte(0)  # Won't reached
 
     def bp_get_accessor(self, di: bp.DataIndexer) -> bp.Accessor:
-        return bp.NilAccessor()  # Won't reached
+        return bp.NilAccessor() # Won't reached
 
     def encode(self) -> bytearray:
         """
@@ -353,17 +321,9 @@ class LandingGear(bp.Accessor):
         ctx = bp.ProcessContext(False, s)
         self.bp_processor().process(ctx, bp.NIL_DATA_INDEXER, self)
 
-    def to_dict(self) -> Dict[str, Any]:
-        return asdict(self)
-
-    def to_json(
-        self, indent: Optional[int] = None, separators: Optional[Tuple[str, str]] = None
-    ) -> str:
-        return json.dumps(self.to_dict(), indent=indent, separators=separators)
-
 
 @dataclass
-class Position(bp.Accessor):
+class Position(bp.MessageBase):
     # Number of bytes to serialize class Position
     BYTES_LENGTH: ClassVar[int] = 12
 
@@ -381,11 +341,11 @@ class Position(bp.Accessor):
 
     def bp_set_byte(self, di: bp.DataIndexer, lshift: int, b: bp.byte) -> None:
         if di.field_number == 1:
-            self.latitude |= int(b) << lshift
+            self.latitude |= (int(b) << lshift)
         if di.field_number == 2:
-            self.longitude |= int(b) << lshift
+            self.longitude |= (int(b) << lshift)
         if di.field_number == 3:
-            self.altitude |= int(b) << lshift
+            self.altitude |= (int(b) << lshift)
         return
 
     def bp_get_byte(self, di: bp.DataIndexer, rshift: int) -> bp.byte:
@@ -398,7 +358,7 @@ class Position(bp.Accessor):
         return bp.byte(0)  # Won't reached
 
     def bp_get_accessor(self, di: bp.DataIndexer) -> bp.Accessor:
-        return bp.NilAccessor()  # Won't reached
+        return bp.NilAccessor() # Won't reached
 
     def encode(self) -> bytearray:
         """
@@ -418,21 +378,12 @@ class Position(bp.Accessor):
         ctx = bp.ProcessContext(False, s)
         self.bp_processor().process(ctx, bp.NIL_DATA_INDEXER, self)
 
-    def to_dict(self) -> Dict[str, Any]:
-        return asdict(self)
-
-    def to_json(
-        self, indent: Optional[int] = None, separators: Optional[Tuple[str, str]] = None
-    ) -> str:
-        return json.dumps(self.to_dict(), indent=indent, separators=separators)
-
 
 @dataclass
-class Pose(bp.Accessor):
+class Pose(bp.MessageBase):
     """
     Pose in flight. https://en.wikipedia.org/wiki/Aircraft_principal_axes
     """
-
     # Number of bytes to serialize class Pose
     BYTES_LENGTH: ClassVar[int] = 12
 
@@ -467,7 +418,7 @@ class Pose(bp.Accessor):
         return bp.byte(0)  # Won't reached
 
     def bp_get_accessor(self, di: bp.DataIndexer) -> bp.Accessor:
-        return bp.NilAccessor()  # Won't reached
+        return bp.NilAccessor() # Won't reached
 
     def encode(self) -> bytearray:
         """
@@ -487,17 +438,9 @@ class Pose(bp.Accessor):
         ctx = bp.ProcessContext(False, s)
         self.bp_processor().process(ctx, bp.NIL_DATA_INDEXER, self)
 
-    def to_dict(self) -> Dict[str, Any]:
-        return asdict(self)
-
-    def to_json(
-        self, indent: Optional[int] = None, separators: Optional[Tuple[str, str]] = None
-    ) -> str:
-        return json.dumps(self.to_dict(), indent=indent, separators=separators)
-
 
 @dataclass
-class Flight(bp.Accessor):
+class Flight(bp.MessageBase):
     # Number of bytes to serialize class Flight
     BYTES_LENGTH: ClassVar[int] = 36
 
@@ -532,7 +475,7 @@ class Flight(bp.Accessor):
     def bp_get_accessor(self, di: bp.DataIndexer) -> bp.Accessor:
         if di.field_number == 1:
             return self.pose
-        return bp.NilAccessor()  # Won't reached
+        return bp.NilAccessor() # Won't reached
 
     def encode(self) -> bytearray:
         """
@@ -552,26 +495,16 @@ class Flight(bp.Accessor):
         ctx = bp.ProcessContext(False, s)
         self.bp_processor().process(ctx, bp.NIL_DATA_INDEXER, self)
 
-    def to_dict(self) -> Dict[str, Any]:
-        return asdict(self)
-
-    def to_json(
-        self, indent: Optional[int] = None, separators: Optional[Tuple[str, str]] = None
-    ) -> str:
-        return json.dumps(self.to_dict(), indent=indent, separators=separators)
-
 
 @dataclass
-class Drone(bp.Accessor):
+class Drone(bp.MessageBase):
     # Number of bytes to serialize class Drone
     BYTES_LENGTH: ClassVar[int] = 65
 
     status: DroneStatus = 0
     position: Position = field(default_factory=Position)
     flight: Flight = field(default_factory=Flight)
-    propellers: List[Propeller] = field(
-        default_factory=lambda: [Propeller() for _ in range(4)]
-    )
+    propellers: List[Propeller] = field(default_factory=lambda: [Propeller() for _ in range(4)])
     power: Power = field(default_factory=Power)
     network: Network = field(default_factory=Network)
     landing_gear: LandingGear = field(default_factory=LandingGear)
@@ -590,7 +523,7 @@ class Drone(bp.Accessor):
 
     def bp_set_byte(self, di: bp.DataIndexer, lshift: int, b: bp.byte) -> None:
         if di.field_number == 1:
-            self.status |= DroneStatus(b) << lshift
+            self.status |= (DroneStatus(b) << lshift)
         return
 
     def bp_get_byte(self, di: bp.DataIndexer, rshift: int) -> bp.byte:
@@ -611,7 +544,7 @@ class Drone(bp.Accessor):
             return self.network
         if di.field_number == 7:
             return self.landing_gear
-        return bp.NilAccessor()  # Won't reached
+        return bp.NilAccessor() # Won't reached
 
     def encode(self) -> bytearray:
         """
@@ -630,11 +563,3 @@ class Drone(bp.Accessor):
         assert len(s) >= self.BYTES_LENGTH, bp.NotEnoughBytes()
         ctx = bp.ProcessContext(False, s)
         self.bp_processor().process(ctx, bp.NIL_DATA_INDEXER, self)
-
-    def to_dict(self) -> Dict[str, Any]:
-        return asdict(self)
-
-    def to_json(
-        self, indent: Optional[int] = None, separators: Optional[Tuple[str, str]] = None
-    ) -> str:
-        return json.dumps(self.to_dict(), indent=indent, separators=separators)

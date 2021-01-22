@@ -7,11 +7,12 @@ Encoding support for generated python files.
 Keep it simple:  No magic.
 """
 
+import json
 from abc import abstractmethod
 from contextlib import contextmanager
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from dataclasses import field as dataclass_field
-from typing import Iterator, List
+from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 # Flags
 FLAG_BOOL: int = 1
@@ -173,6 +174,21 @@ class IntAccessor(Accessor):
 
     def bp_get_accessor(self, di: DataIndexer) -> "Accessor":
         return NilAccessor()
+
+
+class MessageBase(Accessor):
+    """MessageBase is the base class for all bitproto message classes.
+    """
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Converts this message to a dict."""
+        return asdict(self)
+
+    def to_json(
+        self, indent: Optional[int] = None, separators: Optional[Tuple[str, str]] = None
+    ) -> str:
+        """Dumps this message to a json string."""
+        return json.dumps(self.to_dict(), indent=indent, separators=separators)
 
 
 class Processor:
