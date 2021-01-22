@@ -29,7 +29,7 @@ int main(void) {
     EncodeExtendedDrone(&drone, s);
 
     // Output
-    for (int i = 0; i < BYTES_LENGTH_DRONE; i++) printf("%u ", s[i]);
+    for (int i = 0; i < BYTES_LENGTH_EXTENDED_DRONE; i++) printf("%u ", s[i]);
 
     // Decode with old message
     struct Drone drone_old = {0};

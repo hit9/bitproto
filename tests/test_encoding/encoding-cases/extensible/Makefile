@@ -29,8 +29,8 @@ bp-c:
 	@bitproto c $(BP_EXTENDED_FILENAME) c/
 
 bp-go:
-	@bitproto go $(BP_ORIGIN_FILENAME) go/bp/
-	@bitproto go $(BP_EXTENDED_FILENAME) go/bp/
+	@bitproto go $(BP_ORIGIN_FILENAME) go/bp_origin/
+	@bitproto go $(BP_EXTENDED_FILENAME) go/bp_extended/
 
 bp-py:
 	@bitproto py $(BP_ORIGIN_FILENAME) py/
