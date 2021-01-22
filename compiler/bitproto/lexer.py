@@ -19,10 +19,10 @@ from bitproto.errors import InvalidEscapingChar, LexerError
 class Lexer:
     """Lexer for bitproto.
 
-        >>> lexer = Lexer()
-        >>> lexer.input("uint3 field")
-        >>> lexer.token()
-        LexToken(UINT_TYPE, uint3, 1, 0)
+    >>> lexer = Lexer()
+    >>> lexer.input("uint3 field")
+    >>> lexer.token()
+    LexToken(UINT_TYPE, uint3, 1, 0)
 
     """
 

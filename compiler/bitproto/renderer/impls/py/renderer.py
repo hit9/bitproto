@@ -4,14 +4,33 @@ Renderer for Python.
 from abc import abstractmethod
 from typing import List, Optional
 
-from bitproto._ast import (Alias, Array, Bool, BoundDefinition, Constant, Enum,
-                           Int, Integer, Message, MessageField, SingleType)
-from bitproto.renderer.block import (Block, BlockAheadNotice, BlockBindAlias,
-                                     BlockBindConstant, BlockBindEnum,
-                                     BlockBindEnumField, BlockBindMessage,
-                                     BlockBindMessageField, BlockBindProto,
-                                     BlockBoundDefinitionDispatcher,
-                                     BlockComposition, BlockWrapper)
+from bitproto._ast import (
+    Alias,
+    Array,
+    Bool,
+    BoundDefinition,
+    Constant,
+    Enum,
+    Int,
+    Integer,
+    Message,
+    MessageField,
+    SingleType,
+)
+from bitproto.renderer.block import (
+    Block,
+    BlockAheadNotice,
+    BlockBindAlias,
+    BlockBindConstant,
+    BlockBindEnum,
+    BlockBindEnumField,
+    BlockBindMessage,
+    BlockBindMessageField,
+    BlockBindProto,
+    BlockBoundDefinitionDispatcher,
+    BlockComposition,
+    BlockWrapper,
+)
 from bitproto.renderer.impls.py.formatter import PyFormatter as F
 from bitproto.renderer.renderer import Renderer
 from bitproto.utils import cached_property, override
@@ -318,7 +337,10 @@ class BlockMessageMethodProcessor(BlockMessageBase, BlockWrapper[F]):
 
 class BlockMessageMethodGetSetByteItemBase(BlockBindMessageField[F]):
     def __init__(
-        self, d: MessageField, name: Optional[str] = None, indent: int = 0,
+        self,
+        d: MessageField,
+        name: Optional[str] = None,
+        indent: int = 0,
     ) -> None:
         super().__init__(d, name, indent)
         self.array_depth: int = 0
@@ -471,7 +493,10 @@ class BlockMessageMethodGetByte(BlockMessageBase, BlockWrapper[F]):
 
 class BlockMessageMethodGetAccessorItem(BlockBindMessageField[F]):
     def __init__(
-        self, d: MessageField, name: Optional[str] = None, indent: int = 0,
+        self,
+        d: MessageField,
+        name: Optional[str] = None,
+        indent: int = 0,
     ) -> None:
         super().__init__(d, name, indent)
         self.array_depth: int = 0

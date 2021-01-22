@@ -4,21 +4,42 @@ Renderer for C file.
 
 from typing import List, Optional
 
-from bitproto._ast import (Alias, Array, BoundDefinition, Definition, Enum,
-                           Message, MessageField)
-from bitproto.renderer.block import (Block, BlockAheadNotice, BlockBindAlias,
-                                     BlockBindEnum, BlockBindMessage,
-                                     BlockBindMessageField,
-                                     BlockBoundDefinitionDispatcher,
-                                     BlockComposition, BlockConditional,
-                                     BlockDeferable, BlockWrapper)
+from bitproto._ast import (
+    Alias,
+    Array,
+    BoundDefinition,
+    Definition,
+    Enum,
+    Message,
+    MessageField,
+)
+from bitproto.renderer.block import (
+    Block,
+    BlockAheadNotice,
+    BlockBindAlias,
+    BlockBindEnum,
+    BlockBindMessage,
+    BlockBindMessageField,
+    BlockBoundDefinitionDispatcher,
+    BlockComposition,
+    BlockConditional,
+    BlockDeferable,
+    BlockWrapper,
+)
 from bitproto.renderer.impls.c.formatter import CFormatter as F
 from bitproto.renderer.impls.c.renderer_h import (
-    BlockAliasJsonFormatterBase, BlockAliasProcessorBase,
-    BlockEnumJsonFormatterBase, BlockEnumProcessorBase,
-    BlockMessageBpJsonFormatterBase, BlockMessageDecoderBase,
-    BlockMessageEncoderBase, BlockMessageFieldDescriptorsIniterBase,
-    BlockMessageJsonFormatterBase, BlockMessageProcessorBase, RendererCHeader)
+    BlockAliasJsonFormatterBase,
+    BlockAliasProcessorBase,
+    BlockEnumJsonFormatterBase,
+    BlockEnumProcessorBase,
+    BlockMessageBpJsonFormatterBase,
+    BlockMessageDecoderBase,
+    BlockMessageEncoderBase,
+    BlockMessageFieldDescriptorsIniterBase,
+    BlockMessageJsonFormatterBase,
+    BlockMessageProcessorBase,
+    RendererCHeader,
+)
 from bitproto.renderer.renderer import Renderer
 from bitproto.utils import cached_property, cast_or_raise, override
 

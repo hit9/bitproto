@@ -24,6 +24,7 @@ __all__ = (
     "frozen",
     "safe_hash",
     "override",
+    "override_docstring",
     "cast_or_raise",
     "overridable",
     "isabstractmethod",
@@ -59,9 +60,9 @@ else:
 def conditional_cache(condition: Callable[..., bool]) -> Callable[[F], F]:
     """Cache given function until condition function returns True.
 
-        >>> @conditional_cache(lambda fn, args, kwds: ...)
-            def get_attr(self, *args, **kwds):
-                pass
+    >>> @conditional_cache(lambda fn, args, kwds: ...)
+        def get_attr(self, *args, **kwds):
+            pass
     """
 
     def decorator(user_function: F) -> F:
@@ -231,9 +232,9 @@ safe_hash_ = safe_hash  # Alias
 def override(c: C) -> Callable[[M], M]:
     """Just a simple mark indicates this method is overriding super method.
 
-        >>> @override(SuperClass)
-            def some_func(self):
-                pass
+    >>> @override(SuperClass)
+        def some_func(self):
+            pass
     """
 
     def decorator(f: M) -> M:
@@ -278,6 +279,21 @@ def write_stderr(s: str) -> None:
     sys.stderr.write(s + "\n")
 
 
+def override_docstring(string: str) -> Callable[[F], F]:
+    """Returns a decorator that wraps given string as this function's docstring.
+
+    >>> @override_docstring(s)
+    def foo():
+        pass
+    """
+
+    def decorator(function: F) -> F:
+        function.__doc__ = string
+        return function
+
+    return decorator
+
+
 @unique
 class Color(Enum):
     BLACK: int = 0
@@ -308,8 +324,8 @@ def upper_case(word: str) -> str:
 def pascal_case(word: str) -> str:
     """Converts given word to pascal case.
 
-        >>> pascal_case("someWord")
-        "SomeWord"
+    >>> pascal_case("someWord")
+    "SomeWord"
     """
     items: List[str] = []
     parts = word.split("_")
@@ -337,8 +353,8 @@ _snake_case_regex_m_capital_match = re.compile(
 def snake_case(word: str) -> str:
     """Converts given word to snake case.
 
-        >>> snake_case("someWord")
-        "some_word"
+    >>> snake_case("someWord")
+    "some_word"
     """
     underscore = "_"
     no_underscore_words = word.split(underscore)

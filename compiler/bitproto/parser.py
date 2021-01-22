@@ -18,34 +18,61 @@ from ply.lex import LexToken  # type: ignore
 from ply.yacc import LRParser as PlyParser  # type: ignore
 from ply.yacc import YaccProduction as P  # type: ignore
 
-from bitproto._ast import (Alias, Array, BooleanConstant, Comment, Constant,
-                           Definition, Enum, EnumField, IntegerConstant,
-                           Message, MessageField, Option, Proto, Scope,
-                           StringConstant, Type)
-from bitproto.errors import (AliasInEnumUnsupported, AliasInMessageUnsupported,
-                             CalculationExpressionError,
-                             ConstInEnumUnsupported, ConstInMessageUnsupported,
-                             CyclicImport, DuplicatedDefinition,
-                             DuplicatedImport, EnumInEnumUnsupported,
-                             GrammarError, ImportInEnumUnsupported,
-                             ImportInMessageUnsupported, InternalError,
-                             InvalidArrayCap, MessageFieldInEnumUnsupported,
-                             MessageInEnumUnsupported, OptionInEnumUnsupported,
-                             ProtoNameUndefined, ReferencedConstantNotDefined,
-                             ReferencedNotConstant, ReferencedNotType,
-                             ReferencedTypeNotDefined,
-                             StatementInMessageUnsupported,
-                             UnsupportedToDeclareProtoNameOutofProtoScope)
+from bitproto._ast import (
+    Alias,
+    Array,
+    BooleanConstant,
+    Comment,
+    Constant,
+    Definition,
+    Enum,
+    EnumField,
+    IntegerConstant,
+    Message,
+    MessageField,
+    Option,
+    Proto,
+    Scope,
+    StringConstant,
+    Type,
+)
+from bitproto.errors import (
+    AliasInEnumUnsupported,
+    AliasInMessageUnsupported,
+    CalculationExpressionError,
+    ConstInEnumUnsupported,
+    ConstInMessageUnsupported,
+    CyclicImport,
+    DuplicatedDefinition,
+    DuplicatedImport,
+    EnumInEnumUnsupported,
+    GrammarError,
+    ImportInEnumUnsupported,
+    ImportInMessageUnsupported,
+    InternalError,
+    InvalidArrayCap,
+    MessageFieldInEnumUnsupported,
+    MessageInEnumUnsupported,
+    OptionInEnumUnsupported,
+    ProtoNameUndefined,
+    ReferencedConstantNotDefined,
+    ReferencedNotConstant,
+    ReferencedNotType,
+    ReferencedTypeNotDefined,
+    StatementInMessageUnsupported,
+    UnsupportedToDeclareProtoNameOutofProtoScope,
+)
+from bitproto.grammars import *
 from bitproto.lexer import Lexer
-from bitproto.utils import cast_or_raise, write_stderr
+from bitproto.utils import cast_or_raise, override_docstring, write_stderr
 
 
 class Parser:
     """Parser for bitproto.
 
-        >>> parser = Parser()
-        >>> parser.parse("path/to/example.bitproto")
-        <bitproto example>
+    >>> parser = Parser()
+    >>> parser.parse("path/to/example.bitproto")
+    <bitproto example>
 
     """
 
@@ -175,17 +202,16 @@ class Parser:
         p.set_lexpos(to, p.lexpos(from_))
         p.set_lineno(to, p.lineno(from_))
 
+    @override_docstring(r_optional_semicolon)
     def p_optional_semicolon(self, p: P) -> None:
-        """optional_semicolon : ';'
-                              |"""
         p[0] = None
 
+    @override_docstring(r_start)
     def p_start(self, p: P) -> None:
-        """start : open_global_scope global_scope close_global_scope"""
         p[0] = p[2]
 
+    @override_docstring(r_open_global_scope)
     def p_open_global_scope(self, p: P) -> None:
-        """open_global_scope : """
         proto = Proto(
             filepath=self.current_filepath(),
             _bound=None,
@@ -193,38 +219,28 @@ class Parser:
         )
         self.push_scope(proto)
 
+    @override_docstring(r_close_global_scope)
     def p_close_global_scope(self, p: P) -> None:
-        """close_global_scope :"""
         scope = self.pop_scope()
         proto = cast_or_raise(Proto, scope)
         if not proto.name:
             raise ProtoNameUndefined(filepath=self.current_filepath())
         proto.freeze()
 
+    @override_docstring(r_global_scope)
     def p_global_scope(self, p: P) -> None:
-        """global_scope : global_scope_definitions"""
         p[0] = scope = self.current_scope()
 
+    @override_docstring(r_global_scope_definitions)
     def p_global_scope_definitions(self, p: P) -> None:
-        """global_scope_definitions : global_scope_definition_unit global_scope_definitions
-                                    | global_scope_definition_unit
-                                    |"""
         self.util_parse_sequence(p)
 
+    @override_docstring(r_global_scope_definition_unit)
     def p_global_scope_definition_unit(self, p: P) -> None:
-        """global_scope_definition_unit : import
-                                        | option
-                                        | alias
-                                        | const
-                                        | enum
-                                        | message
-                                        | proto
-                                        | comment
-                                        | newline"""
         p[0] = p[1]
 
+    @override_docstring(r_proto)
     def p_proto(self, p: P) -> None:
-        """proto : PROTO IDENTIFIER optional_semicolon"""
         scope = self.current_scope()
         if isinstance(scope, Proto):
             proto = cast(Proto, self.current_scope())
@@ -235,14 +251,14 @@ class Parser:
                 lineno=p.lineno(1), filepath=self.current_filepath()
             )
 
+    @override_docstring(r_comment)
     def p_comment(self, p: P) -> None:
-        """comment : COMMENT NEWLINE"""
         comment = p[1]
         self.push_comment(comment)
         self.set_last_newline_pos(p.lexpos(2))
 
+    @override_docstring(r_newline)
     def p_newline(self, p: P) -> None:
-        """newline : NEWLINE"""
         self.clear_comment_block()
         self.set_last_newline_pos(p.lexpos(1))
 
@@ -262,16 +278,14 @@ class Parser:
         return os.path.join(current_proto_dir, importing_path)
 
     def _check_parsing_file(self, filepath: str) -> bool:
-        """Checks if given filepath existing in parsing stack.
-        """
+        """Checks if given filepath existing in parsing stack."""
         for filepath_ in self.filepath_stack:
             if os.path.samefile(filepath, filepath_):
                 return True
         return False
 
+    @override_docstring(r_import)
     def p_import(self, p: P) -> None:
-        """import : IMPORT STRING_LITERAL optional_semicolon
-                  | IMPORT IDENTIFIER STRING_LITERAL optional_semicolon"""
         # Get filepath to import.
         importing_path = p[len(p) - 2]
         filepath = self._get_child_filepath(importing_path)
@@ -310,8 +324,8 @@ class Parser:
         # Push to current scope
         self.current_scope().push_member(child, name)
 
+    @override_docstring(r_option)
     def p_option(self, p: P) -> None:
-        """option : OPTION dotted_identifier '=' option_value optional_semicolon"""
         name, value = p[2], p[4]
         p[0] = option = Option.from_value(
             value=value,
@@ -326,16 +340,12 @@ class Parser:
         )
         self.current_scope().push_member(option)
 
+    @override_docstring(r_option_value)
     def p_option_value(self, p: P) -> None:
-        """option_value : boolean_literal
-                        | integer_literal
-                        | string_literal"""
         p[0] = p[1]
 
+    @override_docstring(r_alias)
     def p_alias(self, p: P) -> None:
-        """alias : TYPE IDENTIFIER '=' type optional_semicolon
-                 | TYPEDEF type IDENTIFIER optional_semicolon"""
-
         if len(p) == 6:
             name, type, lineno, token = p[2], p[4], p.lineno(2), p[2]
         else:
@@ -357,9 +367,8 @@ class Parser:
         )
         self.current_scope().push_member(alias)
 
+    @override_docstring(r_const)
     def p_const(self, p: P) -> None:
-        """const : CONST IDENTIFIER '=' const_value optional_semicolon"""
-
         name, value = p[2], p[4]
 
         constant_cls: Optional[T[Constant]] = None
@@ -382,47 +391,37 @@ class Parser:
         )
         self.current_scope().push_member(constant)
 
+    @override_docstring(r_const_value)
     def p_const_value(self, p: P) -> None:
-        """const_value : boolean_literal
-                       | string_literal
-                       | constant_reference
-                       | calculation_expression
-                       """
         p[0] = p[1]
 
+    @override_docstring(r_calculation_expression)
     def p_calculation_expression(self, p: P) -> None:
-        """calculation_expression : calculation_expression_plus
-                                  | calculation_expression_minus
-                                  | calculation_expression_times
-                                  | calculation_expression_divide
-                                  | calculation_expression_group
-                                  | integer_literal
-                                  | constant_reference_for_calculation"""
         p[0] = p[1]
 
+    @override_docstring(r_calculation_expression_plus)
     def p_calculation_expression_plus(self, p: P) -> None:
-        """calculation_expression_plus : calculation_expression PLUS calculation_expression"""
         p[0] = p[1] + p[3]
 
+    @override_docstring(r_calculation_expression_minus)
     def p_calculation_expression_minus(self, p: P) -> None:
-        """calculation_expression_minus : calculation_expression MINUS calculation_expression"""
         p[0] = p[1] - p[3]
 
+    @override_docstring(r_calculation_expression_times)
     def p_calculation_expression_times(self, p: P) -> None:
-        """calculation_expression_times : calculation_expression TIMES calculation_expression"""
         p[0] = p[1] * p[3]
 
+    @override_docstring(r_calculation_expression_divide)
     def p_calculation_expression_divide(self, p: P) -> None:
-        """calculation_expression_divide : calculation_expression DIVIDE calculation_expression"""
         # NOTE: Both sides are integers and we output an integer too.
         p[0] = int(p[1] // p[3])
 
+    @override_docstring(r_calculation_expression_group)
     def p_calculation_expression_group(self, p: P) -> None:
-        """calculation_expression_group : '(' calculation_expression ')'"""
         p[0] = p[2]
 
+    @override_docstring(r_constant_reference_for_calculation)
     def p_constant_reference_for_calculation(self, p: P) -> None:
-        """constant_reference_for_calculation : constant_reference"""
         referenced = p[1]
         if isinstance(referenced, IntegerConstant):
             integer_constant = cast(IntegerConstant, referenced)
@@ -437,8 +436,8 @@ class Parser:
 
     def _lookup_referenced_member(self, identifier: str) -> Optional[Definition]:
         """Lookup referenced defintion member in current bitproto.
-          * When `identifier` contains dots: lookup from its bitproto.
-          * Otherwise, lookup from the scope stack reversively (in current proto).
+        * When `identifier` contains dots: lookup from its bitproto.
+        * Otherwise, lookup from the scope stack reversively (in current proto).
         """
         names = identifier.split(".")
 
@@ -449,8 +448,8 @@ class Parser:
                 return d
         return None
 
+    @override_docstring(r_constant_reference)
     def p_constant_reference(self, p: P) -> None:
-        """constant_reference : dotted_identifier"""
         d = self._lookup_referenced_member(p[1])
         if d is None:
             raise ReferencedConstantNotDefined(
@@ -470,28 +469,23 @@ class Parser:
         p[0] = d
         self.copy_p_tracking(p)
 
+    @override_docstring(r_type)
     def p_type(self, p: P) -> None:
-        """type : single_type
-                | array_type"""
         p[0] = p[1]
         self.copy_p_tracking(p)
 
+    @override_docstring(r_single_type)
     def p_single_type(self, p: P) -> None:
-        """single_type : base_type
-                       | type_reference"""
         p[0] = p[1]
         self.copy_p_tracking(p)
 
+    @override_docstring(r_base_type)
     def p_base_type(self, p: P) -> None:
-        """base_type : BOOL_TYPE
-                     | UINT_TYPE
-                     | INT_TYPE
-                     | BYTE_TYPE"""
         p[0] = p[1]
         self.copy_p_tracking(p)
 
+    @override_docstring(r_type_reference)
     def p_type_reference(self, p: P) -> None:
-        """type_reference : dotted_identifier"""
         d = self._lookup_referenced_member(p[1])
         if d is None:
             raise ReferencedTypeNotDefined(
@@ -510,13 +504,12 @@ class Parser:
         p[0] = d
         self.copy_p_tracking(p)
 
+    @override_docstring(r_optional_extensible_flag)
     def p_optional_extensible_flag(self, p: P) -> None:
-        """optional_extensible_flag : "'"
-                                    |"""
         p[0] = len(p) == 2
 
+    @override_docstring(r_array_type)
     def p_array_type(self, p: P) -> None:
-        """array_type : single_type '[' array_capacity ']' optional_extensible_flag"""
         p[0] = Array(
             element_type=p[1],
             cap=p[3],
@@ -527,13 +520,12 @@ class Parser:
         )
         self.copy_p_tracking(p)
 
+    @override_docstring(r_array_capacity)
     def p_array_capacity(self, p: P) -> None:
-        """array_capacity : INT_LITERAL
-                          | constant_reference_for_array_capacity"""
         p[0] = p[1]
 
+    @override_docstring(r_constant_reference_for_array_capacity)
     def p_constant_reference_for_array_capacity(self, p: P) -> None:
-        """constant_reference_for_array_capacity : constant_reference"""
         referenced = p[1]
         if isinstance(referenced, IntegerConstant):
             integer_constant = cast(IntegerConstant, referenced)
@@ -546,14 +538,14 @@ class Parser:
                 lineno=p.lineno(1),
             )
 
+    @override_docstring(r_enum)
     def p_enum(self, p: P) -> None:
-        """enum : open_enum_scope enum_scope close_enum_scope"""
         p[0] = enum = p[2]
         self.current_scope().push_member(enum)
         self.copy_p_tracking(p)
 
+    @override_docstring(r_open_enum_scope)
     def p_open_enum_scope(self, p: P) -> None:
-        """open_enum_scope : ENUM IDENTIFIER ':' UINT_TYPE '{'"""
         enum = Enum(
             name=p[2],
             type=p[4],
@@ -567,36 +559,24 @@ class Parser:
         )
         self.push_scope(enum)
 
+    @override_docstring(r_enum_scope)
     def p_enum_scope(self, p: P) -> None:
-        """enum_scope : enum_items"""
         p[0] = scope = self.current_scope()
 
+    @override_docstring(r_close_enum_scope)
     def p_close_enum_scope(self, p: P) -> None:
-        """close_enum_scope : '}'"""
         self.pop_scope().freeze()
 
+    @override_docstring(r_enum_items)
     def p_enum_items(self, p: P) -> None:
-        """enum_items : enum_item enum_items
-                      | enum_item
-                      |"""
         self.util_parse_sequence(p)
 
+    @override_docstring(r_enum_item)
     def p_enum_item(self, p: P) -> None:
-        """enum_item : enum_field
-                     | enum_item_unsupported
-                     | comment
-                     | newline"""
         p[0] = p[1]
 
+    @override_docstring(r_enum_item_unsupported)
     def p_enum_item_unsupported(self, p: P) -> None:
-        """enum_item_unsupported : alias
-                                 | const
-                                 | proto
-                                 | import
-                                 | option
-                                 | enum
-                                 | message
-                                 | message_field"""
         if isinstance(p[1], Alias):
             raise AliasInEnumUnsupported.from_token(token=p[1])
         if isinstance(p[1], Constant):
@@ -615,8 +595,8 @@ class Parser:
             lineno=p.lineno(1), filepath=self.current_filepath()
         )
 
+    @override_docstring(r_enum_field)
     def p_enum_field(self, p: P) -> None:
-        """enum_field : IDENTIFIER '=' integer_literal optional_semicolon"""
         name = p[1]
         value = p[3]
         field = EnumField(
@@ -632,14 +612,14 @@ class Parser:
         )
         self.current_scope().push_member(field)
 
+    @override_docstring(r_message)
     def p_message(self, p: P) -> None:
-        """message : open_message_scope message_scope close_message_scope"""
         p[0] = message = p[2]
         self.current_scope().push_member(message)
         self.copy_p_tracking(p)
 
+    @override_docstring(r_open_message_scope)
     def p_open_message_scope(self, p: P) -> None:
-        """open_message_scope : MESSAGE IDENTIFIER optional_extensible_flag '{'"""
         message = Message(
             name=p[2],
             extensible=p[3],
@@ -653,35 +633,24 @@ class Parser:
         )
         self.push_scope(message)
 
+    @override_docstring(r_close_message_scope)
     def p_close_message_scope(self, p: P) -> None:
-        """close_message_scope : '}'"""
         self.pop_scope().freeze()
 
+    @override_docstring(r_message_scope)
     def p_message_scope(self, p: P) -> None:
-        """message_scope : message_items"""
         p[0] = scope = self.current_scope()
 
+    @override_docstring(r_message_items)
     def p_message_items(self, p: P) -> None:
-        """message_items : message_item message_items
-                         | message_item
-                         |"""
         self.util_parse_sequence(p)
 
+    @override_docstring(r_message_item)
     def p_message_item(self, p: P) -> None:
-        """message_item : option
-                        | enum
-                        | message_field
-                        | message
-                        | message_item_unsupported
-                        | comment
-                        | newline"""
         p[0] = p[1]
 
+    @override_docstring(r_message_item_unsupported)
     def p_message_item_unsupported(self, p: P) -> None:
-        """message_item_unsupported : alias
-                                    | const
-                                    | proto
-                                    | import"""
         if isinstance(p[1], Alias):
             raise AliasInMessageUnsupported.from_token(token=p[1])
         if isinstance(p[1], Constant):
@@ -692,8 +661,8 @@ class Parser:
             lineno=p.lineno(1), filepath=self.current_filepath()
         )
 
+    @override_docstring(r_message_field)
     def p_message_field(self, p: P) -> None:
-        """message_field : type IDENTIFIER '=' INT_LITERAL optional_semicolon"""
         name = p[2]
         type = p[1]
         field_number = p[4]
@@ -711,23 +680,20 @@ class Parser:
         )
         self.current_scope().push_member(message_field)
 
+    @override_docstring(r_boolean_literal)
     def p_boolean_literal(self, p: P) -> None:
-        """boolean_literal : BOOL_LITERAL"""
         p[0] = p[1]
 
+    @override_docstring(r_integer_literal)
     def p_integer_literal(self, p: P) -> None:
-        """integer_literal : INT_LITERAL
-                           | HEX_LITERAL"""
         p[0] = p[1]
 
+    @override_docstring(r_string_literal)
     def p_string_literal(self, p: P) -> None:
-        """string_literal : STRING_LITERAL"""
         p[0] = p[1]
 
+    @override_docstring(r_dotted_identifier)
     def p_dotted_identifier(self, p: P) -> None:
-        """dotted_identifier : IDENTIFIER '.' dotted_identifier
-                             | IDENTIFIER"""
-
         self.copy_p_tracking(p)
         if len(p) == 4:
             p[0] = ".".join([p[1], p[3]])

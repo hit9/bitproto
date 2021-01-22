@@ -12,15 +12,42 @@ from typing import Callable, Dict, List, Optional, Tuple
 from typing import Type as T
 from typing import TypeVar, Union, cast
 
-from bitproto._ast import (Alias, Array, Bool, BooleanConstant,
-                           BoundDefinition, BoundScope, Byte, Constant,
-                           Definition, Enum, EnumField, Int, Integer,
-                           IntegerConstant, Message, MessageField, Node, Proto,
-                           Scope, SingleType, StringConstant, Type, Uint,
-                           Value)
+from bitproto._ast import (
+    Alias,
+    Array,
+    Bool,
+    BooleanConstant,
+    BoundDefinition,
+    BoundScope,
+    Byte,
+    Constant,
+    Definition,
+    Enum,
+    EnumField,
+    Int,
+    Integer,
+    IntegerConstant,
+    Message,
+    MessageField,
+    Node,
+    Proto,
+    Scope,
+    SingleType,
+    StringConstant,
+    Type,
+    Uint,
+    Value,
+)
 from bitproto.errors import InternalError
-from bitproto.utils import (cast_or_raise, final, keep_case, overridable,
-                            pascal_case, snake_case, upper_case)
+from bitproto.utils import (
+    cast_or_raise,
+    final,
+    keep_case,
+    overridable,
+    pascal_case,
+    snake_case,
+    upper_case,
+)
 
 CaseStyleConverter = Callable[[str], str]
 
@@ -455,8 +482,8 @@ class Formatter:
     def format_out_filename(self, proto: Proto, extension: str) -> str:
         """Formats the out file name for given proto and given extension.
 
-            >>> format_out_filename(proto, ".h")
-            "example_bp.h"
+        >>> format_out_filename(proto, ".h")
+        "example_bp.h"
         """
         out_base_name = proto.name
         if proto.filepath:

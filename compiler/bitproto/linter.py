@@ -11,13 +11,31 @@ from typing import Callable, Generic, List, Optional, Tuple
 from typing import Type as T
 from typing import TypeVar
 
-from bitproto._ast import (Alias, BoundDefinition, Constant, Definition, Enum,
-                           EnumField, Message, MessageField, Node, Proto)
-from bitproto.errors import (AliasNameNotPascal, ConstantNameNotUpper,
-                             EnumFieldNameNotUpper, EnumHasNoFieldValue0,
-                             EnumNameNotPascal, IndentWarning, LintWarning,
-                             MessageFieldNameNotSnake, MessageNameNotPascal,
-                             Warning, warning)
+from bitproto._ast import (
+    Alias,
+    BoundDefinition,
+    Constant,
+    Definition,
+    Enum,
+    EnumField,
+    Message,
+    MessageField,
+    Node,
+    Proto,
+)
+from bitproto.errors import (
+    AliasNameNotPascal,
+    ConstantNameNotUpper,
+    EnumFieldNameNotUpper,
+    EnumHasNoFieldValue0,
+    EnumNameNotPascal,
+    IndentWarning,
+    LintWarning,
+    MessageFieldNameNotSnake,
+    MessageNameNotPascal,
+    Warning,
+    warning,
+)
 from bitproto.utils import pascal_case, snake_case
 
 D = TypeVar("D", bound=Definition)

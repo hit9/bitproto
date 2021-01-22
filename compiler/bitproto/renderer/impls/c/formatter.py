@@ -4,9 +4,22 @@ C formatter.
 
 from typing import Optional
 
-from bitproto._ast import (Alias, Array, Bool, Byte, Constant, Definition,
-                           Enum, EnumField, Int, Message, MessageField, Proto,
-                           Type, Uint)
+from bitproto._ast import (
+    Alias,
+    Array,
+    Bool,
+    Byte,
+    Constant,
+    Definition,
+    Enum,
+    EnumField,
+    Int,
+    Message,
+    MessageField,
+    Proto,
+    Type,
+    Uint,
+)
 from bitproto.errors import InternalError
 from bitproto.renderer.formatter import CaseStyleMapping, Formatter
 from bitproto.utils import override

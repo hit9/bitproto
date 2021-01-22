@@ -4,8 +4,20 @@ Python formatter.
 
 from typing import List, Optional
 
-from bitproto._ast import (Alias, Array, Bool, Byte, Constant, Enum, EnumField,
-                           Int, Message, Proto, Type, Uint)
+from bitproto._ast import (
+    Alias,
+    Array,
+    Bool,
+    Byte,
+    Constant,
+    Enum,
+    EnumField,
+    Int,
+    Message,
+    Proto,
+    Type,
+    Uint,
+)
 from bitproto.errors import InternalError
 from bitproto.renderer.formatter import CaseStyleMapping, Formatter
 from bitproto.utils import final, override, upper_case
