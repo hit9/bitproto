@@ -1,4 +1,4 @@
-include setup.py
+include setup.py requirements.txt
 recursive-include bitproto *.py
 recursive-exclude venv *
 recursive-exclude dist *

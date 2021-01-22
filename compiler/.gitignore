@@ -1,0 +1,7 @@
+dist
+build
+__pycache__
+*.egg-info
+pip-wheel-metadata
+bitproto.spec
+*.zip

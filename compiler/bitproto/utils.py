@@ -1,5 +1,5 @@
-import re
 import os
+import re
 import sys
 from enum import Enum, unique
 from functools import wraps
@@ -37,6 +37,7 @@ __all__ = (
     "write_stderr",
     "fatal",
 )
+
 
 from typing_extensions import final  # Compat 3.7
 

@@ -8,11 +8,11 @@ Entry inteface.
 import argparse
 
 from bitproto import __description__, __version__
-from bitproto.errors import ParserError, RendererError, NoLanguageArgument
+from bitproto.errors import NoLanguageArgument, ParserError, RendererError
 from bitproto.linter import lint
 from bitproto.parser import parse
-from bitproto.utils import fatal
 from bitproto.renderer import render, renderer_registry
+from bitproto.utils import fatal
 
 EPILOG = """
 example usage:
@@ -108,7 +108,7 @@ def main(
 
     # Render
     if not lang:
-        raise NoLanguageArgument()
+        fatal(str(NoLanguageArgument()))
 
     try:
         render(proto, lang, outdir=outdir)

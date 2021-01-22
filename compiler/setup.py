@@ -20,7 +20,7 @@ setup(
     zip_safe=False,
     entry_points={"console_scripts": ["bitproto=bitproto._main:run_bitproto"]},
     python_requires=">=3.7",
-    install_requires=["ply>=3.11"],
+    install_requires=open("requirements.txt").readlines(),
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
         "Environment :: Console",
