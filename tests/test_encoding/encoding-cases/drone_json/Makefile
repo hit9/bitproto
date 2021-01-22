@@ -1,4 +1,4 @@
-NAME=drone
+NAME=drone_json
 BIN=main
 
 BP_FILENAME=$(NAME).bitproto

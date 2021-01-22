@@ -73,3 +73,7 @@ class _TestCase:
 
 def test_encoding_drone() -> None:
     _TestCase("drone").run()
+
+
+def test_encoding_drone_json() -> None:
+    _TestCase("drone_json").run()
