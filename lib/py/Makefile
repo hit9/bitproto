@@ -4,10 +4,10 @@ install-dev-requirements:
 	pip install -r requirements_dev.txt
 
 lint:
-	mypy bitproto
-	isort --check bitproto
-	black --check bitproto
+	mypy bitprotolib
+	isort --check bitprotolib
+	black --check bitprotolib
 
 reformat:
-	isort bitproto
-	black bitproto
+	isort bitprotolib
+	black bitprotolib

@@ -177,8 +177,7 @@ class IntAccessor(Accessor):
 
 
 class MessageBase(Accessor):
-    """MessageBase is the base class for all bitproto message classes.
-    """
+    """MessageBase is the base class for all bitproto message classes."""
 
     def to_dict(self) -> Dict[str, Any]:
         """Converts this message to a dict."""
