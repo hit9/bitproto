@@ -27,3 +27,5 @@ message D {
 message E {
     A a = 1;
 }
+
+type H = byte[3]'

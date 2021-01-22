@@ -218,6 +218,8 @@ def test_parse_extensible() -> None:
     message_b = cast_or_raise(Message, proto.get_member("B"))
     message_d = cast_or_raise(Message, proto.get_member("D"))
     message_e = cast_or_raise(Message, proto.get_member("E"))
+    alias_h = cast_or_raise(Alias, proto.get_member("H"))
+    array_h = cast_or_raise(Array, alias_h.type)
 
     assert enum_c.extensible
     assert not enum_f.extensible
@@ -225,6 +227,7 @@ def test_parse_extensible() -> None:
     assert not message_b.extensible
     assert not message_d.extensible
     assert not message_e.extensible
+    assert array_h.extensible
 
     assert enum_c.nbits() == 3 + 8
     assert enum_f.nbits() == 3
@@ -232,6 +235,7 @@ def test_parse_extensible() -> None:
     assert message_b.nbits() == 1
     assert message_d.nbits() == enum_c.nbits()
     assert message_e.nbits() == message_a.nbits()
+    assert array_h.nbits() == 3 * 8 + 16
 
 
 def test_parse_array_cap_constraint() -> None:
