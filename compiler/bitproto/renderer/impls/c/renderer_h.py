@@ -127,6 +127,7 @@ class BlockAliasDef(BlockBindAlias[F]):
             self.render_alias_typedef_to_array()
         else:
             self.render_alias_typedef_to_common()
+        self.push_typing_hint_inline_comment()
 
     @override(Block)
     def render(self) -> None:
@@ -204,6 +205,7 @@ class BlockEnumDef(BlockBindEnum[F]):
     def render(self) -> None:
         self.push_definition_comments()
         self.push(f"typedef {self.enum_uint_type} {self.enum_name};")
+        self.push_typing_hint_inline_comment()
 
 
 class BlockEnumDefs(BlockBindEnum[F], BlockComposition[F]):
@@ -245,6 +247,7 @@ class BlockMessageField(BlockBindMessageField[F]):
     def render(self) -> None:
         self.push_definition_comments()
         self.render_field_declaration()
+        self.push_typing_hint_inline_comment()
 
 
 class BlockMessageLengthMacro(BlockBindMessage[F]):

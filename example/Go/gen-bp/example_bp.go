@@ -10,19 +10,19 @@ import (
 	bp "github.com/hit9/bitproto/lib/go"
 )
 
-type Timestamp int64
+type Timestamp int64 // 64bit
 
 func (m Timestamp) BpProcessor() bp.Processor {
 	return bp.NewAliasProcessor(bp.NewInt(64))
 }
 
-type TernaryInt32 [3]int32
+type TernaryInt32 [3]int32 // 96bit
 
 func (m TernaryInt32) BpProcessor() bp.Processor {
 	return bp.NewAliasProcessor(bp.NewArray(false, 3, bp.NewInt(32)))
 }
 
-type DroneStatus uint8
+type DroneStatus uint8 // 3bit
 
 const (
 	DRONE_STATUS_UNKNOWN DroneStatus = 0
@@ -54,7 +54,7 @@ func (v DroneStatus) String() string {
 	}
 }
 
-type PropellerStatus uint8
+type PropellerStatus uint8 // 2bit
 
 const (
 	PROPELLER_STATUS_UNKNOWN PropellerStatus = 0
@@ -80,7 +80,7 @@ func (v PropellerStatus) String() string {
 	}
 }
 
-type RotatingDirection uint8
+type RotatingDirection uint8 // 2bit
 
 const (
 	ROTATING_DIRECTION_UNKNOWN RotatingDirection = 0
@@ -106,7 +106,7 @@ func (v RotatingDirection) String() string {
 	}
 }
 
-type PowerStatus uint8
+type PowerStatus uint8 // 2bit
 
 const (
 	POWER_STATUS_UNKNOWN PowerStatus = 0
@@ -132,7 +132,7 @@ func (v PowerStatus) String() string {
 	}
 }
 
-type LandingGearStatus uint8
+type LandingGearStatus uint8 // 2bit
 
 const (
 	LANDING_GEAR_STATUS_UNKNOWN LandingGearStatus = 0
@@ -159,9 +159,9 @@ func (v LandingGearStatus) String() string {
 }
 
 type Propeller struct {
-	Id uint8 `json:"id"`
-	Status PropellerStatus `json:"status"`
-	Direction RotatingDirection `json:"direction"`
+	Id uint8 `json:"id"` // 8bit
+	Status PropellerStatus `json:"status"` // 2bit
+	Direction RotatingDirection `json:"direction"` // 2bit
 }
 
 // Number of bytes to serialize struct Propeller
@@ -230,9 +230,9 @@ func (m *Propeller) BpGetByte(di *bp.DataIndexer, rshift int) byte {
 }
 
 type Power struct {
-	Battery uint8 `json:"battery"`
-	Status PowerStatus `json:"status"`
-	IsCharging bool `json:"is_charging"`
+	Battery uint8 `json:"battery"` // 8bit
+	Status PowerStatus `json:"status"` // 2bit
+	IsCharging bool `json:"is_charging"` // 1bit
 }
 
 // Number of bytes to serialize struct Power
@@ -302,9 +302,9 @@ func (m *Power) BpGetByte(di *bp.DataIndexer, rshift int) byte {
 
 type Network struct {
 	// Degree of signal, between 1~10.
-	Signal uint8 `json:"signal"`
+	Signal uint8 `json:"signal"` // 4bit
 	// The timestamp of the last time received heartbeat packet.
-	HeartbeatAt Timestamp `json:"heartbeat_at"`
+	HeartbeatAt Timestamp `json:"heartbeat_at"` // 64bit
 }
 
 // Number of bytes to serialize struct Network
@@ -368,7 +368,7 @@ func (m *Network) BpGetByte(di *bp.DataIndexer, rshift int) byte {
 }
 
 type LandingGear struct {
-	Status LandingGearStatus `json:"status"`
+	Status LandingGearStatus `json:"status"` // 2bit
 }
 
 // Number of bytes to serialize struct LandingGear
@@ -427,9 +427,9 @@ func (m *LandingGear) BpGetByte(di *bp.DataIndexer, rshift int) byte {
 }
 
 type Position struct {
-	Latitude uint32 `json:"latitude"`
-	Longitude uint32 `json:"longitude"`
-	Altitude uint32 `json:"altitude"`
+	Latitude uint32 `json:"latitude"` // 32bit
+	Longitude uint32 `json:"longitude"` // 32bit
+	Altitude uint32 `json:"altitude"` // 32bit
 }
 
 // Number of bytes to serialize struct Position
@@ -499,9 +499,9 @@ func (m *Position) BpGetByte(di *bp.DataIndexer, rshift int) byte {
 
 // Pose in flight. https://en.wikipedia.org/wiki/Aircraft_principal_axes
 type Pose struct {
-	Yaw int32 `json:"yaw"`
-	Pitch int32 `json:"pitch"`
-	Roll int32 `json:"roll"`
+	Yaw int32 `json:"yaw"` // 32bit
+	Pitch int32 `json:"pitch"` // 32bit
+	Roll int32 `json:"roll"` // 32bit
 }
 
 // Number of bytes to serialize struct Pose
@@ -570,11 +570,11 @@ func (m *Pose) BpGetByte(di *bp.DataIndexer, rshift int) byte {
 }
 
 type Flight struct {
-	Pose Pose `json:"pose"`
+	Pose Pose `json:"pose"` // 96bit
 	// Velocity at X, Y, Z axis.
-	Velocity TernaryInt32 `json:"velocity"`
+	Velocity TernaryInt32 `json:"velocity"` // 96bit
 	// Acceleration at X, Y, Z axis.
-	Acceleration TernaryInt32 `json:"acceleration"`
+	Acceleration TernaryInt32 `json:"acceleration"` // 96bit
 }
 
 // Number of bytes to serialize struct Flight
@@ -641,13 +641,13 @@ func (m *Flight) BpGetByte(di *bp.DataIndexer, rshift int) byte {
 }
 
 type Drone struct {
-	Status DroneStatus `json:"status"`
-	Position Position `json:"position"`
-	Flight Flight `json:"flight"`
-	Propellers [4]Propeller `json:"propellers"`
-	Power Power `json:"power"`
-	Network Network `json:"network"`
-	LandingGear LandingGear `json:"landing_gear"`
+	Status DroneStatus `json:"status"` // 3bit
+	Position Position `json:"position"` // 96bit
+	Flight Flight `json:"flight"` // 288bit
+	Propellers [4]Propeller `json:"propellers"` // 48bit
+	Power Power `json:"power"` // 11bit
+	Network Network `json:"network"` // 68bit
+	LandingGear LandingGear `json:"landing_gear"` // 2bit
 }
 
 // Number of bytes to serialize struct Drone

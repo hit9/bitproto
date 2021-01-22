@@ -90,6 +90,7 @@ class BlockAliasDef(BlockBindAlias[F]):
     def render(self) -> None:
         self.push_definition_comments()
         self.push(f"{self.alias_name} = {self.aliased_type}")
+        self.push_typing_hint_inline_comment()
 
 
 class BlockAlias(BlockBindAlias[F], BlockComposition):
@@ -146,6 +147,7 @@ class BlockEnumFieldListWrapper(BlockBindEnum[F], BlockWrapper[F]):
     def render_enum_type(self) -> None:
         self.push_definition_comments()
         self.push(f"{self.enum_name} = int")
+        self.push_typing_hint_inline_comment()
 
 
 class BlockEnumValueToNameMapItem(BlockBindEnumField[F]):
@@ -212,6 +214,7 @@ class BlockMessageField(BlockBindMessageField[F]):
         self.push(
             f"{self.message_field_name}: {self.message_field_type} = {self.message_field_default_value}"
         )
+        self.push_typing_hint_inline_comment()
 
 
 class BlockMessageBase(BlockBindMessage[F]):

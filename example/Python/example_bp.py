@@ -13,7 +13,7 @@ from typing import ClassVar, Dict, List
 from bitprotolib import bp
 
 
-Timestamp = int
+Timestamp = int # 64bit
 
 def bp_processor_Timestamp() -> bp.Processor:
     return bp.AliasProcessor(bp.Int(64))
@@ -22,7 +22,7 @@ def bp_default_factory_Timestamp() -> Timestamp:
     return 0
 
 
-TernaryInt32 = List[int]
+TernaryInt32 = List[int] # 96bit
 
 def bp_processor_TernaryInt32() -> bp.Processor:
     return bp.AliasProcessor(bp.Array(False, 3, bp.Int(32)))
@@ -31,7 +31,7 @@ def bp_default_factory_TernaryInt32() -> TernaryInt32:
     return [0 for _ in range(3)]
 
 
-DroneStatus = int
+DroneStatus = int # 3bit
 DRONE_STATUS_UNKNOWN: DroneStatus = 0
 DRONE_STATUS_STANDBY: DroneStatus = 1
 DRONE_STATUS_RISING: DroneStatus = 2
@@ -50,7 +50,7 @@ def bp_processor_DroneStatus() -> bp.Processor:
     return bp.EnumProcessor(False, bp.Uint(3))
 
 
-PropellerStatus = int
+PropellerStatus = int # 2bit
 PROPELLER_STATUS_UNKNOWN: PropellerStatus = 0
 PROPELLER_STATUS_IDLE: PropellerStatus = 1
 PROPELLER_STATUS_ROTATING: PropellerStatus = 2
@@ -65,7 +65,7 @@ def bp_processor_PropellerStatus() -> bp.Processor:
     return bp.EnumProcessor(False, bp.Uint(2))
 
 
-RotatingDirection = int
+RotatingDirection = int # 2bit
 ROTATING_DIRECTION_UNKNOWN: RotatingDirection = 0
 ROTATING_DIRECTION_CLOCK_WISE: RotatingDirection = 1
 ROTATING_DIRECTION_ANTI_CLOCK_WISE: RotatingDirection = 2
@@ -80,7 +80,7 @@ def bp_processor_RotatingDirection() -> bp.Processor:
     return bp.EnumProcessor(False, bp.Uint(2))
 
 
-PowerStatus = int
+PowerStatus = int # 2bit
 POWER_STATUS_UNKNOWN: PowerStatus = 0
 POWER_STATUS_OFF: PowerStatus = 1
 POWER_STATUS_ON: PowerStatus = 2
@@ -95,7 +95,7 @@ def bp_processor_PowerStatus() -> bp.Processor:
     return bp.EnumProcessor(False, bp.Uint(2))
 
 
-LandingGearStatus = int
+LandingGearStatus = int # 2bit
 LANDING_GEAR_STATUS_UNKNOWN: LandingGearStatus = 0
 LANDING_GEAR_STATUS_UNFOLDED: LandingGearStatus = 1
 LANDING_GEAR_STATUS_FOLDED: LandingGearStatus = 2
@@ -115,9 +115,9 @@ class Propeller(bp.MessageBase):
     # Number of bytes to serialize class Propeller
     BYTES_LENGTH: ClassVar[int] = 2
 
-    id: int = 0
-    status: PropellerStatus = 0
-    direction: RotatingDirection = 0
+    id: int = 0 # 8bit
+    status: PropellerStatus = 0 # 2bit
+    direction: RotatingDirection = 0 # 2bit
 
     def bp_processor(self) -> bp.Processor:
         field_processors: List[bp.Processor] = [
@@ -172,9 +172,9 @@ class Power(bp.MessageBase):
     # Number of bytes to serialize class Power
     BYTES_LENGTH: ClassVar[int] = 2
 
-    battery: int = 0
-    status: PowerStatus = 0
-    is_charging: bool = False
+    battery: int = 0 # 8bit
+    status: PowerStatus = 0 # 2bit
+    is_charging: bool = False # 1bit
 
     def bp_processor(self) -> bp.Processor:
         field_processors: List[bp.Processor] = [
@@ -230,9 +230,9 @@ class Network(bp.MessageBase):
     BYTES_LENGTH: ClassVar[int] = 9
 
     # Degree of signal, between 1~10.
-    signal: int = 0
+    signal: int = 0 # 4bit
     # The timestamp of the last time received heartbeat packet.
-    heartbeat_at: Timestamp = field(default_factory=bp_default_factory_Timestamp)
+    heartbeat_at: Timestamp = field(default_factory=bp_default_factory_Timestamp) # 64bit
 
     def bp_processor(self) -> bp.Processor:
         field_processors: List[bp.Processor] = [
@@ -282,7 +282,7 @@ class LandingGear(bp.MessageBase):
     # Number of bytes to serialize class LandingGear
     BYTES_LENGTH: ClassVar[int] = 1
 
-    status: LandingGearStatus = 0
+    status: LandingGearStatus = 0 # 2bit
 
     def bp_processor(self) -> bp.Processor:
         field_processors: List[bp.Processor] = [
@@ -327,9 +327,9 @@ class Position(bp.MessageBase):
     # Number of bytes to serialize class Position
     BYTES_LENGTH: ClassVar[int] = 12
 
-    latitude: int = 0
-    longitude: int = 0
-    altitude: int = 0
+    latitude: int = 0 # 32bit
+    longitude: int = 0 # 32bit
+    altitude: int = 0 # 32bit
 
     def bp_processor(self) -> bp.Processor:
         field_processors: List[bp.Processor] = [
@@ -387,9 +387,9 @@ class Pose(bp.MessageBase):
     # Number of bytes to serialize class Pose
     BYTES_LENGTH: ClassVar[int] = 12
 
-    yaw: int = 0
-    pitch: int = 0
-    roll: int = 0
+    yaw: int = 0 # 32bit
+    pitch: int = 0 # 32bit
+    roll: int = 0 # 32bit
 
     def bp_processor(self) -> bp.Processor:
         field_processors: List[bp.Processor] = [
@@ -444,11 +444,11 @@ class Flight(bp.MessageBase):
     # Number of bytes to serialize class Flight
     BYTES_LENGTH: ClassVar[int] = 36
 
-    pose: Pose = field(default_factory=Pose)
+    pose: Pose = field(default_factory=Pose) # 96bit
     # Velocity at X, Y, Z axis.
-    velocity: TernaryInt32 = field(default_factory=bp_default_factory_TernaryInt32)
+    velocity: TernaryInt32 = field(default_factory=bp_default_factory_TernaryInt32) # 96bit
     # Acceleration at X, Y, Z axis.
-    acceleration: TernaryInt32 = field(default_factory=bp_default_factory_TernaryInt32)
+    acceleration: TernaryInt32 = field(default_factory=bp_default_factory_TernaryInt32) # 96bit
 
     def bp_processor(self) -> bp.Processor:
         field_processors: List[bp.Processor] = [
@@ -501,13 +501,13 @@ class Drone(bp.MessageBase):
     # Number of bytes to serialize class Drone
     BYTES_LENGTH: ClassVar[int] = 65
 
-    status: DroneStatus = 0
-    position: Position = field(default_factory=Position)
-    flight: Flight = field(default_factory=Flight)
-    propellers: List[Propeller] = field(default_factory=lambda: [Propeller() for _ in range(4)])
-    power: Power = field(default_factory=Power)
-    network: Network = field(default_factory=Network)
-    landing_gear: LandingGear = field(default_factory=LandingGear)
+    status: DroneStatus = 0 # 3bit
+    position: Position = field(default_factory=Position) # 96bit
+    flight: Flight = field(default_factory=Flight) # 288bit
+    propellers: List[Propeller] = field(default_factory=lambda: [Propeller() for _ in range(4)]) # 48bit
+    power: Power = field(default_factory=Power) # 11bit
+    network: Network = field(default_factory=Network) # 68bit
+    landing_gear: LandingGear = field(default_factory=LandingGear) # 2bit
 
     def bp_processor(self) -> bp.Processor:
         field_processors: List[bp.Processor] = [
