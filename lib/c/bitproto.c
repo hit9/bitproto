@@ -497,7 +497,7 @@ void BpJsonFormatMessage(struct BpMessageDescriptor *descriptor,
         BpJsonFormatMessageField(&field_descriptor, ctx);
 
         if (k + 1 < descriptor->nfields) {
-            BpJsonFormatString(ctx, ", ");
+            BpJsonFormatString(ctx, ",");
         }
     }
 
@@ -510,7 +510,7 @@ void BpJsonFormatMessage(struct BpMessageDescriptor *descriptor,
 void BpJsonFormatMessageField(struct BpMessageFieldDescriptor *descriptor,
                               struct BpJsonFormatContext *ctx) {
     // Format key.
-    BpJsonFormatString(ctx, "\"%s\": ", descriptor->name);
+    BpJsonFormatString(ctx, "\"%s\":", descriptor->name);
 
     // Format value.
     switch (descriptor->type.flag) {
@@ -619,7 +619,7 @@ void BpJsonFormatArray(struct BpArrayDescriptor *descriptor,
         }
 
         if (k + 1 < descriptor->cap) {
-            BpJsonFormatString(ctx, ", ");
+            BpJsonFormatString(ctx, ",");
         }
     }
 
