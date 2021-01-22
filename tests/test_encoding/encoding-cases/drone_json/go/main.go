@@ -13,7 +13,6 @@ func assert(condition bool) {
 }
 
 func main() {
-	// Encode
 	drone := &bp.Drone{}
 	drone.Status = bp.DRONE_STATUS_RISING
 	drone.Position.Longitude = 2000

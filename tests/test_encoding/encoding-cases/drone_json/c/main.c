@@ -4,7 +4,6 @@
 #include "drone_json_bp.h"
 
 int main(void) {
-    // Encode.
     struct Drone drone = {0};
 
     drone.status = DRONE_STATUS_RISING;

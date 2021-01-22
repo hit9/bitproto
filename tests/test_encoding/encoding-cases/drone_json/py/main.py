@@ -2,7 +2,6 @@ import drone_json_bp as bp
 
 
 def main() -> None:
-    # Encode.
     drone = bp.Drone()
 
     drone.status = bp.DRONE_STATUS_RISING
