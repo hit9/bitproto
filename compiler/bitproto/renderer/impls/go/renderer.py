@@ -195,11 +195,8 @@ class BlockEnumMethodBpProcessor(BlockBindEnum[F]):
     @override(Block)
     def render(self) -> None:
         uint = self.formatter.format_processor_uint(self.d.type)
-        extensible = self.formatter.format_bool_value(self.d.extensible)
         self.push(f"func (m {self.enum_name}) BpProcessor() bp.Processor {{")
-        self.push(
-            f"return bp.NewEnumProcessor({extensible}, {uint})", indent=self.indent + 1
-        )
+        self.push(f"return bp.NewEnumProcessor({uint})", indent=self.indent + 1)
         self.push("}")
 
 

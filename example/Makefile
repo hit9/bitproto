@@ -1,4 +1,4 @@
-default: build
+default: run
 
 proto:
 	bitproto c example.bitproto C
@@ -8,3 +8,8 @@ proto:
 build: proto
 	cd C && make
 	cd Go && go build -o example
+
+run: build
+	make -C C
+	cd Go && ./example
+	cd Python && python main.py

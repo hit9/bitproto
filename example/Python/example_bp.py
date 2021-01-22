@@ -47,7 +47,7 @@ _DRONESTATUS_VALUE_TO_NAME_MAP: Dict[DroneStatus, str] = {
 }
 
 def bp_processor_DroneStatus() -> bp.Processor:
-    return bp.EnumProcessor(False, bp.Uint(3))
+    return bp.EnumProcessor(bp.Uint(3))
 
 
 PropellerStatus = int # 2bit
@@ -62,7 +62,7 @@ _PROPELLERSTATUS_VALUE_TO_NAME_MAP: Dict[PropellerStatus, str] = {
 }
 
 def bp_processor_PropellerStatus() -> bp.Processor:
-    return bp.EnumProcessor(False, bp.Uint(2))
+    return bp.EnumProcessor(bp.Uint(2))
 
 
 RotatingDirection = int # 2bit
@@ -77,7 +77,7 @@ _ROTATINGDIRECTION_VALUE_TO_NAME_MAP: Dict[RotatingDirection, str] = {
 }
 
 def bp_processor_RotatingDirection() -> bp.Processor:
-    return bp.EnumProcessor(False, bp.Uint(2))
+    return bp.EnumProcessor(bp.Uint(2))
 
 
 PowerStatus = int # 2bit
@@ -92,7 +92,7 @@ _POWERSTATUS_VALUE_TO_NAME_MAP: Dict[PowerStatus, str] = {
 }
 
 def bp_processor_PowerStatus() -> bp.Processor:
-    return bp.EnumProcessor(False, bp.Uint(2))
+    return bp.EnumProcessor(bp.Uint(2))
 
 
 LandingGearStatus = int # 2bit
@@ -107,7 +107,7 @@ _LANDINGGEARSTATUS_VALUE_TO_NAME_MAP: Dict[LandingGearStatus, str] = {
 }
 
 def bp_processor_LandingGearStatus() -> bp.Processor:
-    return bp.EnumProcessor(False, bp.Uint(2))
+    return bp.EnumProcessor(bp.Uint(2))
 
 
 @dataclass

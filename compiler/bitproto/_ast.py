@@ -846,7 +846,7 @@ class EnumField(Field):
 @final
 @frozen(post_init=False)
 @dataclass
-class Enum(BoundScope, SingleType, ExtensibleType):
+class Enum(BoundScope, SingleType):
     """Enum.
     :param type: The type annotation of this enum.
 
@@ -856,8 +856,7 @@ class Enum(BoundScope, SingleType, ExtensibleType):
     type: Uint = _UINT_MISSING
 
     def __repr__(self) -> str:
-        extensible_flag = "'" if self.extensible else ""
-        return f"<enum {self.name}{extensible_flag}>"
+        return f"<enum {self.name}>"
 
     @override(ExtensibleType)
     def ahead_nbits(self) -> int:
@@ -865,10 +864,7 @@ class Enum(BoundScope, SingleType, ExtensibleType):
 
     @override(Type)
     def nbits(self) -> int:
-        n = self.type.nbits()
-        if not self.extensible:
-            return n
-        return self.ahead_nbits() + n
+        return self.type.nbits()
 
     @cache_if_frozen
     def fields(self) -> List[EnumField]:

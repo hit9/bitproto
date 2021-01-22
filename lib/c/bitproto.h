@@ -87,8 +87,6 @@ struct BpAliasDescriptor {
 
 // BpEnumDescriptor describes an enum definition.
 struct BpEnumDescriptor {
-    // Whether this enum is extensible.
-    bool extensible;
     // The corresponding uint type.
     struct BpType uint;
 };
@@ -157,7 +155,7 @@ struct BpMessageDescriptor BpMessageDescriptor(
 struct BpMessageFieldDescriptor BpMessageFieldDescriptor(void *data,
                                                          struct BpType type,
                                                          char *name);
-struct BpEnumDescriptor BpEnumDescriptor(bool extensible, struct BpType uint);
+struct BpEnumDescriptor BpEnumDescriptor(struct BpType uint);
 struct BpArrayDescriptor BpArrayDescriptor(bool extensible, size_t cap,
                                            struct BpType element_type);
 struct BpAliasDescriptor BpAliasDescriptor(struct BpType to);
@@ -184,11 +182,6 @@ void BpEndecodeArray(struct BpArrayDescriptor *descriptor,
                      struct BpProcessorContext *ctx, void *data);
 
 // Extensible Processor.
-
-void BpEncodeEnumExtensibleAhead(struct BpEnumDescriptor *descriptor,
-                                 struct BpProcessorContext *ctx);
-uint8_t BpDecodeEnumExtensibleAhead(struct BpEnumDescriptor *descriptor,
-                                    struct BpProcessorContext *ctx);
 
 void BpEncodeArrayExtensibleAhead(struct BpArrayDescriptor *descriptor,
                                   struct BpProcessorContext *ctx);

@@ -78,8 +78,8 @@ struct BpMessageFieldDescriptor BpMessageFieldDescriptor(void *data,
 }
 
 // BpEnumDescriptor returns a descriptor for an enum.
-struct BpEnumDescriptor BpEnumDescriptor(bool extensible, struct BpType uint) {
-    return (struct BpEnumDescriptor){extensible, uint};
+struct BpEnumDescriptor BpEnumDescriptor(struct BpType uint) {
+    return (struct BpEnumDescriptor){uint};
 }
 
 // BpArrayDescriptor returns a descriptor for an array.
@@ -168,31 +168,8 @@ void BpEndecodeAlias(struct BpAliasDescriptor *descriptor,
 
 void BpEndecodeEnum(struct BpEnumDescriptor *descriptor,
                     struct BpProcessorContext *ctx, void *data) {
-    // Keep current number of bits total processed.
-    int i = ctx->i;
-    // Opponent enum nbits if extensible is set.
-    uint8_t ahead = 0;
-
-    if (descriptor->extensible) {
-        if (ctx->is_encode) {
-            // Encode extensible ahead if extensible.
-            BpEncodeEnumExtensibleAhead(descriptor, ctx);
-        } else {
-            // Decode extensible ahead if extensible.
-            ahead = BpDecodeEnumExtensibleAhead(descriptor, ctx);
-        }
-    }
-
     // Process inner uint.
     BpEndecodeBaseType(descriptor->uint, ctx, data);
-
-    // Skip redundant bits if decoding.
-    if (descriptor->extensible && (!ctx->is_encode)) {
-        int ito = i + (int)ahead;
-        if (ito >= ctx->i) {
-            ctx->i = ito;
-        }
-    }
 }
 
 void BpEndecodeArray(struct BpArrayDescriptor *descriptor,
@@ -327,26 +304,6 @@ void BpDecodeSingleByte(struct BpProcessorContext *ctx, void *data, int j,
     } else {  // Otherwise, run OR to copy bits.
         data_buffer[value_index] |= delta;
     }
-}
-
-// BpEncodeEnumExtensibleAhead encode enum's bit capacity value to current bit
-// encoding stream.
-void BpEncodeEnumExtensibleAhead(struct BpEnumDescriptor *descriptor,
-                                 struct BpProcessorContext *ctx) {
-    // Safe to cast to uint8_t:
-    // the number of bits of enum always not larger than 64.
-    uint8_t data = (uint8_t)(descriptor->uint.nbits);
-    // Encode this data as a base type.
-    BpEndecodeBaseType(BpUint(8), ctx, (void *)&data);
-}
-
-// BpDecodeEnumExtensibleAhead decode enum's bit capacity value from current
-// decoding buffer.
-uint8_t BpDecodeEnumExtensibleAhead(struct BpEnumDescriptor *descriptor,
-                                    struct BpProcessorContext *ctx) {
-    uint8_t data = 0;
-    BpEndecodeBaseType(BpUint(8), ctx, (void *)&data);
-    return data;
 }
 
 // BpEncodeArrayExtensibleAhead encode the array capacity as the ahead flag to

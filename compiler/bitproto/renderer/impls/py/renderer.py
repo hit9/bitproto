@@ -188,9 +188,8 @@ class BlockEnumMethodProcessor(BlockBindEnum[F]):
     def render(self) -> None:
         processor_name = self.formatter.format_processor_name_enum(self.d)
         ut = self.formatter.format_processor_uint(self.d.type)
-        extensible = self.formatter.format_bool_value(self.d.extensible)
         self.push(f"def {processor_name}() -> bp.Processor:")
-        self.push(f"return bp.EnumProcessor({extensible}, {ut})", indent=4)
+        self.push(f"return bp.EnumProcessor({ut})", indent=4)
 
 
 class BlockEnum(BlockBindEnum[F], BlockComposition[F]):

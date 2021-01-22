@@ -164,9 +164,8 @@ class CFormatter(Formatter):
         return f"BpAlias({nbits}, {size}, {processor}, {formatter})"
 
     def format_bp_enum_descriptor(self, t: Enum) -> str:
-        extensible = self.format_bool_value(t.extensible)
         bp_uint = self.format_bp_uint(t.type)
-        return f"BpEnumDescriptor({extensible}, {bp_uint})"
+        return f"BpEnumDescriptor({bp_uint})"
 
     def format_bp_enum_processor_name(self, t: Enum) -> str:
         enum_name = self.format_enum_name(t)

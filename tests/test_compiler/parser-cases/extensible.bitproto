@@ -1,6 +1,6 @@
 proto extensible
 
-enum C' : uint3 {
+enum C : uint3 {
     C_UNKNOWN = 1
     C_YES = 2
     C_NO = 3
@@ -29,3 +29,7 @@ message E {
 }
 
 type H = byte[3]'
+
+message M' {
+    E e = 1;
+}

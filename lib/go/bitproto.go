@@ -244,62 +244,18 @@ func (t *Array) DecodeExtensibleAhead(ctx *ProcessContext) uint16 {
 // EnumProcessor implements Processor for enum.
 // Assuming compiler generates Enum a method: BpProcessor to returns this.
 type EnumProcessor struct {
-	extensible bool
-	ut         *Uint
+	ut *Uint
 }
 
-func NewEnumProcessor(extensible bool, ut *Uint) *EnumProcessor {
-	return &EnumProcessor{extensible, ut}
+func NewEnumProcessor(ut *Uint) *EnumProcessor {
+	return &EnumProcessor{ut}
 }
 
 func (t *EnumProcessor) Flag() Flag { return FlagEnum }
 
 func (t *EnumProcessor) Process(ctx *ProcessContext, di *DataIndexer, accessor Accessor) {
-
-	// Record current number of bits processed.
-	i := ctx.i
-	// Opponent enum bits if extensible set.
-	ahead := uint8(0)
-
-	if t.extensible {
-		if ctx.isEncode {
-			// Encode ahead flag if extensible.
-			t.EncodeExtensibleAhead(ctx)
-		} else {
-			// Decode ahead flag if extensible.
-			ahead = t.DecodeExtensibleAhead(ctx)
-		}
-	}
-
 	// Process inner uint.
 	t.ut.Process(ctx, di, accessor)
-
-	// Skip redundant bits post decoding.
-	if t.extensible && !ctx.isEncode {
-		// Skip redundant bits.
-		ito := i + int(ahead)
-		if ito >= ctx.i {
-			ctx.i = ito
-		}
-	}
-}
-
-// EncodeExtensibleAhead encode enum ahead flag into current encoding buffer in
-// given ctx.
-func (t *EnumProcessor) EncodeExtensibleAhead(ctx *ProcessContext) {
-	data := uint8(t.ut.nbits) // Safe cast: the number of bits of enum always <= 64.
-	accessor := &Uint8Accessor{data}
-	di := NewDataIndexer(1)
-	processBaseType(8, ctx, di, accessor)
-}
-
-// DecodeExtensibleAhead decode enum ahead flag from current decoding buffer in
-// given ctx.
-func (t *EnumProcessor) DecodeExtensibleAhead(ctx *ProcessContext) uint8 {
-	accessor := &Uint8Accessor{}
-	di := NewDataIndexer(1)
-	processBaseType(8, ctx, di, accessor)
-	return accessor.data
 }
 
 // AliasProcessor implements Processor for alias.

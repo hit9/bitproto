@@ -553,11 +553,10 @@ class Parser:
         self.copy_p_tracking(p)
 
     def p_open_enum_scope(self, p: P) -> None:
-        """open_enum_scope : ENUM IDENTIFIER optional_extensible_flag ':' UINT_TYPE '{'"""
+        """open_enum_scope : ENUM IDENTIFIER ':' UINT_TYPE '{'"""
         enum = Enum(
             name=p[2],
-            type=p[5],
-            extensible=p[3],
+            type=p[4],
             token=p[2],
             lineno=p.lineno(2),
             filepath=self.current_filepath(),
