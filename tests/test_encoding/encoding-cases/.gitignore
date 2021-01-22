@@ -4,3 +4,6 @@
 *_bp.py
 */c/main
 */go/main
+*/go/vendor
+*.pyc
+__pycache__
