@@ -33,7 +33,7 @@ const (
 )
 
 func (m DroneStatus) BpProcessor() bp.Processor {
-	return bp.NewEnumProcessor(false, bp.NewUint(3))
+	return bp.NewEnumProcessor(bp.NewUint(3))
 }
 
 // String returns the name of this enum item.
@@ -63,7 +63,7 @@ const (
 )
 
 func (m PropellerStatus) BpProcessor() bp.Processor {
-	return bp.NewEnumProcessor(false, bp.NewUint(2))
+	return bp.NewEnumProcessor(bp.NewUint(2))
 }
 
 // String returns the name of this enum item.
@@ -89,7 +89,7 @@ const (
 )
 
 func (m RotatingDirection) BpProcessor() bp.Processor {
-	return bp.NewEnumProcessor(false, bp.NewUint(2))
+	return bp.NewEnumProcessor(bp.NewUint(2))
 }
 
 // String returns the name of this enum item.
@@ -115,7 +115,7 @@ const (
 )
 
 func (m PowerStatus) BpProcessor() bp.Processor {
-	return bp.NewEnumProcessor(false, bp.NewUint(2))
+	return bp.NewEnumProcessor(bp.NewUint(2))
 }
 
 // String returns the name of this enum item.
@@ -141,7 +141,7 @@ const (
 )
 
 func (m LandingGearStatus) BpProcessor() bp.Processor {
-	return bp.NewEnumProcessor(false, bp.NewUint(2))
+	return bp.NewEnumProcessor(bp.NewUint(2))
 }
 
 // String returns the name of this enum item.

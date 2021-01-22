@@ -26,13 +26,29 @@ from typing import Generic, Iterator, List, Optional
 from typing import Type as T
 from typing import TypeVar, Union, cast
 
-from bitproto._ast import (Alias, BoundDefinition, Comment, Constant, D,
-                           Definition, Enum, EnumField, Message, MessageField,
-                           Proto)
+from bitproto._ast import (
+    Alias,
+    BoundDefinition,
+    Comment,
+    Constant,
+    D,
+    Definition,
+    Enum,
+    EnumField,
+    Message,
+    MessageField,
+    Proto,
+)
 from bitproto.errors import InternalError
 from bitproto.renderer.formatter import F, Formatter
-from bitproto.utils import (cached_property, final, overridable, override,
-                            snake_case, upper_case)
+from bitproto.utils import (
+    cached_property,
+    final,
+    overridable,
+    override,
+    snake_case,
+    upper_case,
+)
 
 #############
 # Block base
@@ -245,7 +261,12 @@ class BlockBindDefinitionBase(Generic[D]):
 class BlockBindDefinition(Block[F], BlockBindDefinitionBase[D]):
     """Block that bind a definition."""
 
-    def __init__(self, d: D, name: Optional[str] = None, indent: int = 0,) -> None:
+    def __init__(
+        self,
+        d: D,
+        name: Optional[str] = None,
+        indent: int = 0,
+    ) -> None:
         BlockBindDefinitionBase.__init__(self, d, name=name)
         Block.__init__(self, indent=indent)
 

@@ -5,20 +5,45 @@ Renderer for Go.
 from abc import abstractmethod
 from typing import Any, List, Optional
 
-from bitproto._ast import (Alias, Array, Bool, BoundDefinition, Byte, Constant,
-                           Enum, Int, Integer, Message, MessageField,
-                           SingleType, Uint)
-from bitproto.renderer.block import (Block, BlockAheadNotice, BlockBindAlias,
-                                     BlockBindConstant, BlockBindEnum,
-                                     BlockBindEnumField, BlockBindMessage,
-                                     BlockBindMessageField, BlockBindProto,
-                                     BlockBoundDefinitionDispatcher,
-                                     BlockComposition, BlockEmptyLine,
-                                     BlockWrapper)
+from bitproto._ast import (
+    Alias,
+    Array,
+    Bool,
+    BoundDefinition,
+    Byte,
+    Constant,
+    Enum,
+    Int,
+    Integer,
+    Message,
+    MessageField,
+    SingleType,
+    Uint,
+)
+from bitproto.renderer.block import (
+    Block,
+    BlockAheadNotice,
+    BlockBindAlias,
+    BlockBindConstant,
+    BlockBindEnum,
+    BlockBindEnumField,
+    BlockBindMessage,
+    BlockBindMessageField,
+    BlockBindProto,
+    BlockBoundDefinitionDispatcher,
+    BlockComposition,
+    BlockEmptyLine,
+    BlockWrapper,
+)
 from bitproto.renderer.impls.go.formatter import GoFormatter as F
 from bitproto.renderer.renderer import Renderer
-from bitproto.utils import (cached_property, cast_or_raise, override,
-                            snake_case, upper_case)
+from bitproto.utils import (
+    cached_property,
+    cast_or_raise,
+    override,
+    snake_case,
+    upper_case,
+)
 
 GO_LIB_IMPORT_PATH = "github.com/hit9/bitproto/lib/go"
 
@@ -195,11 +220,8 @@ class BlockEnumMethodBpProcessor(BlockBindEnum[F]):
     @override(Block)
     def render(self) -> None:
         uint = self.formatter.format_processor_uint(self.d.type)
-        extensible = self.formatter.format_bool_value(self.d.extensible)
         self.push(f"func (m {self.enum_name}) BpProcessor() bp.Processor {{")
-        self.push(
-            f"return bp.NewEnumProcessor({extensible}, {uint})", indent=self.indent + 1
-        )
+        self.push(f"return bp.NewEnumProcessor({uint})", indent=self.indent + 1)
         self.push("}")
 
 
@@ -211,7 +233,9 @@ class BlockEnumMethodString(BlockBindEnum[F], BlockWrapper[F]):
     @override(BlockWrapper)
     def before(self) -> None:
         self.push_comment("String returns the name of this enum item.")
-        self.push(f"func (v {self.enum_name}) String() string {{",)
+        self.push(
+            f"func (v {self.enum_name}) String() string {{",
+        )
         self.push("switch v {", indent=1)
 
     @override(BlockWrapper)
@@ -342,7 +366,10 @@ class BlockMessageMethodBpProcessor(BlockBindMessage[F], BlockWrapper[F]):
 
 class BlockMessageMethodBpGetSetByteItemBase(BlockBindMessageField[F]):
     def __init__(
-        self, d: MessageField, name: Optional[str] = None, indent: int = 0,
+        self,
+        d: MessageField,
+        name: Optional[str] = None,
+        indent: int = 0,
     ) -> None:
         super().__init__(d, name, indent)
         self.array_depth: int = 0
@@ -514,7 +541,10 @@ class BlockMessageMethodBpGetByte(BlockBindMessage[F], BlockWrapper[F]):
 
 class BlockMessageMethodBpGetAccessorItem(BlockBindMessageField[F]):
     def __init__(
-        self, d: MessageField, name: Optional[str] = None, indent: int = 0,
+        self,
+        d: MessageField,
+        name: Optional[str] = None,
+        indent: int = 0,
     ) -> None:
         super().__init__(d, name, indent)
         self.array_depth: int = 0

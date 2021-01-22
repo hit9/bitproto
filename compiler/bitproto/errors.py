@@ -104,10 +104,23 @@ class _TokenBound(Base):
         return f"L{self.lineno} {self.token} => {message}"
 
     @classmethod
-    def from_token(cls: T[_B], token: "Node", **kwds: Any,) -> _B:
+    def from_token(
+        cls: T[_B],
+        token: "Node",
+        **kwds: Any,
+    ) -> _B:
         return cls(
             filepath=token.filepath, token=token.token, lineno=token.lineno, **kwds
         )
+
+
+@dataclass
+class UserError(Error):
+    """User error."""
+
+
+class NoLanguageArgument(UserError):
+    """No language specific."""
 
 
 @dataclass

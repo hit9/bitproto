@@ -4,14 +4,33 @@ Renderer for Python.
 from abc import abstractmethod
 from typing import List, Optional
 
-from bitproto._ast import (Alias, Array, Bool, BoundDefinition, Constant, Enum,
-                           Int, Integer, Message, MessageField, SingleType)
-from bitproto.renderer.block import (Block, BlockAheadNotice, BlockBindAlias,
-                                     BlockBindConstant, BlockBindEnum,
-                                     BlockBindEnumField, BlockBindMessage,
-                                     BlockBindMessageField, BlockBindProto,
-                                     BlockBoundDefinitionDispatcher,
-                                     BlockComposition, BlockWrapper)
+from bitproto._ast import (
+    Alias,
+    Array,
+    Bool,
+    BoundDefinition,
+    Constant,
+    Enum,
+    Int,
+    Integer,
+    Message,
+    MessageField,
+    SingleType,
+)
+from bitproto.renderer.block import (
+    Block,
+    BlockAheadNotice,
+    BlockBindAlias,
+    BlockBindConstant,
+    BlockBindEnum,
+    BlockBindEnumField,
+    BlockBindMessage,
+    BlockBindMessageField,
+    BlockBindProto,
+    BlockBoundDefinitionDispatcher,
+    BlockComposition,
+    BlockWrapper,
+)
 from bitproto.renderer.impls.py.formatter import PyFormatter as F
 from bitproto.renderer.renderer import Renderer
 from bitproto.utils import cached_property, override
@@ -188,9 +207,8 @@ class BlockEnumMethodProcessor(BlockBindEnum[F]):
     def render(self) -> None:
         processor_name = self.formatter.format_processor_name_enum(self.d)
         ut = self.formatter.format_processor_uint(self.d.type)
-        extensible = self.formatter.format_bool_value(self.d.extensible)
         self.push(f"def {processor_name}() -> bp.Processor:")
-        self.push(f"return bp.EnumProcessor({extensible}, {ut})", indent=4)
+        self.push(f"return bp.EnumProcessor({ut})", indent=4)
 
 
 class BlockEnum(BlockBindEnum[F], BlockComposition[F]):
@@ -319,7 +337,10 @@ class BlockMessageMethodProcessor(BlockMessageBase, BlockWrapper[F]):
 
 class BlockMessageMethodGetSetByteItemBase(BlockBindMessageField[F]):
     def __init__(
-        self, d: MessageField, name: Optional[str] = None, indent: int = 0,
+        self,
+        d: MessageField,
+        name: Optional[str] = None,
+        indent: int = 0,
     ) -> None:
         super().__init__(d, name, indent)
         self.array_depth: int = 0
@@ -472,7 +493,10 @@ class BlockMessageMethodGetByte(BlockMessageBase, BlockWrapper[F]):
 
 class BlockMessageMethodGetAccessorItem(BlockBindMessageField[F]):
     def __init__(
-        self, d: MessageField, name: Optional[str] = None, indent: int = 0,
+        self,
+        d: MessageField,
+        name: Optional[str] = None,
+        indent: int = 0,
     ) -> None:
         super().__init__(d, name, indent)
         self.array_depth: int = 0

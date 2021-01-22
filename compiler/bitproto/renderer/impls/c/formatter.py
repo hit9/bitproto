@@ -4,9 +4,22 @@ C formatter.
 
 from typing import Optional
 
-from bitproto._ast import (Alias, Array, Bool, Byte, Constant, Definition,
-                           Enum, EnumField, Int, Message, MessageField, Proto,
-                           Type, Uint)
+from bitproto._ast import (
+    Alias,
+    Array,
+    Bool,
+    Byte,
+    Constant,
+    Definition,
+    Enum,
+    EnumField,
+    Int,
+    Message,
+    MessageField,
+    Proto,
+    Type,
+    Uint,
+)
 from bitproto.errors import InternalError
 from bitproto.renderer.formatter import CaseStyleMapping, Formatter
 from bitproto.utils import override
@@ -19,7 +32,10 @@ class CFormatter(Formatter):
     def case_style_mapping(self) -> CaseStyleMapping:
         return {
             Constant: "upper",
+            Alias: "pascal",
+            Enum: "pascal",
             EnumField: ("snake", "upper"),
+            Message: "pascal",
         }
 
     @override(Formatter)
@@ -78,6 +94,10 @@ class CFormatter(Formatter):
     @override(Formatter)
     def format_import_statement(self, t: Proto, as_name: Optional[str] = None) -> str:
         return '#include "{0}_bp.h"'.format(t.name)
+
+    @override(Formatter)
+    def definition_name_prefix_option_name(self) -> str:
+        return "c.name_prefix"
 
     def format_sizeof(self, t: str) -> str:
         return f"sizeof({t})"
@@ -157,9 +177,8 @@ class CFormatter(Formatter):
         return f"BpAlias({nbits}, {size}, {processor}, {formatter})"
 
     def format_bp_enum_descriptor(self, t: Enum) -> str:
-        extensible = self.format_bool_value(t.extensible)
         bp_uint = self.format_bp_uint(t.type)
-        return f"BpEnumDescriptor({extensible}, {bp_uint})"
+        return f"BpEnumDescriptor({bp_uint})"
 
     def format_bp_enum_processor_name(self, t: Enum) -> str:
         enum_name = self.format_enum_name(t)

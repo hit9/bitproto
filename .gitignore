@@ -9,3 +9,4 @@ dist
 .ccls-cache
 *.gch
 *.out
+.mypy_cache

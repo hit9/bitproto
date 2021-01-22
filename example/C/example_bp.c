@@ -34,52 +34,52 @@ void BpXXXJsonFormatTernaryInt32(void *data, struct BpJsonFormatContext *ctx) {
 }
 
 void BpXXXProcessDroneStatus(void *data, struct BpProcessorContext *ctx) {
-    struct BpEnumDescriptor descriptor = BpEnumDescriptor(false, BpUint(3));
+    struct BpEnumDescriptor descriptor = BpEnumDescriptor(BpUint(3));
     BpEndecodeEnum(&descriptor, ctx, data);
 }
 
 void BpXXXJsonFormatDroneStatus(void *data, struct BpJsonFormatContext *ctx) {
-    struct BpEnumDescriptor descriptor = BpEnumDescriptor(false, BpUint(3));
+    struct BpEnumDescriptor descriptor = BpEnumDescriptor(BpUint(3));
     BpJsonFormatEnum(&descriptor, ctx, data);
 }
 
 void BpXXXProcessPropellerStatus(void *data, struct BpProcessorContext *ctx) {
-    struct BpEnumDescriptor descriptor = BpEnumDescriptor(false, BpUint(2));
+    struct BpEnumDescriptor descriptor = BpEnumDescriptor(BpUint(2));
     BpEndecodeEnum(&descriptor, ctx, data);
 }
 
 void BpXXXJsonFormatPropellerStatus(void *data, struct BpJsonFormatContext *ctx) {
-    struct BpEnumDescriptor descriptor = BpEnumDescriptor(false, BpUint(2));
+    struct BpEnumDescriptor descriptor = BpEnumDescriptor(BpUint(2));
     BpJsonFormatEnum(&descriptor, ctx, data);
 }
 
 void BpXXXProcessRotatingDirection(void *data, struct BpProcessorContext *ctx) {
-    struct BpEnumDescriptor descriptor = BpEnumDescriptor(false, BpUint(2));
+    struct BpEnumDescriptor descriptor = BpEnumDescriptor(BpUint(2));
     BpEndecodeEnum(&descriptor, ctx, data);
 }
 
 void BpXXXJsonFormatRotatingDirection(void *data, struct BpJsonFormatContext *ctx) {
-    struct BpEnumDescriptor descriptor = BpEnumDescriptor(false, BpUint(2));
+    struct BpEnumDescriptor descriptor = BpEnumDescriptor(BpUint(2));
     BpJsonFormatEnum(&descriptor, ctx, data);
 }
 
 void BpXXXProcessPowerStatus(void *data, struct BpProcessorContext *ctx) {
-    struct BpEnumDescriptor descriptor = BpEnumDescriptor(false, BpUint(2));
+    struct BpEnumDescriptor descriptor = BpEnumDescriptor(BpUint(2));
     BpEndecodeEnum(&descriptor, ctx, data);
 }
 
 void BpXXXJsonFormatPowerStatus(void *data, struct BpJsonFormatContext *ctx) {
-    struct BpEnumDescriptor descriptor = BpEnumDescriptor(false, BpUint(2));
+    struct BpEnumDescriptor descriptor = BpEnumDescriptor(BpUint(2));
     BpJsonFormatEnum(&descriptor, ctx, data);
 }
 
 void BpXXXProcessLandingGearStatus(void *data, struct BpProcessorContext *ctx) {
-    struct BpEnumDescriptor descriptor = BpEnumDescriptor(false, BpUint(2));
+    struct BpEnumDescriptor descriptor = BpEnumDescriptor(BpUint(2));
     BpEndecodeEnum(&descriptor, ctx, data);
 }
 
 void BpXXXJsonFormatLandingGearStatus(void *data, struct BpJsonFormatContext *ctx) {
-    struct BpEnumDescriptor descriptor = BpEnumDescriptor(false, BpUint(2));
+    struct BpEnumDescriptor descriptor = BpEnumDescriptor(BpUint(2));
     BpJsonFormatEnum(&descriptor, ctx, data);
 }
 

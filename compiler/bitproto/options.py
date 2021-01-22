@@ -42,6 +42,12 @@ PROTO_OPTTIONS: OptionDescriptors = (
         "C language struct packing alignment, defaults to 1",
     ),
     OptionDescriptor(
+        "c.name_prefix",
+        "",
+        None,
+        "Name prefix of generated C defintions, defaults to empty.",
+    ),
+    OptionDescriptor(
         "go.package_path",
         "",
         None,

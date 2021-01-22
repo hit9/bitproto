@@ -12,14 +12,42 @@ from typing import Callable, Dict, List, Optional, Tuple
 from typing import Type as T
 from typing import TypeVar, Union, cast
 
-from bitproto._ast import (Alias, Array, Bool, BooleanConstant, BoundScope,
-                           Byte, Constant, Definition, Enum, EnumField, Int,
-                           Integer, IntegerConstant, Message, MessageField,
-                           Node, Proto, Scope, SingleType, StringConstant,
-                           Type, Uint, Value)
+from bitproto._ast import (
+    Alias,
+    Array,
+    Bool,
+    BooleanConstant,
+    BoundDefinition,
+    BoundScope,
+    Byte,
+    Constant,
+    Definition,
+    Enum,
+    EnumField,
+    Int,
+    Integer,
+    IntegerConstant,
+    Message,
+    MessageField,
+    Node,
+    Proto,
+    Scope,
+    SingleType,
+    StringConstant,
+    Type,
+    Uint,
+    Value,
+)
 from bitproto.errors import InternalError
-from bitproto.utils import (final, keep_case, overridable, pascal_case,
-                            snake_case, upper_case)
+from bitproto.utils import (
+    cast_or_raise,
+    final,
+    keep_case,
+    overridable,
+    pascal_case,
+    snake_case,
+    upper_case,
+)
 
 CaseStyleConverter = Callable[[str], str]
 
@@ -220,6 +248,13 @@ class Formatter:
         """
         return (Message, Proto)
 
+    @overridable
+    def definition_name_prefix_option_name(self) -> str:
+        """The name of the definition name prefix option.
+        Defaults to "".
+        """
+        return ""
+
     # Finals
 
     @final
@@ -260,19 +295,31 @@ class Formatter:
         scope = d.scope_stack[-1]
         return scope.get_name_by_member(d) or d.name
 
+    def _get_definition_name_prefix(self, d: Definition) -> str:
+        """Gets the configured name prefix for given definition."""
+        if isinstance(d, BoundDefinition):
+            d_ = cast_or_raise(BoundDefinition, d)
+            bound = d_.bound
+            option_name = self.definition_name_prefix_option_name()
+            if option_name:
+                return bound.get_option_as_string_or_raise(option_name)
+        return ""
+
     def _format_definition_name_inner_proto(self, d: Definition) -> str:
         """Formats the declaration name for given definition in target language inner a
         proto. Target languages may disallow nested declarations (such as structs, enums,
         constants, typedefs), so we join the names of the definition's parent namespace
         scopes with underscore. Example output format: "Scope1_Scope2_{definition_name}".
         """
+        prefix = self._get_definition_name_prefix(d)
         definition_name = self._get_definition_name(d)
+        name = prefix + definition_name
 
         classes_ = self.scopes_with_namespace()
         namespaces = [scope for scope in d.scope_stack if isinstance(scope, classes_)]
 
         if len(namespaces) <= 1:
-            return definition_name  # Global definition.
+            return name  # Global definition.
 
         items: List[str] = [definition_name]
 
@@ -281,7 +328,8 @@ class Formatter:
                 items.insert(0, self._get_definition_name(namespace))
             elif isinstance(namespace, Proto):
                 break
-        return self.delimer_inner_proto().join(items)
+        name = prefix + self.delimer_inner_proto().join(items)
+        return name
 
     def format_definition_name_inner_proto(
         self, d: Definition, class_: Optional[T[Definition]] = None
@@ -434,8 +482,8 @@ class Formatter:
     def format_out_filename(self, proto: Proto, extension: str) -> str:
         """Formats the out file name for given proto and given extension.
 
-            >>> format_out_filename(proto, ".h")
-            "example_bp.h"
+        >>> format_out_filename(proto, ".h")
+        "example_bp.h"
         """
         out_base_name = proto.name
         if proto.filepath:

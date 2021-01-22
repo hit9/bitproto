@@ -1,7 +1,17 @@
 import pytest
-from bitproto.utils import (cache, cached_property, cast_or_raise,
-                            conditional_cache, frozen, keep_case, pascal_case,
-                            snake_case, upper_case)
+
+from bitproto.utils import (
+    cache,
+    cached_property,
+    cast_or_raise,
+    conditional_cache,
+    frozen,
+    keep_case,
+    pascal_case,
+    snake_case,
+    upper_case,
+    override_docstring,
+)
 
 
 def test_cached_property() -> None:
@@ -125,3 +135,14 @@ def test_cast_or_raise() -> None:
     assert cast_or_raise(int, 1) == 1
     with pytest.raises(TypeError):
         cast_or_raise(int, "1")
+
+
+def test_override_docstring() -> None:
+    s = "this is new docstring"
+
+    @override_docstring(s)
+    def foo() -> None:
+        """This is old docstring"""
+        pass
+
+    assert foo.__doc__ == s

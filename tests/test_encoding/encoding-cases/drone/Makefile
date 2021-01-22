@@ -43,6 +43,6 @@ run-py: build-py
 	@cd py && python $(PY_SOURCE_FILE)
 
 clean:
-	@rm -fr c/$(C_BIN) go/$(GO_BIN) go/vendor */*_bp.* py/__pycache__
+	@rm -fr c/$(C_BIN) go/$(GO_BIN) go/vendor */*_bp.* */**/*_bp.* py/__pycache__
 
 run: run-c run-go run-py

@@ -72,8 +72,7 @@ class Renderer(Generic[F]):
 
     @abstractmethod
     def file_extension(self) -> str:
-        """Returns the file extension to generate.  e.g. ".c"
-        """
+        """Returns the file extension to generate.  e.g. ".c" """
         raise NotImplementedError
 
     @abstractmethod

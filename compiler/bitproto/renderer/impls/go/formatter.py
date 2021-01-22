@@ -4,9 +4,22 @@ Go formatter
 
 from typing import Optional
 
-from bitproto._ast import (Alias, Array, Bool, Byte, Constant, Enum, EnumField,
-                           Int, Integer, Message, MessageField, Proto, Type,
-                           Uint)
+from bitproto._ast import (
+    Alias,
+    Array,
+    Bool,
+    Byte,
+    Constant,
+    Enum,
+    EnumField,
+    Int,
+    Integer,
+    Message,
+    MessageField,
+    Proto,
+    Type,
+    Uint,
+)
 from bitproto.errors import InternalError
 from bitproto.renderer.formatter import CaseStyleMapping, Formatter
 from bitproto.utils import cast_or_raise, override

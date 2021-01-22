@@ -177,8 +177,7 @@ class IntAccessor(Accessor):
 
 
 class MessageBase(Accessor):
-    """MessageBase is the base class for all bitproto message classes.
-    """
+    """MessageBase is the base class for all bitproto message classes."""
 
     def to_dict(self) -> Dict[str, Any]:
         """Converts this message to a dict."""
@@ -318,51 +317,17 @@ class EnumProcessor(Processor):
     """Enum implements Processor for enum type.
     Assuming compiler generates a global function bp_processor_{enum_name}.
 
-    :param extensible: Indicates whether this enum is extensible.
     :param ut: The uint type of this enum.
     """
 
-    extensible: bool
     ut: Uint
 
     def flag(self) -> int:
         return FLAG_ENUM
 
     def process(self, ctx: ProcessContext, di: DataIndexer, accessor: Accessor) -> None:
-        # Record current number of bits processed.
-        i = ctx.i
-        # Opponent array capacity if extensible set.
-        ahead = 0
-
-        if self.extensible:
-            if ctx.is_encode:
-                # Encode extensible ahead  if extensible.
-                self.encode_extensible_ahead(ctx)
-            else:
-                # Decode extensible ahead  if extensible.
-                ahead = self.decode_extensible_ahead(ctx)
-
         # Process inner uint.
         self.ut.process(ctx, di, accessor)
-
-        # Skip redundant bits post decoding.
-        if self.extensible and not ctx.is_encode:
-            ito = i + ahead
-            if ito >= ctx.i:
-                ctx.i = ito
-
-    def encode_extensible_ahead(self, ctx: ProcessContext) -> None:
-        """Encode enum ahead flag into current encoding buffer in given ctx."""
-        accessor = IntAccessor(data=self.ut.nbits)
-        di = DataIndexer(field_number=1)
-        process_base_type(8, ctx, di, accessor)
-
-    def decode_extensible_ahead(self, ctx: ProcessContext) -> int:
-        """Decode enum ahead flag from current decoding buffer in given ctx."""
-        accessor = IntAccessor()
-        di = DataIndexer(field_number=1)
-        process_base_type(8, ctx, di, accessor)
-        return accessor.data
 
 
 @dataclass

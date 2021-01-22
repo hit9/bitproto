@@ -48,19 +48,38 @@ from typing import Any, Callable, ClassVar, Dict, List, Optional, Tuple
 from typing import Type as T
 from typing import TypeVar, Union, cast
 
-from bitproto.errors import (DuplicatedDefinition, DuplicatedEnumFieldValue,
-                             DuplicatedMessageFieldNumber,
-                             EnumFieldValueOverflow, InternalError,
-                             InvalidAliasedType, InvalidArrayCap,
-                             InvalidEnumFieldValue, InvalidIntCap,
-                             InvalidMessageFieldNumber, InvalidOptionValue,
-                             InvalidUintCap, MessageSizeOverflows,
-                             UnsupportedArrayType, UnsupportedOption)
-from bitproto.options import (MESSAGE_OPTIONS, PROTO_OPTTIONS,
-                              OptionDescriptor, OptionDescriptors)
+from bitproto.errors import (
+    DuplicatedDefinition,
+    DuplicatedEnumFieldValue,
+    DuplicatedMessageFieldNumber,
+    EnumFieldValueOverflow,
+    InternalError,
+    InvalidAliasedType,
+    InvalidArrayCap,
+    InvalidEnumFieldValue,
+    InvalidIntCap,
+    InvalidMessageFieldNumber,
+    InvalidOptionValue,
+    InvalidUintCap,
+    MessageSizeOverflows,
+    UnsupportedArrayType,
+    UnsupportedOption,
+)
+from bitproto.options import (
+    MESSAGE_OPTIONS,
+    PROTO_OPTTIONS,
+    OptionDescriptor,
+    OptionDescriptors,
+)
 from bitproto.options import Validator as OptionValidator
-from bitproto.utils import (cache, conditional_cache, final, frozen,
-                            overridable, override)
+from bitproto.utils import (
+    cache,
+    conditional_cache,
+    final,
+    frozen,
+    overridable,
+    override,
+)
 
 N = TypeVar("N", bound="Node")  # Node
 D = TypeVar("D", bound="Definition")  # Definition
@@ -401,7 +420,10 @@ class Scope(Definition):
 
     @cache_if_frozen
     def filter(
-        self, t: T[D], recursive: bool = False, bound: Optional["Proto"] = None,
+        self,
+        t: T[D],
+        recursive: bool = False,
+        bound: Optional["Proto"] = None,
     ) -> List[Tuple[str, D]]:
         """Filter member by given type. (dfs)
 
@@ -846,7 +868,7 @@ class EnumField(Field):
 @final
 @frozen(post_init=False)
 @dataclass
-class Enum(BoundScope, SingleType, ExtensibleType):
+class Enum(BoundScope, SingleType):
     """Enum.
     :param type: The type annotation of this enum.
 
@@ -856,8 +878,7 @@ class Enum(BoundScope, SingleType, ExtensibleType):
     type: Uint = _UINT_MISSING
 
     def __repr__(self) -> str:
-        extensible_flag = "'" if self.extensible else ""
-        return f"<enum {self.name}{extensible_flag}>"
+        return f"<enum {self.name}>"
 
     @override(ExtensibleType)
     def ahead_nbits(self) -> int:
@@ -865,10 +886,7 @@ class Enum(BoundScope, SingleType, ExtensibleType):
 
     @override(Type)
     def nbits(self) -> int:
-        n = self.type.nbits()
-        if not self.extensible:
-            return n
-        return self.ahead_nbits() + n
+        return self.type.nbits()
 
     @cache_if_frozen
     def fields(self) -> List[EnumField]:
