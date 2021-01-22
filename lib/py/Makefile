@@ -5,7 +5,9 @@ install-dev-requirements:
 
 lint:
 	mypy bitprotolib
+	isort -c bitprotolib
 	black --check bitprotolib
 
 reformat:
 	black bitprotolib
+	isort bitprotolib
