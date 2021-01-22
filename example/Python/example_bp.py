@@ -6,8 +6,9 @@ Proto drone describes the structure of the drone.
 """
 
 
-from dataclasses import dataclass, field
-from typing import ClassVar, Dict, List
+from dataclasses import dataclass, field, asdict
+import json
+from typing import Any, ClassVar, Dict, List, Optional, Tuple
 from bitprotolib import bp
 
 
@@ -164,6 +165,12 @@ class Propeller(bp.Accessor):
         ctx = bp.ProcessContext(False, s)
         self.bp_processor().process(ctx, bp.NIL_DATA_INDEXER, self)
 
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+    def to_json(self, indent: Optional[int] = None, separators: Optional[Tuple[str, str]]=None) -> str:
+        return json.dumps(self.to_dict(), indent=indent, separators=separators)
+
 
 @dataclass
 class Power(bp.Accessor):
@@ -221,6 +228,12 @@ class Power(bp.Accessor):
         ctx = bp.ProcessContext(False, s)
         self.bp_processor().process(ctx, bp.NIL_DATA_INDEXER, self)
 
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+    def to_json(self, indent: Optional[int] = None, separators: Optional[Tuple[str, str]]=None) -> str:
+        return json.dumps(self.to_dict(), indent=indent, separators=separators)
+
 
 @dataclass
 class Network(bp.Accessor):
@@ -274,6 +287,12 @@ class Network(bp.Accessor):
         ctx = bp.ProcessContext(False, s)
         self.bp_processor().process(ctx, bp.NIL_DATA_INDEXER, self)
 
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+    def to_json(self, indent: Optional[int] = None, separators: Optional[Tuple[str, str]]=None) -> str:
+        return json.dumps(self.to_dict(), indent=indent, separators=separators)
+
 
 @dataclass
 class LandingGear(bp.Accessor):
@@ -318,6 +337,12 @@ class LandingGear(bp.Accessor):
         assert len(s) >= self.BYTES_LENGTH, bp.NotEnoughBytes()
         ctx = bp.ProcessContext(False, s)
         self.bp_processor().process(ctx, bp.NIL_DATA_INDEXER, self)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+    def to_json(self, indent: Optional[int] = None, separators: Optional[Tuple[str, str]]=None) -> str:
+        return json.dumps(self.to_dict(), indent=indent, separators=separators)
 
 
 @dataclass
@@ -375,6 +400,12 @@ class Position(bp.Accessor):
         assert len(s) >= self.BYTES_LENGTH, bp.NotEnoughBytes()
         ctx = bp.ProcessContext(False, s)
         self.bp_processor().process(ctx, bp.NIL_DATA_INDEXER, self)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+    def to_json(self, indent: Optional[int] = None, separators: Optional[Tuple[str, str]]=None) -> str:
+        return json.dumps(self.to_dict(), indent=indent, separators=separators)
 
 
 @dataclass
@@ -436,6 +467,12 @@ class Pose(bp.Accessor):
         ctx = bp.ProcessContext(False, s)
         self.bp_processor().process(ctx, bp.NIL_DATA_INDEXER, self)
 
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+    def to_json(self, indent: Optional[int] = None, separators: Optional[Tuple[str, str]]=None) -> str:
+        return json.dumps(self.to_dict(), indent=indent, separators=separators)
+
 
 @dataclass
 class Flight(bp.Accessor):
@@ -492,6 +529,12 @@ class Flight(bp.Accessor):
         assert len(s) >= self.BYTES_LENGTH, bp.NotEnoughBytes()
         ctx = bp.ProcessContext(False, s)
         self.bp_processor().process(ctx, bp.NIL_DATA_INDEXER, self)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+    def to_json(self, indent: Optional[int] = None, separators: Optional[Tuple[str, str]]=None) -> str:
+        return json.dumps(self.to_dict(), indent=indent, separators=separators)
 
 
 @dataclass
@@ -561,3 +604,9 @@ class Drone(bp.Accessor):
         assert len(s) >= self.BYTES_LENGTH, bp.NotEnoughBytes()
         ctx = bp.ProcessContext(False, s)
         self.bp_processor().process(ctx, bp.NIL_DATA_INDEXER, self)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+    def to_json(self, indent: Optional[int] = None, separators: Optional[Tuple[str, str]]=None) -> str:
+        return json.dumps(self.to_dict(), indent=indent, separators=separators)

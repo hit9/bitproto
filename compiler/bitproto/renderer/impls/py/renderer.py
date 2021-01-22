@@ -26,8 +26,9 @@ class BlockProtoDocstring(BlockBindProto[F]):
 class BlockGeneralImports(Block[F]):
     @override(Block)
     def render(self) -> None:
-        self.push("from dataclasses import dataclass, field")
-        self.push("from typing import ClassVar, Dict, List")
+        self.push("from dataclasses import dataclass, field, asdict")
+        self.push("import json")
+        self.push("from typing import Any, ClassVar, Dict, List, Optional, Tuple")
         self.push("from bitprotolib import bp")
 
 
@@ -574,6 +575,25 @@ class BlockMessageMethodDecode(BlockMessageBase):
         )
 
 
+class BlockMessageMethodToDict(BlockMessageBase):
+    @override(Block)
+    def render(self) -> None:
+        self.push(f"def to_dict(self) -> Dict[str, Any]:")
+        self.push(f"return asdict(self)", indent=self.indent + 4)
+
+
+class BlockMessageMethodToJson(BlockMessageBase):
+    @override(Block)
+    def render(self) -> None:
+        self.push(
+            f"def to_json(self, indent: Optional[int] = None, separators: Optional[Tuple[str, str]]=None) -> str:"
+        )
+        self.push(
+            f"return json.dumps(self.to_dict(), indent=indent, separators=separators)",
+            indent=self.indent + 4,
+        )
+
+
 class BlockMessage(BlockMessageBase, BlockComposition[F]):
     @override(BlockComposition)
     def blocks(self) -> List[Block[F]]:
@@ -585,6 +605,8 @@ class BlockMessage(BlockMessageBase, BlockComposition[F]):
             BlockMessageMethodGetAccessor(self.d, indent=4),
             BlockMessageMethodEncode(self.d, indent=4),
             BlockMessageMethodDecode(self.d, indent=4),
+            BlockMessageMethodToDict(self.d, indent=4),
+            BlockMessageMethodToJson(self.d, indent=4),
         ]
 
     @override(BlockComposition)
