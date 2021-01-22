@@ -115,6 +115,15 @@ class _TokenBound(Base):
 
 
 @dataclass
+class UserError(Error):
+    """User error."""
+
+
+class NoLanguageArgument(UserError):
+    """No language specific."""
+
+
+@dataclass
 class ParserError(Error, _TokenBound):
     """Some error occurred during bitproto parsing."""
 

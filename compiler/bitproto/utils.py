@@ -1,4 +1,5 @@
 import re
+import os
 import sys
 from enum import Enum, unique
 from functools import wraps
@@ -33,6 +34,8 @@ __all__ = (
     "colored",
     "pascal_case",
     "snake_case",
+    "write_stderr",
+    "fatal",
 )
 
 from typing_extensions import final  # Compat 3.7
@@ -277,6 +280,13 @@ def write_file(filepath: str, s: str) -> None:
 def write_stderr(s: str) -> None:
     """Write a line of string to stderr."""
     sys.stderr.write(s + "\n")
+
+
+def fatal(s: str = "", code: int = 1) -> None:
+    """Exit the whole program with given code and message."""
+    if s:
+        write_stderr(s)
+    os._exit(code)
 
 
 def override_docstring(string: str) -> Callable[[F], F]:

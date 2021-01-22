@@ -1,16 +1,17 @@
 """
-bitproto.command
-~~~~~~~~~~~~~~~~
+bitproto._main
+~~~~~~~~~~~~~~
 
-Command inteface.
+Entry inteface.
 """
 
 import argparse
 
 from bitproto import __description__, __version__
-from bitproto.errors import ParserError, RendererError
+from bitproto.errors import ParserError, RendererError, NoLanguageArgument
 from bitproto.linter import lint
 from bitproto.parser import parse
+from bitproto.utils import fatal
 from bitproto.renderer import render, renderer_registry
 
 EPILOG = """
@@ -72,32 +73,49 @@ def build_arg_parser() -> argparse.ArgumentParser:
 def run_bitproto() -> None:
     args_parser = build_arg_parser()
     args = args_parser.parse_args()
+    main(
+        args.filepath,
+        lang=args.language,
+        outdir=args.outdir,
+        disable_linter=args.disable_linter,
+        check=args.check,
+    )
 
-    exit_code = 0
 
+def main(
+    filepath: str,
+    lang: str = "",
+    outdir: str = "",
+    disable_linter: bool = False,
+    check: bool = False,
+) -> None:
     # Parse
     try:
-        proto = parse(args.filepath)
+        proto = parse(filepath)
     except ParserError as error:
-        args_parser.exit(1, message=error.colored())
+        fatal(error.colored())
     except IOError as error:
-        args_parser.exit(1, message="{0} => {1}".format(args.filepath, str(error)))
+        fatal(str(error))
 
-    if not args.disable_linter:
-        if lint(proto) > 0:
-            exit_code = 1
+    # Lint
+    if not disable_linter:
+        lint_warnings = lint(proto)
 
-    if args.check:  #  Checks only.
-        args_parser.exit(exit_code)
-
-    if not args.language:
-        args_parser.exit(1, message="No language specific.")
+    if check:
+        if lint_warnings > 0:
+            fatal()
+        return
 
     # Render
+    if not lang:
+        raise NoLanguageArgument()
+
     try:
-        render(proto, args.language, outdir=args.outdir)
+        render(proto, lang, outdir=outdir)
     except RendererError as error:
-        args_parser.exit(1, message=error.colored())
+        fatal(error.colored())
+    except IOError as error:
+        fatal(str(error))
 
 
 if __name__ == "__main__":
