@@ -26,9 +26,10 @@ class BlockProtoDocstring(BlockBindProto[F]):
 class BlockGeneralImports(Block[F]):
     @override(Block)
     def render(self) -> None:
-        self.push("from dataclasses import dataclass, field, asdict")
         self.push("import json")
+        self.push("from dataclasses import asdict, dataclass, field")
         self.push("from typing import Any, ClassVar, Dict, List, Optional, Tuple")
+        self.push_empty_line()
         self.push("from bitprotolib import bp")
 
 
