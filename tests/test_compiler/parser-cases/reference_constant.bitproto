@@ -1,0 +1,12 @@
+proto reference_constant
+
+
+const A = 2
+const B = A * 3
+
+message C {
+    byte[B] b = 3;
+}
+
+const D = "abcde"
+const E = D

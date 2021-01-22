@@ -19,7 +19,7 @@ def main() -> None:
 
     assert drone_new.status == drone.status
 
-    print(drone_new)
+    print(drone_new.to_json())
 
 
 if __name__ == "__main__":

@@ -1,0 +1,12 @@
+proto import_
+
+import base "shared.bitproto"
+import  "color.bitproto"
+
+const Pi = base.Pi
+
+message A {
+    base.Container container = 1;
+    base.Slice slice = 2;
+    color.Color color = 3;
+}

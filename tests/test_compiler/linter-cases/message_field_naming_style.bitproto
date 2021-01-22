@@ -1,0 +1,5 @@
+proto message_field_naming_style
+
+message Container {
+    byte[10] SomeWord = 1;
+}

@@ -1,0 +1,7 @@
+proto constants
+
+const A = 1
+const B = "B"
+const C = false
+const D = yes
+const E = no

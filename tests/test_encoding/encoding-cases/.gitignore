@@ -1,0 +1,9 @@
+*_bp.go
+*_bp.c
+*_bp.h
+*_bp.py
+*/c/main
+*/go/main
+*/go/vendor
+*.pyc
+__pycache__

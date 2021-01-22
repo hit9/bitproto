@@ -1,0 +1,19 @@
+proto shared_3
+
+import "shared_4.bitproto"
+
+enum Color : uint3 {
+    COLOR_UNKNOWN = 0
+    COLOR_RED = 1
+    COLOR_BLUE = 2
+}
+
+message Record {
+    shared_4.Timestamp t = 1
+}
+
+message B {
+    message C {
+        bool ok = 1;
+    }
+}

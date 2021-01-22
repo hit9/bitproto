@@ -1,0 +1,5 @@
+proto enum_field_naming_style
+
+enum Color : uint3 {
+    ColorRed = 1
+}

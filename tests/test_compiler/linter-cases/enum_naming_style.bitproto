@@ -1,0 +1,5 @@
+proto enum_naming_style
+
+enum someEnum : uint32 {
+    SOME_ENUM_UNKNOWN = 0
+}

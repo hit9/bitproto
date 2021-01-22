@@ -25,8 +25,9 @@ from bitproto._ast import (Alias, Array, BooleanConstant, Comment, Constant,
 from bitproto.errors import (AliasInEnumUnsupported, AliasInMessageUnsupported,
                              CalculationExpressionError,
                              ConstInEnumUnsupported, ConstInMessageUnsupported,
-                             CyclicImport, EnumInEnumUnsupported, GrammarError,
-                             ImportInEnumUnsupported,
+                             CyclicImport, DuplicatedDefinition,
+                             DuplicatedImport, EnumInEnumUnsupported,
+                             GrammarError, ImportInEnumUnsupported,
                              ImportInMessageUnsupported, InternalError,
                              InvalidArrayCap, MessageFieldInEnumUnsupported,
                              MessageInEnumUnsupported, OptionInEnumUnsupported,
@@ -36,7 +37,7 @@ from bitproto.errors import (AliasInEnumUnsupported, AliasInMessageUnsupported,
                              StatementInMessageUnsupported,
                              UnsupportedToDeclareProtoNameOutofProtoScope)
 from bitproto.lexer import Lexer
-from bitproto.utils import cast_or_raise
+from bitproto.utils import cast_or_raise, write_stderr
 
 
 class Parser:
@@ -274,6 +275,7 @@ class Parser:
         # Get filepath to import.
         importing_path = p[len(p) - 2]
         filepath = self._get_child_filepath(importing_path)
+
         # Check if this filepath already in parsing.
         if self._check_parsing_file(filepath):
             raise CyclicImport(
@@ -282,11 +284,29 @@ class Parser:
                 token=importing_path,
                 lineno=p.lineno(2),
             )
+
+        # Check if this filepath already parsed by current proto.
+        for _, proto in self.current_proto().protos(recursive=False):
+            if os.path.samefile(proto.filepath, filepath):
+                raise DuplicatedImport(
+                    filepath=self.current_filepath(), token=filepath, lineno=p.lineno(1)
+                )
+
         # Parse.
         p[0] = child = self.parse_child(filepath)
         name = child.name
         if len(p) == 5:  # Importing as `name`
             name = p[2]
+
+        # Check if import (as) name already taken.
+        if name in self.current_proto().members:
+            raise DuplicatedDefinition(
+                message="imported proto name already used",
+                token=name,
+                lineno=p.lineno(1),
+                filepath=self.current_filepath(),
+            )
+
         # Push to current scope
         self.current_scope().push_member(child, name)
 
@@ -313,14 +333,23 @@ class Parser:
         p[0] = p[1]
 
     def p_alias(self, p: P) -> None:
-        """alias : TYPE IDENTIFIER '=' type optional_semicolon"""
-        name, type = p[2], p[4]
+        """alias : TYPE IDENTIFIER '=' type optional_semicolon
+                 | TYPEDEF type IDENTIFIER optional_semicolon"""
+
+        if len(p) == 6:
+            name, type, lineno, token = p[2], p[4], p.lineno(2), p[2]
+        else:
+            name, type, lineno, token = p[3], p[2], p.lineno(3), p[3]
+            write_stderr(
+                f"syntax warning: keyword typedef deprecated, suggestion: type {name} = ..."
+            )
+
         p[0] = alias = Alias(
             name=name,
             type=type,
             filepath=self.current_filepath(),
-            lineno=p.lineno(2),
-            token=p[2],
+            lineno=lineno,
+            token=token,
             indent=self.current_indent(p),
             scope_stack=self.current_scope_stack(),
             comment_block=self.collect_comment_block(),
@@ -412,15 +441,13 @@ class Parser:
           * Otherwise, lookup from the scope stack reversively (in current proto).
         """
         names = identifier.split(".")
-        if len(names) > 1:  # Contains dots
-            proto = self.current_proto()
-            return proto.get_member(*names)
-        else:  # No dot.
-            for scope in self.scope_stack_in_current_proto()[::-1]:
-                d = scope.get_member(identifier)
-                if d is not None:
-                    return d
-            return None
+
+        for scope in self.scope_stack_in_current_proto()[::-1]:
+            # Lookup in scopes bound to current proto reversively.
+            d = scope.get_member(*names)
+            if d is not None:
+                return d
+        return None
 
     def p_constant_reference(self, p: P) -> None:
         """constant_reference : dotted_identifier"""
@@ -590,7 +617,7 @@ class Parser:
         )
 
     def p_enum_field(self, p: P) -> None:
-        """enum_field : IDENTIFIER '=' INT_LITERAL optional_semicolon"""
+        """enum_field : IDENTIFIER '=' integer_literal optional_semicolon"""
         name = p[1]
         value = p[3]
         field = EnumField(

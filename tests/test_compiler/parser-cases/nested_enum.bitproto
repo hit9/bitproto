@@ -1,0 +1,17 @@
+proto nested_enum
+
+message A {
+    message B {
+        enum C : uint2 {
+            C_UNKNOWN = 0;
+            C_ON = 1;
+            C_OFF = 2;
+        }
+        C c = 1;
+    }
+    B.C c = 1;
+}
+
+message D {
+    A.B.C C = 1;
+}

@@ -1,0 +1,29 @@
+proto extensible
+
+enum C' : uint3 {
+    C_UNKNOWN = 1
+    C_YES = 2
+    C_NO = 3
+}
+
+enum F : uint3 {
+    F_UNKNOWN = 1
+    F_YES = 2
+    F_NO = 3
+}
+
+message A' {
+    bool a = 1;
+}
+
+message B {
+    bool b = 1;
+}
+
+message D {
+    C c = 1;
+}
+
+message E {
+    A a = 1;
+}

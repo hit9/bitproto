@@ -15,13 +15,12 @@ Errors.
       |    |- LintWarning
 """
 
-import sys
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, ClassVar, Optional
 from typing import Type as T
 from typing import TypeVar
 
-from bitproto.utils import Color, colored
+from bitproto.utils import Color, colored, overridable, override, write_stderr
 
 if TYPE_CHECKING:
     from bitproto._ast import Node
@@ -37,11 +36,13 @@ class Base:
         if not self.description:
             self.description = self.format_default_description()
 
+    @overridable
     def format_default_description(self) -> str:
         return self.__doc__ or ""
 
+    @overridable
     def _message_prefix(self) -> str:
-        return "[ error ]"
+        pass
 
     def __str__(self) -> str:
         description = self.description
@@ -59,13 +60,18 @@ class Error(Base, Exception):
     def colored(self) -> str:
         return colored(super(Error, self).__str__(), Color.RED)
 
+    @override(Base)
+    def _message_prefix(self) -> str:
+        return "error: "
+
 
 @dataclass
 class Warning(Base):
     """Warning continues processing and leaves a message."""
 
+    @override(Base)
     def _message_prefix(self) -> str:
-        return "[ warning ]"
+        return "warning: "
 
     def colored(self) -> str:
         return colored(super(Warning, self).__str__(), Color.YELLOW)
@@ -75,7 +81,7 @@ def warning(w: Optional["Warning"] = None) -> None:
     """Logs a warning to stderr."""
     if not w:
         return
-    sys.stderr.write(w.colored() + "\n")
+    write_stderr(w.colored())
 
 
 @dataclass
@@ -90,6 +96,7 @@ class _TokenBound(Base):
     token: str = ""
     lineno: int = 0
 
+    @override(Base)
     def format_default_description(self) -> str:
         message = self.message or self.__doc__
         if self.filepath:
@@ -156,6 +163,11 @@ class InvalidArrayCap(GrammarError):
 @dataclass
 class DuplicatedDefinition(GrammarError):
     """Duplicated definition."""
+
+
+@dataclass
+class DuplicatedImport(GrammarError):
+    """Duplicated import."""
 
 
 @dataclass
@@ -304,6 +316,7 @@ class LintWarning(_TokenBound, Warning):
 
     suggestion: Optional[str] = None
 
+    @override(Base)
     def format_default_description(self) -> str:
         description: str = super(LintWarning, self).format_default_description()
         if self.suggestion:

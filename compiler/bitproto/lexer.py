@@ -41,6 +41,7 @@ class Lexer:
         "const",
         "enum",
         "message",
+        "typedef",  # Reserved for deprecated warning.
     )
     keywords_tokens = tuple(map(lambda k: k.upper(), keywords))
 

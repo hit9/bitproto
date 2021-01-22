@@ -265,9 +265,24 @@ class BlockBindDefinition(Block[F], BlockBindDefinitionBase[D]):
         """
         self.push_docstring(*self.d.comment_block, indent=indent)
 
+    @final
+    def push_typing_hint_inline_comment(self) -> None:
+        """Push an inline comment to hint the original defined bitproto type."""
+        comment = self.formatter.format_comment(f"{self.nbits()}bit")
+        self.push_string(comment)
+
+    @overridable
+    def nbits(self) -> int:
+        """Returns the number of bits this definition occupy."""
+        return 0
+
 
 class BlockBindAlias(BlockBindDefinition[F, Alias]):
     """Implements BlockBindDefinition for Alias."""
+
+    @override(BlockBindDefinition)
+    def nbits(self) -> int:
+        return self.d.nbits()
 
     @cached_property
     def alias_name(self) -> str:
@@ -302,6 +317,10 @@ class BlockBindConstant(BlockBindDefinition[F, Constant]):
 class BlockBindEnum(BlockBindDefinition[F, Enum]):
     """Implements BlockBindDefinition for Enum."""
 
+    @override(BlockBindDefinition)
+    def nbits(self) -> int:
+        return self.d.nbits()
+
     @cached_property
     def enum_name(self) -> str:
         """Returns the formatted name of this enum."""
@@ -315,6 +334,10 @@ class BlockBindEnum(BlockBindDefinition[F, Enum]):
 
 class BlockBindEnumField(BlockBindDefinition[F, EnumField]):
     """Implements the BlockBindDefinition for EnumField."""
+
+    @override(BlockBindDefinition)
+    def nbits(self) -> int:
+        return self.d.enum.nbits()
 
     @cached_property
     def enum_field_name(self) -> str:
@@ -334,6 +357,10 @@ class BlockBindEnumField(BlockBindDefinition[F, EnumField]):
 
 class BlockBindMessage(BlockBindDefinition[F, Message]):
     """Implements the BlockBindDefinition for Message."""
+
+    @override(BlockBindDefinition)
+    def nbits(self) -> int:
+        return self.d.nbits()
 
     @cached_property
     def message_name(self) -> str:
@@ -359,6 +386,10 @@ class BlockBindMessage(BlockBindDefinition[F, Message]):
 
 class BlockBindMessageField(BlockBindDefinition[F, MessageField]):
     """Implements the BlockBindDefinition for MessageField."""
+
+    @override(BlockBindDefinition)
+    def nbits(self) -> int:
+        return self.d.type.nbits()
 
     @cached_property
     def message_field_name(self) -> str:

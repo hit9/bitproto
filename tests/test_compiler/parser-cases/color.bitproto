@@ -1,0 +1,9 @@
+proto color
+
+enum Color : uint3 {
+    COLOR_UNKNOWN = 0
+    COLOR_RED = 1
+    COLOR_BLUE = 2
+    COLOR_GRREN = 3
+    COLOR_YELLOW = 4
+}

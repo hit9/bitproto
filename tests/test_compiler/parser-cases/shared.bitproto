@@ -1,0 +1,9 @@
+proto shared
+
+const Pi = 314
+
+type Slice = byte[10]
+
+message Container {
+    Slice slice = 1;
+}

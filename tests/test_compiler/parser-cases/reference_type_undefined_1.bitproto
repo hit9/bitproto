@@ -1,0 +1,5 @@
+proto reference_type_undefined_1
+
+message A {
+    B b = 1;
+}

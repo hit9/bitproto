@@ -1,0 +1,5 @@
+proto reference_not_type_1
+
+const A = 3 + 2
+
+type B = A

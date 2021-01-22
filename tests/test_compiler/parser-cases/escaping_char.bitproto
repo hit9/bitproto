@@ -1,0 +1,9 @@
+proto escaping_char
+
+const A = "simple char \t"
+
+const B = "simple char \"V\""
+
+const C = "simple char \\"
+
+const D = "simple char ''\'"

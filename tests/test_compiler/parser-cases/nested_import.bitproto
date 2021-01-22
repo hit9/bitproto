@@ -1,0 +1,11 @@
+proto nested_import;
+
+import "shared_3.bitproto"
+import "shared_4.bitproto"
+
+message A {
+    shared_3.Color color = 1;
+    shared_3.Record record = 2;
+    shared_4.Timestamp created_at = 3;
+    shared_3.B.C c = 4;
+}

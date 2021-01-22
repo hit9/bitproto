@@ -1,0 +1,3 @@
+proto shared_1
+
+import "shared_2.bitproto"

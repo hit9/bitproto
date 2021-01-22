@@ -1,0 +1,9 @@
+proto message_size_constraint
+
+type Slice = byte[10000]
+
+message A {
+    Slice[1024] a = 1;
+    Slice[1024] b = 2;
+    Slice[1024] c = 2;
+}

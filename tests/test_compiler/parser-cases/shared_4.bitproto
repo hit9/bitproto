@@ -1,0 +1,3 @@
+proto shared_4
+
+type Timestamp = int64

@@ -1,0 +1,24 @@
+proto reference_message
+
+message A {
+    message B {
+        message C {
+            bool is_ok = 1;
+        }
+        C c = 1;
+    }
+    B b = 1;
+    B.C c = 2;
+}
+
+message D {
+    A a = 1;
+    A.B b = 2;
+    A.B.C c = 3;
+}
+
+message E {
+    message F {
+        A.B.C c = 1;
+    }
+}

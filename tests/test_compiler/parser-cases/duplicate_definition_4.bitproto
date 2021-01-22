@@ -1,0 +1,4 @@
+proto duplicate_definition_4
+
+import "shared_3.bitproto"
+import "shared_3.bitproto"

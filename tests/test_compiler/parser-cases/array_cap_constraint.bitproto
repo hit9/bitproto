@@ -1,0 +1,3 @@
+proto array_cap_constraint
+
+type Slice = byte[100000]

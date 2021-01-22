@@ -82,6 +82,7 @@ class BlockAliasDef(BlockBindAlias[F]):
     def render(self) -> None:
         self.push_definition_comments()
         self.push(f"type {self.alias_name} {self.aliased_type}")
+        self.push_typing_hint_inline_comment()
 
 
 class BlockAlias(BlockBindAlias[F], BlockComposition[F]):
@@ -155,6 +156,7 @@ class BlockEnumType(BlockBindEnum[F]):
     def render(self) -> None:
         self.push_definition_comments()
         self.push(f"type {self.enum_name} {self.enum_uint_type}")
+        self.push_typing_hint_inline_comment()
 
 
 class BlockEnumMethodStringCaseItem(BlockBindEnumField[F]):
@@ -241,6 +243,7 @@ class BlockMessageField(BlockBindMessageField[F]):
         self.push(
             f'{self.message_field_name} {self.message_field_type} `json:"{snake_case_name}"`'
         )
+        self.push_typing_hint_inline_comment()
 
 
 class BlockMessageFieldList(BlockBindMessage[F], BlockComposition[F]):

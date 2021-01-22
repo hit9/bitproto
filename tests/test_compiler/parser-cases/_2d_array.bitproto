@@ -1,0 +1,8 @@
+proto _2d_array
+
+type Slice = byte[4]
+type Matrix = Slice[4]
+
+message A {
+    Matrix matrix = 1;
+}

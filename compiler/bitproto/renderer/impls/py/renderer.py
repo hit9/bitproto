@@ -26,8 +26,10 @@ class BlockProtoDocstring(BlockBindProto[F]):
 class BlockGeneralImports(Block[F]):
     @override(Block)
     def render(self) -> None:
+        self.push("import json")
         self.push("from dataclasses import dataclass, field")
         self.push("from typing import ClassVar, Dict, List")
+        self.push_empty_line()
         self.push("from bitprotolib import bp")
 
 
@@ -88,6 +90,7 @@ class BlockAliasDef(BlockBindAlias[F]):
     def render(self) -> None:
         self.push_definition_comments()
         self.push(f"{self.alias_name} = {self.aliased_type}")
+        self.push_typing_hint_inline_comment()
 
 
 class BlockAlias(BlockBindAlias[F], BlockComposition):
@@ -144,6 +147,7 @@ class BlockEnumFieldListWrapper(BlockBindEnum[F], BlockWrapper[F]):
     def render_enum_type(self) -> None:
         self.push_definition_comments()
         self.push(f"{self.enum_name} = int")
+        self.push_typing_hint_inline_comment()
 
 
 class BlockEnumValueToNameMapItem(BlockBindEnumField[F]):
@@ -210,6 +214,7 @@ class BlockMessageField(BlockBindMessageField[F]):
         self.push(
             f"{self.message_field_name}: {self.message_field_type} = {self.message_field_default_value}"
         )
+        self.push_typing_hint_inline_comment()
 
 
 class BlockMessageBase(BlockBindMessage[F]):
@@ -262,7 +267,7 @@ class BlockMessageClass(BlockMessageBase, BlockWrapper[F]):
     @override(BlockWrapper)
     def before(self) -> None:
         self.push("@dataclass")
-        self.push(f"class {self.message_name}(bp.Accessor):")
+        self.push(f"class {self.message_name}(bp.MessageBase):")
         self.push_definition_docstring(indent=4)
 
 

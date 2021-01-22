@@ -1,0 +1,7 @@
+proto empty_message
+
+message Empty {}
+
+message A {
+    Empty a = 1;
+}

@@ -273,6 +273,11 @@ def write_file(filepath: str, s: str) -> None:
         f.write(s)
 
 
+def write_stderr(s: str) -> None:
+    """Write a line of string to stderr."""
+    sys.stderr.write(s + "\n")
+
+
 @unique
 class Color(Enum):
     BLACK: int = 0
@@ -307,10 +312,15 @@ def pascal_case(word: str) -> str:
         "SomeWord"
     """
     items: List[str] = []
-    for part in word.split("_"):
+    parts = word.split("_")
+    contains_underscore = len(parts) > 1
+    for part in parts:
         if part:
-            first_char, remain_part = part[0], part[1:]
-            items.append(first_char.upper() + remain_part)
+            if contains_underscore:
+                items.append(part.title())
+            else:
+                first_char, remain_part = part[0], part[1:]
+                items.append(first_char.upper() + remain_part)
     return "".join(items)
 
 

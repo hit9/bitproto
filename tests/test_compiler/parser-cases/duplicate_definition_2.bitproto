@@ -1,0 +1,4 @@
+proto duplicate_definition_2
+
+const A = 1
+message A {}
