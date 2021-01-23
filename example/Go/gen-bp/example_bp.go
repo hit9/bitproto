@@ -10,6 +10,11 @@ import (
 	bp "github.com/hit9/bitproto/lib/go"
 )
 
+// Avoid possible golang import not used error
+var formatInt = strconv.FormatInt
+var jsonMarshal = json.Marshal
+var _ = bp.Useless
+
 type Timestamp int64 // 64bit
 
 func (m Timestamp) BpProcessor() bp.Processor {
@@ -50,7 +55,7 @@ func (v DroneStatus) String() string {
 	case 4:
 		return "DRONE_STATUS_FLYING"
 	default:
-		return "DroneStatus(" + strconv.FormatInt(int64(v), 10) + ")"
+		return "DroneStatus(" + formatInt(int64(v), 10) + ")"
 	}
 }
 
@@ -76,7 +81,7 @@ func (v PropellerStatus) String() string {
 	case 2:
 		return "PROPELLER_STATUS_ROTATING"
 	default:
-		return "PropellerStatus(" + strconv.FormatInt(int64(v), 10) + ")"
+		return "PropellerStatus(" + formatInt(int64(v), 10) + ")"
 	}
 }
 
@@ -102,7 +107,7 @@ func (v RotatingDirection) String() string {
 	case 2:
 		return "ROTATING_DIRECTION_ANTI_CLOCK_WISE"
 	default:
-		return "RotatingDirection(" + strconv.FormatInt(int64(v), 10) + ")"
+		return "RotatingDirection(" + formatInt(int64(v), 10) + ")"
 	}
 }
 
@@ -128,7 +133,7 @@ func (v PowerStatus) String() string {
 	case 2:
 		return "POWER_STATUS_ON"
 	default:
-		return "PowerStatus(" + strconv.FormatInt(int64(v), 10) + ")"
+		return "PowerStatus(" + formatInt(int64(v), 10) + ")"
 	}
 }
 
@@ -154,7 +159,7 @@ func (v LandingGearStatus) String() string {
 	case 2:
 		return "LANDING_GEAR_STATUS_FOLDED"
 	default:
-		return "LandingGearStatus(" + strconv.FormatInt(int64(v), 10) + ")"
+		return "LandingGearStatus(" + formatInt(int64(v), 10) + ")"
 	}
 }
 
@@ -171,7 +176,7 @@ func (m *Propeller) Size() uint32 { return 2 }
 
 // Returns string representation for struct Propeller.
 func (m *Propeller) String() string {
-	v, _ := json.Marshal(m)
+	v, _ := jsonMarshal(m)
 	return string(v)
 }
 
@@ -242,7 +247,7 @@ func (m *Power) Size() uint32 { return 2 }
 
 // Returns string representation for struct Power.
 func (m *Power) String() string {
-	v, _ := json.Marshal(m)
+	v, _ := jsonMarshal(m)
 	return string(v)
 }
 
@@ -314,7 +319,7 @@ func (m *Network) Size() uint32 { return 9 }
 
 // Returns string representation for struct Network.
 func (m *Network) String() string {
-	v, _ := json.Marshal(m)
+	v, _ := jsonMarshal(m)
 	return string(v)
 }
 
@@ -378,7 +383,7 @@ func (m *LandingGear) Size() uint32 { return 1 }
 
 // Returns string representation for struct LandingGear.
 func (m *LandingGear) String() string {
-	v, _ := json.Marshal(m)
+	v, _ := jsonMarshal(m)
 	return string(v)
 }
 
@@ -439,7 +444,7 @@ func (m *Position) Size() uint32 { return 12 }
 
 // Returns string representation for struct Position.
 func (m *Position) String() string {
-	v, _ := json.Marshal(m)
+	v, _ := jsonMarshal(m)
 	return string(v)
 }
 
@@ -511,7 +516,7 @@ func (m *Pose) Size() uint32 { return 12 }
 
 // Returns string representation for struct Pose.
 func (m *Pose) String() string {
-	v, _ := json.Marshal(m)
+	v, _ := jsonMarshal(m)
 	return string(v)
 }
 
@@ -584,7 +589,7 @@ func (m *Flight) Size() uint32 { return 36 }
 
 // Returns string representation for struct Flight.
 func (m *Flight) String() string {
-	v, _ := json.Marshal(m)
+	v, _ := jsonMarshal(m)
 	return string(v)
 }
 
@@ -657,7 +662,7 @@ func (m *Drone) Size() uint32 { return 65 }
 
 // Returns string representation for struct Drone.
 func (m *Drone) String() string {
-	v, _ := json.Marshal(m)
+	v, _ := jsonMarshal(m)
 	return string(v)
 }
 

@@ -65,6 +65,13 @@ class BlockGeneralImports(Block):
         self.push(f'bp "{GO_LIB_IMPORT_PATH}"', indent=1)
         self.push(f")")
 
+        self.push_empty_line()
+
+        self.push_comment("Avoid possible golang import not used error")
+        self.push(f"var formatInt = strconv.FormatInt")
+        self.push(f"var jsonMarshal = json.Marshal")
+        self.push(f"var _ = bp.Useless")
+
 
 class BlockImportChildProto(BlockBindProto[F]):
     @override(Block)
@@ -196,7 +203,7 @@ class BlockEnumMethodStringCaseDefault(BlockBindEnum[F]):
     def render(self) -> None:
         self.push("default:")
         self.push(
-            f'return "{self.enum_name}(" + strconv.FormatInt(int64(v), 10) + ")"',
+            f'return "{self.enum_name}(" + formatInt(int64(v), 10) + ")"',
             indent=self.indent + 1,
         )
 
@@ -633,7 +640,7 @@ class BlockMessageMethodString(BlockBindMessage[F]):
             f"Returns string representation for struct {self.message_name}."
         )
         self.push(f"func (m *{self.message_name}) String() string {{")
-        self.push(f"v, _ := json.Marshal(m)", indent=1)
+        self.push(f"v, _ := jsonMarshal(m)", indent=1)
         self.push(f"return string(v)", indent=1)
         self.push("}")
 
