@@ -35,12 +35,22 @@ jobs:
       with:
         go-version: ${{ matrix.go }}
 
-    - name: Install requirements
+    - name: Install bitproto compiler
       run: |
-        pip install compiler/
+        pip install compiler
+
+    - name: Install bitproto python lib
+      run: |
+        pip install lib/py
+
+    - name: Install dev requirements
+      run: |
         pip install -r compiler/requirements_dev.txt
-        pip install lib/py/
         pip install -r lib/py/requirements_dev.txt
+
+    - name: Install tests requirements
+      run: |
+        pip install -r tests/requirements_tests.txt
 
     - name: Run lints
       run: |
