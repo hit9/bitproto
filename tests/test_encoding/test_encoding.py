@@ -37,7 +37,7 @@ class _TestCase:
         Returns output.
         """
         sub_cmd = self.cmd_run_fmt.format(lang=lang)
-        cmd = f"make -s  --no-print-directory{sub_cmd}"
+        cmd = f"make -s  --no-print-directory {sub_cmd}"
         return subprocess.check_output(cmd, shell=True)
 
     def execute_cmd_clean(self) -> None:
