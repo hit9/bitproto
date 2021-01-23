@@ -1,0 +1,9 @@
+proto consts
+
+const A = 1
+const B = 2 * 3
+const C = "string"
+const D = true
+const E = false
+const F = yes
+const G = no

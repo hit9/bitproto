@@ -85,3 +85,7 @@ def test_encoding_extensible() -> None:
 
 def test_encoding_empty() -> None:
     _TestCase("empty").run()
+
+
+def test_encoding_consts() -> None:
+    _TestCase("consts").run()
