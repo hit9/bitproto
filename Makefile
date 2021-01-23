@@ -6,5 +6,5 @@ lint:
 	make -C lib/go lint
 	make -C lib/py lint
 
-test: lint
+test:
 	pytest tests -v

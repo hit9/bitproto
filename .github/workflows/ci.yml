@@ -17,7 +17,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-18.04]
-        python: [3.7, 3.8]
+        python: [3.7, 3.8, 3.9]
         go: [1.15, 1.14]
 
     runs-on: ${{ matrix.os  }}
@@ -41,6 +41,11 @@ jobs:
         pip install -r compiler/requirements_dev.txt
         pip install lib/py/
         pip install -r lib/py/requirements_dev.txt
+
+    - name: Run lints
+      run: |
+        make lint
+      if: "matrix.python == '3.9'"
 
     - name: Run tests
       run: |
