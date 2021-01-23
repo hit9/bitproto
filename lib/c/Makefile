@@ -1,5 +1,5 @@
 lint:
-	clang-format --dry-run bitproto.*
+	clang-format -n bitproto.*
 
 reformat:
 	clang-format -i bitproto.*
