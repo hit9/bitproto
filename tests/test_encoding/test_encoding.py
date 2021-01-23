@@ -89,3 +89,7 @@ def test_encoding_empty() -> None:
 
 def test_encoding_consts() -> None:
     _TestCase("consts").run()
+
+
+def test_encoding_nested() -> None:
+    _TestCase("nested").run()
