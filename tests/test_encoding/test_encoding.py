@@ -81,3 +81,7 @@ def test_encoding_drone_json() -> None:
 
 def test_encoding_extensible() -> None:
     _TestCase("extensible").run()
+
+
+def test_encoding_empty() -> None:
+    _TestCase("empty").run()
