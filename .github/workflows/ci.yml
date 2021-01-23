@@ -37,11 +37,11 @@ jobs:
 
     - name: Install bitproto compiler
       run: |
-        pip install compiler
+        pip install -e ./compiler
 
     - name: Install bitproto python lib
       run: |
-        pip install lib/py
+        pip install -e ./lib/py
 
     - name: Install dev requirements
       run: |
