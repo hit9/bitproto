@@ -1,0 +1,56 @@
+proto nested
+
+message A {
+    bool a = 1;
+}
+
+message B {
+    message A {
+        message B {
+            message C {
+                message D {
+                    bool ok = 1;
+                }
+            }
+        }
+        bool b = 1;
+    }
+
+    A a = 1;  // Local A wins.
+    A.B.C.D d = 2;  // Local D
+}
+
+message C {
+    message A {
+        message B {
+            message C {
+                message D {
+                    B.A.B.C.D d = 1;
+                    uint3 f = 2;
+                }
+            }
+        }
+
+        B.C.D d = 2;
+    }
+    A a = 1;
+    A.B.C.D d = 2;
+}
+
+message D {
+    enum A : uint3 {
+        A_UNKNOWN = 0;
+        A_OK = 1;
+    }
+
+    message B {
+        message C {
+            message D {
+                uint3 g = 1;
+            }
+        }
+    }
+
+    B.C.D d = 1;
+    A a = 2;
+}
