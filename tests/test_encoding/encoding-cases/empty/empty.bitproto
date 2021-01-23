@@ -1,0 +1,16 @@
+proto empty
+
+message Empty {}
+
+message A {
+    Empty empty = 1;
+}
+
+message B {
+    Empty empty = 1;
+    bool ok = 2;
+}
+
+message C' {
+    Empty empty = 1
+}

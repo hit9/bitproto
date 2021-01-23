@@ -9,6 +9,9 @@
 //	* No dynamic function construction.
 package bitproto
 
+// Exported for generated go files to reference to avoid bp imported but not used error.
+var Useless = false
+
 // Flag
 type Flag = int
 
