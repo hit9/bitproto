@@ -1,5 +1,6 @@
+CLANG_FORMAT?=clang-format
 lint:
-	clang-format -n bitproto.*
+	$(CLANG_FORMAT) -n bitproto.*
 
 reformat:
-	clang-format -i bitproto.*
+	$(CLANG_FORMAT) -i bitproto.*
