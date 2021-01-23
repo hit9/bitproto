@@ -7,4 +7,4 @@ lint:
 	make -C lib/py lint
 
 test:
-	pytest tests -v
+	pytest tests -v -s -x

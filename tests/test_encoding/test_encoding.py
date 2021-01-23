@@ -49,7 +49,9 @@ class _TestCase:
         Raises AssertionError if not.
         """
         for out in outputs:
-            assert out.strip() == outputs[0].strip()
+            if out.strip() != outputs[0].strip():
+                print(out, outputs[0])
+                raise AssertionError()
 
     def run(self) -> None:
         """Run this case, returns the """
