@@ -16,7 +16,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-16.04, ubuntu-18.04]
+        os: [ubuntu-18.04]
         python: [3.7, 3.8]
         go: [1.15, 1.14]
 
@@ -38,5 +38,10 @@ jobs:
     - name: Install requirements
       run: |
         pip install compiler/
-        pip install -e compiler/requirements_dev.txt
+        pip install -r compiler/requirements_dev.txt
         pip install lib/py/
+        pip install -r lib/py/requirements_dev.txt
+
+    - name: Run tests
+      run: |
+        make test
