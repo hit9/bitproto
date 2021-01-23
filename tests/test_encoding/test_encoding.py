@@ -41,7 +41,7 @@ class _TestCase:
         return subprocess.check_output(cmd, shell=True)
 
     def execute_cmd_clean(self) -> None:
-        cmd = f"make {self.cmd_clean}"
+        cmd = f"make -s  --no-print-directory {self.cmd_clean}"
         subprocess.check_call(cmd, shell=True)
 
     def compare_outputs(self, outputs: List[bytes]) -> None:
@@ -49,9 +49,7 @@ class _TestCase:
         Raises AssertionError if not.
         """
         for out in outputs:
-            if out.strip() != outputs[0].strip():
-                print(out, outputs[0])
-                raise AssertionError()
+            assert out.strip() == outputs[0].strip()
 
     def run(self) -> None:
         """Run this case, returns the """
