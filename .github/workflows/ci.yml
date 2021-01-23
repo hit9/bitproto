@@ -27,14 +27,12 @@ jobs:
       with:
         python-version: ${{ matrix.python }}
 
-    steps:
     - uses: actions/checkout@v2
     - name: Set up Golang ${{ matrix.go }}
       uses: actions/setup-go@v2
       with:
         go-version: ${{ matrix.go }}
 
-    steps:
     - name: Install requirements
       run: |
         pip install compiler/
