@@ -1,3 +1,4 @@
+import json
 import os
 import subprocess
 from dataclasses import dataclass, field
@@ -22,6 +23,7 @@ class _TestCase:
 
     # Whether to compare output of command run.
     compare_output: bool = True
+    compare_output_as_json: bool = False
 
     def __post_init__(self) -> None:
         if not self.langs:
@@ -37,11 +39,11 @@ class _TestCase:
         Returns output.
         """
         sub_cmd = self.cmd_run_fmt.format(lang=lang)
-        cmd = f"make {sub_cmd}"
+        cmd = f"make -s  --no-print-directory {sub_cmd}"
         return subprocess.check_output(cmd, shell=True)
 
     def execute_cmd_clean(self) -> None:
-        cmd = f"make {self.cmd_clean}"
+        cmd = f"make -s  --no-print-directory {self.cmd_clean}"
         subprocess.check_call(cmd, shell=True)
 
     def compare_outputs(self, outputs: List[bytes]) -> None:
@@ -49,7 +51,10 @@ class _TestCase:
         Raises AssertionError if not.
         """
         for out in outputs:
-            assert out.strip() == outputs[0].strip()
+            if not self.compare_output_as_json:
+                assert out.strip() == outputs[0].strip()
+            else:
+                assert json.loads(out.strip()) == json.loads(outputs[0].strip())
 
     def run(self) -> None:
         """Run this case, returns the """
@@ -76,7 +81,7 @@ def test_encoding_drone() -> None:
 
 
 def test_encoding_drone_json() -> None:
-    _TestCase("drone_json").run()
+    _TestCase("drone_json", compare_output_as_json=True).run()
 
 
 def test_encoding_extensible() -> None:
