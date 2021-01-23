@@ -52,9 +52,18 @@ jobs:
       run: |
         pip install -r tests/requirements_tests.txt
 
+
+    - name: Install clang-format 11.0
+      run: |
+        wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+        apt-add-repository "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-11 main"
+        apt update
+        apt-get install clang-format-11
+      if: "matrix.python == '3.9'"
+
     - name: Run lints
       run: |
-        make lint
+        make lint CLANG_FORMAT=clang-format-11
       if: "matrix.python == '3.9'"
 
     - name: Run tests
