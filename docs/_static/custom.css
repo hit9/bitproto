@@ -1,0 +1,79 @@
+@import url("https://fonts.googleapis.com/css?family=Crimson+Text");
+
+body {
+  font-family: 'Garamond', 'Georgia', serif;
+  color: black;
+}
+
+div.document {
+  width: 960px;
+}
+
+div.body {
+  color: black;
+}
+
+a,
+a.reference
+{
+    color: #fc5185;
+    border-bottom: 1px dotted #fc5185;
+    text-decoration: none;
+}
+
+a:hover,
+a.reference:hover
+{
+    color: #a00;
+    border-bottom: 1px solid #a00;
+    text-decoration: none;
+}
+
+div.footer a {
+  border-bottom: 1px dotted #888;
+  text-decoration: none;
+}
+
+div.footer a:hover {
+  border-bottom: 1px solid #888;
+  text-decoration: none;
+}
+
+div.body h1,
+div.body h2,
+div.body h3,
+div.body h4,
+div.body h5,
+div.body h6,
+div.admonition p.admonition-title,
+div.sphinxsidebar input {
+  font-family: "Crimson Text", "Garamond", "Georgia", serif;
+  color: black;
+}
+
+code {
+  font-family: 'Consolas', 'Menlo', serif;
+  padding: 1px 2px;
+  margin: 0 3px;
+}
+
+p code {
+  color: #364f6b;
+  font-weight: bold;
+  background-color: #fff;
+}
+
+p code:hover {
+  background-color: #ecf0f3;
+}
+
+pre {
+  padding: 20px 25px;
+  margin: 36px auto;
+}
+
+pre,
+pre code {
+  background: #f5f5f5;
+  line-height: 1.4;
+}
