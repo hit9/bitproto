@@ -10,3 +10,4 @@ dist
 *.gch
 *.out
 .mypy_cache
+spam
