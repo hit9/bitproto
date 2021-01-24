@@ -42,8 +42,7 @@ In the bitproto file above:
 
 * ``proto`` declares the name of this bitproto, it's required for every bitproto.
 * ``Color`` is an enum that occupies 3 bits (meaning its value ranges up to 7).
-* ``Timestamp`` is a custom type aliasing to builtin type ``int64``,
-  think the keyword ``typedef`` in C.
+* ``Timestamp`` is a custom type aliasing to builtin type ``int64``, think the keyword ``typedef`` in C.
 * ``Pen`` is a message that contains 2 fields. A message field consists of a type on the left, a
   following name and a unique field number on the right.
 

@@ -91,26 +91,22 @@ It's recommended to use bitproto over protobuf when:
 * Wants bit-level message fields.
 * Wants to know clearly how many bytes the encoded data will occupy.
 
+
 Content list
 ------------
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 1
 
     quickstart
+    c-guide
+    go-guide
+    python-guide
     compiler
     language
     style
     extensibility
+    options
     changelog
     license
 
-Language Guides
----------------
-
-.. toctree::
-    :maxdepth: 1
-
-    c-guide
-    go-guide
-    python-guide

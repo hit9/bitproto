@@ -51,6 +51,8 @@ class BitprotoStyle(Style):
     background_color = "#f5f5f5"
     styles = {
         Comment: "italic #999999",
+        Comment.Preproc: "noitalic #333333",
+        Comment.PreprocFile: "noitalic #333333",
         Keyword: "bold",
         Keyword.Namespace: "bold #364f6b",
         Keyword.Declaration: "bold #364f6b",
