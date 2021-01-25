@@ -16,8 +16,8 @@ source_suffix = ".rst"
 html_theme_options = {
     "logo": "bitproto-logo.png",
     "logo_name": False,
-    # "github_user": "hit9",
-    # "github_repo": "bitproto",
+    "github_user": "hit9",
+    "github_repo": "bitproto",
     "github_banner": True,
     "fixed_sidebar": True,
     "extra_nav_links": {

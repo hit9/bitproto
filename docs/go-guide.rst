@@ -112,11 +112,11 @@ Now, we create a file named  `main.go` and put the following code in it:
 Notes to replace the import path of the generated `pen_bp.go` to yours.
 
 In the code above, we firstly creates a ``p`` of type ``Pen`` with data initilization,
-then call a method ``p.Encode`` to encode ``p`` and return the encoded buffer ``s``, which
+then call a method ``p.Encode()`` to encode ``p`` and return the encoded buffer ``s``, which
 is a slice of bytes.
 
 In the decoding part, we constructs another ``p1`` instance of type ``Pen`` with zero initilization,
-then call a method ``p1.Decode`` to decode bytes from buffer ``s`` into ``p1``.
+then call a method ``p1.Decode()`` to decode bytes from buffer ``s`` into ``p1``.
 
 The compiler also generates json tags on the generated struct's fields. And generates a method ``String()``
 to return the json format of the structure.
@@ -125,7 +125,7 @@ Let's run it:
 
 .. sourcecode:: bash
 
-   go run main.go
+   $ go run main.go
    {"color":1,"produced_at":1611515729966}
 
 The encoder and decoder functions copy bits between the structure's memory and buffer ``s`` byte-to-byte.
