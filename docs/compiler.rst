@@ -1,7 +1,7 @@
 .. _the-compiler:
 
-The compiler
-============
+Compiler
+=========
 
 The bitproto compiler generates language-specific code, which provides
 the encode and decode api functions.
@@ -25,7 +25,7 @@ This will install a command named ``bitproto`` to your system, you can check it'
    $ bitproto -v
    bitproto 0.4.0
 
-If you're new to Python, or want to skip a Python installation,
+If you're new to Python, or wish to skip a Python installation,
 you can download the compiler from `this download link <https://github.com/hit9/bitproto/releases>`_
 directly, there provides the prebuilt one-file executables for Mac OS, Windows and Linux,
 which works without having to install a Python3.7+.
