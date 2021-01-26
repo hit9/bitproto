@@ -16,83 +16,6 @@ struct BpJsonFormatContext BpJsonFormatContext(char *s) {
     return (struct BpJsonFormatContext){0, s};
 }
 
-// BpBool returns a bool BpType.
-struct BpType BpBool() {
-    return (struct BpType){BP_TYPE_BOOL, 1, sizeof(bool), NULL, NULL};
-}
-
-// BpInt returns a int BpType for given nbits.
-struct BpType BpInt(size_t nbits) {
-    return (struct BpType){BP_TYPE_INT, nbits, BpIntSizeFromNbits(nbits), NULL,
-                           NULL};
-}
-
-// BpUint returns a uint BpType for given nbits.
-struct BpType BpUint(size_t nbits) {
-    return (struct BpType){BP_TYPE_UINT, nbits, BpUintSizeFromNbits(nbits),
-                           NULL, NULL};
-}
-
-// BpByte returns a byte BpType for given nbits.
-struct BpType BpByte() {
-    return (struct BpType){BP_TYPE_BYTE, 8, sizeof(unsigned char), NULL, NULL};
-}
-
-// BpMessage returns a message BpType.
-struct BpType BpMessage(size_t nbits, size_t size, BpProcessor processor,
-                        BpJsonFormatter formatter) {
-    return (struct BpType){BP_TYPE_MESSAGE, nbits, size, processor, formatter};
-}
-
-// BpEnum returns an enum BpType.
-struct BpType BpEnum(size_t nbits, size_t size, BpProcessor processor,
-                     BpJsonFormatter formatter) {
-    return (struct BpType){BP_TYPE_ENUM, nbits, size, processor, formatter};
-}
-
-// BpArray returns an array BpType.
-struct BpType BpArray(size_t nbits, size_t size, BpProcessor processor,
-                      BpJsonFormatter formatter) {
-    return (struct BpType){BP_TYPE_ARRAY, nbits, size, processor, formatter};
-}
-
-// BpAlias returns an alias BpType.
-struct BpType BpAlias(size_t nbits, size_t size, BpProcessor processor,
-                      BpJsonFormatter formatter) {
-    return (struct BpType){BP_TYPE_ALIAS, nbits, size, processor, formatter};
-}
-
-// BpMessageDescriptor returns a descriptor for a message.
-struct BpMessageDescriptor BpMessageDescriptor(
-    bool extensible, int nfields, size_t nbits,
-    struct BpMessageFieldDescriptor *field_descriptors) {
-    return (struct BpMessageDescriptor){extensible, nfields, nbits,
-                                        field_descriptors};
-}
-
-// BpMessageFieldDescriptor returns a descriptor for a message field.
-struct BpMessageFieldDescriptor BpMessageFieldDescriptor(void *data,
-                                                         struct BpType type,
-                                                         char *name) {
-    return (struct BpMessageFieldDescriptor){data, type, name};
-}
-
-// BpEnumDescriptor returns a descriptor for an enum.
-struct BpEnumDescriptor BpEnumDescriptor(struct BpType uint) {
-    return (struct BpEnumDescriptor){uint};
-}
-
-// BpArrayDescriptor returns a descriptor for an array.
-struct BpArrayDescriptor BpArrayDescriptor(bool extensible, size_t cap,
-                                           struct BpType element_type) {
-    return (struct BpArrayDescriptor){extensible, cap, element_type};
-}
-
-// BpAliasDescriptor returns a descriptor for an alias.
-struct BpAliasDescriptor BpAliasDescriptor(struct BpType to) {
-    return (struct BpAliasDescriptor){to};
-}
-
 // BpEndecodeMessage process given message at data with provided message
 // descriptor. It iterate all message fields to process.
 void BpEndecodeMessage(struct BpMessageDescriptor *descriptor,
@@ -114,13 +37,13 @@ void BpEndecodeMessage(struct BpMessageDescriptor *descriptor,
 
     // Process message fields.
     for (int k = 0; k < descriptor->nfields; k++) {
-        struct BpMessageFieldDescriptor field_descriptor =
-            descriptor->field_descriptors[k];
-        BpEndecodeMessageField(&field_descriptor, ctx, NULL);
+        struct BpMessageFieldDescriptor *field_descriptor =
+            &(descriptor->field_descriptors[k]);
+        BpEndecodeMessageField(field_descriptor, ctx, NULL);
     }
 
     // Skip redundant bits if decoding.
-    if (descriptor->extensible && (!ctx->is_encode)) {
+    if (descriptor->extensible && (!(ctx->is_encode))) {
         int ito = i + (int)ahead;
         if (ito >= ctx->i) {
             ctx->i = ito;
@@ -136,7 +59,7 @@ void BpEndecodeMessageField(struct BpMessageFieldDescriptor *descriptor,
         case BP_TYPE_INT:
         case BP_TYPE_UINT:
         case BP_TYPE_BYTE:
-            BpEndecodeBaseType(descriptor->type, ctx, descriptor->data);
+            BpEndecodeBaseType((descriptor->type).nbits, ctx, descriptor->data);
             break;
         case BP_TYPE_ENUM:
         case BP_TYPE_ALIAS:
@@ -158,7 +81,7 @@ void BpEndecodeAlias(struct BpAliasDescriptor *descriptor,
         case BP_TYPE_INT:
         case BP_TYPE_UINT:
         case BP_TYPE_BYTE:
-            BpEndecodeBaseType(descriptor->to, ctx, data);
+            BpEndecodeBaseType((descriptor->to).nbits, ctx, data);
             break;
         case BP_TYPE_ARRAY:
             descriptor->to.processor(data, ctx);
@@ -169,7 +92,7 @@ void BpEndecodeAlias(struct BpAliasDescriptor *descriptor,
 void BpEndecodeEnum(struct BpEnumDescriptor *descriptor,
                     struct BpProcessorContext *ctx, void *data) {
     // Process inner uint.
-    BpEndecodeBaseType(descriptor->uint, ctx, data);
+    BpEndecodeBaseType((descriptor->uint).nbits, ctx, data);
 }
 
 void BpEndecodeArray(struct BpArrayDescriptor *descriptor,
@@ -189,18 +112,21 @@ void BpEndecodeArray(struct BpArrayDescriptor *descriptor,
         }
     }
 
+    int element_nbits = descriptor->element_type.nbits;
+    int element_size = descriptor->element_type.size;
+    unsigned char *data_ptr = (unsigned char *)data;
+
     // Process array elements.
     for (int k = 0; k < descriptor->cap; k++) {
         // Lookup the address of this element's data.
-        void *element_data =
-            (void *)((unsigned char *)data + k * descriptor->element_type.size);
+        void *element_data = (void *)(data_ptr + k * element_size);
 
         switch (descriptor->element_type.flag) {
             case BP_TYPE_BOOL:
             case BP_TYPE_INT:
             case BP_TYPE_UINT:
             case BP_TYPE_BYTE:
-                BpEndecodeBaseType(descriptor->element_type, ctx, element_data);
+                BpEndecodeBaseType(element_nbits, ctx, element_data);
                 break;
             case BP_TYPE_ALIAS:
             case BP_TYPE_MESSAGE:
@@ -220,89 +146,79 @@ void BpEndecodeArray(struct BpArrayDescriptor *descriptor,
 }
 
 // BpEndecodeBaseType process given base type at given data.
-void BpEndecodeBaseType(struct BpType type, struct BpProcessorContext *ctx,
-                        void *data) {
-    // Number of bits this type occupy.
-    int n = (int)(type.nbits);
+void BpEndecodeBaseType(int nbits, struct BpProcessorContext *ctx, void *data) {
     // j tracks the number bits processed on current base.
     int j = 0;
+    int i = ctx->i;
 
-    while (j < n) {
-        // Number of bits to copy.
-        int c = BpGetNbitsToCopy(ctx->i, j, n);
-        // Process single byte copy.
-        BpEndecodeSingleByte(ctx, data, j, c);
+    while (j < nbits) {
+        // Remaing and multiple of i / 8 and j / 8.
+        int ir = i % 8;
+        int im = i / 8;
+        int jr = j % 8;
+        int jm = j / 8;
+        // Number of bits to copy, smallest value of following numbers:
+        //   The remaining bits to process to for current byte, 8 - (j % 8);
+        //   The remaining bits to process from for current byte, 8 - (i % 8);
+        //   The remaining bits to process for current base type, n - j;
+        int c = BpMinTriple(8 - jr, 8 - ir, nbits - j);
+
+        if (ctx->is_encode)
+            BpEncodeSingleByte(ctx, data, ir, im, jr, jm, c);
+        else
+            BpDecodeSingleByte(ctx, data, ir, im, jr, jm, c);
+
         // Maintain j and i.
         j += c;
-        ctx->i += c;
+        i += c;
     }
-}
 
-// BpEndecodeSingleByte dispatch process to BpEncodeSingleByte or
-// BpDecodeSingleByte by context.
-void BpEndecodeSingleByte(struct BpProcessorContext *ctx, void *data, int j,
-                          int c) {
-    if (ctx->is_encode) {
-        BpEncodeSingleByte(ctx, data, j, c);
-    } else {
-        BpDecodeSingleByte(ctx, data, j, c);
-    }
+    ctx->i = i;
 }
 
 // BpEncodeSingleByte encode number of c bits in a single byte of data to target
 // buffer s in given context ctx.
-void BpEncodeSingleByte(struct BpProcessorContext *ctx, void *data, int j,
-                        int c) {
-    int i = ctx->i;
-
+void BpEncodeSingleByte(struct BpProcessorContext *ctx, void *data, int ir,
+                        int im, int jr, int jm, int c) {
     // Number of bits to shift.
-    int shift = (j % 8) - (i % 8);
+    int shift = jr - ir;
     // Mask value to intercept bits.
-    int mask = BpGetMask(i % 8, c);
-    // Index of current byte in the target base type data.
-    int value_index = (int)(j / 8);
+    int mask = BpGetMask(ir, c);
     // Get the value at this index as an unsigned char (byte).
-    unsigned char value = ((unsigned char *)(data))[value_index];
+    unsigned char value = ((unsigned char *)(data))[jm];
 
-    // Index of byte in the target buffer.
-    int buffer_index = (int)(i / 8);
     // Delta to put on.
     int delta = BpSmartShift(value, shift) & mask;
 
-    if (i % 8 == 0) {  // Assign if writing at start of a byte.
-        ctx->s[buffer_index] = delta;
+    if (ir == 0) {  // Assign if writing at start of a byte.
+        ctx->s[im] = delta;
     } else {  // Otherwise, run OR to copy bits.
-        ctx->s[buffer_index] |= delta;
+        ctx->s[im] |= delta;
     }
 }
 
 // BpDecodeSingleByte decode number of c bits from buffer s in given context ctx
 // to target data.
-void BpDecodeSingleByte(struct BpProcessorContext *ctx, void *data, int j,
-                        int c) {
-    int i = ctx->i;
-
+void BpDecodeSingleByte(struct BpProcessorContext *ctx, void *data, int ir,
+                        int im, int jr, int jm, int c) {
     // Number of bits to shift.
-    int shift = (i % 8) - (j % 8);
+    int shift = ir - jr;
     // Mask value to intercept bits.
-    int mask = BpGetMask(j % 8, c);
+    int mask = BpGetMask(jr, c);
 
-    // Index of bytes in the source buffer.
-    int buffer_index = (int)(i / 8);
     // Get the char at this index from buffer `s`.
-    unsigned char value = ctx->s[buffer_index];
+    unsigned char value = ctx->s[im];
 
     // Index of current byte in the target base type data.
-    int value_index = (int)(j / 8);
     unsigned char *data_buffer = (unsigned char *)(data);
 
     // Delta to put on.
     int delta = BpSmartShift(value, shift) & mask;
 
-    if (j % 8 == 0) {  // Assign if writing to starting of a byte.
-        data_buffer[value_index] = delta;
+    if (jr == 0) {  // Assign if writing to starting of a byte.
+        data_buffer[jm] = delta;
     } else {  // Otherwise, run OR to copy bits.
-        data_buffer[value_index] |= delta;
+        data_buffer[jm] |= delta;
     }
 }
 
@@ -313,7 +229,7 @@ void BpEncodeArrayExtensibleAhead(struct BpArrayDescriptor *descriptor,
     // Safe to cast to uint16_t:
     // the capacity of an array always <= 65535.
     uint16_t data = (uint16_t)(descriptor->cap);
-    BpEndecodeBaseType(BpUint(16), ctx, (void *)&data);
+    BpEndecodeBaseType(16, ctx, (void *)&data);
 }
 
 // BpDecodeArrayExtensibleAhead decode the ahead flag as the array capacity from
@@ -321,7 +237,7 @@ void BpEncodeArrayExtensibleAhead(struct BpArrayDescriptor *descriptor,
 uint16_t BpDecodeArrayExtensibleAhead(struct BpArrayDescriptor *descriptor,
                                       struct BpProcessorContext *ctx) {
     uint16_t data = 0;
-    BpEndecodeBaseType(BpUint(16), ctx, (void *)&data);
+    BpEndecodeBaseType(16, ctx, (void *)&data);
     return data;
 }
 
@@ -332,7 +248,7 @@ void BpEncodeMessageExtensibleAhead(struct BpMessageDescriptor *descriptor,
     // Safe to cast to uint16_t:
     // The bitproto compiler constraints message size up to 65535 bits.
     uint16_t data = (uint16_t)(descriptor->nbits);
-    BpEndecodeBaseType(BpUint(16), ctx, (void *)&data);
+    BpEndecodeBaseType(16, ctx, (void *)&data);
 }
 
 // BpDecodeMessageExtensibleAhead decode the ahead flag as message's number of
@@ -340,50 +256,47 @@ void BpEncodeMessageExtensibleAhead(struct BpMessageDescriptor *descriptor,
 uint16_t BpDecodeMessageExtensibleAhead(struct BpMessageDescriptor *descriptor,
                                         struct BpProcessorContext *ctx) {
     uint16_t data = 0;
-    BpEndecodeBaseType(BpUint(16), ctx, (void *)&data);
+    BpEndecodeBaseType(16, ctx, (void *)&data);
     return data;
 }
 
-// BpMin returns the smaller one of given two integers.
-int BpMin(int a, int b) {
-    if (a < b) {
-        return a;
-    }
-    return b;
+// BpMinTriple returns the smaller one of given three integers.
+int BpMinTriple(int a, int b, int c) {
+    return (a < b) ? ((a < c) ? a : c) : ((b < c) ? b : c);
 }
 
 // BpIntSizeFromNbits returns the size of corresponding integer type for given
 // bits number.
-size_t BpIntSizeFromNbits(size_t nbits) {
+int BpIntSizeFromNbits(int nbits) {
     if (nbits <= 8) {
-        return sizeof(int8_t);
+        return (int)sizeof(int8_t);
     }
     if (nbits <= 16 && nbits > 8) {
-        return sizeof(int16_t);
+        return (int)sizeof(int16_t);
     }
     if (nbits <= 32 && nbits > 16) {
-        return sizeof(int32_t);
+        return (int)sizeof(int32_t);
     }
     if (nbits <= 64 && nbits > 32) {
-        return sizeof(int64_t);
+        return (int)sizeof(int64_t);
     }
     return 0;
 }
 
 // BpUintSizeFromNbits returns the size of corresponding unsigned integer type
 // for given bits number.
-size_t BpUintSizeFromNbits(size_t nbits) {
+int BpUintSizeFromNbits(int nbits) {
     if (nbits <= 8) {
-        return sizeof(uint8_t);
+        return (int)sizeof(uint8_t);
     }
     if (nbits <= 16 && nbits > 8) {
-        return sizeof(uint16_t);
+        return (int)sizeof(uint16_t);
     }
     if (nbits <= 32 && nbits > 16) {
-        return sizeof(uint32_t);
+        return (int)sizeof(uint32_t);
     }
     if (nbits <= 64 && nbits > 32) {
-        return sizeof(uint64_t);
+        return (int)sizeof(uint64_t);
     }
     return 0;
 }
@@ -393,11 +306,11 @@ size_t BpUintSizeFromNbits(size_t nbits) {
 // processing contxt, argument j is the number of bits processed in current base
 // type processing, argument n is the number of bits current base type occupy.
 // The result is the smallest value of following numbers:
-//   The remaining bits to process for current base type, n - j;
 //   The remaining bits to process to for current byte, 8 - (j % 8);
 //   The remaining bits to process from for current byte, 8 - (i % 8);
+//   The remaining bits to process for current base type, n - j;
 int BpGetNbitsToCopy(int i, int j, int n) {
-    return BpMin(BpMin(n - j, 8 - (j % 8)), 8 - (i % 8));
+    return BpMinTriple(8 - (j % 8), 8 - (i % 8), n - j);
 }
 
 // BpGetMask returns the mask value to copy bits inside a single byte.
@@ -410,23 +323,15 @@ int BpGetNbitsToCopy(int i, int j, int n) {
 //   00001111               k=0, c=4
 //   01111100               k=2, c=5
 //   00111100               k=2, c=4
-int BpGetMask(int k, int c) {
-    if (k == 0) {
-        return (1 << c) - 1;
-    }
-    return (1 << ((k + 1 + c) - 1)) - (1 << ((k + 1) - 1));
-}
+int BpGetMask(int k, int c) { return (1 << (k + c)) - (1 << k); }
 
 // BpSmartShift shifts given number n by k.
 // If k is larger than 0, performs a right shift, otherwise left.
 int BpSmartShift(int n, int k) {
-    if (k > 0) {
-        return n >> k;
-    }
-    if (k < 0) {
-        return n << (0 - k);
-    }
-    return n;
+    // Quote: If the value of the right operand is negative or is greater
+    // than or equal to the width of the promoted left operand, the behavior is
+    // undefined.
+    return (k > 0) ? (n >> k) : ((k == 0) ? n : (n << (0 - k)));
 }
 
 // BpJsonFormatString is a simple wrapper on sprintf that accepts
@@ -448,10 +353,10 @@ void BpJsonFormatMessage(struct BpMessageDescriptor *descriptor,
 
     // Format key values.
     for (int k = 0; k < descriptor->nfields; k++) {
-        struct BpMessageFieldDescriptor field_descriptor =
-            descriptor->field_descriptors[k];
+        struct BpMessageFieldDescriptor *field_descriptor =
+            &(descriptor->field_descriptors[k]);
 
-        BpJsonFormatMessageField(&field_descriptor, ctx);
+        BpJsonFormatMessageField(field_descriptor, ctx);
 
         if (k + 1 < descriptor->nfields) {
             BpJsonFormatString(ctx, ",");
