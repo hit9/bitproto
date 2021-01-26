@@ -21,7 +21,7 @@ a.reference
     text-decoration: none;
 }
 
-.image-link {
+a.image-reference {
     border-bottom: none;
     text-decoration: none;
 }

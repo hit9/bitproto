@@ -1,17 +1,14 @@
 The bit level data interchange format
 =====================================
 
-Introduction
-------------
-
 .. image:: https://img.shields.io/badge/license-BSD3-brightgreen
-      :class: image-link
 .. image:: https://github.com/hit9/bitproto/workflows/bitproto%20ci/badge.svg
       :target: https://github.com/hit9/bitproto/actions?query=workflow%3A%22bitproto+ci%22
-      :class: image-link
 .. image:: https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg
       :target: https://saythanks.io/to/hit9@icloud.com
-      :class: image-link
+
+Introduction
+------------
 
 Bitproto is a lightweight, easy-to-use and production-proven bit level data
 interchange data format for serializing data structures.
