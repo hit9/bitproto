@@ -7,15 +7,6 @@
 // Implementations
 ///////////////////
 
-// BpContext returns a BpProcessorContext.
-struct BpProcessorContext BpProcessorContext(bool is_encode, unsigned char *s) {
-    return (struct BpProcessorContext){is_encode, 0, s};
-}
-// BpJsonFormatContext returns a BpJsonFormatContext.
-struct BpJsonFormatContext BpJsonFormatContext(char *s) {
-    return (struct BpJsonFormatContext){0, s};
-}
-
 // BpEndecodeMessage process given message at data with provided message
 // descriptor. It iterate all message fields to process.
 void BpEndecodeMessage(struct BpMessageDescriptor *descriptor,
@@ -265,42 +256,6 @@ int BpMinTriple(int a, int b, int c) {
     return (a < b) ? ((a < c) ? a : c) : ((b < c) ? b : c);
 }
 
-// BpIntSizeFromNbits returns the size of corresponding integer type for given
-// bits number.
-int BpIntSizeFromNbits(int nbits) {
-    if (nbits <= 8) {
-        return (int)sizeof(int8_t);
-    }
-    if (nbits <= 16 && nbits > 8) {
-        return (int)sizeof(int16_t);
-    }
-    if (nbits <= 32 && nbits > 16) {
-        return (int)sizeof(int32_t);
-    }
-    if (nbits <= 64 && nbits > 32) {
-        return (int)sizeof(int64_t);
-    }
-    return 0;
-}
-
-// BpUintSizeFromNbits returns the size of corresponding unsigned integer type
-// for given bits number.
-int BpUintSizeFromNbits(int nbits) {
-    if (nbits <= 8) {
-        return (int)sizeof(uint8_t);
-    }
-    if (nbits <= 16 && nbits > 8) {
-        return (int)sizeof(uint16_t);
-    }
-    if (nbits <= 32 && nbits > 16) {
-        return (int)sizeof(uint32_t);
-    }
-    if (nbits <= 64 && nbits > 32) {
-        return (int)sizeof(uint64_t);
-    }
-    return 0;
-}
-
 // BpGetMask returns the mask value to copy bits inside a single byte.
 // The argument k is the start bit index in the byte, argument c is the number
 // of bits to copy.
@@ -448,11 +403,13 @@ void BpJsonFormatArray(struct BpArrayDescriptor *descriptor,
                        struct BpJsonFormatContext *ctx, void *data) {
     BpJsonFormatString(ctx, "[");
 
+    int element_size = descriptor->element_type.size;
+    unsigned char *data_ptr = (unsigned char *)data;
+
     // Format array elements.
     for (int k = 0; k < descriptor->cap; k++) {
         // Lookup the address of this element's data.
-        void *element_data =
-            (void *)((unsigned char *)data + k * descriptor->element_type.size);
+        void *element_data = (void *)(data_ptr + k * element_size);
         switch (descriptor->element_type.flag) {
             case BP_TYPE_BOOL:
             case BP_TYPE_INT:

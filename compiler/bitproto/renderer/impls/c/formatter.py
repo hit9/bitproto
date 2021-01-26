@@ -133,11 +133,13 @@ class CFormatter(Formatter):
 
     def format_bp_int(self, t: Int) -> str:
         nbits = self.format_int_value(t.nbits())
-        return f"BpInt({nbits})"
+        size = self.format_sizeof(self.format_int_type(t))
+        return f"BpInt({nbits}, {size})"
 
     def format_bp_uint(self, t: Uint) -> str:
         nbits = self.format_int_value(t.nbits())
-        return f"BpUint({nbits})"
+        size = self.format_sizeof(self.format_uint_type(t))
+        return f"BpUint({nbits}, {size})"
 
     def format_bp_byte(self) -> str:
         return f"BpByte()"

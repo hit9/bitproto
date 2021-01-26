@@ -34,13 +34,18 @@ extern "C" {
 #define BP_TYPE_ARRAY 7
 #define BP_TYPE_MESSAGE 8
 
+// Context Constructors.
+#define BpProcessorContext(is_encode, s) \
+    ((struct BpProcessorContext){(is_encode), 0, (s)})
+#define BpJsonFormatContext(s) \
+    (struct BpJsonFormatContext) { 0, (s) }
+
 // BpType Constructors.
 #define BpBool() ((struct BpType){BP_TYPE_BOOL, 1, sizeof(bool), NULL, NULL})
-#define BpUint(nbits)                                                      \
-    ((struct BpType){BP_TYPE_UINT, (nbits), ((((nbits)-1) / 8) + 1), NULL, \
-                     NULL})
-#define BpInt(nbits) \
-    ((struct BpType){BP_TYPE_INT, (nbits), ((((nbits)-1) / 8) + 1), NULL, NULL})
+#define BpUint(nbits, size) \
+    ((struct BpType){BP_TYPE_UINT, (nbits), (size), NULL, NULL})
+#define BpInt(nbits, size) \
+    ((struct BpType){BP_TYPE_INT, (nbits), (size), NULL, NULL})
 #define BpByte() \
     ((struct BpType){BP_TYPE_BYTE, 8, sizeof(unsigned char), NULL, NULL});
 #define BpMessage(nbits, size, processor, formatter)                \
@@ -165,10 +170,6 @@ struct BpMessageDescriptor {
 // Declarations
 ////////////////
 
-// Context Constructor.
-struct BpProcessorContext BpProcessorContext(bool is_encode, unsigned char *s);
-struct BpJsonFormatContext BpJsonFormatContext(char *s);
-
 // Encoding & Decoding
 
 void BpEncodeSingleByte(struct BpProcessorContext *ctx, void *data, int ir,
@@ -218,8 +219,6 @@ void BpJsonFormatArray(struct BpArrayDescriptor *descriptor,
 
 // Utils
 
-int BpIntSizeFromNbits(int nbits);
-int BpUintSizeFromNbits(int nbits);
 int BpMinTriple(int a, int b, int c);
 int BpSmartShift(int n, int k);
 int BpGetMask(int k, int c);
