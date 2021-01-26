@@ -23,9 +23,8 @@ html_theme_options = {
     "github_count": True,
     "fixed_sidebar": True,
     "extra_nav_links": {
-        "Source Code": "https://github.com/hit9/bitproto",
-        "Issue Traker": "https://github.com/hit9/bitproto/issues",
-        "Test Status": "https://github.com/hit9/bitproto/actions",
+        "bitproto @ github": "https://github.com/hit9/bitproto",
+        "bitproto @ pypi": "https://pypi.org/project/bitproto",
     },
 }
 pygments_style = "_pygments.BitprotoStyle"

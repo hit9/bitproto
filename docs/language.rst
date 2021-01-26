@@ -640,3 +640,12 @@ The bitproto naming guidelines are introduced in following code example:
    message PascalCaseMessage {
        uint3 lower_snake_case_field = 2
    }
+
+Editor Integration
+^^^^^^^^^^^^^^^^^^
+
+Vim
+"""
+A syntax plugin for `vim <https://www.vim.org/>`_ is available from
+`bitproto's github repository <https://github.com/hit9/bitproto/tree/master/editors/vim>`_.
+This plugin only supports syntax highlighting of bitproto language.

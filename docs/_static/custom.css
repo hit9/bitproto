@@ -21,6 +21,11 @@ a.reference
     text-decoration: none;
 }
 
+.image-link {
+    border-bottom: none;
+    text-decoration: none;
+}
+
 a:hover,
 a.reference:hover
 {
@@ -58,7 +63,7 @@ code {
 }
 
 p code,
-dt code, 
+dt code,
 .line code {
   color: #364f6b;
   font-weight: bold;
