@@ -4,8 +4,8 @@ The bit level data interchange format
 Introduction
 ------------
 
-Bitproto is a lightweight, easy-to-use and production-proven bit level data interchange data format
-for serializing data structures.
+Bitproto is a lightweight, easy-to-use and production-proven bit level data
+interchange data format for serializing data structures.
 
 The protocol describing syntax looks like the great
 `protocol buffers <https://developers.google.com/protocol-buffers>`_ ,
@@ -102,7 +102,8 @@ Vs Protobuf
 
 The differences between bitproto and protobuf are:
 
-* bitproto supports bit level data serialization, like the `bit fields in C <https://en.wikipedia.org/wiki/Bit_field>`_.
+* bitproto supports bit level data serialization, like the
+  `bit fields in C <https://en.wikipedia.org/wiki/Bit_field>`_.
 
 * bitproto doesn't use any dynamic memory allocations. Few of
   `protobuf C implementations <https://github.com/protocolbuffers/protobuf/blob/master/docs/third_party.md>`_
@@ -116,10 +117,13 @@ The differences between bitproto and protobuf are:
   think setting `aligned attribute to 1 <https://stackoverflow.com/a/11772340>`_
   on structs in C.
 
-* Protobuf works good on `backward compatibility <https://developers.google.com/protocol-buffers/docs/overview#backwards_compatibility>`_.
-  For bitproto, this is the main shortcome of bitproto serialization until :ref:`v0.4.0 <version-0.4.0>`,
-  since this version, it supports message's :ref:`extensiblity <language-guide-extensibility>` by adding two bytes indicating the message size
-  at head of the message's encoded buffer. This breaks the traditional data layout design by encoding some minimal reflection
+* Protobuf works good on
+  `backward compatibility <https://developers.google.com/protocol-buffers/docs/overview#backwards_compatibility>`_.
+  For bitproto, this is the main shortcome of bitproto serialization until
+  :ref:`v0.4.0 <version-0.4.0>`, since this version, it supports message's
+  :ref:`extensiblity <language-guide-extensibility>` by adding two bytes indicating
+  the message size at head of the message's encoded buffer.  This breaks the
+  traditional data layout design by encoding some minimal reflection
   size information in, so this is designed as an optional feature.
 
 Shortcomes
@@ -127,15 +131,17 @@ Shortcomes
 
 Known shortcomes of bitproto:
 
-* bitproto doesn't support varying sized types. For example, a ``unit37`` always occupies 37 bits even you
-  assign it a small value like ``1``.
+* bitproto doesn't support varying sized types. For example, a ``unit37`` always occupies
+  37 bits even you assign it a small value like ``1``.
 
-  Which means there will be lots of zero bytes if the meaningful data occupies little on this type.
-  For instance, there will be ``n-1`` bytes left zero if only one byte of a type with ``n`` bytes size is used.
+  Which means there will be lots of zero bytes if the meaningful data occupies little on
+  this type.  For instance, there will be ``n-1`` bytes left zero if only one byte of a
+  type with ``n`` bytes size is used.
 
-  Generally, we actually don't care much about this, since there are not so many bytes in communication
-  with embedded devices. The protocol itself is meant to be designed tight and compact. Consider to wrap
-  a compression mechanism like `zlib <https://zlib.net/>`_ on the encoded buffer if you really care.
+  Generally, we actually don't care much about this, since there are not so many bytes
+  in communication with embedded devices. The protocol itself is meant to be designed
+  tight and compact. Consider to wrap a compression mechanism like `zlib <https://zlib.net/>`_
+  on the encoded buffer if you really care.
 
 
 Content list
