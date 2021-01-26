@@ -223,7 +223,6 @@ int BpUintSizeFromNbits(int nbits);
 int BpMinTriple(int a, int b, int c);
 int BpSmartShift(int n, int k);
 int BpGetMask(int k, int c);
-int BpGetNbitsToCopy(int i, int j, int n);
 
 #if defined(__cplusplus)
 }

@@ -301,18 +301,6 @@ int BpUintSizeFromNbits(int nbits) {
     return 0;
 }
 
-// BpGetNbitsToCopy returns the number of bits to copy for current base type
-// processing. Where argument i is the total bits processed in the whole
-// processing contxt, argument j is the number of bits processed in current base
-// type processing, argument n is the number of bits current base type occupy.
-// The result is the smallest value of following numbers:
-//   The remaining bits to process to for current byte, 8 - (j % 8);
-//   The remaining bits to process from for current byte, 8 - (i % 8);
-//   The remaining bits to process for current base type, n - j;
-int BpGetNbitsToCopy(int i, int j, int n) {
-    return BpMinTriple(8 - (j % 8), 8 - (i % 8), n - j);
-}
-
 // BpGetMask returns the mask value to copy bits inside a single byte.
 // The argument k is the start bit index in the byte, argument c is the number
 // of bits to copy.
