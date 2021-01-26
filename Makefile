@@ -8,3 +8,8 @@ lint:
 
 test:
 	pytest tests -v -s -x
+
+example:
+	make -C example
+
+.PHONY: lint test example
