@@ -51,6 +51,9 @@ In the bitproto file above:
 In bitproto, we can determine how long the encoded buffer will be just from the proto defined,
 for instance, the message ``Pen`` will occupy ``3 + 64`` bits, that's ``9`` bytes.
 
+You may want to checkout
+`a larger example on github <https://github.com/hit9/bitproto/tree/master/example>`_.
+
 Next, we will introduce how to use bitproto with this simple bitproto file in different languages.
 
 Language-Specific Guides

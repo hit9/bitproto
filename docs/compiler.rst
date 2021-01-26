@@ -56,7 +56,9 @@ Validates bitproto source file syntax, exits with a non-zero code if any syntax 
 
 The compiler won't generate files but only run a protocol syntax checking if `-c` option is given.
 
-By default, the compiler runs a simple default linter, which gives warnings if the given
+.. _compiler-linter:
+
+By default, the compiler runs a simple protocol linter, which gives warnings if the given
 bitproto file doesn't meet the :ref:`style-guide`, to disable the linter:
 
 .. sourcecode:: bash

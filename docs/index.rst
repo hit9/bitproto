@@ -32,16 +32,13 @@ This image shows the layout of data fields in the encoded bytes buffer:
     :align: center
 
 
-You may want to checkout
-`a larger example on github <https://github.com/hit9/bitproto/tree/master/example>`_.
-
 Features
 ---------
 
 - Supports bit level data serialization.
-- Supports protocol :ref:`extensiblity <extensibility>`, for backward-compatibility.
+- Supports protocol :ref:`extensiblity <language-guide-extensibility>`, for backward-compatibility.
 - Very easy to :ref:`start <quickstart>`:
-   - Protocol syntax is similar to the well-known protobuf.
+   - :ref:`Protocol syntax <language-guide>` is similar to the well-known protobuf.
    - Generating code with very simple serialization api.
 - Supports the following languages:
    - :ref:`C (ANSI C)<quickstart-c-guide>` - No dynamic memory allocation.
@@ -114,13 +111,14 @@ The differences between bitproto and protobuf are:
 * bitproto doesn't support varying sized data, all type are fixed sized.
 
   bitproto won't encode typing or size reflection information into the buffer.
-  It only encodes the data itself, the encoded data is arranged like it's arranged in the memory,
-  with fixed size, without paddings, think setting `aligned attribute to 1 <https://stackoverflow.com/a/11772340>`_
+  It only encodes the data itself, without any additional data, the encoded data
+  is arranged like it's arranged in the memory, with fixed size, without paddings,
+  think setting `aligned attribute to 1 <https://stackoverflow.com/a/11772340>`_
   on structs in C.
 
 * Protobuf works good on `backward compatibility <https://developers.google.com/protocol-buffers/docs/overview#backwards_compatibility>`_.
   For bitproto, this is the main shortcome of bitproto serialization until :ref:`v0.4.0 <version-0.4.0>`,
-  since this version, it supports message's :ref:`extensiblity <extensibility>` by adding two bytes indicating the message size
+  since this version, it supports message's :ref:`extensiblity <language-guide-extensibility>` by adding two bytes indicating the message size
   at head of the message's encoded buffer. This breaks the traditional data layout design by encoding some minimal reflection
   size information in, so this is designed as an optional feature.
 
@@ -152,7 +150,5 @@ Content list
     python-guide
     compiler
     language
-    style
-    extensibility
     changelog
     license

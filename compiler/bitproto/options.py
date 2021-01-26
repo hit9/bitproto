@@ -39,7 +39,7 @@ PROTO_OPTTIONS: OptionDescriptors = (
         "c.struct_packing_alignment",
         0,
         lambda v: 0 <= v <= 8,
-        "C language struct packing alignment, defaults to 1",
+        "C language struct packing alignment, defaults to 0",
     ),
     OptionDescriptor(
         "c.name_prefix",
