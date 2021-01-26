@@ -1,4 +1,4 @@
-Vim Syntax highlighting for bitproto
+Vim syntax highlighting for bitproto
 ====================================
 
 Vim syntax highlighting plugin for bitproto.
