@@ -1,5 +1,7 @@
 .. currentmodule:: bitproto
 
+.. _version-0.4.0:
+
 Version 0.4.0
 -------------
 

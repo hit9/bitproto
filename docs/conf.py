@@ -16,13 +16,16 @@ source_suffix = ".rst"
 html_theme_options = {
     "logo": "bitproto-logo.png",
     "logo_name": False,
-    # "github_user": "hit9",
-    # "github_repo": "bitproto",
-    "github_banner": True,
+    "github_user": "hit9",
+    "github_repo": "bitproto",
+    "github_banner": False,
+    "github_type": "star",
+    "github_count": True,
     "fixed_sidebar": True,
     "extra_nav_links": {
         "Source Code": "https://github.com/hit9/bitproto",
-        "Author's Blog": "https://writings.sh",
+        "Issue Traker": "https://github.com/hit9/bitproto/issues",
+        "Test Status": "https://github.com/hit9/bitproto/actions",
     },
 }
 pygments_style = "_pygments.BitprotoStyle"

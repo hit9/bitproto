@@ -60,5 +60,5 @@ class BitprotoStyle(Style):
         Keyword.Constant: "bold #364f6b",
         Number: "#333333",
         String: "#48466d",
-        Name.Entity: "bold #333333",
+        Name.Entity: "bold #4D5656",
     }

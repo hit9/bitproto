@@ -3,7 +3,7 @@
 Quickstart
 ==========
 
-Bitproto comes with a proto-to-code generator (:ref:`the-compiler`) and language-specific libraries.
+Bitproto comes with a proto-to-code :ref:`compiler <the-compiler>` and language-specific libraries.
 
 The compiler parses the bitproto file and generates code files in target languages,
 which contains the structure definitions, encoding and decoding function entries.
@@ -40,14 +40,19 @@ Suppose that we have a bitproto named `pen.bitproto`, with the following content
 
 In the bitproto file above:
 
-* ``proto`` declares the name of this bitproto, it's required for every bitproto.
-* ``Color`` is an enum that occupies 3 bits (meaning its value ranges up to 7).
-* ``Timestamp`` is a custom type aliasing to builtin type ``int64``, think the keyword ``typedef`` in C.
+* ``proto`` declares the name of this bitproto, this statement is required for every bitproto.
+* ``Color`` is an enum on ``uint3``, it occupies 3 bits (meaning its value ranges up to 7).
+* ``Timestamp`` is a custom type defined by user, aliasing to builtin type ``int64``,
+  like what the keyword ``typedef`` does in C.
 * ``Pen`` is a message that contains 2 fields. A message field consists of a type on the left, a
-  following name and a unique field number on the right.
+  following name and a unique field number on the right. Bitproto encodes a message by the order of
+  the field number. So that the field numbers shouldn't be modified once they are in use.
 
 In bitproto, we can determine how long the encoded buffer will be just from the proto defined,
-for instance, the message ``Pen`` will occupy ``3 + 64`` bits, that's 9 bytes.
+for instance, the message ``Pen`` will occupy ``3 + 64`` bits, that's ``9`` bytes.
+
+You may want to checkout
+`a larger example on github <https://github.com/hit9/bitproto/tree/master/example>`_.
 
 Next, we will introduce how to use bitproto with this simple bitproto file in different languages.
 
