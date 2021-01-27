@@ -212,7 +212,7 @@ void BpJsonFormatArray(struct BpArrayDescriptor *descriptor,
 // Utils
 
 int BpMinTriple(int a, int b, int c);
-int BpSmartShift(int n, int k);
+unsigned char BpSmartShift(unsigned char n, int k);
 
 #if defined(__cplusplus)
 }

@@ -143,7 +143,7 @@ unsigned char BpCopyBits(unsigned char dst, unsigned char src, int dst_bit_idx,
     int shift = src_bit_idx - dst_bit_idx;
     // Mask to clear char src's right remaining bits all to 0.
     // The following expression gives a number like 0b111100000.
-    int mask = (1 << (dst_bit_idx + c)) - (1 << dst_bit_idx);
+    unsigned char mask = (1 << (dst_bit_idx + c)) - (1 << dst_bit_idx);
     // Result of a new dst byte.
     // dst | (src >> shift) & mask
     return dst | (BpSmartShift(src, shift) & mask);
@@ -171,7 +171,11 @@ void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src,
 
         int c = 0;
 
-        if (dst_bit_im != 0 || bits < 8) {
+        if (dst_bit_im == 0 && src_bit_im == 0 && n >= 8) {
+            // Assign directly if already aligned to 0.
+            dst_ptr[0] = src_ptr[0];
+            c = 8;
+        } else if (dst_bit_im != 0 || bits < 8) {
             // Number of bits to copy.
             // 8-dst_bit_im ensures the destination space is enough.
             // 8-src_bit_im ensures the source space is enough.
@@ -262,9 +266,9 @@ int BpMinTriple(int a, int b, int c) {
     return (a < b) ? ((a < c) ? a : c) : ((b < c) ? b : c);
 }
 
-// BpSmartShift shifts given number n by k.
+// BpSmartShift shifts given unsigned char n by k.
 // If k is larger than 0, performs a right shift, otherwise left.
-int BpSmartShift(int n, int k) {
+unsigned char BpSmartShift(unsigned char n, int k) {
     // Quote: If the value of the right operand is negative or is greater
     // than or equal to the width of the promoted left operand, the behavior
     // is undefined.
