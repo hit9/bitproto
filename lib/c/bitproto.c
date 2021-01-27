@@ -132,18 +132,18 @@ void BpEndecodeArray(struct BpArrayDescriptor *descriptor,
 
 // BpCopyBits copy number of c bits from given char src to given char dst.
 // Returns the new value of dst.
-// The argument src_bit_index is the index in the single byte src to start
-// coping. The argument dst_bit_index is the index in the single byte dst to
+// The argument src_bit_idx is the index in the single byte src to start
+// coping. The argument dst_bit_idx is the index in the single byte dst to
 // start coping.
-unsigned char BpCopyBits(unsigned char dst, unsigned char src,
-                         int dst_bit_index, int src_bit_index, int c) {
+unsigned char BpCopyBits(unsigned char dst, unsigned char src, int dst_bit_idx,
+                         int src_bit_idx, int c) {
     // The number of bits to shift char src.
-    // If given src_bit_index is smaller than dst_bit_index, performs a shift
+    // If given src_bit_idx is smaller than dst_bit_idx, performs a shift
     // left. Else shifts right.
-    int shift = src_bit_index - dst_bit_index;
+    int shift = src_bit_idx - dst_bit_idx;
     // Mask to clear char src's right remaining bits all to 0.
     // The following expression gives a number like 0b111100000.
-    int mask = (1 << (dst_bit_index + c)) - (1 << dst_bit_index);
+    int mask = (1 << (dst_bit_idx + c)) - (1 << dst_bit_idx);
     // Result of a new dst byte.
     // dst | (src >> shift) & mask
     return dst | (BpSmartShift(src, shift) & mask);
@@ -151,41 +151,59 @@ unsigned char BpCopyBits(unsigned char dst, unsigned char src,
 
 // BpCopyBufferBits copy number of nbits from source buffer src to destination
 // buffer dst.
-// The argument src_bit_index is the index to start coping on buffer src.
-// The argument dst_bit_index is the index to start coping on buffer dst.
-void BpCopyBufferBits(int nbits, unsigned char *dst, unsigned char *src,
-                      int dst_bit_index, int src_bit_index) {
-    // Byte index of destination buffer.
-    int dst_byte_index = 0;
-    // Byte index of source buffer.
-    int src_byte_index = 0;
-    // Mod of destination buffer bit index.
-    int dst_bit_im = 0;
-    // Mod of source buffer bit index.
-    int src_bit_im = 0;
+// The argument src_bit_idx is the index to start coping on buffer src.
+// The argument dst_bit_idx is the index to start coping on buffer dst.
+void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src,
+                      int dst_bit_idx, int src_bit_idx) {
+    while (n > 0) {
+        int dst_byte_idx = dst_bit_idx >> 3;
+        int src_byte_idx = src_bit_idx >> 3;
 
-    // Number of bits processed.
-    int n = 0;
+        int dst_bit_im = dst_bit_idx & 7;
+        int src_bit_im = src_bit_idx & 7;
 
-    while (n < nbits) {
-        dst_byte_index = dst_bit_index >> 3;
-        src_byte_index = src_bit_index >> 3;
-        dst_bit_im = dst_bit_index & 7;
-        src_bit_im = src_bit_index & 7;
+        unsigned char *dst_ptr = dst + dst_byte_idx;
+        unsigned char *src_ptr = src + src_byte_idx;
 
-        // Number of bits to copy.
-        // 8-dst_bit_im ensures the destination space is enough.
-        // 8-src_bit_im ensures the source space is enough.
-        // nbits - n ensures the total bits remaining count.
-        int c = BpMinTriple(8 - dst_bit_im, 8 - src_bit_im, nbits - n);
-        // Copy number of c bits from src to dst.
-        dst[dst_byte_index] =
-            BpCopyBits(dst[dst_byte_index], src[src_byte_index], dst_bit_im,
-                       src_bit_im, c);
-        // Matain increments.
-        n += c;
-        dst_bit_index += c;
-        src_bit_index += c;
+        int shift = src_bit_im;
+        int bits = n + shift;
+
+        int c = 0;
+
+        if (dst_bit_im != 0 || bits < 8) {
+            // Number of bits to copy.
+            // 8-dst_bit_im ensures the destination space is enough.
+            // 8-src_bit_im ensures the source space is enough.
+            // nbits ensures the total bits remaining enough.
+            c = BpMinTriple(8 - dst_bit_im, 8 - src_bit_im, n);
+            dst_ptr[0] =
+                BpCopyBits(dst_ptr[0], src_ptr[0], dst_bit_im, src_bit_im, c);
+
+        } else if (bits >= 32) {
+            uint32_t v32 = (*((uint32_t *)(src_ptr))) >> shift;
+            unsigned char *ptr = (unsigned char *)(&v32);
+            dst_ptr[0] = ptr[0];
+            dst_ptr[1] = ptr[1];
+            dst_ptr[2] = ptr[2];
+            dst_ptr[3] = ptr[3];
+
+            c = 32 - shift;
+        } else if (bits >= 16) {
+            uint16_t v16 = (*(uint16_t *)(src_ptr)) >> shift;
+            unsigned char *ptr = (unsigned char *)(&v16);
+            dst_ptr[0] = ptr[0];
+            dst_ptr[1] = ptr[1];
+
+            c = 16 - shift;
+        } else if (bits >= 8) {
+            dst_ptr[0] = (src_ptr[0] >> shift) & 0xff;
+
+            c = 8 - shift;
+        }
+
+        n -= c;
+        dst_bit_idx += c;
+        src_bit_idx += c;
     }
 }
 
@@ -200,8 +218,8 @@ void BpEndecodeBaseType(int nbits, struct BpProcessorContext *ctx, void *data) {
     ctx->i += nbits;
 }
 
-// BpEncodeArrayExtensibleAhead encode the array capacity as the ahead flag to
-// current bit encoding stream.
+// BpEncodeArrayExtensibleAhead encode the array capacity as the ahead flag
+// to current bit encoding stream.
 void BpEncodeArrayExtensibleAhead(struct BpArrayDescriptor *descriptor,
                                   struct BpProcessorContext *ctx) {
     // Safe to cast to uint16_t:
@@ -210,8 +228,8 @@ void BpEncodeArrayExtensibleAhead(struct BpArrayDescriptor *descriptor,
     BpEndecodeBaseType(16, ctx, (void *)&data);
 }
 
-// BpDecodeArrayExtensibleAhead decode the ahead flag as the array capacity from
-// current bit decoding buffer.
+// BpDecodeArrayExtensibleAhead decode the ahead flag as the array capacity
+// from current bit decoding buffer.
 uint16_t BpDecodeArrayExtensibleAhead(struct BpArrayDescriptor *descriptor,
                                       struct BpProcessorContext *ctx) {
     uint16_t data = 0;
@@ -219,8 +237,8 @@ uint16_t BpDecodeArrayExtensibleAhead(struct BpArrayDescriptor *descriptor,
     return data;
 }
 
-// BpEncodeMessageExtensibleAhead encode the message number of bits as the ahead
-// flag to current bit encoding stream.
+// BpEncodeMessageExtensibleAhead encode the message number of bits as the
+// ahead flag to current bit encoding stream.
 void BpEncodeMessageExtensibleAhead(struct BpMessageDescriptor *descriptor,
                                     struct BpProcessorContext *ctx) {
     // Safe to cast to uint16_t:
@@ -229,8 +247,8 @@ void BpEncodeMessageExtensibleAhead(struct BpMessageDescriptor *descriptor,
     BpEndecodeBaseType(16, ctx, (void *)&data);
 }
 
-// BpDecodeMessageExtensibleAhead decode the ahead flag as message's number of
-// bits from current decoding buffer.
+// BpDecodeMessageExtensibleAhead decode the ahead flag as message's number
+// of bits from current decoding buffer.
 uint16_t BpDecodeMessageExtensibleAhead(struct BpMessageDescriptor *descriptor,
                                         struct BpProcessorContext *ctx) {
     uint16_t data = 0;
@@ -247,8 +265,8 @@ int BpMinTriple(int a, int b, int c) {
 // If k is larger than 0, performs a right shift, otherwise left.
 int BpSmartShift(int n, int k) {
     // Quote: If the value of the right operand is negative or is greater
-    // than or equal to the width of the promoted left operand, the behavior is
-    // undefined.
+    // than or equal to the width of the promoted left operand, the behavior
+    // is undefined.
     return (k > 0) ? (n >> k) : ((k == 0) ? n : (n << (0 - k)));
 }
 
@@ -262,8 +280,8 @@ void BpJsonFormatString(struct BpJsonFormatContext *ctx, const char *format,
     va_end(va);
 }
 
-// BpJsonFormatMessage formats the message with given descriptor to json format
-// string and writes the formatted string into buffer given by ctx.
+// BpJsonFormatMessage formats the message with given descriptor to json
+// format string and writes the formatted string into buffer given by ctx.
 void BpJsonFormatMessage(struct BpMessageDescriptor *descriptor,
                          struct BpJsonFormatContext *ctx, void *data) {
     // Formats left brace.
