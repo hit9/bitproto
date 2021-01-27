@@ -130,6 +130,24 @@ void BpEndecodeArray(struct BpArrayDescriptor *descriptor,
     }
 }
 
+// BpCopyBits copy number of c bits from given char src to given char dst.
+// Returns the new value of dst.
+// The argument src_bit_index is the index to start coping on byte src.
+// The argument dst_bit_index is the index to start coping on byte dst.
+unsigned char BpCopyBits(unsigned char src, unsigned char dst,
+                         int src_bit_index, int dst_bit_index, int c) {
+    // The number of bits to shift char src.
+    // If given src_bit_index is smaller than dst_bit_index, performs a shift
+    // left. Else shifts right.
+    int shift = src_bit_index - dst_bit_index;
+    // Mask to clear char src's right remaining bits all to 0.
+    // The following expression gives a number like 0b111100000.
+    int mask = (1 << (dst_bit_index + c)) - (1 << dst_bit_index);
+    // Result of a new dst byte.
+    // dst | (src >> shift) & mask
+    return dst | (BpSmartShift(src, shift) & mask);
+}
+
 // BpEndecodeBaseType process given base type at given data.
 void BpEndecodeBaseType(int nbits, struct BpProcessorContext *ctx, void *data) {
     // j tracks the number bits processed on current base.
@@ -138,10 +156,10 @@ void BpEndecodeBaseType(int nbits, struct BpProcessorContext *ctx, void *data) {
 
     while (j < nbits) {
         // Remaing and multiple of i / 8 and j / 8.
-        int ir = i % 8;
-        int im = i / 8;
-        int jr = j % 8;
-        int jm = j / 8;
+        int ir = i & 7;
+        int im = i >> 3;
+        int jr = j & 7;
+        int jm = j >> 3;
         // Number of bits to copy, smallest value of following numbers:
         //   The remaining bits to process to for current byte, 8 - (j % 8);
         //   The remaining bits to process from for current byte, 8 - (i % 8);
@@ -165,45 +183,18 @@ void BpEndecodeBaseType(int nbits, struct BpProcessorContext *ctx, void *data) {
 // buffer s in given context ctx.
 void BpEncodeSingleByte(struct BpProcessorContext *ctx, void *data, int ir,
                         int im, int jr, int jm, int c) {
-    // Number of bits to shift.
-    int shift = jr - ir;
-    // Mask value to intercept bits.
-    int mask = BpGetMask(ir, c);
-    // Get the value at this index as an unsigned char (byte).
-    unsigned char value = ((unsigned char *)(data))[jm];
-
-    // Delta to put on.
-    int delta = BpSmartShift(value, shift) & mask;
-
-    if (ir == 0) {  // Assign if writing at start of a byte.
-        ctx->s[im] = delta;
-    } else {  // Otherwise, run OR to copy bits.
-        ctx->s[im] |= delta;
-    }
+    unsigned char src = ((unsigned char *)data)[jm];
+    unsigned char dst = ctx->s[im];
+    ctx->s[im] = BpCopyBits(src, dst, jr, ir, c);
 }
 
 // BpDecodeSingleByte decode number of c bits from buffer s in given context ctx
 // to target data.
 void BpDecodeSingleByte(struct BpProcessorContext *ctx, void *data, int ir,
                         int im, int jr, int jm, int c) {
-    // Number of bits to shift.
-    int shift = ir - jr;
-    // Mask value to intercept bits.
-    int mask = BpGetMask(jr, c);
-
-    // Get the char at this index from buffer `s`.
-    unsigned char value = ctx->s[im];
-
-    unsigned char *data_buffer = (unsigned char *)(data);
-
-    // Delta to put on.
-    int delta = BpSmartShift(value, shift) & mask;
-
-    if (jr == 0) {  // Assign if writing to starting of a byte.
-        data_buffer[jm] = delta;
-    } else {  // Otherwise, run OR to copy bits.
-        data_buffer[jm] |= delta;
-    }
+    unsigned char dst = ((unsigned char *)data)[jm];
+    unsigned char src = ctx->s[im];
+    ((unsigned char *)data)[jm] = BpCopyBits(src, dst, ir, jr, c);
 }
 
 // BpEncodeArrayExtensibleAhead encode the array capacity as the ahead flag to
@@ -248,18 +239,6 @@ uint16_t BpDecodeMessageExtensibleAhead(struct BpMessageDescriptor *descriptor,
 int BpMinTriple(int a, int b, int c) {
     return (a < b) ? ((a < c) ? a : c) : ((b < c) ? b : c);
 }
-
-// BpGetMask returns the mask value to copy bits inside a single byte.
-// The argument k is the start bit index in the byte, argument c is the number
-// of bits to copy.
-//
-// Examples of returned mask:
-//
-//   Returns                Arguments
-//   00001111               k=0, c=4
-//   01111100               k=2, c=5
-//   00111100               k=2, c=4
-int BpGetMask(int k, int c) { return (1 << (k + c)) - (1 << k); }
 
 // BpSmartShift shifts given number n by k.
 // If k is larger than 0, performs a right shift, otherwise left.

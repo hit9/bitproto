@@ -167,6 +167,8 @@ struct BpMessageDescriptor {
 
 // Encoding & Decoding
 
+unsigned char BpCopyBits(unsigned char src, unsigned char dst,
+                         int src_bit_index, int dst_bit_index, int c);
 void BpEncodeSingleByte(struct BpProcessorContext *ctx, void *data, int ir,
                         int im, int jr, int jm, int c);
 void BpDecodeSingleByte(struct BpProcessorContext *ctx, void *data, int ir,
@@ -212,7 +214,6 @@ void BpJsonFormatArray(struct BpArrayDescriptor *descriptor,
 
 int BpMinTriple(int a, int b, int c);
 int BpSmartShift(int n, int k);
-int BpGetMask(int k, int c);
 
 #if defined(__cplusplus)
 }
