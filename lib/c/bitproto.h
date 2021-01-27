@@ -67,7 +67,6 @@ extern "C" {
                                   (field_descriptors)})
 #define BpMessageFieldDescriptor(data, type, name) \
     ((struct BpMessageFieldDescriptor){(data), (type), (name)})
-#define BpEnumDescriptor(uint) ((struct BpEnumDescriptor){(uint)})
 #define BpArrayDescriptor(extensible, cap, element_type) \
     ((struct BpArrayDescriptor){(extensible), (cap), (element_type)})
 #define BpAliasDescriptor(to) ((struct BpAliasDescriptor){(to)})
@@ -129,12 +128,6 @@ struct BpAliasDescriptor {
     struct BpType to;
 };
 
-// BpEnumDescriptor describes an enum definition.
-struct BpEnumDescriptor {
-    // The corresponding uint type.
-    struct BpType uint;
-};
-
 // BpArrayDescriptor describes an array type.
 struct BpArrayDescriptor {
     // Whether this array is extensible.
@@ -185,8 +178,6 @@ void BpEndecodeMessage(struct BpMessageDescriptor *descriptor,
                        struct BpProcessorContext *ctx, void *data);
 void BpEndecodeAlias(struct BpAliasDescriptor *descriptor,
                      struct BpProcessorContext *ctx, void *data);
-void BpEndecodeEnum(struct BpEnumDescriptor *descriptor,
-                    struct BpProcessorContext *ctx, void *data);
 void BpEndecodeArray(struct BpArrayDescriptor *descriptor,
                      struct BpProcessorContext *ctx, void *data);
 

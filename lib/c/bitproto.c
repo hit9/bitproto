@@ -80,12 +80,6 @@ void BpEndecodeAlias(struct BpAliasDescriptor *descriptor,
     }
 }
 
-void BpEndecodeEnum(struct BpEnumDescriptor *descriptor,
-                    struct BpProcessorContext *ctx, void *data) {
-    // Process inner uint.
-    BpEndecodeBaseType((descriptor->uint).nbits, ctx, data);
-}
-
 void BpEndecodeArray(struct BpArrayDescriptor *descriptor,
                      struct BpProcessorContext *ctx, void *data) {
     // Keep current number of bits total processed.
@@ -200,7 +194,6 @@ void BpDecodeSingleByte(struct BpProcessorContext *ctx, void *data, int ir,
     // Get the char at this index from buffer `s`.
     unsigned char value = ctx->s[im];
 
-    // Index of current byte in the target base type data.
     unsigned char *data_buffer = (unsigned char *)(data);
 
     // Delta to put on.
