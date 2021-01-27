@@ -148,55 +148,53 @@ unsigned char BpCopyBits(unsigned char dst, unsigned char src,
     return dst | (BpSmartShift(src, shift) & mask);
 }
 
-// BpEndecodeBaseType process given base type at given data.
-void BpEndecodeBaseType(int nbits, struct BpProcessorContext *ctx, void *data) {
-    // Destination buffer.
-    unsigned char *dst;
-    // Source buffer.
-    unsigned char *src;
-    // Bit index of source destination buffer.
-    int di = 0;
-    // Bit index of source buffer.
-    int si = 0;
-
-    // Determine the variables above
-    if (ctx->is_encode) {
-        dst = ctx->s;
-        src = (unsigned char *)data;
-        di = ctx->i;
-    } else {
-        dst = (unsigned char *)data;
-        src = ctx->s;
-        si = ctx->i;
-    }
+// BpCopyBufferBits copy number of nbits from source buffer src to destination
+// buffer dst.
+void BpCopyBufferBits(int nbits, unsigned char *dst, unsigned char *src,
+                      int dst_bit_index, int src_bit_index) {
+    // Byte index of destination buffer.
+    int dst_byte_index = 0;
+    // Byte index of source buffer.
+    int src_byte_index = 0;
+    // Mod of destination buffer bit index.
+    int dst_bit_im = 0;
+    // Mod of source buffer bit index.
+    int src_bit_im = 0;
 
     // Number of bits processed.
     int n = 0;
 
     while (n < nbits) {
-        // Byte index of destination.
-        int db = di / 8;
-        // Byte index of source.
-        int sb = si / 8;
-        // Mod of destination bit index.
-        int dm = di % 8;
-        // Mod of source bit index.
-        int sm = si % 8;
+        dst_byte_index = dst_bit_index / 8;
+        src_byte_index = src_bit_index / 8;
+        dst_bit_im = dst_bit_index % 8;
+        src_bit_im = src_bit_index % 8;
 
         // Number of bits to copy.
-        // 8-dm ensures the destination space is enough.
-        // 8-sm ensures the source space is enough.
+        // 8-dst_bit_im ensures the destination space is enough.
+        // 8-src_bit_im ensures the source space is enough.
         // nbits - n ensures the total bits remaining count.
-        int c = BpMinTriple(8 - dm, 8 - sm, nbits - n);
+        int c = BpMinTriple(8 - dst_bit_im, 8 - src_bit_im, nbits - n);
         // Copy number of c bits from src to dst.
-        dst[db] = BpCopyBits(dst[db], src[sb], dm, sm, c);
+        dst[dst_byte_index] =
+            BpCopyBits(dst[dst_byte_index], src[src_byte_index], dst_bit_im,
+                       src_bit_im, c);
         // Matain increments.
         n += c;
-        di += c;
-        si += c;
+        dst_bit_index += c;
+        src_bit_index += c;
     }
+}
 
-    ctx->i += n;
+// BpEndecodeBaseType process given base type at given data.
+void BpEndecodeBaseType(int nbits, struct BpProcessorContext *ctx, void *data) {
+    // Determine the variables above
+    if (ctx->is_encode) {
+        BpCopyBufferBits(nbits, ctx->s, (unsigned char *)data, ctx->i, 0);
+    } else {
+        BpCopyBufferBits(nbits, (unsigned char *)data, ctx->s, 0, ctx->i);
+    }
+    ctx->i += nbits;
 }
 
 // BpEncodeArrayExtensibleAhead encode the array capacity as the ahead flag to
