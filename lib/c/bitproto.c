@@ -151,6 +151,7 @@ unsigned char BpCopyBits(unsigned char dst, unsigned char src, int dst_bit_idx,
 
 // BpCopyBufferBits copy number of nbits from source buffer src to destination
 // buffer dst.
+// The argument n is the total number of bits to copy.
 // The argument src_bit_idx is the index to start coping on buffer src.
 // The argument dst_bit_idx is the index to start coping on buffer dst.
 void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src,

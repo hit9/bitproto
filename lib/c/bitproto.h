@@ -8,6 +8,7 @@
 #ifndef __BITPROTO_LIB_H__
 #define __BITPROTO_LIB_H__ 1
 
+#include <inttypes.h>
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>
