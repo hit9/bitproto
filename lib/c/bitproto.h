@@ -8,12 +8,14 @@
 #ifndef __BITPROTO_LIB_H__
 #define __BITPROTO_LIB_H__ 1
 
-#include <inttypes.h>
 #include <stdarg.h>
-#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+
+#ifndef __cplusplus
+#include <stdbool.h>
+#endif
 
 #if defined(__cplusplus)
 extern "C" {
