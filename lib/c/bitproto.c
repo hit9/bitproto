@@ -134,8 +134,8 @@ void BpEndecodeArray(struct BpArrayDescriptor *descriptor,
 // Returns the new value of dst.
 // The argument src_bit_index is the index to start coping on byte src.
 // The argument dst_bit_index is the index to start coping on byte dst.
-unsigned char BpCopyBits(unsigned char src, unsigned char dst,
-                         int src_bit_index, int dst_bit_index, int c) {
+unsigned char BpCopyBits(unsigned char dst, unsigned char src,
+                         int dst_bit_index, int src_bit_index, int c) {
     // The number of bits to shift char src.
     // If given src_bit_index is smaller than dst_bit_index, performs a shift
     // left. Else shifts right.
@@ -154,6 +154,9 @@ void BpEndecodeBaseType(int nbits, struct BpProcessorContext *ctx, void *data) {
     int j = 0;
     int i = ctx->i;
 
+    unsigned char *s = ctx->s;
+    unsigned char *d = (unsigned char *)data;
+
     while (j < nbits) {
         // Remaing and multiple of i / 8 and j / 8.
         int ir = i & 7;
@@ -167,9 +170,9 @@ void BpEndecodeBaseType(int nbits, struct BpProcessorContext *ctx, void *data) {
         int c = BpMinTriple(8 - jr, 8 - ir, nbits - j);
 
         if (ctx->is_encode)
-            BpEncodeSingleByte(ctx, data, ir, im, jr, jm, c);
+            s[im] = BpCopyBits(s[im], d[jm], ir, jr, c);
         else
-            BpDecodeSingleByte(ctx, data, ir, im, jr, jm, c);
+            d[jm] = BpCopyBits(d[jm], s[im], jr, ir, c);
 
         // Maintain j and i.
         j += c;
@@ -177,24 +180,6 @@ void BpEndecodeBaseType(int nbits, struct BpProcessorContext *ctx, void *data) {
     }
 
     ctx->i = i;
-}
-
-// BpEncodeSingleByte encode number of c bits in a single byte of data to target
-// buffer s in given context ctx.
-void BpEncodeSingleByte(struct BpProcessorContext *ctx, void *data, int ir,
-                        int im, int jr, int jm, int c) {
-    unsigned char src = ((unsigned char *)data)[jm];
-    unsigned char dst = ctx->s[im];
-    ctx->s[im] = BpCopyBits(src, dst, jr, ir, c);
-}
-
-// BpDecodeSingleByte decode number of c bits from buffer s in given context ctx
-// to target data.
-void BpDecodeSingleByte(struct BpProcessorContext *ctx, void *data, int ir,
-                        int im, int jr, int jm, int c) {
-    unsigned char dst = ((unsigned char *)data)[jm];
-    unsigned char src = ctx->s[im];
-    ((unsigned char *)data)[jm] = BpCopyBits(src, dst, ir, jr, c);
 }
 
 // BpEncodeArrayExtensibleAhead encode the array capacity as the ahead flag to

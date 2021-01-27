@@ -167,12 +167,8 @@ struct BpMessageDescriptor {
 
 // Encoding & Decoding
 
-unsigned char BpCopyBits(unsigned char src, unsigned char dst,
-                         int src_bit_index, int dst_bit_index, int c);
-void BpEncodeSingleByte(struct BpProcessorContext *ctx, void *data, int ir,
-                        int im, int jr, int jm, int c);
-void BpDecodeSingleByte(struct BpProcessorContext *ctx, void *data, int ir,
-                        int im, int jr, int jm, int c);
+unsigned char BpCopyBits(unsigned char dst, unsigned char src,
+                         int dst_bit_index, int src_bit_index, int c);
 void BpEndecodeBaseType(int nbits, struct BpProcessorContext *ctx, void *data);
 void BpEndecodeMessageField(struct BpMessageFieldDescriptor *descriptor,
                             struct BpProcessorContext *ctx, void *data);
