@@ -132,8 +132,9 @@ void BpEndecodeArray(struct BpArrayDescriptor *descriptor,
 
 // BpCopyBits copy number of c bits from given char src to given char dst.
 // Returns the new value of dst.
-// The argument src_bit_index is the index to start coping on byte src.
-// The argument dst_bit_index is the index to start coping on byte dst.
+// The argument src_bit_index is the index in the single byte src to start
+// coping. The argument dst_bit_index is the index in the single byte dst to
+// start coping.
 unsigned char BpCopyBits(unsigned char dst, unsigned char src,
                          int dst_bit_index, int src_bit_index, int c) {
     // The number of bits to shift char src.
@@ -150,6 +151,8 @@ unsigned char BpCopyBits(unsigned char dst, unsigned char src,
 
 // BpCopyBufferBits copy number of nbits from source buffer src to destination
 // buffer dst.
+// The argument src_bit_index is the index to start coping on buffer src.
+// The argument dst_bit_index is the index to start coping on buffer dst.
 void BpCopyBufferBits(int nbits, unsigned char *dst, unsigned char *src,
                       int dst_bit_index, int src_bit_index) {
     // Byte index of destination buffer.
@@ -165,10 +168,10 @@ void BpCopyBufferBits(int nbits, unsigned char *dst, unsigned char *src,
     int n = 0;
 
     while (n < nbits) {
-        dst_byte_index = dst_bit_index / 8;
-        src_byte_index = src_bit_index / 8;
-        dst_bit_im = dst_bit_index % 8;
-        src_bit_im = src_bit_index % 8;
+        dst_byte_index = dst_bit_index >> 3;
+        src_byte_index = src_bit_index >> 3;
+        dst_bit_im = dst_bit_index & 7;
+        src_bit_im = src_bit_index & 7;
 
         // Number of bits to copy.
         // 8-dst_bit_im ensures the destination space is enough.
