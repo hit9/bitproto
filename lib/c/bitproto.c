@@ -50,9 +50,9 @@ void BpEndecodeMessageField(struct BpMessageFieldDescriptor *descriptor,
         case BP_TYPE_INT:
         case BP_TYPE_UINT:
         case BP_TYPE_BYTE:
+        case BP_TYPE_ENUM:
             BpEndecodeBaseType((descriptor->type).nbits, ctx, descriptor->data);
             break;
-        case BP_TYPE_ENUM:
         case BP_TYPE_ALIAS:
         case BP_TYPE_ARRAY:
         case BP_TYPE_MESSAGE:
@@ -117,11 +117,11 @@ void BpEndecodeArray(struct BpArrayDescriptor *descriptor,
             case BP_TYPE_INT:
             case BP_TYPE_UINT:
             case BP_TYPE_BYTE:
+            case BP_TYPE_ENUM:
                 BpEndecodeBaseType(element_nbits, ctx, element_data);
                 break;
             case BP_TYPE_ALIAS:
             case BP_TYPE_MESSAGE:
-            case BP_TYPE_ENUM:
                 descriptor->element_type.processor(element_data, ctx);
                 break;
         }
@@ -317,16 +317,19 @@ void BpJsonFormatMessageField(struct BpMessageFieldDescriptor *descriptor,
     // Format key.
     BpJsonFormatString(ctx, "\"%s\":", descriptor->name);
 
+    int flag = descriptor->type.flag;
+    int nbits = descriptor->type.nbits;
+
     // Format value.
-    switch (descriptor->type.flag) {
+    switch (flag) {
         case BP_TYPE_BOOL:
         case BP_TYPE_INT:
         case BP_TYPE_UINT:
         case BP_TYPE_BYTE:
-            BpJsonFormatBaseType(descriptor->type, ctx, descriptor->data);
+        case BP_TYPE_ENUM:
+            BpJsonFormatBaseType(flag, nbits, ctx, descriptor->data);
             break;
         case BP_TYPE_ARRAY:
-        case BP_TYPE_ENUM:
         case BP_TYPE_ALIAS:
         case BP_TYPE_MESSAGE:
             descriptor->type.json_formatter(descriptor->data, ctx);
@@ -335,9 +338,9 @@ void BpJsonFormatMessageField(struct BpMessageFieldDescriptor *descriptor,
 }
 
 // BpJsonFormatBaseType formats a data in base type to json format.
-void BpJsonFormatBaseType(struct BpType type, struct BpJsonFormatContext *ctx,
+void BpJsonFormatBaseType(int flag, int nbits, struct BpJsonFormatContext *ctx,
                           void *data) {
-    switch (type.flag) {
+    switch (flag) {
         case BP_TYPE_BOOL:
             // Bool
             BpJsonFormatString(ctx, "%s",
@@ -346,24 +349,25 @@ void BpJsonFormatBaseType(struct BpType type, struct BpJsonFormatContext *ctx,
         case BP_TYPE_INT:
             // Int
             // FIXME 32bit differs with 64bit
-            if (type.nbits <= 8) {
+            if (nbits <= 8) {
                 BpJsonFormatString(ctx, "%d", (*((int8_t *)data)));
-            } else if (type.nbits <= 16) {
+            } else if (nbits <= 16) {
                 BpJsonFormatString(ctx, "%d", (*((int16_t *)data)));
-            } else if (type.nbits <= 32) {
+            } else if (nbits <= 32) {
                 BpJsonFormatString(ctx, "%d", (*((int32_t *)data)));
             } else {
                 BpJsonFormatString(ctx, "%ld", (*((int64_t *)data)));
             }
             break;
         case BP_TYPE_UINT:
+        case BP_TYPE_ENUM:
             // Uint
             // FIXME 32bit differs with 64bit
-            if (type.nbits <= 8) {
+            if (nbits <= 8) {
                 BpJsonFormatString(ctx, "%u", (*((uint8_t *)data)));
-            } else if (type.nbits <= 16) {
+            } else if (nbits <= 16) {
                 BpJsonFormatString(ctx, "%u", (*((uint16_t *)data)));
-            } else if (type.nbits <= 32) {
+            } else if (nbits <= 32) {
                 BpJsonFormatString(ctx, "%lu", (*((uint32_t *)data)));
             } else {
                 BpJsonFormatString(ctx, "%llu", (*((uint64_t *)data)));
@@ -376,21 +380,16 @@ void BpJsonFormatBaseType(struct BpType type, struct BpJsonFormatContext *ctx,
     }
 }
 
-// BpJsonFormatEnum formats an enum with given descriptor to json format.
-void BpJsonFormatEnum(struct BpEnumDescriptor *descriptor,
-                      struct BpJsonFormatContext *ctx, void *data) {
-    BpJsonFormatBaseType(descriptor->uint, ctx, data);
-}
-
-// BpJsonFormatEnum formats an alias with given descriptor to json format.
+// BpJsonFormatAlias formats an alias with given descriptor to json format.
 void BpJsonFormatAlias(struct BpAliasDescriptor *descriptor,
                        struct BpJsonFormatContext *ctx, void *data) {
-    switch (descriptor->to.flag) {
+    int flag = descriptor->to.flag;
+    switch (flag) {
         case BP_TYPE_BOOL:
         case BP_TYPE_INT:
         case BP_TYPE_UINT:
         case BP_TYPE_BYTE:
-            BpJsonFormatBaseType(descriptor->to, ctx, data);
+            BpJsonFormatBaseType(flag, descriptor->to.nbits, ctx, data);
             break;
         case BP_TYPE_ARRAY:
             descriptor->to.json_formatter(data, ctx);
@@ -398,29 +397,31 @@ void BpJsonFormatAlias(struct BpAliasDescriptor *descriptor,
     }
 }
 
-// BpJsonFormatEnum formats an array with given descriptor to json format.
+// BpJsonFormatArray formats an array with given descriptor to json format.
 void BpJsonFormatArray(struct BpArrayDescriptor *descriptor,
                        struct BpJsonFormatContext *ctx, void *data) {
     BpJsonFormatString(ctx, "[");
 
     int element_size = descriptor->element_type.size;
+    int element_flag = descriptor->element_type.flag;
+    int element_nbits = descriptor->element_type.nbits;
     unsigned char *data_ptr = (unsigned char *)data;
 
     // Format array elements.
     for (int k = 0; k < descriptor->cap; k++) {
         // Lookup the address of this element's data.
         void *element_data = (void *)(data_ptr + k * element_size);
-        switch (descriptor->element_type.flag) {
+        switch (element_flag) {
             case BP_TYPE_BOOL:
             case BP_TYPE_INT:
             case BP_TYPE_UINT:
             case BP_TYPE_BYTE:
-                BpJsonFormatBaseType(descriptor->element_type, ctx,
+            case BP_TYPE_ENUM:
+                BpJsonFormatBaseType(element_flag, element_nbits, ctx,
                                      element_data);
                 break;
             case BP_TYPE_ALIAS:
             case BP_TYPE_MESSAGE:
-            case BP_TYPE_ENUM:
                 descriptor->element_type.json_formatter(element_data, ctx);
                 break;
         }

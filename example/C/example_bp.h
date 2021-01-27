@@ -192,21 +192,6 @@ void BpXXXJsonFormatTimestamp(void *data, struct BpJsonFormatContext *ctx);
 void BpXXXProcessTernaryInt32(void *data, struct BpProcessorContext *ctx);
 void BpXXXJsonFormatTernaryInt32(void *data, struct BpJsonFormatContext *ctx);
 
-void BpXXXProcessDroneStatus(void *data, struct BpProcessorContext *ctx);
-void BpXXXJsonFormatDroneStatus(void *data, struct BpJsonFormatContext *ctx);
-
-void BpXXXProcessPropellerStatus(void *data, struct BpProcessorContext *ctx);
-void BpXXXJsonFormatPropellerStatus(void *data, struct BpJsonFormatContext *ctx);
-
-void BpXXXProcessRotatingDirection(void *data, struct BpProcessorContext *ctx);
-void BpXXXJsonFormatRotatingDirection(void *data, struct BpJsonFormatContext *ctx);
-
-void BpXXXProcessPowerStatus(void *data, struct BpProcessorContext *ctx);
-void BpXXXJsonFormatPowerStatus(void *data, struct BpJsonFormatContext *ctx);
-
-void BpXXXProcessLandingGearStatus(void *data, struct BpProcessorContext *ctx);
-void BpXXXJsonFormatLandingGearStatus(void *data, struct BpJsonFormatContext *ctx);
-
 void BpXXXProcessPropeller(void *data, struct BpProcessorContext *ctx);
 void BpXXXJsonFormatPropeller(void *data, struct BpJsonFormatContext *ctx);
 

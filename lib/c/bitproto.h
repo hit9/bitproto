@@ -53,8 +53,8 @@ extern "C" {
 #define BpMessage(nbits, size, processor, formatter)                \
     ((struct BpType){BP_TYPE_MESSAGE, (nbits), (size), (processor), \
                      (formatter)})
-#define BpEnum(nbits, size, processor, formatter) \
-    ((struct BpType){BP_TYPE_ENUM, (nbits), (size), (processor), (formatter)})
+#define BpEnum(nbits, size) \
+    ((struct BpType){BP_TYPE_ENUM, (nbits), (size), NULL, NULL})
 #define BpArray(nbits, size, processor, formatter) \
     ((struct BpType){BP_TYPE_ARRAY, (nbits), (size), (processor), (formatter)})
 #define BpAlias(nbits, size, processor, formatter) \
@@ -208,12 +208,10 @@ void BpJsonFormatString(struct BpJsonFormatContext *ctx, const char *format,
                         ...);
 void BpJsonFormatMessage(struct BpMessageDescriptor *descriptor,
                          struct BpJsonFormatContext *ctx, void *data);
-void BpJsonFormatBaseType(struct BpType type, struct BpJsonFormatContext *ctx,
+void BpJsonFormatBaseType(int flag, int nbits, struct BpJsonFormatContext *ctx,
                           void *data);
 void BpJsonFormatAlias(struct BpAliasDescriptor *descriptor,
                        struct BpJsonFormatContext *ctx, void *data);
-void BpJsonFormatEnum(struct BpEnumDescriptor *descriptor,
-                      struct BpJsonFormatContext *ctx, void *data);
 void BpJsonFormatMessageField(struct BpMessageFieldDescriptor *descriptor,
                               struct BpJsonFormatContext *ctx);
 void BpJsonFormatArray(struct BpArrayDescriptor *descriptor,

@@ -180,38 +180,6 @@ class BlockEnumFieldList(BlockBindEnum[F], BlockComposition[F]):
         return "\n"
 
 
-class BlockEnumProcessorBase(BlockBindEnum[F]):
-    @cached_property
-    def function_name(self) -> str:
-        return self.formatter.format_bp_enum_processor_name(self.d)
-
-    @cached_property
-    def function_signature(self) -> str:
-        return f"void {self.function_name}(void *data, struct BpProcessorContext *ctx)"
-
-
-class BlockEnumProcessorDeclaration(BlockEnumProcessorBase):
-    @override(Block)
-    def render(self) -> None:
-        self.push(f"{self.function_signature};")
-
-
-class BlockEnumJsonFormatterBase(BlockBindEnum[F]):
-    @cached_property
-    def function_name(self) -> str:
-        return self.formatter.format_bp_enum_json_formatter_name(self.d)
-
-    @cached_property
-    def function_signature(self) -> str:
-        return f"void {self.function_name}(void *data, struct BpJsonFormatContext *ctx)"
-
-
-class BlockEnumJsonFormatterDeclaration(BlockEnumJsonFormatterBase):
-    @override(Block)
-    def render(self) -> None:
-        self.push(f"{self.function_signature};")
-
-
 class BlockEnumDef(BlockBindEnum[F]):
     @override(Block)
     def render(self) -> None:
@@ -227,19 +195,6 @@ class BlockEnumDefs(BlockBindEnum[F], BlockComposition[F]):
             BlockEnumDef(self.d),
             BlockEnumFieldList(self.d),
         ]
-
-
-class BlockEnumFunctionDeclarationsForInternal(BlockBindEnum[F], BlockComposition[F]):
-    @override(BlockComposition)
-    def blocks(self) -> List[Block[F]]:
-        return [
-            BlockEnumProcessorDeclaration(self.d),
-            BlockEnumJsonFormatterDeclaration(self.d),
-        ]
-
-    @override(BlockComposition)
-    def separator(self) -> str:
-        return "\n"
 
 
 class BlockMessageField(BlockBindMessageField[F]):
@@ -482,8 +437,6 @@ class BlockFunctionDeclarationsForInternalList(BlockBoundDefinitionDispatcher[F]
     def dispatch(self, d: BoundDefinition) -> Optional[Block[F]]:
         if isinstance(d, Alias):
             return BlockAliasFunctionDeclarationsForInternal(d)
-        if isinstance(d, Enum):
-            return BlockEnumFunctionDeclarationsForInternal(d)
         if isinstance(d, Message):
             return BlockMessageFunctionDeclarationsForInternal(d)
         return None
