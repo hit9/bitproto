@@ -10,11 +10,7 @@ from abc import abstractmethod
 from typing import Generic, List, Optional
 
 from bitproto._ast import Proto
-from bitproto.errors import (
-    InternalError,
-    InvalidProtoOptimizationMode,
-    LanguageNotSupportOptimizationMode,
-)
+from bitproto.errors import InternalError, LanguageNotSupportOptimizationMode
 from bitproto.renderer.block import Block, BlockRenderContext
 from bitproto.renderer.formatter import F, Formatter
 from bitproto.utils import final, overridable
@@ -80,12 +76,15 @@ class Renderer(Generic[F]):
 
     @final
     def check_proto_for_optimization_mode(self) -> None:
-        """Raises if proto contains non-traditional definitions."""
+        """Raises if proto contains non-traditional definitions.
+
+        Proto's definitions and types aren't checked whether to be traditional here. The
+        parser is enforced to traditional mode to check it during parsing.
+        """
         if not self.optimization_mode:
             return
         if not self.support_optimization():
             raise LanguageNotSupportOptimizationMode(lang=self.language_name())
-        pass
 
     @abstractmethod
     def language_name(self) -> str:

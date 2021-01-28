@@ -101,7 +101,7 @@ def main(
 ) -> None:
     # Parse
     try:
-        traditional_mode = enable_optimize
+        traditional_mode = enable_optimize and not check
         proto = parse(filepath, traditional_mode=traditional_mode)
     except ParserError as error:
         fatal(error.colored())

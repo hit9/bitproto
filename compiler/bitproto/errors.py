@@ -345,11 +345,6 @@ class LanguageNotSupportOptimizationMode(RendererError):
 
 
 @dataclass
-class InvalidProtoOptimizationMode(RendererError):
-    """Invalid proto in optimization mode, extensiblity is not supported."""
-
-
-@dataclass
 class LintWarning(_TokenBound, Warning):
     """Some warning occurred during bitproto linting."""
 
