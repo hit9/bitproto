@@ -16,7 +16,7 @@ example:
 	make -C example
 
 bench:
-	make -C benchmark/bench-on-os
+	make -C benchmark/unix
 
 bench-c-o1:
 	make -C benchmark/bench-on-os bench-c-o1
