@@ -50,7 +50,7 @@ extern "C" {
 #define BpInt(nbits, size) \
     ((struct BpType){BP_TYPE_INT, (nbits), (size), NULL, NULL})
 #define BpByte() \
-    ((struct BpType){BP_TYPE_BYTE, 8, sizeof(unsigned char), NULL, NULL});
+    ((struct BpType){BP_TYPE_BYTE, 8, sizeof(unsigned char), NULL, NULL})
 #define BpMessage(nbits, size, processor, formatter)                \
     ((struct BpType){BP_TYPE_MESSAGE, (nbits), (size), (processor), \
                      (formatter)})
