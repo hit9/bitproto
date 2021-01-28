@@ -1,5 +1,5 @@
-bitproto benchmark
-==================
+bitproto benchmark on OS
+========================
 
 How to run:
 
@@ -15,4 +15,5 @@ How to run:
 
      $ cd C && make bench
 
-`Benchmark result on Github Actions here <https://github.com/hit9/bitproto/actions?query=workflow%3A%22bitproto+benchmark%22>`_.
+Checks the benchmark on Github Actions:
+`Benchmark result on Github Actions <https://github.com/hit9/bitproto/actions?query=workflow%3A%22bitproto+benchmark%22>`_.
