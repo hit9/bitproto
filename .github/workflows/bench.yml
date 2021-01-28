@@ -18,6 +18,7 @@ jobs:
       matrix:
         os: [ubuntu-20.04, ubuntu-18.04, macos-latest]
         python: [3.9]
+        go: [1.15]
 
     runs-on: ${{ matrix.os  }}
 
@@ -28,12 +29,22 @@ jobs:
       with:
         python-version: ${{ matrix.python }}
 
+    - uses: actions/checkout@v2
+    - name: Set up Golang ${{ matrix.go }}
+      uses: actions/setup-go@v2
+      with:
+        go-version: ${{ matrix.go }}
+
     - name: Install bitproto compiler
       run: |
         pip install -e ./compiler
 
+    - name: Install bitproto python lib
+      run: |
+        pip install -e ./lib/py
+
     - name: Run benchmark
       run: |
         make bench
-        make bench-o1
-        make bench-o2
+        make bench-c-o1
+        make bench-c-o2

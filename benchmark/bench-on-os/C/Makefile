@@ -1,4 +1,4 @@
-BITPROTO_LIB_PATH=../../lib/c
+BITPROTO_LIB_PATH=../../../lib/c
 
 CC_OPTIMIZE?=
 
