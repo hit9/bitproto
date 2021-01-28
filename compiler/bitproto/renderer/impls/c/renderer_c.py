@@ -410,6 +410,10 @@ class RendererC(Renderer[F]):
     """Renderer for C language (c file)."""
 
     @override(Renderer)
+    def language_name(self) -> str:
+        return "c"
+
+    @override(Renderer)
     def file_extension(self) -> str:
         return ".c"
 

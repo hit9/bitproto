@@ -87,6 +87,7 @@ def run_bitproto() -> None:
         outdir=args.outdir,
         disable_linter=args.disable_linter,
         check=args.check,
+        enable_optimize=args.enable_optimize,
     )
 
 
@@ -96,6 +97,7 @@ def main(
     outdir: str = "",
     disable_linter: bool = False,
     check: bool = False,
+    enable_optimize: bool = False,
 ) -> None:
     # Parse
     try:
@@ -119,7 +121,7 @@ def main(
         fatal(str(NoLanguageArgument()))
 
     try:
-        render(proto, lang, outdir=outdir)
+        render(proto, lang, outdir=outdir, optimization_mode=enable_optimize)
     except RendererError as error:
         fatal(error.colored())
     except IOError as error:

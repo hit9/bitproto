@@ -10,9 +10,14 @@ from abc import abstractmethod
 from typing import Generic, List, Optional
 
 from bitproto._ast import Proto
-from bitproto.errors import InternalError
+from bitproto.errors import (
+    InternalError,
+    InvalidProtoOptimizationMode,
+    LanguageNotSupportOptimizationMode,
+)
 from bitproto.renderer.block import Block, BlockRenderContext
 from bitproto.renderer.formatter import F, Formatter
+from bitproto.utils import final, overridable
 
 
 class Renderer(Generic[F]):
@@ -21,11 +26,19 @@ class Renderer(Generic[F]):
     :param proto: The parsed bitproto instance.
     :param outdir: The directory to write files, defaults to the source
        bitproto's file directory, or cwd.
+    :param optimization_mode: Whether the optimization_mode is enabled.
     """
 
-    def __init__(self, proto: Proto, outdir: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        proto: Proto,
+        outdir: Optional[str] = None,
+        optimization_mode: bool = False,
+    ) -> None:
         self.proto = proto
         self.outdir = outdir or self.get_outdir_default(proto)
+        self.optimization_mode = optimization_mode
+        self.check_proto_for_optimization_mode()
 
         self.out_filename = self.get_out_filename()
         self.out_filepath = os.path.join(self.outdir, self.out_filename)
@@ -65,6 +78,20 @@ class Renderer(Generic[F]):
             f.write(content)
         return self.out_filepath
 
+    @final
+    def check_proto_for_optimization_mode(self) -> None:
+        """Raises if proto contains non-traditional definitions."""
+        if not self.optimization_mode:
+            return
+        if not self.support_optimization():
+            raise LanguageNotSupportOptimizationMode(lang=self.language_name())
+        pass
+
+    @abstractmethod
+    def language_name(self) -> str:
+        """Returns the language name of this renderer."""
+        raise NotImplementedError
+
     @abstractmethod
     def block(self) -> Block[F]:
         """Returns the block to render."""
@@ -79,3 +106,10 @@ class Renderer(Generic[F]):
     def formatter(self) -> F:
         """Returns the formatter of this renderer."""
         raise NotImplementedError
+
+    @overridable
+    def support_optimization(self) -> bool:
+        """Returns `True` if this render supports optimization mode.
+        Defaults to False.
+        """
+        return False

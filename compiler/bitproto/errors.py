@@ -324,6 +324,27 @@ class ProtoNameUndefined(GrammarError):
 
 
 @dataclass
+class LanguageNotSupportOptimizationMode(RendererError):
+    """Language doesn't support optimization mode."""
+
+    lang: str = ""
+
+    @override(Base)
+    def format_default_description(self) -> str:
+        message: str
+        if self.lang:
+            message = f"Optimization mode for language {self.lang} isn't supported."
+        else:
+            message = self.__doc__ or ""
+        return message
+
+
+@dataclass
+class InvalidProtoOptimizationMode(RendererError):
+    """Invalid proto in optimization mode, extensiblity is not supported."""
+
+
+@dataclass
 class LintWarning(_TokenBound, Warning):
     """Some warning occurred during bitproto linting."""
 

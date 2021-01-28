@@ -712,6 +712,10 @@ class RendererGo(Renderer[F]):
     """Renderer for Go language."""
 
     @override(Renderer)
+    def language_name(self) -> str:
+        return "go"
+
+    @override(Renderer)
     def file_extension(self) -> str:
         return ".go"
 

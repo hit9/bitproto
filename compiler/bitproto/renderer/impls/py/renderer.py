@@ -658,6 +658,10 @@ class RendererPy(Renderer[F]):
     """Renderer for Python language."""
 
     @override(Renderer)
+    def language_name(self) -> str:
+        return "py"
+
+    @override(Renderer)
     def file_extension(self) -> str:
         return ".py"
 
