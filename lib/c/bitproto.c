@@ -8,7 +8,7 @@
 ///////////////////
 
 // BpEndecodeMessage process given message at data with provided message
-// descriptor. It iterate all message fields to process.
+// descriptor. It iterates all message fields to process.
 void BpEndecodeMessage(struct BpMessageDescriptor *descriptor,
                        struct BpProcessorContext *ctx, void *data) {
     // Keep current number of bits total processed.
@@ -80,6 +80,8 @@ void BpEndecodeAlias(struct BpAliasDescriptor *descriptor,
     }
 }
 
+// BpEndecodeArray process given array at data with provided descriptor. It
+// iterates all array elements to process.
 void BpEndecodeArray(struct BpArrayDescriptor *descriptor,
                      struct BpProcessorContext *ctx, void *data) {
     // Keep current number of bits total processed.
@@ -156,19 +158,30 @@ unsigned char BpCopyBits(unsigned char dst, unsigned char src, int dst_bit_idx,
 // The argument dst_bit_idx is the index to start coping on buffer dst.
 void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src,
                       int dst_bit_idx, int src_bit_idx) {
+    // n is the number of bits remaining to process.
     while (n > 0) {
+        // Byte index in destination buffer.
         int dst_byte_idx = dst_bit_idx >> 3;
+        // Byte index in source buffer.
         int src_byte_idx = src_bit_idx >> 3;
 
+        // Remainder of destination bit index on 8.
         int dst_bit_im = dst_bit_idx & 7;
+        // Remainder of source bit index on 8.
         int src_bit_im = src_bit_idx & 7;
 
+        // Pointer to the destination to write this iteration.
         unsigned char *dst_ptr = dst + dst_byte_idx;
+        // Pointer to the destination to read this iteration.
         unsigned char *src_ptr = src + src_byte_idx;
 
+        // Number of bits to shift if goes into the optimized batch writing
+        // branch.
         int shift = src_bit_im;
+        // The capacity of bits for batch writing.
         int bits = n + shift;
 
+        // Number of bits to copy this iteration.
         int c = 0;
 
         if (dst_bit_im == 0 && src_bit_im == 0 && n >= 8) {
@@ -176,6 +189,8 @@ void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src,
             dst_ptr[0] = src_ptr[0];
             c = 8;
         } else if (dst_bit_im != 0 || bits < 8) {
+            // Copy on single byte.
+
             // Number of bits to copy.
             // 8-dst_bit_im ensures the destination space is enough.
             // 8-src_bit_im ensures the source space is enough.
@@ -185,6 +200,8 @@ void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src,
                 BpCopyBits(dst_ptr[0], src_ptr[0], dst_bit_im, src_bit_im, c);
 
         } else if (bits >= 32) {
+            // Copy as an uint32 integer.
+            // This way, performance faster x2 than BpCopyBits iteration.
             uint32_t v32 = (*((uint32_t *)(src_ptr))) >> shift;
             unsigned char *ptr = (unsigned char *)(&v32);
             dst_ptr[0] = ptr[0];
@@ -194,6 +211,7 @@ void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src,
 
             c = 32 - shift;
         } else if (bits >= 16) {
+            // Copy as an uint16 integer.
             uint16_t v16 = (*(uint16_t *)(src_ptr)) >> shift;
             unsigned char *ptr = (unsigned char *)(&v16);
             dst_ptr[0] = ptr[0];
@@ -201,11 +219,13 @@ void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src,
 
             c = 16 - shift;
         } else if (bits >= 8) {
+            // Copy as an unsigned char.
             dst_ptr[0] = (src_ptr[0] >> shift) & 0xff;
 
             c = 8 - shift;
         }
 
+        // Maintain in(de)crements.
         n -= c;
         dst_bit_idx += c;
         src_bit_idx += c;
