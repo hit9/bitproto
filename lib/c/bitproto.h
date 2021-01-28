@@ -10,14 +10,23 @@
 
 #include <inttypes.h>
 #include <stdarg.h>
-#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 
+#ifndef __cplusplus
+#include <stdbool.h>
+#endif
+
 #if defined(__cplusplus)
 extern "C" {
 #endif
+
+////////////////////
+// Macros
+////////////////////
+
+// BpType Flags.
 
 #define BP_TYPE_BOOL 1
 #define BP_TYPE_INT 2
@@ -27,6 +36,41 @@ extern "C" {
 #define BP_TYPE_ALIAS 6
 #define BP_TYPE_ARRAY 7
 #define BP_TYPE_MESSAGE 8
+
+// Context Constructors.
+#define BpProcessorContext(is_encode, s) \
+    ((struct BpProcessorContext){(is_encode), 0, (s)})
+#define BpJsonFormatContext(s) \
+    (struct BpJsonFormatContext) { 0, (s) }
+
+// BpType Constructors.
+#define BpBool() ((struct BpType){BP_TYPE_BOOL, 1, sizeof(bool), NULL, NULL})
+#define BpUint(nbits, size) \
+    ((struct BpType){BP_TYPE_UINT, (nbits), (size), NULL, NULL})
+#define BpInt(nbits, size) \
+    ((struct BpType){BP_TYPE_INT, (nbits), (size), NULL, NULL})
+#define BpByte() \
+    ((struct BpType){BP_TYPE_BYTE, 8, sizeof(unsigned char), NULL, NULL})
+#define BpMessage(nbits, size, processor, formatter)                \
+    ((struct BpType){BP_TYPE_MESSAGE, (nbits), (size), (processor), \
+                     (formatter)})
+#define BpEnum(nbits, size) \
+    ((struct BpType){BP_TYPE_ENUM, (nbits), (size), NULL, NULL})
+#define BpArray(nbits, size, processor, formatter) \
+    ((struct BpType){BP_TYPE_ARRAY, (nbits), (size), (processor), (formatter)})
+#define BpAlias(nbits, size, processor, formatter) \
+    ((struct BpType){BP_TYPE_ALIAS, (nbits), (size), (processor), (formatter)})
+
+// Descriptors
+
+#define BpMessageDescriptor(extensible, nfields, nbits, field_descriptors) \
+    ((struct BpMessageDescriptor){(extensible), (nfields), (nbits),        \
+                                  (field_descriptors)})
+#define BpMessageFieldDescriptor(data, type, name) \
+    ((struct BpMessageFieldDescriptor){(data), (type), (name)})
+#define BpArrayDescriptor(extensible, cap, element_type) \
+    ((struct BpArrayDescriptor){(extensible), (cap), (element_type)})
+#define BpAliasDescriptor(to) ((struct BpAliasDescriptor){(to)})
 
 ////////////////////
 // Data Abstractions
@@ -66,9 +110,9 @@ struct BpType {
     // Flag of this type.
     int flag;
     // Number of bits this type occupy in encoding.
-    size_t nbits;
+    int nbits;
     // Number of bytes this type occupy in memory.
-    size_t size;
+    int size;
 
     // Processor function for this type.
     // Sets if this type is message, enum, alias or array, otherwise NULL.
@@ -85,18 +129,12 @@ struct BpAliasDescriptor {
     struct BpType to;
 };
 
-// BpEnumDescriptor describes an enum definition.
-struct BpEnumDescriptor {
-    // The corresponding uint type.
-    struct BpType uint;
-};
-
 // BpArrayDescriptor describes an array type.
 struct BpArrayDescriptor {
     // Whether this array is extensible.
     bool extensible;
     // Capacity of this array.
-    size_t cap;
+    int cap;
     // The array element's type.
     struct BpType element_type;
 };
@@ -119,7 +157,7 @@ struct BpMessageDescriptor {
     // Number of fields this message contains.
     int nfields;
     // Number of bits this message occupy.
-    size_t nbits;
+    int nbits;
     // List of descriptors of the message fields.
     struct BpMessageFieldDescriptor *field_descriptors;
 };
@@ -128,56 +166,19 @@ struct BpMessageDescriptor {
 // Declarations
 ////////////////
 
-// Context Constructor.
-struct BpProcessorContext BpProcessorContext(bool is_encode, unsigned char *s);
-struct BpJsonFormatContext BpJsonFormatContext(char *s);
-
-// BpType Constructors.
-
-struct BpType BpBool();
-struct BpType BpInt(size_t nbits);
-struct BpType BpUint(size_t nbits);
-struct BpType BpByte();
-struct BpType BpMessage(size_t nbits, size_t size, BpProcessor processor,
-                        BpJsonFormatter formatter);
-struct BpType BpEnum(size_t nbits, size_t size, BpProcessor processor,
-                     BpJsonFormatter formatter);
-struct BpType BpArray(size_t nbits, size_t size, BpProcessor processor,
-                      BpJsonFormatter formatter);
-struct BpType BpAlias(size_t nbits, size_t size, BpProcessor processor,
-                      BpJsonFormatter formatter);
-
-// Descriptor Constructors.
-
-struct BpMessageDescriptor BpMessageDescriptor(
-    bool extensible, int nfields, size_t nbits,
-    struct BpMessageFieldDescriptor *field_descriptors);
-struct BpMessageFieldDescriptor BpMessageFieldDescriptor(void *data,
-                                                         struct BpType type,
-                                                         char *name);
-struct BpEnumDescriptor BpEnumDescriptor(struct BpType uint);
-struct BpArrayDescriptor BpArrayDescriptor(bool extensible, size_t cap,
-                                           struct BpType element_type);
-struct BpAliasDescriptor BpAliasDescriptor(struct BpType to);
-
 // Encoding & Decoding
 
-void BpEncodeSingleByte(struct BpProcessorContext *ctx, void *data, int j,
-                        int c);
-void BpDecodeSingleByte(struct BpProcessorContext *ctx, void *data, int j,
-                        int c);
-void BpEndecodeSingleByte(struct BpProcessorContext *ctx, void *data, int j,
-                          int c);
-void BpEndecodeBaseType(struct BpType type, struct BpProcessorContext *ctx,
-                        void *data);
+unsigned char BpCopyBits(unsigned char dst, unsigned char src,
+                         int dst_bit_index, int src_bit_index, int c);
+void BpCopyBufferBits(int nbits, unsigned char *dst, unsigned char *src,
+                      int dst_bit_index, int src_bit_index);
+void BpEndecodeBaseType(int nbits, struct BpProcessorContext *ctx, void *data);
 void BpEndecodeMessageField(struct BpMessageFieldDescriptor *descriptor,
                             struct BpProcessorContext *ctx, void *data);
 void BpEndecodeMessage(struct BpMessageDescriptor *descriptor,
                        struct BpProcessorContext *ctx, void *data);
 void BpEndecodeAlias(struct BpAliasDescriptor *descriptor,
                      struct BpProcessorContext *ctx, void *data);
-void BpEndecodeEnum(struct BpEnumDescriptor *descriptor,
-                    struct BpProcessorContext *ctx, void *data);
 void BpEndecodeArray(struct BpArrayDescriptor *descriptor,
                      struct BpProcessorContext *ctx, void *data);
 
@@ -199,12 +200,10 @@ void BpJsonFormatString(struct BpJsonFormatContext *ctx, const char *format,
                         ...);
 void BpJsonFormatMessage(struct BpMessageDescriptor *descriptor,
                          struct BpJsonFormatContext *ctx, void *data);
-void BpJsonFormatBaseType(struct BpType type, struct BpJsonFormatContext *ctx,
+void BpJsonFormatBaseType(int flag, int nbits, struct BpJsonFormatContext *ctx,
                           void *data);
 void BpJsonFormatAlias(struct BpAliasDescriptor *descriptor,
                        struct BpJsonFormatContext *ctx, void *data);
-void BpJsonFormatEnum(struct BpEnumDescriptor *descriptor,
-                      struct BpJsonFormatContext *ctx, void *data);
 void BpJsonFormatMessageField(struct BpMessageFieldDescriptor *descriptor,
                               struct BpJsonFormatContext *ctx);
 void BpJsonFormatArray(struct BpArrayDescriptor *descriptor,
@@ -212,12 +211,8 @@ void BpJsonFormatArray(struct BpArrayDescriptor *descriptor,
 
 // Utils
 
-size_t BpIntSizeFromNbits(size_t nbits);
-size_t BpUintSizeFromNbits(size_t nbits);
-int BpMin(int a, int b);
-int BpSmartShift(int n, int k);
-int BpGetMask(int k, int c);
-int BpGetNbitsToCopy(int i, int j, int n);
+int BpMinTriple(int a, int b, int c);
+unsigned char BpSmartShift(unsigned char n, int k);
 
 #if defined(__cplusplus)
 }

@@ -133,11 +133,13 @@ class CFormatter(Formatter):
 
     def format_bp_int(self, t: Int) -> str:
         nbits = self.format_int_value(t.nbits())
-        return f"BpInt({nbits})"
+        size = self.format_sizeof(self.format_int_type(t))
+        return f"BpInt({nbits}, {size})"
 
     def format_bp_uint(self, t: Uint) -> str:
         nbits = self.format_int_value(t.nbits())
-        return f"BpUint({nbits})"
+        size = self.format_sizeof(self.format_uint_type(t))
+        return f"BpUint({nbits}, {size})"
 
     def format_bp_byte(self) -> str:
         return f"BpByte()"
@@ -154,9 +156,7 @@ class CFormatter(Formatter):
         nbits = self.format_int_value(t.nbits())
         enum_type = self.format_enum_type(t)
         size = self.format_sizeof(enum_type)
-        processor = self.format_bp_enum_processor_name(t)
-        formatter = self.format_bp_enum_json_formatter_name(t)
-        return f"BpEnum({nbits}, {size}, {processor}, {formatter})"
+        return f"BpEnum({nbits}, {size})"
 
     def format_bp_array(self, t: Array, d: Definition) -> str:
         nbits = self.format_int_value(t.nbits())
@@ -179,11 +179,6 @@ class CFormatter(Formatter):
     def format_bp_enum_descriptor(self, t: Enum) -> str:
         bp_uint = self.format_bp_uint(t.type)
         return f"BpEnumDescriptor({bp_uint})"
-
-    def format_bp_enum_processor_name(self, t: Enum) -> str:
-        enum_name = self.format_enum_name(t)
-        prefix = self.bp_processor_name_prefix()
-        return f"{prefix}{enum_name}"
 
     def format_bp_message_descriptor(
         self, t: Message, field_descriptors: str = "field_descriptors"
@@ -242,11 +237,6 @@ class CFormatter(Formatter):
         message_name = self.format_message_name(t)
         prefix = self.bp_json_formatter_name_prefix()
         return f"{prefix}{message_name}"
-
-    def format_bp_enum_json_formatter_name(self, t: Enum) -> str:
-        enum_name = self.format_enum_name(t)
-        prefix = self.bp_json_formatter_name_prefix()
-        return f"{prefix}{enum_name}"
 
     def format_bp_alias_json_formatter_name(self, t: Alias) -> str:
         alias_name = self.format_alias_name(t)

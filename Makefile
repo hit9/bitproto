@@ -8,3 +8,17 @@ lint:
 
 test:
 	pytest tests -v -s -x
+
+example:
+	make -C example
+
+bench:
+	make -C benchmark
+
+bench-o1:
+	make -C benchmark CC_OPTIMIZE=-O1
+
+bench-o2:
+	make -C benchmark CC_OPTIMIZE=-O2
+
+.PHONY: lint test example bench bench-o1 bench-o2

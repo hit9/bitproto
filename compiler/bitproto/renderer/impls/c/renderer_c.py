@@ -30,8 +30,6 @@ from bitproto.renderer.impls.c.formatter import CFormatter as F
 from bitproto.renderer.impls.c.renderer_h import (
     BlockAliasJsonFormatterBase,
     BlockAliasProcessorBase,
-    BlockEnumJsonFormatterBase,
-    BlockEnumProcessorBase,
     BlockMessageBpJsonFormatterBase,
     BlockMessageDecoderBase,
     BlockMessageEncoderBase,
@@ -192,56 +190,6 @@ class BlockAliasJsonFormatter(BlockAliasJsonFormatterBase, BlockWrapper[F]):
     @override(BlockWrapper)
     def after(self) -> None:
         self.push("}")
-
-
-class BlockEnumProcessorBody(BlockBindEnum[F]):
-    @override(Block)
-    def render(self) -> None:
-        descriptor = self.formatter.format_bp_enum_descriptor(self.d)
-        self.push(f"struct BpEnumDescriptor descriptor = {descriptor};")
-        self.push("BpEndecodeEnum(&descriptor, ctx, data);")
-
-
-class BlockEnumProcessor(BlockEnumProcessorBase, BlockWrapper[F]):
-    @override(BlockWrapper)
-    def wraps(self) -> Block[F]:
-        return BlockEnumProcessorBody(self.d, indent=4)
-
-    @override(BlockWrapper)
-    def before(self) -> None:
-        self.push(f"{self.function_signature} {{")
-
-    @override(BlockWrapper)
-    def after(self) -> None:
-        self.push("}")
-
-
-class BlockEnumJsonFormatterBody(BlockBindEnum[F]):
-    @override(Block)
-    def render(self) -> None:
-        descriptor = self.formatter.format_bp_enum_descriptor(self.d)
-        self.push(f"struct BpEnumDescriptor descriptor = {descriptor};")
-        self.push("BpJsonFormatEnum(&descriptor, ctx, data);")
-
-
-class BlockEnumJsonFormatter(BlockEnumJsonFormatterBase, BlockWrapper[F]):
-    @override(BlockWrapper)
-    def wraps(self) -> Block[F]:
-        return BlockEnumJsonFormatterBody(self.d, indent=4)
-
-    @override(BlockWrapper)
-    def before(self) -> None:
-        self.push(f"{self.function_signature} {{")
-
-    @override(BlockWrapper)
-    def after(self) -> None:
-        self.push("}")
-
-
-class BlockEnumFunctions(BlockBindEnum[F], BlockComposition[F]):
-    @override(BlockComposition)
-    def blocks(self) -> List[Block[F]]:
-        return [BlockEnumProcessor(self.d), BlockEnumJsonFormatter(self.d)]
 
 
 class BlockArrayProcessorForMessageField(BlockBindMessageField[F], BlockConditional[F]):
@@ -443,8 +391,6 @@ class BlockBoundDefinitionList(BlockBoundDefinitionDispatcher[F]):
     def dispatch(self, d: BoundDefinition) -> Optional[Block[F]]:
         if isinstance(d, Alias):
             return BlockAliasFunctions(d)
-        if isinstance(d, Enum):
-            return BlockEnumFunctions(d)
         if isinstance(d, Message):
             return BlockMessageFunctions(d)
         return None

@@ -4,22 +4,22 @@
 #include "example_bp.h"
 
 void BpXXXProcessTimestamp(void *data, struct BpProcessorContext *ctx) {
-    struct BpAliasDescriptor descriptor = BpAliasDescriptor(BpInt(64));
+    struct BpAliasDescriptor descriptor = BpAliasDescriptor(BpInt(64, sizeof(int64_t)));
     BpEndecodeAlias(&descriptor, ctx, data);
 }
 
 void BpXXXJsonFormatTimestamp(void *data, struct BpJsonFormatContext *ctx) {
-    struct BpAliasDescriptor descriptor = BpAliasDescriptor(BpInt(64));
+    struct BpAliasDescriptor descriptor = BpAliasDescriptor(BpInt(64, sizeof(int64_t)));
     BpJsonFormatAlias(&descriptor, ctx, data);
 }
 
 void BpXXXProcessArrayTernaryInt32(void *data, struct BpProcessorContext *ctx) {
-    struct BpArrayDescriptor descriptor = BpArrayDescriptor(false, 3, BpInt(32));
+    struct BpArrayDescriptor descriptor = BpArrayDescriptor(false, 3, BpInt(32, sizeof(int32_t)));
     BpEndecodeArray(&descriptor, ctx, data);
 }
 
 void BpXXXJsonFormatArrayTernaryInt32(void *data, struct BpJsonFormatContext *ctx) {
-    struct BpArrayDescriptor descriptor = BpArrayDescriptor(false, 3, BpInt(32));
+    struct BpArrayDescriptor descriptor = BpArrayDescriptor(false, 3, BpInt(32, sizeof(int32_t)));
     BpJsonFormatArray(&descriptor, ctx, data);
 }
 
@@ -33,60 +33,10 @@ void BpXXXJsonFormatTernaryInt32(void *data, struct BpJsonFormatContext *ctx) {
     BpJsonFormatAlias(&descriptor, ctx, data);
 }
 
-void BpXXXProcessDroneStatus(void *data, struct BpProcessorContext *ctx) {
-    struct BpEnumDescriptor descriptor = BpEnumDescriptor(BpUint(3));
-    BpEndecodeEnum(&descriptor, ctx, data);
-}
-
-void BpXXXJsonFormatDroneStatus(void *data, struct BpJsonFormatContext *ctx) {
-    struct BpEnumDescriptor descriptor = BpEnumDescriptor(BpUint(3));
-    BpJsonFormatEnum(&descriptor, ctx, data);
-}
-
-void BpXXXProcessPropellerStatus(void *data, struct BpProcessorContext *ctx) {
-    struct BpEnumDescriptor descriptor = BpEnumDescriptor(BpUint(2));
-    BpEndecodeEnum(&descriptor, ctx, data);
-}
-
-void BpXXXJsonFormatPropellerStatus(void *data, struct BpJsonFormatContext *ctx) {
-    struct BpEnumDescriptor descriptor = BpEnumDescriptor(BpUint(2));
-    BpJsonFormatEnum(&descriptor, ctx, data);
-}
-
-void BpXXXProcessRotatingDirection(void *data, struct BpProcessorContext *ctx) {
-    struct BpEnumDescriptor descriptor = BpEnumDescriptor(BpUint(2));
-    BpEndecodeEnum(&descriptor, ctx, data);
-}
-
-void BpXXXJsonFormatRotatingDirection(void *data, struct BpJsonFormatContext *ctx) {
-    struct BpEnumDescriptor descriptor = BpEnumDescriptor(BpUint(2));
-    BpJsonFormatEnum(&descriptor, ctx, data);
-}
-
-void BpXXXProcessPowerStatus(void *data, struct BpProcessorContext *ctx) {
-    struct BpEnumDescriptor descriptor = BpEnumDescriptor(BpUint(2));
-    BpEndecodeEnum(&descriptor, ctx, data);
-}
-
-void BpXXXJsonFormatPowerStatus(void *data, struct BpJsonFormatContext *ctx) {
-    struct BpEnumDescriptor descriptor = BpEnumDescriptor(BpUint(2));
-    BpJsonFormatEnum(&descriptor, ctx, data);
-}
-
-void BpXXXProcessLandingGearStatus(void *data, struct BpProcessorContext *ctx) {
-    struct BpEnumDescriptor descriptor = BpEnumDescriptor(BpUint(2));
-    BpEndecodeEnum(&descriptor, ctx, data);
-}
-
-void BpXXXJsonFormatLandingGearStatus(void *data, struct BpJsonFormatContext *ctx) {
-    struct BpEnumDescriptor descriptor = BpEnumDescriptor(BpUint(2));
-    BpJsonFormatEnum(&descriptor, ctx, data);
-}
-
 void BpFieldDescriptorsInitPropeller(struct Propeller *m, struct BpMessageFieldDescriptor *fds) {
-    fds[0] = BpMessageFieldDescriptor((void *)&(m->id), BpUint(8), "id");
-    fds[1] = BpMessageFieldDescriptor((void *)&(m->status), BpEnum(2, sizeof(PropellerStatus), BpXXXProcessPropellerStatus, BpXXXJsonFormatPropellerStatus), "status");
-    fds[2] = BpMessageFieldDescriptor((void *)&(m->direction), BpEnum(2, sizeof(RotatingDirection), BpXXXProcessRotatingDirection, BpXXXJsonFormatRotatingDirection), "direction");
+    fds[0] = BpMessageFieldDescriptor((void *)&(m->id), BpUint(8, sizeof(uint8_t)), "id");
+    fds[1] = BpMessageFieldDescriptor((void *)&(m->status), BpEnum(2, sizeof(PropellerStatus)), "status");
+    fds[2] = BpMessageFieldDescriptor((void *)&(m->direction), BpEnum(2, sizeof(RotatingDirection)), "direction");
 }
 
 void BpXXXProcessPropeller(void *data, struct BpProcessorContext *ctx) {
@@ -124,8 +74,8 @@ int JsonPropeller(struct Propeller *m, char *s) {
 }
 
 void BpFieldDescriptorsInitPower(struct Power *m, struct BpMessageFieldDescriptor *fds) {
-    fds[0] = BpMessageFieldDescriptor((void *)&(m->battery), BpUint(8), "battery");
-    fds[1] = BpMessageFieldDescriptor((void *)&(m->status), BpEnum(2, sizeof(PowerStatus), BpXXXProcessPowerStatus, BpXXXJsonFormatPowerStatus), "status");
+    fds[0] = BpMessageFieldDescriptor((void *)&(m->battery), BpUint(8, sizeof(uint8_t)), "battery");
+    fds[1] = BpMessageFieldDescriptor((void *)&(m->status), BpEnum(2, sizeof(PowerStatus)), "status");
     fds[2] = BpMessageFieldDescriptor((void *)&(m->is_charging), BpBool(), "is_charging");
 }
 
@@ -164,7 +114,7 @@ int JsonPower(struct Power *m, char *s) {
 }
 
 void BpFieldDescriptorsInitNetwork(struct Network *m, struct BpMessageFieldDescriptor *fds) {
-    fds[0] = BpMessageFieldDescriptor((void *)&(m->signal), BpUint(4), "signal");
+    fds[0] = BpMessageFieldDescriptor((void *)&(m->signal), BpUint(4, sizeof(uint8_t)), "signal");
     fds[1] = BpMessageFieldDescriptor((void *)&(m->heartbeat_at), BpAlias(64, sizeof(Timestamp), BpXXXProcessTimestamp, BpXXXJsonFormatTimestamp), "heartbeat_at");
 }
 
@@ -203,7 +153,7 @@ int JsonNetwork(struct Network *m, char *s) {
 }
 
 void BpFieldDescriptorsInitLandingGear(struct LandingGear *m, struct BpMessageFieldDescriptor *fds) {
-    fds[0] = BpMessageFieldDescriptor((void *)&(m->status), BpEnum(2, sizeof(LandingGearStatus), BpXXXProcessLandingGearStatus, BpXXXJsonFormatLandingGearStatus), "status");
+    fds[0] = BpMessageFieldDescriptor((void *)&(m->status), BpEnum(2, sizeof(LandingGearStatus)), "status");
 }
 
 void BpXXXProcessLandingGear(void *data, struct BpProcessorContext *ctx) {
@@ -241,9 +191,9 @@ int JsonLandingGear(struct LandingGear *m, char *s) {
 }
 
 void BpFieldDescriptorsInitPosition(struct Position *m, struct BpMessageFieldDescriptor *fds) {
-    fds[0] = BpMessageFieldDescriptor((void *)&(m->latitude), BpUint(32), "latitude");
-    fds[1] = BpMessageFieldDescriptor((void *)&(m->longitude), BpUint(32), "longitude");
-    fds[2] = BpMessageFieldDescriptor((void *)&(m->altitude), BpUint(32), "altitude");
+    fds[0] = BpMessageFieldDescriptor((void *)&(m->latitude), BpUint(32, sizeof(uint32_t)), "latitude");
+    fds[1] = BpMessageFieldDescriptor((void *)&(m->longitude), BpUint(32, sizeof(uint32_t)), "longitude");
+    fds[2] = BpMessageFieldDescriptor((void *)&(m->altitude), BpUint(32, sizeof(uint32_t)), "altitude");
 }
 
 void BpXXXProcessPosition(void *data, struct BpProcessorContext *ctx) {
@@ -281,9 +231,9 @@ int JsonPosition(struct Position *m, char *s) {
 }
 
 void BpFieldDescriptorsInitPose(struct Pose *m, struct BpMessageFieldDescriptor *fds) {
-    fds[0] = BpMessageFieldDescriptor((void *)&(m->yaw), BpInt(32), "yaw");
-    fds[1] = BpMessageFieldDescriptor((void *)&(m->pitch), BpInt(32), "pitch");
-    fds[2] = BpMessageFieldDescriptor((void *)&(m->roll), BpInt(32), "roll");
+    fds[0] = BpMessageFieldDescriptor((void *)&(m->yaw), BpInt(32, sizeof(int32_t)), "yaw");
+    fds[1] = BpMessageFieldDescriptor((void *)&(m->pitch), BpInt(32, sizeof(int32_t)), "pitch");
+    fds[2] = BpMessageFieldDescriptor((void *)&(m->roll), BpInt(32, sizeof(int32_t)), "roll");
 }
 
 void BpXXXProcessPose(void *data, struct BpProcessorContext *ctx) {
@@ -371,7 +321,7 @@ void BpXXXJsonFormatArrayDrone4(void *data, struct BpJsonFormatContext *ctx) {
 }
 
 void BpFieldDescriptorsInitDrone(struct Drone *m, struct BpMessageFieldDescriptor *fds) {
-    fds[0] = BpMessageFieldDescriptor((void *)&(m->status), BpEnum(3, sizeof(DroneStatus), BpXXXProcessDroneStatus, BpXXXJsonFormatDroneStatus), "status");
+    fds[0] = BpMessageFieldDescriptor((void *)&(m->status), BpEnum(3, sizeof(DroneStatus)), "status");
     fds[1] = BpMessageFieldDescriptor((void *)&(m->position), BpMessage(96, sizeof(struct Position), BpXXXProcessPosition, BpXXXJsonFormatPosition), "position");
     fds[2] = BpMessageFieldDescriptor((void *)&(m->flight), BpMessage(288, sizeof(struct Flight), BpXXXProcessFlight, BpXXXJsonFormatFlight), "flight");
     fds[3] = BpMessageFieldDescriptor((void *)&(m->propellers), BpArray(48, 4 * sizeof(struct Propeller), BpXXXProcessArrayDrone4, BpXXXJsonFormatArrayDrone4), "propellers");
