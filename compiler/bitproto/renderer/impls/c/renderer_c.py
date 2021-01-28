@@ -418,6 +418,10 @@ class RendererC(Renderer[F]):
         return ".c"
 
     @override(Renderer)
+    def support_optimization(self) -> bool:
+        return True
+
+    @override(Renderer)
     def formatter(self) -> F:
         return F()
 

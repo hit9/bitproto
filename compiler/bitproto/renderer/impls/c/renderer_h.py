@@ -470,6 +470,10 @@ class RendererCHeader(Renderer[F]):
         return ".h"
 
     @override(Renderer)
+    def support_optimization(self) -> bool:
+        return True
+
+    @override(Renderer)
     def formatter(self) -> F:
         return F()
 

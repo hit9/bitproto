@@ -324,6 +324,11 @@ class ProtoNameUndefined(GrammarError):
 
 
 @dataclass
+class ExtensibleGrammarFoundInTraditionalMode(GrammarError):
+    """Extensible-type grammar found while enforcing traditional mode parsing."""
+
+
+@dataclass
 class LanguageNotSupportOptimizationMode(RendererError):
     """Language doesn't support optimization mode."""
 
