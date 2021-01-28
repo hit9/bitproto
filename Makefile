@@ -16,12 +16,12 @@ example:
 	make -C example
 
 bench:
-	make -C benchmark
+	make -C benchmark/bench-on-os
 
 bench-o1:
-	make -C benchmark CC_OPTIMIZE=-O1
+	make -C benchmark/bench-on-os CC_OPTIMIZE=-O1
 
 bench-o2:
-	make -C benchmark CC_OPTIMIZE=-O2
+	make -C benchmark/bench-on-os CC_OPTIMIZE=-O2
 
 .PHONY: lint test test-o2 example bench bench-o1 bench-o2
