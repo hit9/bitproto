@@ -2,3 +2,5 @@ C/bench
 Go/bench
 *_bp.c
 *_bp.h
+*_bp.go
+*_bp.py
