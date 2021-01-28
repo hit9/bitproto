@@ -69,4 +69,4 @@ jobs:
     - name: Run tests
       run: |
         make test
-        BP_TEST_CC_OPTIMIZATION=-O2 make test
+        make test-o2
