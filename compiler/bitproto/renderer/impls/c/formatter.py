@@ -28,6 +28,10 @@ from bitproto.utils import override
 class CFormatter(Formatter):
     """CFormatter implements Formatter for C language."""
 
+    #################
+    # Language Basics
+    #################
+
     @override(Formatter)
     def case_style_mapping(self) -> CaseStyleMapping:
         return {
@@ -50,6 +54,31 @@ class CFormatter(Formatter):
     def format_comment(self, content: str) -> str:
         return f"// {content}"
 
+    def format_sizeof(self, t: str) -> str:
+        return f"sizeof({t})"
+
+    @override(Formatter)
+    def format_import_statement(self, t: Proto, as_name: Optional[str] = None) -> str:
+        return '#include "{0}_bp.h"'.format(t.name)
+
+    ##################
+    # Naming prefix
+    ##################
+
+    @override(Formatter)
+    def definition_name_prefix_option_name(self) -> str:
+        return "c.name_prefix"
+
+    def bp_processor_name_prefix(self) -> str:
+        return "BpXXXProcess"
+
+    def bp_json_formatter_name_prefix(self) -> str:
+        return "BpXXXJsonFormat"
+
+    ############################
+    # Value literal representing
+    #############################
+
     @override(Formatter)
     def format_bool_value(self, value: bool) -> str:
         if value:
@@ -63,6 +92,10 @@ class CFormatter(Formatter):
     @override(Formatter)
     def format_int_value(self, value: int) -> str:
         return "{0}".format(value)
+
+    ###########################
+    # Type literal representing
+    ###########################
 
     @override(Formatter)
     def format_bool_type(self) -> str:
@@ -91,22 +124,9 @@ class CFormatter(Formatter):
     def format_message_type(self, t: Message) -> str:
         return "struct {0}".format(self.format_message_name(t))
 
-    @override(Formatter)
-    def format_import_statement(self, t: Proto, as_name: Optional[str] = None) -> str:
-        return '#include "{0}_bp.h"'.format(t.name)
-
-    @override(Formatter)
-    def definition_name_prefix_option_name(self) -> str:
-        return "c.name_prefix"
-
-    def format_sizeof(self, t: str) -> str:
-        return f"sizeof({t})"
-
-    def bp_processor_name_prefix(self) -> str:
-        return "BpXXXProcess"
-
-    def bp_json_formatter_name_prefix(self) -> str:
-        return "BpXXXJsonFormat"
+    ###################
+    # Library Supports
+    ###################
 
     def format_bp_type(self, t: Type, d: Optional[Definition] = None) -> str:
         if isinstance(t, Bool):
@@ -263,3 +283,11 @@ class CFormatter(Formatter):
         alias_name = self.format_alias_name(d)
         prefix = self.bp_json_formatter_name_prefix()
         return f"{prefix}Array{alias_name}"
+
+    ###################
+    # Optimization Mode.
+    ###################
+
+    @override(Formatter)
+    def format_op_mode_endecoder_message_var(self) -> str:
+        return "(*m)"

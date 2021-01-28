@@ -86,7 +86,9 @@ class CaseStyle(Enum_):
 class Formatter:
     """Generic language specific formatter."""
 
+    #############
     # Abstracts
+    #############
 
     @abstractmethod
     def case_style_mapping(self) -> CaseStyleMapping:
@@ -167,7 +169,9 @@ class Formatter:
         """
         raise NotImplementedError
 
+    ###############
     # Overridables
+    ###############
 
     @overridable
     def format_left_shift(self, n: int) -> str:
@@ -255,7 +259,9 @@ class Formatter:
         """
         return ""
 
+    ###########
     # Finals
+    ###########
 
     @final
     def format_token_location(self, node: Node) -> str:
@@ -491,6 +497,115 @@ class Formatter:
             out_base_name = os.path.splitext(proto_base_name)[0]  # remove extension
         out_filename = out_base_name + "_bp" + extension
         return out_filename
+
+    #####################
+    # Optimization Mode
+    #####################
+    @overridable
+    def format_op_mode_endecoder_message_var(self) -> str:
+        """Returns the message variable name in rendered encoder and decoder function."""
+        raise NotImplementedError
+
+    @overridable
+    def format_op_mode_encoder_item(
+        self, chain: str, si: int, fi: int, shift: int, mask: int, r: int
+    ) -> str:
+        """Formats one line item of encoder encoding statement.
+        :param chain: Naming chain of current field being processed.
+        :param si: The index of byte in the destination buffer s.
+        :param fi: The index of byte in the source field's bytes.
+        :param shift: The number of bits to shift.
+        :param mask: The mask get from op_mode_get_mask.
+        :param r: 0 if target buffer is margined to the left of byte.
+        """
+        raise NotImplementedError
+
+    @overridable
+    def format_op_mode_decoder_item(
+        self, chain: str, si: int, fi: int, shift: int, mask: int, r: int
+    ) -> str:
+        """Formats one line item of decoder decoding statement.
+        :param chain: Naming chain of current field being processed.
+        :param si: The index of byte in the source buffer s.
+        :param fi: The index of byte in the destination field's bytes.
+        :param shift: The number of bits to shift.
+        :param mask: The mask get from op_mode_get_mask.
+        :param r: 0 if target buffer is margined to the left of byte.
+        """
+        raise NotImplementedError
+
+    @overridable
+    def format_op_mode_field_name_chain(self, chain: str, name: str) -> str:
+        """Append a name to current field name lookup chain."""
+        return chain + "." + name
+
+    @overridable
+    def format_op_mode_field_name_chain_array(self, chain: str, index: int) -> str:
+        """Format array index lookup as a name to append on current field name
+        lookup chain.
+        """
+        return chain + f"[{index}]"
+
+    @final
+    def format_op_mode_smart_shift(self, n: int) -> str:
+        """Gives the formatted result of `format_right_shift` if n > 0.
+        Otherwise gives result of `format_left_shift`.
+        Returns an empty string if n == 0.
+        """
+        if n > 0:
+            return self.format_right_shift(n)
+        elif n < 0:
+            return self.format_left_shift(n)
+        return ""
+
+    @final
+    def op_mode_get_mask(self, k: int, c: int) -> int:
+        """Returns the mask to clear redundancy bits around producted byte before copied to
+        target byte.
+        :param k: The start bit to copy bits inside a byte.
+        :param c: The number of bits to copy.
+
+        Examples of returned mask:
+
+            Returns                Arguments
+            00001111               k=0, c=4
+            01111100               k=2, c=5
+            00111100               k=2, c=4
+        """
+        return (1 << (k + c)) - (1 << k)
+
+    @final
+    def format_op_mode_encode_single_byte(
+        self, t: Type, chain: str, i: int, j: int, c: int
+    ) -> str:
+        shift, mask = ((j % 8) - (i % 8)), self.op_mode_get_mask(i % 8, c)
+        si, fi, r = int(i / 8), int(j / 8), i % 8
+        return self.format_op_mode_encoder_item(chain, si, fi, shift, mask, r)
+
+    @final
+    def format_op_mode_decode_single_byte(
+        self, t: Type, chain: str, i: int, j: int, c: int
+    ) -> str:
+        shift, mask = ((i % 8) - (j % 8)), self.op_mode_get_mask(j % 8, c)
+        si, fi, r = int(i / 8), int(j / 8), j % 8
+        return self.format_op_mode_decoder_item(chain, si, fi, shift, mask, r)
+
+    @final
+    def format_op_mode_single_type(
+        self, t: SingleType, chain: str, is_encode: bool, i: List[int]
+    ) -> List[str]:
+        l: List[str] = []
+        j, n = 0, t.nbits()
+        while j < n:
+            c = min(8 - (i[0] % 8), 8 - (j % 8), n - j)
+            if is_encode:
+                s = self.format_op_mode_encode_single_byte(t, chain, i[0], j, c)
+            else:
+                s = self.format_op_mode_decode_single_byte(t, chain, i[0], j, c)
+            l.append(s)
+            j += c
+            i[0] += c
+        return l
 
 
 F = TypeVar("F", bound=Formatter)
