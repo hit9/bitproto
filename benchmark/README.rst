@@ -14,3 +14,5 @@ How to run:
   .. sourcecode:: bash
 
      $ cd C && make bench
+
+`Benchmark result on Github Actions here <https://github.com/hit9/bitproto/actions?query=workflow%3A%22bitproto+benchmark%22>`_.
