@@ -35,5 +35,5 @@ jobs:
     - name: Run benchmark
       run: |
         make bench
-        make bench-o1
-        make bench-o2
+        make bench-c-o1
+        make bench-c-o2
