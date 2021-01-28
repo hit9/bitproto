@@ -115,7 +115,7 @@ The differences between bitproto and protobuf are:
   `protobuf C implementations <https://github.com/protocolbuffers/protobuf/blob/master/docs/third_party.md>`_
   support this except `nanopb <https://jpa.kapsi.fi/nanopb>`_.
 
-* bitproto doesn't support varying sized data, all type are fixed sized.
+* bitproto doesn't support varying sized data, all types are fixed sized.
 
   bitproto won't encode typing or size reflection information into the buffer.
   It only encodes the data itself, without any additional data, the encoded data
