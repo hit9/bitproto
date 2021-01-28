@@ -12,4 +12,7 @@ test:
 example:
 	make -C example
 
-.PHONY: lint test example
+bench:
+	make -C benchmark
+
+.PHONY: lint test example bench
