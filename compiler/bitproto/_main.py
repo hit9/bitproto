@@ -23,6 +23,7 @@ example usage:
   bitproto -c example.bitproto      validate bitproto file syntax
   bitproto c example.bitproto out   build c language file to directory out
   bitproto c example.bitproto -q    option -q to disable builtin linter
+  bitproto c example.bitproto -O    enable performance optimization in traditional mode
 """
 
 
@@ -53,6 +54,13 @@ def build_arg_parser() -> argparse.ArgumentParser:
         dest="disable_linter",
         action="store_true",
         help="disable linter",
+    )
+    args_parser.add_argument(
+        "-O",
+        "--optimize",
+        dest="enable_optimize",
+        action="store_true",
+        help="enable performance optimization in traditional mode",
     )
     args_parser.add_argument(
         "outdir", metavar="out", type=str, nargs="?", help="output directory"
