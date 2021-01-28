@@ -9,6 +9,9 @@ lint:
 test:
 	pytest tests -v -s -x
 
+test-o2:
+	BP_TEST_CC_OPTIMIZATION=-O2 pytest tests/test_encoding -v -s -x
+
 example:
 	make -C example
 
@@ -21,4 +24,4 @@ bench-o1:
 bench-o2:
 	make -C benchmark CC_OPTIMIZE=-O2
 
-.PHONY: lint test example bench bench-o1 bench-o2
+.PHONY: lint test test-o2 example bench bench-o1 bench-o2

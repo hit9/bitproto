@@ -144,7 +144,7 @@ unsigned char BpCopyBits(unsigned char dst, unsigned char src, int dst_bit_idx,
     // left. Else shifts right.
     int shift = src_bit_idx - dst_bit_idx;
     // Mask to clear char src's right remaining bits all to 0.
-    // The following expression gives a number like 0b111100000.
+    // The following expression gives a number like 0b11110000.
     unsigned char mask = (1 << (dst_bit_idx + c)) - (1 << dst_bit_idx);
     // Result of a new dst byte.
     // dst | (src >> shift) & mask

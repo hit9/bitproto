@@ -24,6 +24,8 @@ GO_BIN=$(BIN)
 
 PY_SOURCE_FILE=main.py
 
+CC_OPTIMIZATION_ARG?=
+
 bp-c:
 	@bitproto c $(BP_ORIGIN_FILENAME) c/
 	@bitproto c $(BP_EXTENDED_FILENAME) c/
@@ -38,7 +40,7 @@ bp-py:
 
 
 build-c: bp-c
-	@cd c && $(CC) $(C_SOURCE_FILE_LIST) -I. -I$(BP_LIB_DIR) -o $(C_BIN)
+	@cd c && $(CC) $(C_SOURCE_FILE_LIST) -I. -I$(BP_LIB_DIR) -o $(C_BIN) $(CC_OPTIMIZATION_ARG)
 
 build-go: bp-go
 	@cd go && go build -o $(GO_BIN)
