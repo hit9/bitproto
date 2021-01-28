@@ -25,9 +25,12 @@ class _TestCase:
     compare_output: bool = True
     compare_output_as_json: bool = False
 
+    cc_optimization_arg: str = ""
+
     def __post_init__(self) -> None:
         if not self.langs:
             self.langs = ["c", "go", "py"]
+        self.cc_optimization_arg = os.environ.get("BP_TEST_CC_OPTIMIZATION", "")
 
     @property
     def rootdir(self) -> str:
@@ -40,6 +43,8 @@ class _TestCase:
         """
         sub_cmd = self.cmd_run_fmt.format(lang=lang)
         cmd = f"make -s  --no-print-directory {sub_cmd}"
+        if lang == "c" and self.cc_optimization_arg != "":
+            cmd += " CC_OPTIMIZATION_ARG=" + self.cc_optimization_arg
         return subprocess.check_output(cmd, shell=True)
 
     def execute_cmd_clean(self) -> None:
