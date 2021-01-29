@@ -488,6 +488,10 @@ class BlockFunctionDeclarationsForUserListOpMode(BlockBoundDefinitionDispatcher[
     @override(BlockBoundDefinitionDispatcher)
     def dispatch(self, d: BoundDefinition) -> Optional[Block[F]]:
         if isinstance(d, Message):
+            filter_messages = self._get_ctx_or_raise().optimization_mode_filter_messages
+            if filter_messages:
+                if d.name not in filter_messages:
+                    return None
             return BlockMessageFunctionDeclarationsForUserOpMode(d)
         return None
 

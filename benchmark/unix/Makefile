@@ -6,7 +6,7 @@ bp:
 	bitproto py drone.bitproto Python
 
 bp-optmization-mode:
-	bitproto c drone.bitproto C -O
+	bitproto c drone.bitproto C -O -F "Drone"
 
 bench: bp
 	make -C C

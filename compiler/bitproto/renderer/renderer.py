@@ -62,7 +62,11 @@ class Renderer(Generic[F]):
         block = self.block()
         assert block is not None, InternalError("block() returns None")
 
-        ctx = BlockRenderContext(formatter=formatter, bound=self.proto)
+        ctx = BlockRenderContext(
+            formatter=formatter,
+            bound=self.proto,
+            optimization_mode_filter_messages=self.optimization_mode_filter_messages,
+        )
         block._render_with_ctx(ctx)
         return block._collect()
 

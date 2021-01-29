@@ -2,7 +2,7 @@ default: run
 
 bp:
 	bitproto c example.bitproto C
-	bitproto c example.bitproto C-optimization-mode -O 
+	bitproto c example.bitproto C-optimization-mode -O -F "Drone"
 	bitproto go example.bitproto Go/gen-bp
 	bitproto py example.bitproto Python
 
