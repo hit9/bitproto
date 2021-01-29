@@ -374,11 +374,10 @@ class BlockMessageMethodBpProcessor(BlockBindMessage[F], BlockWrapper[F]):
 class BlockMessageMethodBpGetSetByteItemBase(BlockBindMessageField[F]):
     def __init__(
         self,
-        d: MessageField,
-        name: Optional[str] = None,
-        indent: int = 0,
+        *args: Any,
+        **kwds: Any,
     ) -> None:
-        super().__init__(d, name, indent)
+        super().__init__(*args, **kwds)
         self.array_depth: int = 0
 
     def format_data_ref(self) -> str:
@@ -549,11 +548,10 @@ class BlockMessageMethodBpGetByte(BlockBindMessage[F], BlockWrapper[F]):
 class BlockMessageMethodBpGetAccessorItem(BlockBindMessageField[F]):
     def __init__(
         self,
-        d: MessageField,
-        name: Optional[str] = None,
-        indent: int = 0,
+        *args: Any,
+        **kwds: Any,
     ) -> None:
-        super().__init__(d, name, indent)
+        super().__init__(*args, **kwds)
         self.array_depth: int = 0
 
     def format_data_ref(self) -> str:
