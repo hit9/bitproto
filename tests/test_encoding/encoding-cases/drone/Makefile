@@ -18,8 +18,10 @@ PY_SOURCE_FILE=main.py
 
 CC_OPTIMIZATION_ARG?=
 
+OPTIMIZATION_MODE_ARGS?=
+
 bp-c:
-	@bitproto c $(BP_FILENAME) c/
+	@bitproto c $(BP_FILENAME) c/ $(OPTIMIZATION_MODE_ARGS)
 
 bp-go:
 	@bitproto go $(BP_FILENAME) go/bp/
