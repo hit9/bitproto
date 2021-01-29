@@ -30,11 +30,13 @@ class Renderer(Generic[F]):
         proto: Proto,
         outdir: Optional[str] = None,
         optimization_mode: bool = False,
+        optimization_mode_filter_messages: Optional[List[str]] = None,
     ) -> None:
         self.proto = proto
         self.outdir = outdir or self.get_outdir_default(proto)
         self.optimization_mode = optimization_mode
         self.check_proto_for_optimization_mode()
+        self.optimization_mode_filter_messages = optimization_mode_filter_messages
 
         self.out_filename = self.get_out_filename()
         self.out_filepath = os.path.join(self.outdir, self.out_filename)
