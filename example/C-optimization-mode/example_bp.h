@@ -12,8 +12,6 @@
 #include <stdbool.h>
 #endif
 
-#include "bitproto.h"
-
 #if defined(__cplusplus)
 extern "C" {
 #endif
@@ -136,87 +134,41 @@ struct Drone {
 int EncodePropeller(struct Propeller *m, unsigned char *s);
 // Decode struct Propeller from given buffer s.
 int DecodePropeller(struct Propeller *m, unsigned char *s);
-// Format struct Propeller to a json format string.
-int JsonPropeller(struct Propeller *m, char *s);
 
 // Encode struct Power to given buffer s.
 int EncodePower(struct Power *m, unsigned char *s);
 // Decode struct Power from given buffer s.
 int DecodePower(struct Power *m, unsigned char *s);
-// Format struct Power to a json format string.
-int JsonPower(struct Power *m, char *s);
 
 // Encode struct Network to given buffer s.
 int EncodeNetwork(struct Network *m, unsigned char *s);
 // Decode struct Network from given buffer s.
 int DecodeNetwork(struct Network *m, unsigned char *s);
-// Format struct Network to a json format string.
-int JsonNetwork(struct Network *m, char *s);
 
 // Encode struct LandingGear to given buffer s.
 int EncodeLandingGear(struct LandingGear *m, unsigned char *s);
 // Decode struct LandingGear from given buffer s.
 int DecodeLandingGear(struct LandingGear *m, unsigned char *s);
-// Format struct LandingGear to a json format string.
-int JsonLandingGear(struct LandingGear *m, char *s);
 
 // Encode struct Position to given buffer s.
 int EncodePosition(struct Position *m, unsigned char *s);
 // Decode struct Position from given buffer s.
 int DecodePosition(struct Position *m, unsigned char *s);
-// Format struct Position to a json format string.
-int JsonPosition(struct Position *m, char *s);
 
 // Encode struct Pose to given buffer s.
 int EncodePose(struct Pose *m, unsigned char *s);
 // Decode struct Pose from given buffer s.
 int DecodePose(struct Pose *m, unsigned char *s);
-// Format struct Pose to a json format string.
-int JsonPose(struct Pose *m, char *s);
 
 // Encode struct Flight to given buffer s.
 int EncodeFlight(struct Flight *m, unsigned char *s);
 // Decode struct Flight from given buffer s.
 int DecodeFlight(struct Flight *m, unsigned char *s);
-// Format struct Flight to a json format string.
-int JsonFlight(struct Flight *m, char *s);
 
 // Encode struct Drone to given buffer s.
 int EncodeDrone(struct Drone *m, unsigned char *s);
 // Decode struct Drone from given buffer s.
 int DecodeDrone(struct Drone *m, unsigned char *s);
-// Format struct Drone to a json format string.
-int JsonDrone(struct Drone *m, char *s);
-
-void BpXXXProcessTimestamp(void *data, struct BpProcessorContext *ctx);
-void BpXXXJsonFormatTimestamp(void *data, struct BpJsonFormatContext *ctx);
-
-void BpXXXProcessTernaryInt32(void *data, struct BpProcessorContext *ctx);
-void BpXXXJsonFormatTernaryInt32(void *data, struct BpJsonFormatContext *ctx);
-
-void BpXXXProcessPropeller(void *data, struct BpProcessorContext *ctx);
-void BpXXXJsonFormatPropeller(void *data, struct BpJsonFormatContext *ctx);
-
-void BpXXXProcessPower(void *data, struct BpProcessorContext *ctx);
-void BpXXXJsonFormatPower(void *data, struct BpJsonFormatContext *ctx);
-
-void BpXXXProcessNetwork(void *data, struct BpProcessorContext *ctx);
-void BpXXXJsonFormatNetwork(void *data, struct BpJsonFormatContext *ctx);
-
-void BpXXXProcessLandingGear(void *data, struct BpProcessorContext *ctx);
-void BpXXXJsonFormatLandingGear(void *data, struct BpJsonFormatContext *ctx);
-
-void BpXXXProcessPosition(void *data, struct BpProcessorContext *ctx);
-void BpXXXJsonFormatPosition(void *data, struct BpJsonFormatContext *ctx);
-
-void BpXXXProcessPose(void *data, struct BpProcessorContext *ctx);
-void BpXXXJsonFormatPose(void *data, struct BpJsonFormatContext *ctx);
-
-void BpXXXProcessFlight(void *data, struct BpProcessorContext *ctx);
-void BpXXXJsonFormatFlight(void *data, struct BpJsonFormatContext *ctx);
-
-void BpXXXProcessDrone(void *data, struct BpProcessorContext *ctx);
-void BpXXXJsonFormatDrone(void *data, struct BpJsonFormatContext *ctx);
 
 #if defined(__cplusplus)
 }
