@@ -21,6 +21,7 @@ bench-c-o2: bp
 
 bench-optimization-mode: bp-optmization-mode
 	make -C C
+	make -C Go
 
 bench-c-optimization-mode-o1: bp-optmization-mode
 	make -C C CC_OPTIMIZE=-O1
