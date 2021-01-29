@@ -21,3 +21,9 @@ This directory contains a simple benchmark for bitproto on Unix-like system (lin
   .. sourcecode:: bash
 
      $ make bench-c-o2
+
+* Run benchmark for C / Go with bitproto -O option enabled:
+
+  .. sourcecode:: bash
+
+     $ make bench-optimization-mode
