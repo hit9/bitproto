@@ -61,6 +61,15 @@ class BlockIncludeGeneralHeaders(Block[F]):
         self.push("#include <stdbool.h>")
         self.push("#include <stddef.h>")
         self.push("#include <stdint.h>")
+
+
+class BlockIncludeHeaders(BlockWrapper[F]):
+    @override(BlockWrapper)
+    def wraps(self) -> Block[F]:
+        return BlockIncludeGeneralHeaders()
+
+    @override(BlockWrapper)
+    def after(self) -> None:
         self.push_empty_line()
         self.push('#include "bitproto.h"')
 
@@ -449,7 +458,7 @@ class BlockList(BlockComposition[F]):
             BlockAheadNotice(),
             BlockProtoDocstring(self.bound),
             BlockIncludeGuard(),
-            BlockIncludeGeneralHeaders(),
+            BlockIncludeHeaders(),
             BlockExternCPlusPlus(),
             BlockImportList(),
             BlockDataStructuresList(),
