@@ -706,6 +706,135 @@ class BlockList(BlockComposition[F]):
         ]
 
 
+class BlockGeneralImportsOpMode(Block):
+    @override(Block)
+    def render(self) -> None:
+        self.push(f"import (")
+        self.push(f'"strconv"', indent=1)
+        self.push(f'"encoding/json"', indent=1)
+        self.push(f")")
+
+        self.push_empty_line()
+
+        self.push_comment("Avoid possible golang import not used error")
+        self.push(f"var formatInt = strconv.FormatInt")
+        self.push(f"var jsonMarshal = json.Marshal")
+
+
+class BlockEnumOpMode(BlockBindEnum[F], BlockComposition[F]):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block[F]]:
+        return [
+            BlockEnumType(self.d),
+            BlockEnumFieldListWrapped(self.d),
+            BlockEnumMethodString(self.d),
+        ]
+
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n\n"
+
+
+class BlockMessageMethodEncodeOpMode(BlockBindMessage[F]):
+    @override(Block)
+    def render(self) -> None:
+        size = self.formatter.format_int_value(self.d.nbytes())
+        self.push_comment(f"Encode struct {self.message_name} to bytes buffer.")
+        self.push(f"func (m *{self.message_name}) Encode() []byte {{")
+        self.push(f"s := make([]byte, {size})", indent=1)
+        l = self.formatter.format_op_mode_encode_message(self.d)
+        for line in l:
+            self.push(line, indent=1)
+        self.push(f"return s", indent=1)
+        self.push("}")
+
+
+class BlockMessageMethodDecodeOpMode(BlockBindMessage[F]):
+    @override(Block)
+    def render(self) -> None:
+        self.push(f"func (m *{self.message_name}) Decode(s []byte) {{")
+        l = self.formatter.format_op_mode_decode_message(self.d)
+        for line in l:
+            self.push(line, indent=1)
+        self.push("}")
+
+
+class BlockMessageOpMode(BlockBindMessage[F], BlockComposition[F]):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block[F]]:
+        bs: List[Block[F]] = [
+            BlockMessageStruct(self.d),
+            BlockMessageSizeConst(self.d),
+            BlockMessageMethodSize(self.d),
+            BlockMessageMethodString(self.d),
+        ]
+
+        # Won't render encoder and decoder if not filtered
+        render_ctx = self._get_ctx_or_raise()
+        filter_messages = render_ctx.optimization_mode_filter_messages
+        if filter_messages:
+            if self.d.name not in filter_messages:
+                return bs
+
+        bs.extend(
+            [
+                BlockMessageMethodEncodeOpMode(self.d),
+                BlockMessageMethodDecodeOpMode(self.d),
+            ]
+        )
+        return bs
+
+
+class BlockBoundDefinitionListOpMode(BlockBoundDefinitionDispatcher[F]):
+    @override(BlockBoundDefinitionDispatcher)
+    def dispatch(self, d: BoundDefinition) -> Optional[Block[F]]:
+        if isinstance(d, Alias):
+            return BlockAliasDef(d)
+        if isinstance(d, Constant):
+            return BlockConstant(d)
+        if isinstance(d, Enum):
+            return BlockEnumOpMode(d)
+        if isinstance(d, Message):
+            return BlockMessageOpMode(d)
+        return None
+
+
+class BlockGeneralFunctionBool2ByteOpMode(Block[F]):
+    @override(Block)
+    def render(self) -> None:
+        self.push("func bool2byte(b bool) byte {")
+        self.push("if b {", indent=1)
+        self.push("return 1", indent=2)
+        self.push("}", indent=1)
+        self.push("return 0", indent=1)
+        self.push("}")
+
+
+class BlockGeneralFunctionByte2boolOpMode(Block[F]):
+    @override(Block)
+    def render(self) -> None:
+        self.push("func byte2bool(b byte) bool {")
+        self.push("if b > 0 {", indent=1)
+        self.push("return true", indent=2)
+        self.push("}", indent=1)
+        self.push("return false", indent=1)
+        self.push("}")
+
+
+class BlockListOpMode(BlockComposition[F]):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block[F]]:
+        return [
+            BlockAheadNotice(),
+            BlockPackageName(self.bound),
+            BlockGeneralImportsOpMode(),
+            BlockImportChildProtoList(),
+            BlockBoundDefinitionListOpMode(),
+            BlockGeneralFunctionBool2ByteOpMode(),
+            BlockGeneralFunctionByte2boolOpMode(),
+        ]
+
+
 class RendererGo(Renderer[F]):
     """Renderer for Go language."""
 
@@ -718,9 +847,15 @@ class RendererGo(Renderer[F]):
         return ".go"
 
     @override(Renderer)
+    def support_optimization(self) -> bool:
+        return True
+
+    @override(Renderer)
     def formatter(self) -> F:
         return F()
 
     @override(Renderer)
     def block(self) -> Block[F]:
+        if self.optimization_mode:
+            return BlockListOpMode()
         return BlockList()
