@@ -17,8 +17,8 @@ func benchEncode(n int) {
 	end := time.Now()
 	cost := end.Sub(start).Nanoseconds()
 
-	fmt.Printf("called encode %d times, total %dms, per encode %dus\n",
-		n, int(cost/1000/1000), (cost / 1000 / int64(n)))
+	fmt.Printf("called encode %d times, total %dms, per encode %.2fus\n",
+		n, int(cost/1000/1000), (float64(cost) / 1000.0 / float64(n)))
 }
 
 func benchDecode(n int) {
@@ -33,8 +33,8 @@ func benchDecode(n int) {
 	end := time.Now()
 	cost := end.Sub(start).Nanoseconds()
 
-	fmt.Printf("called decode %d times, total %dms, per decode %dus\n",
-		n, int(cost/1000/1000), (cost / 1000 / int64(n)))
+	fmt.Printf("called decode %d times, total %dms, per decode %.2fus\n",
+		n, int(cost/1000/1000), (float64(cost) / 1000.0 / float64(n)))
 }
 
 func main() {
