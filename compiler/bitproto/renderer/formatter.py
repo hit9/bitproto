@@ -555,7 +555,7 @@ class Formatter:
         if n > 0:
             return self.format_right_shift(n)
         elif n < 0:
-            return self.format_left_shift(n)
+            return self.format_left_shift(0 - n)
         return ""
 
     @final
