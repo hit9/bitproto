@@ -2,7 +2,7 @@
 Renderer for Python.
 """
 from abc import abstractmethod
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from bitproto._ast import (
     Alias,
@@ -338,11 +338,10 @@ class BlockMessageMethodProcessor(BlockMessageBase, BlockWrapper[F]):
 class BlockMessageMethodGetSetByteItemBase(BlockBindMessageField[F]):
     def __init__(
         self,
-        d: MessageField,
-        name: Optional[str] = None,
-        indent: int = 0,
+        *args: Any,
+        **kwds: Any,
     ) -> None:
-        super().__init__(d, name, indent)
+        super().__init__(*args, **kwds)
         self.array_depth: int = 0
 
     def format_data_ref(self) -> str:
@@ -494,11 +493,10 @@ class BlockMessageMethodGetByte(BlockMessageBase, BlockWrapper[F]):
 class BlockMessageMethodGetAccessorItem(BlockBindMessageField[F]):
     def __init__(
         self,
-        d: MessageField,
-        name: Optional[str] = None,
-        indent: int = 0,
+        *args: Any,
+        **kwds: Any,
     ) -> None:
-        super().__init__(d, name, indent)
+        super().__init__(*args, **kwds)
         self.array_depth: int = 0
 
     def format_data_ref(self) -> str:
@@ -656,6 +654,10 @@ class BlockList(BlockComposition[F]):
 
 class RendererPy(Renderer[F]):
     """Renderer for Python language."""
+
+    @override(Renderer)
+    def language_name(self) -> str:
+        return "py"
 
     @override(Renderer)
     def file_extension(self) -> str:

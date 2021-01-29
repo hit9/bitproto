@@ -58,9 +58,20 @@ class BlockIncludeGeneralHeaders(Block[F]):
     @override(Block)
     def render(self) -> None:
         self.push("#include <inttypes.h>")
-        self.push("#include <stdbool.h>")
         self.push("#include <stddef.h>")
         self.push("#include <stdint.h>")
+        self.push("#ifndef __cplusplus")
+        self.push("#include <stdbool.h>")
+        self.push("#endif")
+
+
+class BlockIncludeHeaders(BlockWrapper[F]):
+    @override(BlockWrapper)
+    def wraps(self) -> Block[F]:
+        return BlockIncludeGeneralHeaders()
+
+    @override(BlockWrapper)
+    def after(self) -> None:
         self.push_empty_line()
         self.push('#include "bitproto.h"')
 
@@ -449,7 +460,7 @@ class BlockList(BlockComposition[F]):
             BlockAheadNotice(),
             BlockProtoDocstring(self.bound),
             BlockIncludeGuard(),
-            BlockIncludeGeneralHeaders(),
+            BlockIncludeHeaders(),
             BlockExternCPlusPlus(),
             BlockImportList(),
             BlockDataStructuresList(),
@@ -458,12 +469,62 @@ class BlockList(BlockComposition[F]):
         ]
 
 
+class BlockMessageFunctionDeclarationsForUserOpMode(
+    BlockBindMessage[F], BlockComposition[F]
+):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block[F]]:
+        return [
+            BlockMessageEncoderFunctionDeclaration(self.d),
+            BlockMessageDecoderFunctionDeclaration(self.d),
+        ]
+
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n"
+
+
+class BlockFunctionDeclarationsForUserListOpMode(BlockBoundDefinitionDispatcher[F]):
+    @override(BlockBoundDefinitionDispatcher)
+    def dispatch(self, d: BoundDefinition) -> Optional[Block[F]]:
+        if isinstance(d, Message):
+            filter_messages = self._get_ctx_or_raise().optimization_mode_filter_messages
+            if filter_messages:
+                if d.name not in filter_messages:
+                    return None
+            return BlockMessageFunctionDeclarationsForUserOpMode(d)
+        return None
+
+
+class BlockListOpMode(BlockComposition[F]):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block[F]]:
+        return [
+            BlockAheadNotice(),
+            BlockProtoDocstring(self.bound),
+            BlockIncludeGuard(),
+            BlockIncludeGeneralHeaders(),
+            BlockExternCPlusPlus(),
+            BlockImportList(),
+            BlockDataStructuresList(),
+            BlockFunctionDeclarationsForUserListOpMode(),
+        ]
+
+
 class RendererCHeader(Renderer[F]):
     """Renderer for C language (header)."""
 
     @override(Renderer)
+    def language_name(self) -> str:
+        return "c"
+
+    @override(Renderer)
     def file_extension(self) -> str:
         return ".h"
+
+    @override(Renderer)
+    def support_optimization(self) -> bool:
+        return True
 
     @override(Renderer)
     def formatter(self) -> F:
@@ -471,4 +532,6 @@ class RendererCHeader(Renderer[F]):
 
     @override(Renderer)
     def block(self) -> Block[F]:
+        if self.optimization_mode:
+            return BlockListOpMode()
         return BlockList()

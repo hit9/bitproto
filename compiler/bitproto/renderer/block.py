@@ -61,6 +61,7 @@ class BlockRenderContext(Generic[F]):
 
     formatter: F
     bound: Proto
+    optimization_mode_filter_messages: Optional[List[str]] = None
 
 
 class Block(Generic[F]):

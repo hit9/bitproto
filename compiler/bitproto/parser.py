@@ -46,6 +46,7 @@ from bitproto.errors import (
     DuplicatedDefinition,
     DuplicatedImport,
     EnumInEnumUnsupported,
+    ExtensibleGrammarFoundInTraditionalMode,
     GrammarError,
     ImportInEnumUnsupported,
     ImportInMessageUnsupported,
@@ -88,6 +89,7 @@ class Parser:
         scope_stack: Optional[List[Scope]] = None,
         filepath_stack: Optional[List[str]] = None,
         comment_block: Optional[List[Comment]] = None,
+        traditional_mode: bool = False,
     ) -> None:
         self.lexer: Lexer = Lexer(filepath_stack=filepath_stack)
         self.parser: PlyParser = yacc.yacc(
@@ -98,6 +100,7 @@ class Parser:
         self.comment_block: List[Comment] = comment_block or []
         self.scope_stack_init_length: int = len(self.scope_stack)
         self.last_newline_pos: int = 0
+        self.traditional_mode = traditional_mode
 
     def push_scope(self, scope: Scope) -> None:
         self.scope_stack.append(scope)
@@ -181,6 +184,7 @@ class Parser:
             scope_stack=self.scope_stack,
             filepath_stack=self.filepath_stack,
             comment_block=self.comment_block,
+            traditional_mode=self.traditional_mode,
         ).parse(filepath)
 
     def util_parse_sequence(self, p: P) -> None:
@@ -506,7 +510,12 @@ class Parser:
 
     @override_docstring(r_optional_extensible_flag)
     def p_optional_extensible_flag(self, p: P) -> None:
-        p[0] = len(p) == 2
+        extensible = len(p) == 2
+        p[0] = extensible
+        if extensible and self.traditional_mode:
+            raise ExtensibleGrammarFoundInTraditionalMode(
+                filepath=self.current_filepath(), lineno=p.lineno(1), token=p[1]
+            )
 
     @override_docstring(r_array_type)
     def p_array_type(self, p: P) -> None:
@@ -711,6 +720,12 @@ class Parser:
         raise GrammarError()
 
 
-def parse(filepath: str) -> Proto:
-    """Parse a bitproto from given filepath."""
-    return Parser().parse(filepath)
+def parse(filepath: str, traditional_mode: bool = False) -> Proto:
+    """Parse a bitproto from given filepath.
+
+    :param filepath: The path of bitproto file to parse. A relative path to current cwd or
+       an absolute path.
+    :param traditional_mode: Whether enforcing parsing in traditional mode. Will rases if
+       extensible grammar is used in traditional mode.
+    """
+    return Parser(traditional_mode=traditional_mode).parse(filepath)

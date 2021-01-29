@@ -86,7 +86,9 @@ class CaseStyle(Enum_):
 class Formatter:
     """Generic language specific formatter."""
 
+    #############
     # Abstracts
+    #############
 
     @abstractmethod
     def case_style_mapping(self) -> CaseStyleMapping:
@@ -167,7 +169,9 @@ class Formatter:
         """
         raise NotImplementedError
 
+    ###############
     # Overridables
+    ###############
 
     @overridable
     def format_left_shift(self, n: int) -> str:
@@ -255,7 +259,9 @@ class Formatter:
         """
         return ""
 
+    ###########
     # Finals
+    ###########
 
     @final
     def format_token_location(self, node: Node) -> str:
@@ -491,6 +497,231 @@ class Formatter:
             out_base_name = os.path.splitext(proto_base_name)[0]  # remove extension
         out_filename = out_base_name + "_bp" + extension
         return out_filename
+
+    #####################
+    # Optimization Mode
+    #####################
+    @overridable
+    def format_op_mode_endecoder_message_var(self) -> str:
+        """Returns the message variable name in rendered encoder and decoder function."""
+        raise NotImplementedError
+
+    @overridable
+    def format_op_mode_encoder_item(
+        self, chain: str, si: int, fi: int, shift: int, mask: int, r: int
+    ) -> str:
+        """Formats one line item of encoder encoding statement.
+        :param chain: Naming chain of current field being processed.
+        :param si: The index of byte in the destination buffer s.
+        :param fi: The index of byte in the source field's bytes.
+        :param shift: The number of bits to shift.
+        :param mask: The mask get from op_mode_get_mask.
+        :param r: 0 if target buffer is margined to the left of byte.
+        """
+        raise NotImplementedError
+
+    @overridable
+    def format_op_mode_decoder_item(
+        self, chain: str, si: int, fi: int, shift: int, mask: int, r: int
+    ) -> str:
+        """Formats one line item of decoder decoding statement.
+        :param chain: Naming chain of current field being processed.
+        :param si: The index of byte in the source buffer s.
+        :param fi: The index of byte in the destination field's bytes.
+        :param shift: The number of bits to shift.
+        :param mask: The mask get from op_mode_get_mask.
+        :param r: 0 if target buffer is margined to the left of byte.
+        """
+        raise NotImplementedError
+
+    @overridable
+    def format_op_mode_field_name_chain(self, chain: str, name: str) -> str:
+        """Append a name to current field name lookup chain."""
+        return chain + "." + name
+
+    @overridable
+    def format_op_mode_field_name_chain_array(self, chain: str, index: int) -> str:
+        """Format array index lookup as a name to append on current field name
+        lookup chain.
+        """
+        return chain + f"[{index}]"
+
+    @final
+    def format_op_mode_smart_shift(self, n: int) -> str:
+        """Gives the formatted result of `format_right_shift` if n > 0.
+        Otherwise gives result of `format_left_shift`.
+        Returns an empty string if n == 0.
+        """
+        if n > 0:
+            return self.format_right_shift(n)
+        elif n < 0:
+            return self.format_left_shift(0 - n)
+        return ""
+
+    @final
+    def op_mode_get_mask(self, k: int, c: int) -> int:
+        """Returns the mask to clear redundancy bits around producted byte before copied to
+        target byte.
+        :param k: The start bit to copy bits inside a byte.
+        :param c: The number of bits to copy.
+
+        Examples of returned mask:
+
+            Returns                Arguments
+            00001111               k=0, c=4
+            01111100               k=2, c=5
+            00111100               k=2, c=4
+        """
+        return (1 << (k + c)) - (1 << k)
+
+    @final
+    def format_op_mode_encode_single_byte(
+        self, t: Type, chain: str, i: int, j: int, c: int
+    ) -> str:
+        """Formats the encoding statement for a single byte.
+        :param i: The index of bit to start coping in source buffer.
+        :param j: The index of bit to start coping in destination field buffer.
+        :param c: The number of bits to copy.
+        """
+        shift, mask = ((j % 8) - (i % 8)), self.op_mode_get_mask(i % 8, c)
+        si, fi, r = int(i / 8), int(j / 8), i % 8
+        return self.format_op_mode_encoder_item(chain, si, fi, shift, mask, r)
+
+    @final
+    def format_op_mode_decode_single_byte(
+        self, t: Type, chain: str, i: int, j: int, c: int
+    ) -> str:
+        """Formats the decoding statement for a single byte.
+
+        :param i: The index of bit to start coping in destination buffer.
+        :param j: The index of bit to start coping in source field buffer.
+        :param c: The number of bits to copy.
+        """
+        shift, mask = ((i % 8) - (j % 8)), self.op_mode_get_mask(j % 8, c)
+        si, fi, r = int(i / 8), int(j / 8), j % 8
+        return self.format_op_mode_decoder_item(chain, si, fi, shift, mask, r)
+
+    @final
+    def format_op_mode_endecode_single_type(
+        self, t: SingleType, chain: str, is_encode: bool, i: List[int]
+    ) -> List[str]:
+        """Formats the statements for encoding or decoding a single type.
+
+        :param t: The single type to process.
+        :param chain: The name chain to find the field.
+        :param is_encode: Sets to `True` if encoding.
+        :param i: List of a single number that counts the number of bits processed in the
+           buffer s. Using a list instead of a number to update the number across
+           recursion functions.
+        """
+        # l collects the generated lines.
+        l: List[str] = []
+        # j counts the number of bits processed.
+        j, n = 0, t.nbits()
+        while j < n:
+            # Number of bits to copy
+            # 8-(j%8) ensures the destination (source) space is enough.
+            # 8-(i%8) ensures the source (destination) space is enough.
+            # n-j ensures the total bits remaining enough.
+            c = min(8 - (i[0] % 8), 8 - (j % 8), n - j)
+            if is_encode:
+                s = self.format_op_mode_encode_single_byte(t, chain, i[0], j, c)
+            else:
+                s = self.format_op_mode_decode_single_byte(t, chain, i[0], j, c)
+            l.append(s)
+            # Maintains the j and i counter
+            j += c
+            i[0] += c
+        return l
+
+    @final
+    def format_op_mode_endecode_message_field(
+        self, t: Type, chain: str, is_encode: bool, i: List[int]
+    ) -> List[str]:
+        """Format the encoding (decoding) statements for a message field.
+        This function will dispatch the formatting according to the field type.
+        """
+        if isinstance(t, SingleType):
+            return self.format_op_mode_endecode_single_type(t, chain, is_encode, i)
+        elif isinstance(t, Message):
+            return self.format_op_mode_endecode_message(t, chain, is_encode, i)
+        elif isinstance(t, Array):
+            return self.format_op_mode_endecode_array(t, chain, is_encode, i)
+        elif isinstance(t, Alias):
+            return self.format_op_mode_endecode_alias(t, chain, is_encode, i)
+        raise InternalError("format_endecode_message_field got unknown type")
+
+    @final
+    def format_op_mode_endecode_array(
+        self, t: Array, chain: str, is_encode: bool, i: List[int]
+    ) -> List[str]:
+        """Format the encoding (decoding) statements for an array.
+        This function iterates all elements of this array and dispatch the formatting
+        according to the element's type.
+        """
+        t_ = t.element_type
+        l: List[str] = []
+        for index in range(t.cap):
+            l_: List[str]
+            chain_ = self.format_op_mode_field_name_chain_array(chain, index)
+            if isinstance(t_, SingleType):
+                l_ = self.format_op_mode_endecode_single_type(t_, chain_, is_encode, i)
+            elif isinstance(t_, Message):
+                l_ = self.format_op_mode_endecode_message(t_, chain_, is_encode, i)
+            elif isinstance(t_, Alias):
+                l_ = self.format_op_mode_endecode_alias(t_, chain_, is_encode, i)
+            else:
+                raise InternalError("format_endecode_array got unknown element_type")
+            l.extend(l_)
+        return l
+
+    @final
+    def format_op_mode_endecode_alias(
+        self, t: Alias, chain: str, is_encode: bool, i: List[int]
+    ) -> List[str]:
+        """Format the encoding (decoding) statements for an alias type.
+        This function dispatches the formatting process according to the type aliased.
+        """
+        t_ = t.type
+
+        if isinstance(t_, Array):
+            return self.format_op_mode_endecode_array(t_, chain, is_encode, i)
+        elif isinstance(t_, SingleType):
+            return self.format_op_mode_endecode_single_type(t_, chain, is_encode, i)
+
+        raise InternalError("format_endecode_alias got unknown aliased type")
+
+    @final
+    def format_op_mode_endecode_message(
+        self, t: Message, chain: str, is_encode: bool, i: List[int]
+    ) -> List[str]:
+        """Format the encoding (decoding) statements for a message.
+        This function iterates the message fields and dispatches the formatting process
+        accaccording to the field's type.
+        """
+        l: List[str] = []
+        for field in t.sorted_fields():
+            chain_ = self.format_op_mode_field_name_chain(chain, field.name)
+            t_ = field.type
+            l_ = self.format_op_mode_endecode_message_field(t_, chain_, is_encode, i)
+            l.extend(l_)
+        return l
+
+    @final
+    def format_op_mode_encode_message(self, message: Message) -> List[str]:
+        """Formatter entry for the message encoder statements."""
+        field_name_chain = self.format_op_mode_endecoder_message_var()
+        return self.format_op_mode_endecode_message(
+            message, field_name_chain, True, [0]
+        )
+
+    @final
+    def format_op_mode_decode_message(self, message: Message) -> List[str]:
+        """Formatter entry for the message decoder statements."""
+        field_name_chain = self.format_op_mode_endecoder_message_var()
+        return self.format_op_mode_endecode_message(
+            message, field_name_chain, False, [0]
+        )
 
 
 F = TypeVar("F", bound=Formatter)

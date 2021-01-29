@@ -10,9 +10,10 @@ from abc import abstractmethod
 from typing import Generic, List, Optional
 
 from bitproto._ast import Proto
-from bitproto.errors import InternalError
+from bitproto.errors import InternalError, LanguageNotSupportOptimizationMode
 from bitproto.renderer.block import Block, BlockRenderContext
 from bitproto.renderer.formatter import F, Formatter
+from bitproto.utils import final, overridable
 
 
 class Renderer(Generic[F]):
@@ -21,11 +22,21 @@ class Renderer(Generic[F]):
     :param proto: The parsed bitproto instance.
     :param outdir: The directory to write files, defaults to the source
        bitproto's file directory, or cwd.
+    :param optimization_mode: Whether the optimization_mode is enabled.
     """
 
-    def __init__(self, proto: Proto, outdir: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        proto: Proto,
+        outdir: Optional[str] = None,
+        optimization_mode: bool = False,
+        optimization_mode_filter_messages: Optional[List[str]] = None,
+    ) -> None:
         self.proto = proto
         self.outdir = outdir or self.get_outdir_default(proto)
+        self.optimization_mode = optimization_mode
+        self.check_proto_for_optimization_mode()
+        self.optimization_mode_filter_messages = optimization_mode_filter_messages
 
         self.out_filename = self.get_out_filename()
         self.out_filepath = os.path.join(self.outdir, self.out_filename)
@@ -51,7 +62,11 @@ class Renderer(Generic[F]):
         block = self.block()
         assert block is not None, InternalError("block() returns None")
 
-        ctx = BlockRenderContext(formatter=formatter, bound=self.proto)
+        ctx = BlockRenderContext(
+            formatter=formatter,
+            bound=self.proto,
+            optimization_mode_filter_messages=self.optimization_mode_filter_messages,
+        )
         block._render_with_ctx(ctx)
         return block._collect()
 
@@ -64,6 +79,23 @@ class Renderer(Generic[F]):
         with open(self.out_filepath, "w") as f:
             f.write(content)
         return self.out_filepath
+
+    @final
+    def check_proto_for_optimization_mode(self) -> None:
+        """Raises if proto contains non-traditional definitions.
+
+        Proto's definitions and types aren't checked whether to be traditional here. The
+        parser is enforced to traditional mode to check it during parsing.
+        """
+        if not self.optimization_mode:
+            return
+        if not self.support_optimization():
+            raise LanguageNotSupportOptimizationMode(lang=self.language_name())
+
+    @abstractmethod
+    def language_name(self) -> str:
+        """Returns the language name of this renderer."""
+        raise NotImplementedError
 
     @abstractmethod
     def block(self) -> Block[F]:
@@ -79,3 +111,10 @@ class Renderer(Generic[F]):
     def formatter(self) -> F:
         """Returns the formatter of this renderer."""
         raise NotImplementedError
+
+    @overridable
+    def support_optimization(self) -> bool:
+        """Returns `True` if this render supports optimization mode.
+        Defaults to False.
+        """
+        return False

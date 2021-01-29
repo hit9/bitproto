@@ -324,6 +324,27 @@ class ProtoNameUndefined(GrammarError):
 
 
 @dataclass
+class ExtensibleGrammarFoundInTraditionalMode(GrammarError):
+    """Extensible-type grammar found while enforcing traditional mode parsing."""
+
+
+@dataclass
+class LanguageNotSupportOptimizationMode(RendererError):
+    """Language doesn't support optimization mode."""
+
+    lang: str = ""
+
+    @override(Base)
+    def format_default_description(self) -> str:
+        message: str
+        if self.lang:
+            message = f"Optimization mode for language {self.lang} isn't supported."
+        else:
+            message = self.__doc__ or ""
+        return message
+
+
+@dataclass
 class LintWarning(_TokenBound, Warning):
     """Some warning occurred during bitproto linting."""
 

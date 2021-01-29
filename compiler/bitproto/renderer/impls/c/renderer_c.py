@@ -406,12 +406,80 @@ class BlockList(BlockComposition[F]):
         ]
 
 
+class BlockIncludeOpMode(Block[F]):
+    @override(Block)
+    def render(self) -> None:
+        header_filename = self.formatter.format_out_filename(self.bound, extension=".h")
+        self.push(f'#include "{header_filename}"')
+
+
+class BlockMessageEncoderOpMode(BlockMessageEncoderBase):
+    @override(Block)
+    def render(self) -> None:
+        self.push(f"{self.function_signature} {{")
+        l = self.formatter.format_op_mode_encode_message(self.d)
+        for line in l:
+            self.push(line, indent=4)
+        self.push("return 0;", indent=4)
+        self.push("}")
+
+
+class BlockMessageDecoderOpMode(BlockMessageDecoderBase):
+    @override(Block)
+    def render(self) -> None:
+        self.push(f"{self.function_signature} {{")
+        l = self.formatter.format_op_mode_decode_message(self.d)
+        for line in l:
+            self.push(line, indent=4)
+        self.push("return 0;", indent=4)
+        self.push("}")
+
+
+class BlockMessageFunctionsOpMode(BlockBindMessage[F], BlockComposition[F]):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block[F]]:
+        return [
+            BlockMessageEncoderOpMode(self.d),
+            BlockMessageDecoderOpMode(self.d),
+        ]
+
+
+class BlockBoundDefinitionListOpMode(BlockBoundDefinitionDispatcher[F]):
+    @override(BlockBoundDefinitionDispatcher)
+    def dispatch(self, d: BoundDefinition) -> Optional[Block[F]]:
+        if isinstance(d, Message):
+            filter_messages = self._get_ctx_or_raise().optimization_mode_filter_messages
+            if filter_messages:
+                if d.name not in filter_messages:
+                    return None
+            return BlockMessageFunctionsOpMode(d)
+        return None
+
+
+class BlockListOpMode(BlockComposition[F]):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block[F]]:
+        return [
+            BlockAheadNotice(),
+            BlockIncludeOpMode(),
+            BlockBoundDefinitionListOpMode(),
+        ]
+
+
 class RendererC(Renderer[F]):
     """Renderer for C language (c file)."""
 
     @override(Renderer)
+    def language_name(self) -> str:
+        return "c"
+
+    @override(Renderer)
     def file_extension(self) -> str:
         return ".c"
+
+    @override(Renderer)
+    def support_optimization(self) -> bool:
+        return True
 
     @override(Renderer)
     def formatter(self) -> F:
@@ -419,4 +487,6 @@ class RendererC(Renderer[F]):
 
     @override(Renderer)
     def block(self) -> Block[F]:
+        if self.optimization_mode:
+            return BlockListOpMode()
         return BlockList()

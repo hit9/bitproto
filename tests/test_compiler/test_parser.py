@@ -238,6 +238,11 @@ def test_parse_extensible() -> None:
     assert array_h.nbits() == 3 * 8 + 16
 
 
+def test_parse_extensible_traditional_mode() -> None:
+    with pytest.raises(GrammarError):
+        parse(bitproto_filepath("extensible.bitproto"), traditional_mode=True)
+
+
 def test_parse_array_cap_constraint() -> None:
     with pytest.raises(GrammarError):
         parse(bitproto_filepath("array_cap_constraint.bitproto"))

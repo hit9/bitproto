@@ -13,7 +13,13 @@ from bitproto.renderer.impls import renderer_registry
 from bitproto.renderer.renderer import Renderer
 
 
-def render(proto: Proto, lang: str, outdir: Optional[str] = None) -> List[str]:
+def render(
+    proto: Proto,
+    lang: str,
+    outdir: Optional[str] = None,
+    optimization_mode: bool = False,
+    optimization_mode_filter_messages: Optional[List[str]] = None,
+) -> List[str]:
     """Render given `proto` to directory `outdir`.
     Returns the filepath list generated.
     """
@@ -23,6 +29,11 @@ def render(proto: Proto, lang: str, outdir: Optional[str] = None) -> List[str]:
 
     outs = []
     for renderer_cls in clss:
-        renderer = renderer_cls(proto, outdir=outdir)
+        renderer = renderer_cls(
+            proto,
+            outdir=outdir,
+            optimization_mode=optimization_mode,
+            optimization_mode_filter_messages=optimization_mode_filter_messages,
+        )
         outs.append(renderer.render())
     return outs

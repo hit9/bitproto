@@ -6,9 +6,11 @@
 #define __BITPROTO__DRONE_H__ 1
 
 #include <inttypes.h>
-#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#ifndef __cplusplus
+#include <stdbool.h>
+#endif
 
 #include "bitproto.h"
 
