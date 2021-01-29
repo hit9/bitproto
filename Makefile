@@ -19,9 +19,19 @@ bench:
 	make -C benchmark/unix
 
 bench-c-o1:
-	make -C benchmark/bench-on-os bench-c-o1
+	make -C benchmark/unix bench-c-o1
 
 bench-c-o2:
-	make -C benchmark/bench-on-os bench-c-o2
+	make -C benchmark/unix bench-c-o2
 
-.PHONY: lint test test-o2 example bench bench-c-o1 bench-c-o2
+bench-optimization-mode:
+	make -C benchmark/unix bench-optimization-mode
+
+bench-c-optimization-mode-o1:
+	make -C benchmark/unix bench-c-optimization-mode-o1
+
+bench-c-optimization-mode-o2:
+	make -C benchmark/unix bench-c-optimization-mode-o2
+
+.PHONY: lint test test-o2 example bench bench-c-o1 bench-c-o2 \
+	bench-optimization-mode bench-c-optimization-mode-o1 bench-c-optimization-mode-o2
