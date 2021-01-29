@@ -7,6 +7,7 @@ bp:
 
 bp-optmization-mode:
 	bitproto c drone.bitproto C -O -F "Drone"
+	bitproto go drone.bitproto Go/bp -O -F "Drone"
 
 bench: bp
 	make -C C
@@ -21,6 +22,7 @@ bench-c-o2: bp
 
 bench-optimization-mode: bp-optmization-mode
 	make -C C
+	make -C Go
 
 bench-c-optimization-mode-o1: bp-optmization-mode
 	make -C C CC_OPTIMIZE=-O1

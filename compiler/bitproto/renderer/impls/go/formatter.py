@@ -28,6 +28,10 @@ from bitproto.utils import cast_or_raise, override
 class GoFormatter(Formatter):
     """Formatter for Go language."""
 
+    ###################
+    # Language Basics
+    ###################
+
     @override(Formatter)
     def case_style_mapping(self) -> CaseStyleMapping:
         return {
@@ -51,6 +55,17 @@ class GoFormatter(Formatter):
         return f"// {content}"
 
     @override(Formatter)
+    def format_import_statement(self, t: Proto, as_name: Optional[str] = None) -> str:
+        path = t.get_option_as_string_or_raise("go.package_path") or f"{t.name}_bp"
+        if as_name:
+            return f'import {as_name} "{path}"'
+        return f'import "{path}"'
+
+    ###################
+    # Value literals
+    ###################
+
+    @override(Formatter)
     def format_bool_value(self, value: bool) -> str:
         if value:
             return "true"
@@ -63,6 +78,10 @@ class GoFormatter(Formatter):
     @override(Formatter)
     def format_int_value(self, value: int) -> str:
         return "{0}".format(value)
+
+    ###################
+    # Type representing
+    ###################
 
     @override(Formatter)
     def format_bool_type(self) -> str:
@@ -85,13 +104,6 @@ class GoFormatter(Formatter):
         return "[{cap}]{type}".format(type=self.format_type(t.element_type), cap=t.cap)
 
     @override(Formatter)
-    def format_import_statement(self, t: Proto, as_name: Optional[str] = None) -> str:
-        path = t.get_option_as_string_or_raise("go.package_path") or f"{t.name}_bp"
-        if as_name:
-            return f'import {as_name} "{path}"'
-        return f'import "{path}"'
-
-    @override(Formatter)
     def format_int_value_type(self) -> str:
         return "int"
 
@@ -102,6 +114,10 @@ class GoFormatter(Formatter):
     @override(Formatter)
     def format_bool_value_type(self) -> str:
         return "bool"
+
+    ###################
+    # Library Supports
+    ###################
 
     def format_processor(self, t: Type) -> str:
         if isinstance(t, Bool):
@@ -162,3 +178,65 @@ class GoFormatter(Formatter):
     def format_processor_message(self, t: Message) -> str:
         message_name = self.format_message_name(t)
         return f"(&{message_name}{{}}).BpProcessor()"
+
+    ###################
+    # Optimization Mode.
+    ###################
+
+    @override(Formatter)
+    def format_op_mode_endecoder_message_var(self) -> str:
+        return "m"
+
+    @override(Formatter)
+    def format_op_mode_encoder_item(
+        self, chain: str, t: Type, si: int, fi: int, shift: int, mask: int, r: int
+    ) -> str:
+        """Implements format_op_mode_encoder_item for Go.
+        Generated Go statement like:
+
+                s[0] |= (byte(m.Color >> 8) >> 5) & 7
+
+        """
+        bshift = " >> {0}".format(fi * 8) if fi > 0 else ""
+        shift_s = self.format_op_mode_smart_shift(shift)
+
+        # Handle go's annoying type casting
+        if isinstance(t, Bool):
+            chain = f"bool2byte({chain})"
+        elif isinstance(t, Alias):
+            alias_t = cast_or_raise(Alias, t)
+            if isinstance(alias_t.type, Bool):
+                chain = f"bool2byte(bool({chain}))"
+
+        return f"s[{si}] |= (byte({chain}{bshift}) {shift_s}) & {mask}"
+
+    @override(Formatter)
+    def format_op_mode_decoder_item(
+        self, chain: str, t: Type, si: int, fi: int, shift: int, mask: int, r: int
+    ) -> str:
+        """Implements format_op_mode_encoder_item for Go.
+        Generated Go statement like:
+
+                m.Color |= uint16(byte(s[0]>>3) & 31) << 8
+
+        """
+        bshift = " << {0}".format(fi * 8) if fi > 0 else ""
+        shift_s = self.format_op_mode_smart_shift(shift)
+
+        byte = f"byte(s[{si}] {shift_s}) & {mask}"
+
+        assign = "|="
+        type_s = self.format_type(t)
+        data = f"{type_s}({byte})"
+
+        # Handle go's annoying type casting
+        if isinstance(t, Bool):
+            data = f"byte2bool({byte})"
+            assign = "="
+        elif isinstance(t, Alias):
+            alias_t = cast_or_raise(Alias, t)
+            if isinstance(alias_t.type, Bool):
+                data = f"{type_s}(byte2bool({byte}))"
+                assign = "="
+
+        return f"{chain} {assign} {data}{bshift}"

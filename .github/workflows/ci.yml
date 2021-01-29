@@ -70,3 +70,4 @@ jobs:
       run: |
         make test
         make test-o2
+        make test-optimization-mode

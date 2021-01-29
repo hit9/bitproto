@@ -27,10 +27,14 @@ class _TestCase:
 
     cc_optimization_arg: str = ""
 
+    optimization_mode_arg: str = ""
+    support_optimization_mode: bool = True
+
     def __post_init__(self) -> None:
         if not self.langs:
             self.langs = ["c", "go", "py"]
         self.cc_optimization_arg = os.environ.get("BP_TEST_CC_OPTIMIZATION", "")
+        self.optimization_mode_arg = os.environ.get("BP_TEST_OPTIMIZATION_ARG", "")
 
     @property
     def rootdir(self) -> str:
@@ -45,6 +49,8 @@ class _TestCase:
         cmd = f"make -s  --no-print-directory {sub_cmd}"
         if lang == "c" and self.cc_optimization_arg != "":
             cmd += " CC_OPTIMIZATION_ARG=" + self.cc_optimization_arg
+        if self.optimization_mode_arg:
+            cmd += " OPTIMIZATION_MODE_ARGS=" + self.optimization_mode_arg
         return subprocess.check_output(cmd, shell=True)
 
     def execute_cmd_clean(self) -> None:
@@ -63,6 +69,10 @@ class _TestCase:
 
     def run(self) -> None:
         """Run this case, returns the """
+
+        if self.optimization_mode_arg and not self.support_optimization_mode:
+            return
+
         current_cwd = os.getcwd()
         outputs: List[bytes] = []
 
@@ -86,15 +96,17 @@ def test_encoding_drone() -> None:
 
 
 def test_encoding_drone_json() -> None:
-    _TestCase("drone_json", compare_output_as_json=True).run()
+    _TestCase(
+        "drone_json", compare_output_as_json=True, support_optimization_mode=False
+    ).run()
 
 
 def test_encoding_extensible() -> None:
-    _TestCase("extensible").run()
+    _TestCase("extensible", support_optimization_mode=False).run()
 
 
 def test_encoding_empty() -> None:
-    _TestCase("empty").run()
+    _TestCase("empty", support_optimization_mode=False).run()
 
 
 def test_encoding_consts() -> None:

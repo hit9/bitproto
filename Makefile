@@ -9,6 +9,9 @@ lint:
 test:
 	pytest tests -v -s -x
 
+test-optimization-mode:
+	BP_TEST_OPTIMIZATION_ARG=-O pytest tests/test_encoding -v -s -x
+
 test-o2:
 	BP_TEST_CC_OPTIMIZATION=-O2 pytest tests/test_encoding -v -s -x
 
@@ -33,5 +36,5 @@ bench-c-optimization-mode-o1:
 bench-c-optimization-mode-o2:
 	make -C benchmark/unix bench-c-optimization-mode-o2
 
-.PHONY: lint test test-o2 example bench bench-c-o1 bench-c-o2 \
+.PHONY: lint test test-o2 test-optimization-mode example bench bench-c-o1 bench-c-o2 \
 	bench-optimization-mode bench-c-optimization-mode-o1 bench-c-optimization-mode-o2

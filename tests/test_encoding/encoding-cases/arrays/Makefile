@@ -9,8 +9,10 @@ BP_LIB_DIR=../../../../../lib/c
 BP_LIC_C_PATH=$(BP_LIB_DIR)/bitproto.c
 
 C_SOURCE_FILE=main.c
-C_SOURCE_FILE_LIST=$(C_SOURCE_FILE) $(BP_C_FILENAME) $(BP_LIC_C_PATH) 
+C_SOURCE_FILE_LIST=$(C_SOURCE_FILE) $(BP_C_FILENAME) $(BP_LIC_C_PATH)
 C_BIN=$(BIN)
+
+OPTIMIZATION_MODE_ARGS?=
 
 GO_BIN=$(BIN)
 
@@ -19,10 +21,10 @@ PY_SOURCE_FILE=main.py
 CC_OPTIMIZATION_ARG?=
 
 bp-c:
-	@bitproto c $(BP_FILENAME) c/
+	@bitproto c $(BP_FILENAME) c/  $(OPTIMIZATION_MODE_ARGS)
 
 bp-go:
-	@bitproto go $(BP_FILENAME) go/bp/
+	@bitproto go $(BP_FILENAME) go/bp/   $(OPTIMIZATION_MODE_ARGS)
 
 bp-py:
 	@bitproto py $(BP_FILENAME) py/

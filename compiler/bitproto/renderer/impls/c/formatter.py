@@ -17,6 +17,7 @@ from bitproto._ast import (
     Message,
     MessageField,
     Proto,
+    SingleType,
     Type,
     Uint,
 )
@@ -294,7 +295,7 @@ class CFormatter(Formatter):
 
     @override(Formatter)
     def format_op_mode_encoder_item(
-        self, chain: str, si: int, fi: int, shift: int, mask: int, r: int
+        self, chain: str, t: Type, si: int, fi: int, shift: int, mask: int, r: int
     ) -> str:
         """Implements format_op_mode_encoder_item for C.
         Generated C statement like:
@@ -308,7 +309,7 @@ class CFormatter(Formatter):
 
     @override(Formatter)
     def format_op_mode_decoder_item(
-        self, chain: str, si: int, fi: int, shift: int, mask: int, r: int
+        self, chain: str, t: Type, si: int, fi: int, shift: int, mask: int, r: int
     ) -> str:
         """Implements format_op_mode_encoder_item for C.
         Generated C statement like:

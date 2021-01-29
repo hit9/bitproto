@@ -508,10 +508,11 @@ class Formatter:
 
     @overridable
     def format_op_mode_encoder_item(
-        self, chain: str, si: int, fi: int, shift: int, mask: int, r: int
+        self, chain: str, t: Type, si: int, fi: int, shift: int, mask: int, r: int
     ) -> str:
         """Formats one line item of encoder encoding statement.
         :param chain: Naming chain of current field being processed.
+        :param t: The field's type.
         :param si: The index of byte in the destination buffer s.
         :param fi: The index of byte in the source field's bytes.
         :param shift: The number of bits to shift.
@@ -522,10 +523,11 @@ class Formatter:
 
     @overridable
     def format_op_mode_decoder_item(
-        self, chain: str, si: int, fi: int, shift: int, mask: int, r: int
+        self, chain: str, t: Type, si: int, fi: int, shift: int, mask: int, r: int
     ) -> str:
         """Formats one line item of decoder decoding statement.
         :param chain: Naming chain of current field being processed.
+        :param t: The field type.
         :param si: The index of byte in the source buffer s.
         :param fi: The index of byte in the destination field's bytes.
         :param shift: The number of bits to shift.
@@ -535,9 +537,9 @@ class Formatter:
         raise NotImplementedError
 
     @overridable
-    def format_op_mode_field_name_chain(self, chain: str, name: str) -> str:
+    def format_op_mode_field_name_chain(self, chain: str, field: MessageField) -> str:
         """Append a name to current field name lookup chain."""
-        return chain + "." + name
+        return chain + "." + self.format_message_field_name(field)
 
     @overridable
     def format_op_mode_field_name_chain_array(self, chain: str, index: int) -> str:
@@ -585,7 +587,7 @@ class Formatter:
         """
         shift, mask = ((j % 8) - (i % 8)), self.op_mode_get_mask(i % 8, c)
         si, fi, r = int(i / 8), int(j / 8), i % 8
-        return self.format_op_mode_encoder_item(chain, si, fi, shift, mask, r)
+        return self.format_op_mode_encoder_item(chain, t, si, fi, shift, mask, r)
 
     @final
     def format_op_mode_decode_single_byte(
@@ -599,11 +601,11 @@ class Formatter:
         """
         shift, mask = ((i % 8) - (j % 8)), self.op_mode_get_mask(j % 8, c)
         si, fi, r = int(i / 8), int(j / 8), j % 8
-        return self.format_op_mode_decoder_item(chain, si, fi, shift, mask, r)
+        return self.format_op_mode_decoder_item(chain, t, si, fi, shift, mask, r)
 
     @final
     def format_op_mode_endecode_single_type(
-        self, t: SingleType, chain: str, is_encode: bool, i: List[int]
+        self, t: Type, chain: str, is_encode: bool, i: List[int]
     ) -> List[str]:
         """Formats the statements for encoding or decoding a single type.
 
@@ -687,7 +689,14 @@ class Formatter:
         if isinstance(t_, Array):
             return self.format_op_mode_endecode_array(t_, chain, is_encode, i)
         elif isinstance(t_, SingleType):
-            return self.format_op_mode_endecode_single_type(t_, chain, is_encode, i)
+            return self.format_op_mode_endecode_single_type(
+                # Note pass `t` instead of `t_`.
+                # Because the type of this field is this alias itself.
+                t,
+                chain,
+                is_encode,
+                i,
+            )
 
         raise InternalError("format_endecode_alias got unknown aliased type")
 
@@ -701,7 +710,7 @@ class Formatter:
         """
         l: List[str] = []
         for field in t.sorted_fields():
-            chain_ = self.format_op_mode_field_name_chain(chain, field.name)
+            chain_ = self.format_op_mode_field_name_chain(chain, field)
             t_ = field.type
             l_ = self.format_op_mode_endecode_message_field(t_, chain_, is_encode, i)
             l.extend(l_)
