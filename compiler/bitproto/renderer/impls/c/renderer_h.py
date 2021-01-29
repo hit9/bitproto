@@ -58,9 +58,11 @@ class BlockIncludeGeneralHeaders(Block[F]):
     @override(Block)
     def render(self) -> None:
         self.push("#include <inttypes.h>")
-        self.push("#include <stdbool.h>")
         self.push("#include <stddef.h>")
         self.push("#include <stdint.h>")
+        self.push("#ifndef __cplusplus")
+        self.push("#include <stdbool.h>")
+        self.push("#endif")
 
 
 class BlockIncludeHeaders(BlockWrapper[F]):
