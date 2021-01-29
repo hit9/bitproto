@@ -458,6 +458,44 @@ class BlockList(BlockComposition[F]):
         ]
 
 
+class BlockMessageFunctionDeclarationsForUserOpMode(
+    BlockBindMessage[F], BlockComposition[F]
+):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block[F]]:
+        return [
+            BlockMessageEncoderFunctionDeclaration(self.d),
+            BlockMessageDecoderFunctionDeclaration(self.d),
+        ]
+
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n"
+
+
+class BlockFunctionDeclarationsForUserListOpMode(BlockBoundDefinitionDispatcher[F]):
+    @override(BlockBoundDefinitionDispatcher)
+    def dispatch(self, d: BoundDefinition) -> Optional[Block[F]]:
+        if isinstance(d, Message):
+            return BlockMessageFunctionDeclarationsForUserOpMode(d)
+        return None
+
+
+class BlockListOpMode(BlockComposition[F]):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block[F]]:
+        return [
+            BlockAheadNotice(),
+            BlockProtoDocstring(self.bound),
+            BlockIncludeGuard(),
+            BlockIncludeGeneralHeaders(),
+            BlockExternCPlusPlus(),
+            BlockImportList(),
+            BlockDataStructuresList(),
+            BlockFunctionDeclarationsForUserListOpMode(),
+        ]
+
+
 class RendererCHeader(Renderer[F]):
     """Renderer for C language (header)."""
 
@@ -479,4 +517,6 @@ class RendererCHeader(Renderer[F]):
 
     @override(Renderer)
     def block(self) -> Block[F]:
+        if self.optimization_mode:
+            return BlockListOpMode()
         return BlockList()
