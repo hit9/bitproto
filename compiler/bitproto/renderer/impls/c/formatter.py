@@ -291,3 +291,31 @@ class CFormatter(Formatter):
     @override(Formatter)
     def format_op_mode_endecoder_message_var(self) -> str:
         return "(*m)"
+
+    @override(Formatter)
+    def format_op_mode_encoder_item(
+        self, chain: str, si: int, fi: int, shift: int, mask: int, r: int
+    ) -> str:
+        """Implements format_op_mode_encoder_item for C.
+        Generated C statement like:
+
+            s[0] = (((unsigned char *)&((*m).color))[0] >> 3) & 7;
+
+        """
+        assign = "=" if r == 0 else "|="
+        shift_s = self.format_op_mode_smart_shift(shift)
+        return f"s[{si}] {assign} (((unsigned char *)&({chain}))[{fi}] {shift_s}) & {mask};"
+
+    @override(Formatter)
+    def format_op_mode_decoder_item(
+        self, chain: str, si: int, fi: int, shift: int, mask: int, r: int
+    ) -> str:
+        """Implements format_op_mode_encoder_item for C.
+        Generated C statement like:
+
+            ((unsigned char *)&((*m).color))[0] = (s[0] << 3) & 7;
+
+        """
+        assign = "=" if r == 0 else "|="
+        shift_s = self.format_op_mode_smart_shift(shift)
+        return f"((unsigned char *)&({chain}))[{fi}] {assign} (s[{si}] {shift_s}) & {mask};"
