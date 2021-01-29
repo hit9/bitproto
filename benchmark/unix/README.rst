@@ -1,19 +1,23 @@
-bitproto benchmark on OS
-========================
+bitproto benchmark on Unix OS
+=============================
 
-How to run:
+This directory contains a simple benchmark for bitproto on Unix-like system (linux, macos etc).
 
-* Compile bitproto file:
 
-  .. sourcecode:: bash
-
-     $ make bp
-
-* Run benchmark for a language:
+* Run benchmark for C / Go / Python:
 
   .. sourcecode:: bash
 
-     $ cd C && make bench
+     $ make bench
 
-Checks the benchmark on Github Actions:
-`Benchmark result on Github Actions <https://github.com/hit9/bitproto/actions?query=workflow%3A%22bitproto+benchmark%22>`_.
+* Run benchmark for C with GCC -O1 option enabled:
+
+  .. sourcecode:: bash
+
+     $ make bench-o1
+
+* Run benchmark for C with GCC -O2 option enabled:
+
+  .. sourcecode:: bash
+
+     $ make bench-o2
