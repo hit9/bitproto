@@ -24,7 +24,7 @@ bp-c:
 	@bitproto c $(BP_FILENAME) c/  $(OPTIMIZATION_MODE_ARGS)
 
 bp-go:
-	@bitproto go $(BP_FILENAME) go/bp/
+	@bitproto go $(BP_FILENAME) go/bp/ $(OPTIMIZATION_MODE_ARGS)
 
 bp-py:
 	@bitproto py $(BP_FILENAME) py/
