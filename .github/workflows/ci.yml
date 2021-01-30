@@ -68,6 +68,4 @@ jobs:
 
     - name: Run tests
       run: |
-        make test
-        make test-o2
-        make test-optimization-mode
+        make test --no-print-directory -s
