@@ -46,6 +46,3 @@ jobs:
     - name: Run benchmark
       run: |
         make bench
-        make bench-c-o1
-        make bench-c-o2
-        make bench-optimization-mode

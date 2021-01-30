@@ -19,7 +19,7 @@ example:
 	make -C example
 
 bench:
-	make -C benchmark/unix
+	make -C benchmark/unix -s  --no-print-directory
 
 bench-c-o1:
 	make -C benchmark/unix bench-c-o1
