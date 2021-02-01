@@ -11,7 +11,7 @@ and `stm32f103ve6 <https://www.st.com/en/microcontrollers-microprocessors/stm32f
 Benchmark result
 ----------------
 
-* Microcontroller: **`STM32F103ZE <https://www.st.com/en/microcontrollers-microprocessors/stm32f103ze.html>`**,
+* Microcontroller: `**STM32F103ZE** <https://www.st.com/en/microcontrollers-microprocessors/stm32f103ze.html>`_,
   Arm Cortex-M3 MCU, 72 MHz
 * bitproto file: `drone.bitproto <drone.bitproto>`_.
 
@@ -19,9 +19,9 @@ Standard Mode
 ^^^^^^^^^^^^^
 
 The "standard mode" means to run bitproto compiler **without**
-the optimization mode flag ``-O``, that is to use `the bitproto c lib <../../lib/c>`.
+the optimization mode flag ``-O``, that is to use `the bitproto c lib <../../lib/c>`_.
 
-.. list-table:: Standard Mode
+.. list-table::
    :header-rows: 1
 
    * - GCC Optimization Flag
@@ -45,9 +45,9 @@ Optimization Mode
 ^^^^^^^^^^^^^^^^^
 
 The "standard mode" means to run bitproto compiler **with**
-the optimization mode flag ``-O``, that is not to use `the bitproto c lib <../../lib/c>`.
+the optimization mode flag ``-O``, that is not to use `the bitproto c lib <../../lib/c>`_.
 
-.. list-table:: Standard Mode
+.. list-table::
    :header-rows: 1
 
    * - GCC Optimization Flag
