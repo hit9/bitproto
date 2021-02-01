@@ -421,6 +421,12 @@ class BlockImportList(BlockComposition[F]):
         return "\n"
 
 
+class BlockDefineMacroOpMode(Block[F]):
+    @override(Block)
+    def render(self) -> None:
+        self.push("#define BITPROTO_OPTIMIZATION_MODE 1")
+
+
 class BlockDataStructuresList(BlockBoundDefinitionDispatcher[F]):
     @override(BlockBoundDefinitionDispatcher)
     def dispatch(self, d: BoundDefinition) -> Optional[Block[F]]:
@@ -506,6 +512,7 @@ class BlockListOpMode(BlockComposition[F]):
             BlockIncludeGeneralHeaders(),
             BlockExternCPlusPlus(),
             BlockImportList(),
+            BlockDefineMacroOpMode(),
             BlockDataStructuresList(),
             BlockFunctionDeclarationsForUserListOpMode(),
         ]
