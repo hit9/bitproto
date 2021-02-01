@@ -13,8 +13,17 @@ bp-optimization-mode:
 build: bp
 	make -C bpbench
 
+build-cc-o2: bp
+	make -C bpbench OPT=-O2
+
+build-cc-o3: bp
+	make -C bpbench OPT=-O3
+
 build-optimization-mode: bp-optimization-mode
 	make -C bpbench
+
+build-optimization-mode-o2: bp-optimization-mode
+	make -C bpbench OPT=-O2
 
 flash:
 	st-flash write ./bpbench/build/bpbench.bin 0x08000000
