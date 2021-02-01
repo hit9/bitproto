@@ -17,6 +17,7 @@ setup(
     description=description,
     packages=["bitproto"],
     include_package_data=True,
+    long_description=open("../README.rst").read(),
     zip_safe=False,
     entry_points={"console_scripts": ["bitproto=bitproto._main:run_bitproto"]},
     python_requires=">=3.7",
