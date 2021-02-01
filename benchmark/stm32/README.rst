@@ -11,7 +11,7 @@ and `stm32f103ve6 <https://www.st.com/en/microcontrollers-microprocessors/stm32f
 Benchmark result
 ----------------
 
-* Microcontroller: `**STM32F103ZE** <https://www.st.com/en/microcontrollers-microprocessors/stm32f103ze.html>`_,
+* Microcontroller: `STM32F103ZE <https://www.st.com/en/microcontrolles-microprocessors/stm32f103ze.html>`_,
   Arm Cortex-M3 MCU, 72 MHz
 * bitproto file: `drone.bitproto <drone.bitproto>`_.
 
@@ -28,7 +28,7 @@ the optimization mode flag ``-O``, that is to use `the bitproto c lib <../../lib
      - Number of calls
      - Encode cost per call
      - Decode cost per call
-   * - None
+   * - No ``-O``
      - 10000
      - 170μs
      - 163μs
@@ -44,7 +44,7 @@ the optimization mode flag ``-O``, that is to use `the bitproto c lib <../../lib
 Optimization Mode
 ^^^^^^^^^^^^^^^^^
 
-The "standard mode" means to run bitproto compiler **with**
+The "optimization mode" means to run bitproto compiler **with**
 the optimization mode flag ``-O``, that is not to use `the bitproto c lib <../../lib/c>`_.
 
 .. list-table::
@@ -54,7 +54,7 @@ the optimization mode flag ``-O``, that is not to use `the bitproto c lib <../..
      - Number of calls
      - Encode cost per call
      - Decode cost per call
-   * - None
+   * - No ``-O``
      - 10000
      - 9μs
      - 9μs
