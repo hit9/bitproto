@@ -119,3 +119,7 @@ def test_encoding_nested() -> None:
 
 def test_encoding_arrays() -> None:
     _TestCase("arrays").run()
+
+
+def test_encoding_scatter() -> None:
+    _TestCase("arrays").run()

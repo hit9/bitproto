@@ -1,0 +1,30 @@
+proto scatter
+
+
+message A {
+    uint1 a = 1
+    uint2 b = 2
+    uint3 c = 3
+    uint4 d = 4
+    uint5 e = 5
+    uint6 f = 6
+    uint7 g = 7
+    uint8 h = 8
+    uint9 i = 9
+    uint10 j = 10
+    uint11 k = 11
+    uint12 l = 12
+    uint13 m = 13
+    uint14 n = 14
+    uint15 p = 15
+    uint16 q = 16
+    uint17 r = 17
+    uint18 s = 18
+    uint19 t = 19
+}
+
+message B {
+    A a = 1
+    bool b = 2
+    uint31 c = 3
+}
