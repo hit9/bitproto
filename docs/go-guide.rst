@@ -20,12 +20,12 @@ Then run the bitproto compiler to generate code for Go:
 
    $ bitproto go pen.bitproto bp/
 
-Where the `pen.bitproto` is introduced in earlier section :ref:`quickstart-example-bitproto`.
+Where the ``pen.bitproto`` is introduced in earlier section :ref:`quickstart-example-bitproto`.
 
-We will find that bitproto generates us a file named `pen_bp.go` in the output directory,
+We will find that bitproto generates us a file named ``pen_bp.go`` in the output directory,
 which contains the mapped structs, constants and api methods etc.
 
-In the generated `pen_bp.go`:
+In the generated ``pen_bp.go``:
 
 * The ``enum Color`` in bitproto is mapped to a ``type`` definition on unsigned integer
   statement in Go, and the enum values are mapped to constants:
@@ -85,7 +85,7 @@ If you wish to install bitproto go library to local vendor directory via ``go mo
 Run the code
 ^^^^^^^^^^^^
 
-Now, we create a file named  `main.go` and put the following code in it:
+Now, we create a file named  ``main.go`` and put the following code in it:
 
 .. sourcecode:: go
 
@@ -109,13 +109,13 @@ Now, we create a file named  `main.go` and put the following code in it:
    	fmt.Printf("%v", p1)
    }
 
-Notes to replace the import path of the generated `pen_bp.go` to yours.
+Note to replace the import path of the generated ``pen_bp.go`` to yours.
 
-In the code above, we firstly creates a ``p`` of type ``Pen`` with data initilization,
+In the code above, we firstly create a ``p`` of type ``Pen`` with data initilization,
 then call a method ``p.Encode()`` to encode ``p`` and return the encoded buffer ``s``, which
 is a slice of bytes.
 
-In the decoding part, we constructs another ``p1`` instance of type ``Pen`` with zero initilization,
+In the decoding part, we construct another ``p1`` instance of type ``Pen`` with zero initilization,
 then call a method ``p1.Decode()`` to decode bytes from buffer ``s`` into ``p1``.
 
 The compiler also generates json tags on the generated struct's fields. And generates a method ``String()``

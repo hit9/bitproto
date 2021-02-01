@@ -18,7 +18,7 @@ This document will introduce how to start with using bitproto.
 An example bitproto
 -------------------
 
-Suppose that we have a bitproto named `pen.bitproto`, with the following content:
+Suppose that we have a bitproto named ``pen.bitproto``, with the following content:
 
 .. sourcecode:: bitproto
 

@@ -1,10 +1,10 @@
 bitproto
 ========
 
-Bitproto is a lightweight, easy-to-use and production-proven bit level data
+Bitproto is a lightweight, easy-to-use and fast bit level data
 interchange data format for serializing data structures.
 
-Website: TODO
+Website: https://bitproto.readthedocs.io
 
 Features
 ---------
@@ -21,3 +21,5 @@ Features
   - C - No dynamic memory allocation.
   - Go - No reflection or type assertions.
   - Python - No magic :)
+
+- Blazing fast encoding/decoding.

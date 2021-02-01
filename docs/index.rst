@@ -10,7 +10,7 @@ The bit level data interchange format
 Introduction
 ------------
 
-Bitproto is a lightweight, easy-to-use and production-proven bit level data
+Bitproto is a fast, lightweight and easy-to-use bit level data
 interchange data format for serializing data structures.
 
 The protocol describing syntax looks like the great
@@ -50,6 +50,7 @@ Features
    - :ref:`C (ANSI C)<quickstart-c-guide>` - No dynamic memory allocation.
    - :ref:`Go <quickstart-go-guide>` - No reflection or type assertions.
    - :ref:`Python <quickstart-python-guide>` - No magic :)
+- Blazing fast encoding/decoding (:ref:`benchmark <performance-benchmark>`).
 
 Code Example
 ------------
@@ -113,7 +114,7 @@ The differences between bitproto and protobuf are:
 
 * bitproto doesn't use any dynamic memory allocations. Few of
   `protobuf C implementations <https://github.com/protocolbuffers/protobuf/blob/master/docs/third_party.md>`_
-  support this except `nanopb <https://jpa.kapsi.fi/nanopb>`_.
+  support this, except `nanopb <https://jpa.kapsi.fi/nanopb>`_.
 
 * bitproto doesn't support varying sized data, all types are fixed sized.
 
@@ -149,6 +150,14 @@ Known shortcomes of bitproto:
   tight and compact. Consider to wrap a compression mechanism like `zlib <https://zlib.net/>`_
   on the encoded buffer if you really care.
 
+* bitproto can't provide :ref:`best encoding performance <performance-optimization-mode>`
+  with :ref:`extensibility <language-guide-extensibility>`.
+
+  There's an :ref:`optimization mode <performance-optimization-mode>` designed in bitproto
+  to generate plain encoding/decoding statements directly at code-generation time, since all
+  types in bitproto are fixed-sized, how-to-encode can be determined earlier at code-generation
+  time. This mode gives a huge performance improvement, but I still haven't found a way to
+  make it work with bitproto's extensibility mechanism together.
 
 Content list
 ------------
@@ -162,5 +171,6 @@ Content list
     python-guide
     compiler
     language
+    performance
     changelog
     license
