@@ -10,11 +10,11 @@ Benchmark result
 Github Actions
 ^^^^^^^^^^^^^^
 
-The results of bitproto benchmark on unix like system can be found on github actions,
+The results of bitproto benchmark on unix like system can be found on `github actions <https://github.com/hit9/bitproto/actions?query=workflow%3A%22bitproto+benchmark%22>`_,
 which are runned on `virtual machines <https://docs.github.com/en/actions/reference/specifications-for-github-hosted-runners#supported-runners-and-hardware-resources>`_
 (with 2-core CPU).
 
-The data in the following tables comes from `this github actions run(https://github.com/hit9/bitproto/actions/runs/526600150)`_.
+The data in the following tables comes from `this github actions run <https://github.com/hit9/bitproto/actions/runs/526600150>`_.
 
 Standard Mode
 ''''''''''''''
@@ -103,35 +103,35 @@ the optimization mode flag ``-O``, that is to use `the bitproto lib <../../lib>`
      - 10000
      - 477μs
      - 496μs
-   * - Mac OS X 10.15.7
+   * - MacOS 10.15.7
      - C
      - Standard
      - No ``-O``
      - 1000000
      - 1.77μs
      - 1.76μs
-   * - Mac OS X 10.15.7
+   * - MacOS 10.15.7
      - C
      - Standard
      - ``gcc -O1``
      - 1000000
      - 0.79μs
      - 0.76μs
-   * - Mac OS X 10.15.7
+   * - MacOS 10.15.7
      - C
      - Standard
      - ``gcc -O1``
      - 1000000
      - 0.48μs
      - 0.15μs
-   * - Mac OS X 10.15.7
+   * - MacOS 10.15.7
      - Go
      - Standard
      - /
      - 1000000
      - 7.66μs
      - 7.70μs
-   * - Mac OS X 10.15.7
+   * - MacOS 10.15.7
      - Python
      - Standard
      - /
@@ -198,11 +198,13 @@ the optimization mode flag ``-O``, that is not to use `the bitproto lib <../../l
      - 0.14μs
      - 0.08μs
 
-Mac Book
+Macbook
 ''''''''
 
 The following table is the benchmark result on my macbook (Intel Core i5, 2 CPU Core, 2133 MHz).
 
+.. list-table::
+   :header-rows: 1
    * - Language
      - Mode
      - GCC Optimization Flag
