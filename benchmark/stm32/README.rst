@@ -32,11 +32,11 @@ the optimization mode flag ``-O``, that is to use `the bitproto c lib <../../lib
      - 10000
      - 170μs
      - 163μs
-   * - ``-O2``
+   * - ``gcc -O2``
      - 10000
      - 135μs
      - 131μs
-   * - ``-O3``
+   * - ``gcc -O3``
      - 10000
      - 127μs
      - 119μs
@@ -58,7 +58,7 @@ the optimization mode flag ``-O``, that is not to use `the bitproto c lib <../..
      - 10000
      - 9μs
      - 9μs
-   * - ``-O2``
+   * - ``gcc -O2``
      - 10000
      - 9μs
      - 9μs
