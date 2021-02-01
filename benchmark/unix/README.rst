@@ -103,35 +103,35 @@ the optimization mode flag ``-O``, that is to use `the bitproto lib <../../lib>`
      - 10000
      - 477μs
      - 496μs
-   * - MacOS 10.15.7
+   * - MacOS 10.15
      - C
      - Standard
      - No ``-O``
      - 1000000
      - 1.77μs
      - 1.76μs
-   * - MacOS 10.15.7
+   * - MacOS 10.15
      - C
      - Standard
      - ``gcc -O1``
      - 1000000
      - 0.79μs
      - 0.76μs
-   * - MacOS 10.15.7
+   * - MacOS 10.15
      - C
      - Standard
      - ``gcc -O1``
      - 1000000
      - 0.48μs
      - 0.15μs
-   * - MacOS 10.15.7
+   * - MacOS 10.15
      - Go
      - Standard
      - /
      - 1000000
      - 7.66μs
      - 7.70μs
-   * - MacOS 10.15.7
+   * - MacOS 10.15
      - Python
      - Standard
      - /
@@ -176,21 +176,21 @@ the optimization mode flag ``-O``, that is not to use `the bitproto lib <../../l
      - 1000000
      - 0.12μs
      - 0.08μs
-   * - Mac OS X 10.15.7
+   * - MacOS 10.15
      - C
      - ``bitproto -O``
      - No ``-O``
      - 1000000
      - 0.16μs
      - 0.15μs
-   * - Mac OS X 10.15.7
+   * - MacOS 10.15
      - C
      - ``bitproto -O``
      - ``gcc -O2``
      - 1000000
      - 0.06μs
      - 0.06μs
-   * - Mac OS X 10.15.7
+   * - MacOS 10.15
      - Go
      - ``bitproto -O``
      - /
