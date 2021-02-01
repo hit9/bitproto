@@ -26,7 +26,7 @@ example usage:
   bitproto c example.bitproto -q                option -q to disable builtin linter
   bitproto c example.bitproto -O                enable performance optimization in traditional mode
   bitproto c example.bitproto -O -F Foo,Bar     only generate encoder and decoder functions for
-                                                message A and B in optimization mode.
+                                                message Foo and Bar in optimization mode.
 """
 
 VERSION = f"%(prog)s v{__version__}"
