@@ -27,7 +27,7 @@ bench-standard: bp
 
 bench-c-o1: bp
 	@echo "===================================================="
-	@echo "                Benchmark C (gcc -O2)               "
+	@echo "                Benchmark C (gcc -O1)               "
 	@echo "===================================================="
 	make -C C CC_OPTIMIZE=-O1
 
