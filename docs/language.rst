@@ -314,8 +314,8 @@ Nested types can also be referenced across message scopes:
        Outer.Color color = 1;
    }
 
-A bitproto message opens a scope, bitproto will lookup a type from local scope first
-and then the outer scope. In the following example, the type of field ``color`` is
+A bitproto message opens a scope, bitproto will lookup a type from local scopes first
+and then the outer scopes. In the following example, the type of field ``color`` is
 enum ``Color`` in local ``B``:
 
 .. sourcecode:: bitproto
@@ -326,10 +326,10 @@ enum ``Color`` in local ``B``:
 
    message A {
        message B {
-           enum Color : uint3 {}  // Local first
+           enum Color : uint3 {}
        }
 
-       B.Color color = 1
+       B.Color color = 1   // Local `B.Color` wins
    }
 
 In bitproto, only messages and enums can be nested declared.
@@ -416,7 +416,7 @@ However it is sometimes desirable to bind to a different name, to avoid name cla
 
    import lib "path/to/shared.bitproto"
 
-The statement above import `shared.bitproto` as a name ``lib`` in current bitproto, the reference
+The statement above import ``shared.bitproto`` as a name ``lib`` in current bitproto, the reference
 now starts with ``lib.``:
 
 .. sourcecode:: bitproto
@@ -432,12 +432,12 @@ now starts with ``lib.``:
 Extensibility
 ^^^^^^^^^^^^^
 
-Bitproto knows exactly how many bits a message occupy at compile time, because all types
+Bitproto knows exactly how many bits a message will occupy at compile time, because all types
 are fix-sized. This may make backwards-compatibility hard.
 
 It seems ok to add new fields to the end of a message in use, because the structures of
 existing fields are unchanged, the decoding end won't scan the encoded bytes of new fields,
-then the backward-compatibility achieved:
+then "the backward-compatibility achieved":
 
 .. sourcecode:: bitproto
 
@@ -449,10 +449,11 @@ then the backward-compatibility achieved:
 
 But this mechanism works only if there's no data after this message, that's to say, to make
 this mechanism work, this message should be a top-level message, none of other messages can
-refer it, for instance, it can be a communication packet itself.
+refer it, for instance, it can only be a communication packet itself.
 
 This mechanism fails with in-middle messages, for instance, we can't add new fields to the
-following message ``Middle``, it affects the decoding of other old fields like ``following_field``:
+following message ``Middle``, it affects the decoding of other old fields, like the
+``following_field``:
 
 .. sourcecode:: bitproto
 
@@ -489,7 +490,7 @@ Bitproto introduces a symbol ``'`` to mark a message to be extensible:
 In the code above, ``ExtensibleMessage`` occupies ``1+16`` bits, and ``TraditionalMessage`` still
 occupies ``1`` bit.
 
-By marking a message to be extensible via a single quote, we increases buffer size by two bytes
+By marking a message to be extensible via a single quote, we increase buffer size by two bytes
 in exchange for the possibility of adding new fields in the future. You should balance buffer size
 and extensibility when declaring a message, mark the messages those will be extended in the future.
 
@@ -524,7 +525,7 @@ Back to the example of message ``Middle``, if this message in use is marked to b
        uint7 following_field = 2
    }
 
-Decoding will goes wrong if you exchange data between two ends, of which one marks this message as extensible,
+But decoding will go wrong if you exchange data between two ends, of which one marks this message as extensible,
 and the other marks it as traditional.
 
 Extensible messages can also be nested declared, in the example below, message ``Outer`` occupies ``2+2`` bytes:
@@ -533,6 +534,7 @@ Extensible messages can also be nested declared, in the example below, message `
 
    message Outer' {
        message Inner' {}
+       // Ha, empty extensible messages still cost bytes ~
    }
 
 In addtion, arrays are also supported to be marked as extensible:
@@ -551,7 +553,7 @@ It is the same with extensible messages, an extensible array gains ``2`` bytes o
    For enums, extensibility is not supported, because enum values are atomic in targeting languages,
    the decoding end holding an older version protocol will get a wrong enum value if the encoder end
    increases the enum's number of bits, the unsigned integer types mapped in languages may cast large
-   values to smaller values unexpected.
+   values to unexpected smaller values.
 
 .. _language-guide-option:
 
