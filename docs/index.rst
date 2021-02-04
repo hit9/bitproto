@@ -13,7 +13,7 @@ Introduction
 ------------
 
 Bitproto is a fast, lightweight and easy-to-use bit level data
-interchange data format for serializing data structures.
+interchange format for serializing data structures.
 
 The protocol describing syntax looks like the great
 `protocol buffers <https://developers.google.com/protocol-buffers>`_ ,

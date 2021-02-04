@@ -2,7 +2,7 @@ bitproto
 ========
 
 Bitproto is a fast, lightweight and easy-to-use bit level data
-interchange data format for serializing data structures.
+interchange format for serializing data structures.
 
 Website: https://bitproto.readthedocs.io
 
