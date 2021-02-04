@@ -1,0 +1,117 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2021, Chao Wang
+# This file is distributed under the same license as the bitproto package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2021.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: bitproto 0.4.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-02-04 09:51+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.9.0\n"
+
+#: ../../quickstart.rst:4 31731a0462a745e38ce2c523d67b136b
+msgid "Quickstart"
+msgstr "快速开始"
+
+#: ../../quickstart.rst:6 3170a6a992a34a5d804eecf973c0003f
+msgid ""
+"Bitproto comes with a proto-to-code :ref:`compiler <the-compiler>` and "
+"language-specific libraries."
+msgstr "bitproto 包含一个 :ref:`代码生成器 <the-compiler>` 和语言相关的库。"
+
+#: ../../quickstart.rst:8 37c1750dfe1c48098f0f7b313c82faf5
+msgid ""
+"The compiler parses the bitproto file and generates code files in target "
+"languages, which contains the structure definitions, encoding and "
+"decoding function entries."
+msgstr "bitproto 的编译器会解析 bitproto 源文件并生成目标语言的代码，"
+"生成的代码中包含结构体的定义、编解码的 API 函数。"
+
+#: ../../quickstart.rst:11 c9ca0f16b04d4adca68bc5238108960e
+msgid ""
+"The language-specific libraries provide the underlying serialization "
+"implementation. For different languages, it's required to install the "
+"corresponding serialization library to make bitproto work."
+msgstr "语言相关的库则提供了底层的序列化机制的实现。对于不同的语言，需要安装对应的序列化的库。"
+
+#: ../../quickstart.rst:14 de532ac24c6047be97ed53eb197bfd0d
+msgid "This document will introduce how to start with using bitproto."
+msgstr "本文将介绍如何开始使用 bitproto 。"
+
+#: ../../quickstart.rst:19 658a7fbbfb044cf98ded70f3785adf0b
+msgid "An example bitproto"
+msgstr "一个示例 bitproto"
+
+#: ../../quickstart.rst:21 0030e240f84944b6940c9d83957243c9
+msgid ""
+"Suppose that we have a bitproto named ``pen.bitproto``, with the "
+"following content:"
+msgstr "假设我们有一个 bitproto 文件叫做 ``pen.bitproto`` ，它包含以下内容: "
+
+#: ../../quickstart.rst:41 5cfa3b573a1d40f38aeb62c910dcfeb2
+msgid "In the bitproto file above:"
+msgstr "在上面的 bitproto 文件中："
+
+#: ../../quickstart.rst:43 cc19e28ffedb47ce92b0b7d9cc3b6d1a
+msgid ""
+"``proto`` declares the name of this bitproto, this statement is required "
+"for every bitproto."
+msgstr "``proto`` 声明了这个 bitproto 的名字，这个语句对于每个 bitproto 文件都是必须的。"
+
+#: ../../quickstart.rst:44 b6d658f335f14bd0ad113dd1cac83e92
+msgid ""
+"``Color`` is an enum on ``uint3``, it occupies 3 bits (meaning its value "
+"ranges up to 7)."
+msgstr "``Color`` 是一个指向 ``uint3`` 的枚举，它占用了 ``3`` 个比特，意味着它的值最大为 ``7`` 。"
+
+#: ../../quickstart.rst:45 49f502fd726b42ca982b0b0ef76f3549
+msgid ""
+"``Timestamp`` is a custom type defined by user, aliasing to builtin type "
+"``int64``, like what the keyword ``typedef`` does in C."
+msgstr "``Timestamp`` 是一个用户自定义的类型，它是内置类型 ``int64`` 的别名类型，"
+"类似于 C 语言中的 ``typedef`` 关键字做的事情。"
+
+#: ../../quickstart.rst:47 2bbf82bae960478f9535ee823a95b0d0
+msgid ""
+"``Pen`` is a message that contains 2 fields. A message field consists of "
+"a type on the left, a following name and a unique field number on the "
+"right. Bitproto encodes a message by the order of the field number. So "
+"that the field numbers shouldn't be modified once they are in use."
+msgstr "``Pen`` 是一个包含 2 个字段的消息。一个消息的字段等号的左边是它的类型和名字，右边是字段的标号。"
+"bitproto 会按照字段标号的顺序进行编码，因此一旦字段标号已经在使用，就不应该更改标号的大小了。"
+
+#: ../../quickstart.rst:51 bcd4ec4710b34b7cbe50a8267f373c1b
+msgid ""
+"In bitproto, we can determine how long the encoded buffer will be just "
+"from the proto defined, for instance, the message ``Pen`` will occupy ``3"
+" + 64`` bits, that's ``9`` bytes."
+msgstr "在 bitproto 中，我们可以仅仅从设计好的协议上获知数据在编码后占用多少字节。"
+"比如说，上面的消息 ``Pen`` 将会在编码后占用 ``3 + 64`` 个比特，也就是 ``9`` 个字节。"
+
+#: ../../quickstart.rst:54 0f38b416d19049e5a6081d5e4dd7afce
+msgid ""
+"You may want to checkout `a larger example on github "
+"<https://github.com/hit9/bitproto/tree/master/example>`_."
+msgstr "你可以在 `github <https://github.com/hit9/bitproto/tree/master/example>`_ 上看到一个更大一些的 bitproto 的例子。"
+
+#: ../../quickstart.rst:57 5238f2352bef4d0ab99e991e725cfd48
+msgid ""
+"Next, we will introduce how to use bitproto with this simple bitproto "
+"file in different languages."
+msgstr "接下来，我们将以这个简单的 bitproto 文件来介绍不同语言中的用法。"
+
+#: ../../quickstart.rst:60 959c62d9f14d40dd978a24c3f0f01650
+msgid "Language-Specific Guides"
+msgstr "语言相关的引导"
+
+#~ msgid "快速开始"
+#~ msgstr ""
+

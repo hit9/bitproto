@@ -25,6 +25,9 @@ html_theme_options = {
     "extra_nav_links": {
         "bitproto @ github": "https://github.com/hit9/bitproto",
         "bitproto @ pypi": "https://pypi.org/project/bitproto",
+        "中文文档": "https://bitproto.readthedocs.io/zh/latest",
     },
 }
 pygments_style = "_pygments.BitprotoStyle"
+gettext_uuid = True
+gettext_compact = False

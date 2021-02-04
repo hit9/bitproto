@@ -589,7 +589,7 @@ Full table of options supported:
 
 ``c.name_prefix``
   | Proto level option, defaults to ``""``.
-  | The struct alignment of generated C structs.
+  | Name prefix of generated C types's names.
 
 ``go.package_path``
   | Proto level option, defaults to ``""``.

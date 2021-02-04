@@ -1,0 +1,255 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2021, Chao Wang
+# This file is distributed under the same license as the bitproto package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2021.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: bitproto 0.4.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-02-04 10:53+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.9.0\n"
+
+#: ../../performance.rst:4 a266f980800a4873b6e52dd3cfaa030a
+msgid "Performance"
+msgstr "性能表现"
+
+#: ../../performance.rst:6 10478d32dda84313819212e35fd5f76b
+msgid ""
+"This document will introduce the performance of bitproto encoding and "
+"decoding, along with the optimization mechanism."
+msgstr "本文将介绍 bitproto 的编解码性能表现和优化机制。"
+
+#: ../../performance.rst:12 d4a1bb6ffa9d4ddcab512c2b28008d61
+msgid "Performance Benchmark"
+msgstr "性能压测"
+
+#: ../../performance.rst:14 3190f759276b4d60874179656d096feb
+msgid "Benchmark of bitproto encoding/decoding shows that it runs very fast."
+msgstr "对 bitproto 的编解码的性能压测结果显示，它跑的非常快。"
+
+#: ../../performance.rst:17 e335d07890764b33bf8aa353c441fa90
+msgid "Unix OS"
+msgstr "Unix 系统"
+
+#: ../../performance.rst:19 4f6e4b9a04244b99903b8bbe44b8fab5
+msgid ""
+"On unix like systems (mac, ubuntu etc.), a single encoding/decoding call "
+"costs:"
+msgstr "在类 unix 系统 (mac, ubuntu etc.) 上，一次编码调用或者解码调用占用:"
+
+#: ../../performance.rst:21 d44f4adcfd7d470dabf3a387912d5a75
+msgid "``< 2μs`` in C"
+msgstr "C 语言中 ``< 2μs``"
+
+#: ../../performance.rst:22 54bccc90a1ac4750b4b443d06b43d9a2
+msgid "``< 10μs`` in Go"
+msgstr "Go 语言中 ``<10μs``"
+
+#: ../../performance.rst:23 b69a668531594829810f350e6bdbc095
+msgid "``< 1ms`` in Python"
+msgstr "Python 语言中 ``< 1ms``"
+
+#: ../../performance.rst:25 a1c4268f9b0449bb9fc37aa0990af408
+msgid ""
+"You can checkout `the detail benchmark results for unix on github "
+"<https://github.com/hit9/bitproto/tree/master/benchmark/unix>`_."
+msgstr ""
+"你可以在 `github 上查看 unix 系统上详细的压缩结果 "
+"<https://github.com/hit9/bitproto/tree/master/benchmark/unix>`_ 。"
+
+#: ../../performance.rst:28 53cb6681f3e5430d86f7dee3dab2281a
+msgid "Embedded"
+msgstr "嵌入式"
+
+#: ../../performance.rst:30 156b14e4d2224a9380afe6281009074b
+msgid ""
+"I have tested the benchmark on a `stm32 board "
+"<https://www.st.com/content/st_com/en/products/microcontrollers-"
+"microprocessors/stm32-32-bit-arm-cortex-mcus/stm32-mainstream-"
+"mcus/stm32f1-series/stm32f103/stm32f103ze.html>`_ (arm cortex-m3 72MHz "
+"cpu), a single encoding/decoding call costs around ``160 μs``, and can be"
+" optimized to around ``9 μs`` in :ref:`the optimization mode "
+"<performance-optimization-mode>`."
+msgstr ""
+"我在一个 `stm32 开发板 <https://www.st.com/content/st_com/en/products"
+"/microcontrollers-microprocessors/stm32-32-bit-arm-cortex-mcus/stm32"
+"-mainstream-mcus/stm32f1-series/stm32f103/stm32f103ze.html>`_ (arm "
+"cortex-m3 72MHz cpu) 上进行了压测测试， 一次编码调用或者解码调用占用 ``160 μs`` 左右的时间，并且可以通过 "
+":ref:`优化模式 <performance-optimization-mode>` 来降低到 ``9 μs`` 左右。"
+
+#: ../../performance.rst:34 2d3fd08418c3476f8d3657f35fccfebd
+msgid ""
+"You can checkout `the detail benchmark results for stm32 on github "
+"<https://github.com/hit9/bitproto/tree/master/benchmark/stm32>`_."
+msgstr ""
+"你可以在 `github 上查看 stm32 上详细的压缩结果 "
+"<https://github.com/hit9/bitproto/tree/master/benchmark/stm32>`_ 。"
+
+#: ../../performance.rst:39 84d37078007e461ca24d471be16638a2
+msgid "The Optimization Mode"
+msgstr "优化模式"
+
+#: ../../performance.rst:41 579b722162f0420380482f7d023d929b
+msgid ""
+"For most cases, the performance may meet the requirements. But if you are"
+" not satisfied with this, there's still a way to go, the called "
+"\"optimization mode\" in bitproto, by adding an option ``-O`` to the "
+"bitproto compiler:"
+msgstr ""
+"对于大多数场景，bitproto 的性能应该可以满足需求。但是如果你对此不满意，仍然有一种方法可以尝试，即 bitproto 中所谓的 "
+"\"优化模式\" 。通过给 bitproto 的编译器添加一个 选项 ``-O`` ， 可以开启优化模式："
+
+#: ../../performance.rst:49 e6579dadd3994b5bbe3e6966f878f9db
+msgid "By this way, bitproto will generate code for you in optimization mode."
+msgstr "这样，bitproto 会生成优化模式下的代码。"
+
+#: ../../performance.rst:51 3ffa6b66bdeb475297d7d52c539ddaa6
+msgid ""
+"The mechanism behind optimization mode is to generate plain "
+"encoding/decoding code statements directly at code-generation time. We "
+"known that all types are fixed-sized in bitproto, so the encoding and "
+"decoding processing can be totally determined at code-generation time, "
+"bitproto just iterates all the fields of a message and generate bits "
+"coping statements."
+msgstr ""
+"优化模式背后的机制是，在代码生成阶段直接生成直白的编解码代码语句。我们知道，bitproto "
+"中所有的类型都是定长的，因此在代码生成阶段是完全可以知道如何对数据进行编解码的。在代码生成阶段，bitproto "
+"会遍历消息的所有字段然后生成比特拷贝的语句。"
+
+#: ../../performance.rst:58 43fa73b31d03496c9ae5f06278874c43
+msgid ""
+"The optimization mode doesn't work for :ref:`extensible messages "
+"<language-guide-extensibility>`. Because extensible messages decoding "
+"requires dynamic calculation."
+msgstr ""
+"优化模式不支持和 :ref:`扩展性消息 <language-guide-extensibility>` "
+"一起工作。因为扩展性消息的解码需要依赖动态的计算。"
+
+#: ../../performance.rst:61 c6c8996c2e6b455bb50adcf2ffd4b5cf
+msgid ""
+"For an instance in C, the generated code in optimization mode looks like "
+"this:"
+msgstr "以 C 语言举例，优化模式下生成的代码是这个样子的："
+
+#: ../../performance.rst:77 0b94d30b8e6049c989eac7f57fbd693a
+msgid ""
+"See the generated code example above, there's no loops, no if-else, all "
+"statements are plain bit operations. In this way, bitproto's optimization"
+" mode gives us a maximum performance improvement on encoding/decoding."
+msgstr ""
+"上面的生成代码中，没有循环语句、没有 if-else 语句，所有的语句都是直白的比特操作。通过这种方式，bitproto "
+"的优化模式可以给我编解码效率上最大化的提升。"
+
+#: ../../performance.rst:80 1b357537ecac420e99b7dd218150a394
+msgid ""
+"It's fine of course to use optimization mode on one end and non-"
+"optimization mode (the standard mode) on another end in message "
+"communication. The optimization mode only changes the way how to execute "
+"the encoder and decoder, without changing the format of the message "
+"encoding."
+msgstr ""
+"对于通信双方中，一方使用无优化模式 "
+"(标准模式)，一方使用优化模式，这种情况也是没有问题的。优化模式只改变了编码函数和解码函数的编写方式，并没有改变数据的交换格式。"
+
+#: ../../performance.rst:84 0aab94a0796948d88186ff783a525f86
+msgid ""
+"In fact, using the optimization mode is also a trade-off sometimes. In "
+"this mode, we have to drop the benefits of :ref:`extensibility <language-"
+"guide-extensibility>` , it's not friendly to the compatibility design of "
+"the protocol. Optimization mode is designed for performance-sensitive "
+"scenarios, such as low power consumption embedded boards, compute-"
+"intensive microcontrollers. I recommend to use the optimization mode "
+"when:"
+msgstr ""
+"事实上，使用优化模式也是一种权衡。在这个模式下，我们不得不放弃 :ref:`扩展性功能 <language-guide-"
+"extensibility>` "
+"，这样其实对协议的兼容性设计是不友好的。优化模式是为了性能敏感的场景设计的，比如低功耗的嵌入式板，计算密集的微控制器。在以下场景下，推荐使用优化模式："
+
+#: ../../performance.rst:89 30f46c8635cc4f189aa7ae85963d7f1c
+msgid ""
+"Performance-sensitive scenarios, where ``100μs`` means totally different "
+"with ``10μs``."
+msgstr "性能敏感的场景，``100μs`` 和 ``10μs`` 完全不是一回事。"
+
+#: ../../performance.rst:90 6276e2c7c9574bffa74573391de9735b
+msgid ""
+"The firmwares of communication ends are always upgraded together, thus "
+"the backward-compatibility is not so important."
+msgstr "通信相关方的固件升级总是一起进行的，这样向后兼容性就不那么重要了。"
+
+#: ../../performance.rst:91 9953ef6e28d9446eb636044f4cbc4c93
+msgid "Firmware updates are not frequent, even only once for a long time."
+msgstr "固件的升级并不会频繁，甚至很长时间一次。"
+
+#: ../../performance.rst:93 731df8dd4b0b4f4abe36ec6e5de6d3fb
+#, python-format
+msgid ""
+"Specially, for the scenario that firmware-upgrading of communication ends"
+" have to be processed partially, such as the typical one-to-many `client-"
+"server artitecture "
+"<https://en.wikipedia.org/wiki/Client%E2%80%93server_model>`_, I "
+"recommend to stick to the standard mode rather than the optimization "
+"mode."
+msgstr ""
+"特殊的，对于那种固件升级必须一部分一部分进行，没办法一次性升级的情况，比如典型的 `CS架构 "
+"<https://en.wikipedia.org/wiki/Client%E2%80%93server_model>`_ "
+"，我还是推荐坚持使用标准模式，而不是优化模式。"
+
+#: ../../performance.rst:97 a190f2c6a02e4d1c81a261381b6b51da
+msgid ""
+"The optimization mode is currently supported for language C and Go, (not "
+"yet Python)."
+msgstr "目前，bitproto 的优化模式只支持 C 语言和 Go 语言，目前还不支持 Python 。"
+
+#: ../../performance.rst:99 b16cf3f8c36a49a0b6010693b23e120c
+msgid ""
+"Another benefit of optimization mode is that the bitproto libraries are "
+"no longer required to be dropped in. The bitproto compiler in "
+"optimization mode already throws out the final encoding and decoding "
+"statements, so the bitproto libraries aren't required. The libraries are "
+"designed to used with standard mode, where protocol extensibility is a "
+"feature."
+msgstr "优化模式所带来的另一个好处是不必在使用支持库了。因为 bitproto 的编译器在优化模式下已经生成了最终的编解码语句，"
+"因此 bitproto 的支持库就不需要了。这些支持库最初的设计是为了支持标准模式下的协议扩展性能力。"
+
+#: ../../performance.rst:105 44c905a9afb344ee859b5fd5e72837cc
+msgid "Smaller Code Size"
+msgstr "更小的代码量"
+
+#: ../../performance.rst:107 f6916a6fa4394efba918e44564a3e3ff
+msgid ""
+"Embedded firmware may be limited in program size. Bitproto provides "
+"another compiler option ``-F`` to filter messages to generate in "
+"optimization mode:"
+msgstr "嵌入式固件可能受限于编译后程序占用空间的大小。 bitproto 提供了一个编译器选项 ``-F`` 来筛选需要生成编解码函数的消息名字列表："
+
+#: ../../performance.rst:114 3d205ab357e04f8898a9e40f1d21b450
+msgid ""
+"The command above tells bitproto only to generate encoder and decoder "
+"functions for message ``Packet``, other messages's encoder and decoder "
+"functions will be skpped without generating."
+msgstr "上面的命令中， bitproto 会只生成消息 ``Packet`` 的编码函数和解码函数，"
+"其他消息的编码函数和解码函数则会跳过，不再生成。"
+
+#: ../../performance.rst:117 42db4299999f440fa8b367d603a2bb80
+msgid ""
+"The ``-F`` trick is useful because in most scenarios we just exchange a "
+"single \"top-level\" bitproto message in communication. This option can "
+"also be used with multiple message names:"
+msgstr "``-F`` 选项之所以是有用处的，是因为在很多情况下，我们在通信过程中只交换一个\"顶级的\"消息。"
+"这个选项也可以用来筛选多个消息名字，使用逗号分隔即可："
+
+#: ../../performance.rst:124 a323b26bc7ad41b9b044a3b0a321a8b5
+msgid ""
+"Finally to note that, the ``-F`` option can be only used together with "
+"option ``-O``."
+msgstr "最后需要说明的是，``-F`` 选项只可以用在优化模式下，也就是所只能和 ``-O`` 选项搭配使用。"
+

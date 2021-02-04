@@ -1,0 +1,47 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2021, Chao Wang
+# This file is distributed under the same license as the bitproto package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2021.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: bitproto 0.4.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-02-02 22:59+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.9.0\n"
+
+#: ../../changelog.rst:2 5d138e1e428f40c5bfffede35509f84f
+msgid "Changelog"
+msgstr "版本历史"
+
+#: ../../../changes.rst:6 ed162cca74704e9ca7e17ed2957f3d00
+msgid "Version 0.4.0"
+msgstr ""
+
+#: ../../../changes.rst:8 b8d2f6ccf525422aa1b31e1eb8be3ef3
+msgid ""
+"Add support for ``message`` and ``enum`` extensiblity for protocol "
+"backward compatibility."
+msgstr ""
+
+#: ../../../changes.rst:9 1d3c22b4b6014e75b9e45f416a0cf622
+msgid "Cut down the code size of generated language-specific files."
+msgstr ""
+
+#: ../../../changes.rst:10 b79e2f9d10194a9ab2fb6a2685e64bd5
+msgid "Refactor the bitproto compiler."
+msgstr ""
+
+#: ../../../changes.rst:11 5dfb026b331f477ab8f37e04c7ec931c
+msgid ""
+"Refactor the bitproto serialization mechanism, using language-specific "
+"libraries instead of pure compiler-generated files."
+msgstr ""
+

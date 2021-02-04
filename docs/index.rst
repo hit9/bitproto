@@ -4,6 +4,8 @@ The bit level data interchange format
 .. image:: https://img.shields.io/badge/license-BSD3-brightgreen
 .. image:: https://github.com/hit9/bitproto/workflows/bitproto%20ci/badge.svg
       :target: https://github.com/hit9/bitproto/actions?query=workflow%3A%22bitproto+ci%22
+.. image:: https://readthedocs.org/projects/bitproto/badge/?version=latest
+   :target: https://bitproto.readthedocs.io/en/latest/?badge=latest
 .. image:: https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg
       :target: https://saythanks.io/to/hit9@icloud.com
 

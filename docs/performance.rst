@@ -82,7 +82,7 @@ in message communication. The optimization mode only changes the way how to exec
 without changing the format of the message encoding.
 
 In fact, using the optimization mode is also a trade-off sometimes. In this mode, we have to drop the benefits of
-`extensibility <language-guide-extensibility>`_, it's not friendly to the compatibility design of the protocol.
+:ref:`extensibility <language-guide-extensibility>` , it's not friendly to the compatibility design of the protocol.
 Optimization mode is designed for performance-sensitive scenarios, such as low power consumption embedded boards,
 compute-intensive microcontrollers. I recommend to use the optimization mode when:
 

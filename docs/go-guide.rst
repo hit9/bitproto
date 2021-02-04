@@ -129,7 +129,7 @@ Let's run it:
    {"color":1,"produced_at":1611515729966}
 
 The encoder and decoder functions copy bits between the structure's memory and buffer ``s`` byte-to-byte.
-The bitproto go library doesn't use any reflection (think the ``encodig/json``), which may slow
+The bitproto go library doesn't use any reflection (think the ``encoding/json``), which may slow
 the performance, neither use any type assertions or dynamic function generations.
 
 There's another larger example source code on `the github <https://github.com/hit9/bitproto/tree/master/example>`_.

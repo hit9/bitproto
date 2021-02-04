@@ -1,0 +1,166 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2021, Chao Wang
+# This file is distributed under the same license as the bitproto package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2021.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: bitproto 0.4.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-02-02 22:59+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.9.0\n"
+
+#: ../../go-guide.rst:4 03b550acb16644b78aeef0574744d1f0
+msgid "Go Guide"
+msgstr "Go 语言引导"
+
+#: ../../go-guide.rst:6 13f93bd5c93b48129929dba12281a777
+msgid "This document will introduce how to use bitproto with Go language."
+msgstr "本文将介绍如何在 Go 语言中使用 bitproto 。"
+
+#: ../../go-guide.rst:9 ae994a220c1b484fbed36c37dcaf708a
+msgid "Compile bitproto for Go"
+msgstr "编译 bitproto 生成 Go 文件"
+
+#: ../../go-guide.rst:11 22c0e31899ed4495982207b440c6ccc5
+msgid "Firstly, creates a output directory named ``bp``:"
+msgstr "首先，创建一个目录 ``bp`` 用来存放生成的 go 文件："
+
+#: ../../go-guide.rst:17 c47a6cbdb5664920a956d60e52e70617
+msgid "Then run the bitproto compiler to generate code for Go:"
+msgstr "然后执行 bitproto 的编译器来生成 Go 代码："
+
+#: ../../go-guide.rst:23 163fc7ebc2614ffb9a0c412b46b3477f
+msgid ""
+"Where the ``pen.bitproto`` is introduced in earlier section :ref"
+":`quickstart-example-bitproto`."
+msgstr "其中， ``pen.bitproto`` 已经在前面的章节 "
+":ref:`quickstart-example-bitproto` 中做过说明。"
+
+#: ../../go-guide.rst:25 ceab734ba8e1432da2a3c5844cab3230
+msgid ""
+"We will find that bitproto generates us a file named ``pen_bp.go`` in the"
+" output directory, which contains the mapped structs, constants and api "
+"methods etc."
+msgstr "我们会发现 bitproto 会为我们生成一个叫做 ``pen_bp.go`` 的文件到之前创建的目录 ``bp`` 中，"
+"其中包括结构体、常量和一些接口函数。"
+
+#: ../../go-guide.rst:28 f8272150c0fc4b749521d7d93b768b01
+msgid "In the generated ``pen_bp.go``:"
+msgstr "在生成的 ``pen_bp.go`` 中："
+
+#: ../../go-guide.rst:30 a94c8e6c7fe548458471f629b23f0e5e
+msgid ""
+"The ``enum Color`` in bitproto is mapped to a ``type`` definition on "
+"unsigned integer statement in Go, and the enum values are mapped to "
+"constants:"
+msgstr "bitproto 中的 ``enum Color`` 会映射成 Go 中的使用 ``type`` 关键字定义的"
+"一个无符号整数的类型，枚举值映射成了这个类型的常量："
+
+#: ../../go-guide.rst:43 54f2a3efd5fb485ea49107d52cee847f
+msgid ""
+"The ``Timestamp`` in bitproto is mapped to a ``type`` definition on "
+"``int64`` in Go:"
+msgstr "bitproto 中的 ``Timestamp`` 类型映射成了 Go 中的 ``type`` 关键字"
+"定义的 ``int64`` 类型："
+
+#: ../../go-guide.rst:49 c645d2e772b3440da69e3e753b82e654
+msgid "The ``message Pen`` in bitproto is mapped to a struct in Go:"
+msgstr "bitproto 中的 ``message Pen`` 映射成为了 Go 中的一个结构体："
+
+#: ../../go-guide.rst:58 91e922921b2546a8aaec44ce0a140dcb
+msgid ""
+"The compiler also generates two functions for the struct, they are the "
+"encoder and the decoder:"
+msgstr "bitproto 的编译器同样生成了结构体上的两个方法，分别是编码函数和解码函数:"
+
+#: ../../go-guide.rst:66 6e087dc03f2d41f9aa0cc6dd368ffb68
+msgid "Install bitproto Go library"
+msgstr "安装 bitproto 的 Go 支持库"
+
+#: ../../go-guide.rst:68 077f316352e64aeb8869146c8b823c5d
+msgid ""
+"Bitproto serialization requires a language-specific library to work, the "
+"generated encoder and decoder depends on the bitproto Go library "
+"underlying."
+msgstr "bitproto 序列化需要依赖目标语言的支持库来工作，在这里，"
+"我们生成的编解码函数依赖 bitproto 的 Go 语言支持库。"
+
+#: ../../go-guide.rst:71 89c634ddb48648e496a055dfe32a72fd
+msgid ""
+"The source code of the bitproto Go library is hosted on `Github "
+"<https://github.com/hit9/bitproto/tree/master/lib/go>`_. And can be "
+"installed via ``go get``:"
+msgstr "bitproto 的 Go 语言的支持库存在在 "
+"`Github <https://github.com/hit9/bitproto/tree/master/lib/go>`_ 上，"
+"可以通过 ``go get`` 来获取："
+
+#: ../../go-guide.rst:78 cda145517e83443985be659243ee2d5e
+msgid ""
+"If you wish to install bitproto go library to local vendor directory via "
+"``go mod``:"
+msgstr "如果你希望使用 ``go mode`` 把这个库安装到在本地的 vendor 目录："
+
+#: ../../go-guide.rst:86 40195817ce3a42888484c7092b43b45b
+msgid "Run the code"
+msgstr "运行代码"
+
+#: ../../go-guide.rst:88 62e6980dc2f54a47a3043541baa54872
+msgid "Now, we create a file named  ``main.go`` and put the following code in it:"
+msgstr "现在，我们创建了一个叫做 ``main.go`` 的 Go 文件，包含以下代码："
+
+#: ../../go-guide.rst:112 cfdd8ffa82f54622a21a9b34ede21dd0
+msgid "Note to replace the import path of the generated ``pen_bp.go`` to yours."
+msgstr "注意替换 ``pen_bp.go`` 的导入路径。"
+
+#: ../../go-guide.rst:114 f0fbb7e0b4124390a6fef9f65cfaecbc
+msgid ""
+"In the code above, we firstly create a ``p`` of type ``Pen`` with data "
+"initilization, then call a method ``p.Encode()`` to encode ``p`` and "
+"return the encoded buffer ``s``, which is a slice of bytes."
+msgstr "在上面的代码中，我们首先创建了 ``Pen`` 类型的一个实例 ``p`` ， 并做了数据的初始化，"
+"然后调用了一个方法 ``p.Encode()`` 来把 ``p`` 编码到字节流 ``s`` 中，其中 ``s`` 是一个字节切片。"
+
+#: ../../go-guide.rst:118 67ec3c0654d54c2d9570aca59ec40b02
+msgid ""
+"In the decoding part, we construct another ``p1`` instance of type "
+"``Pen`` with zero initilization, then call a method ``p1.Decode()`` to "
+"decode bytes from buffer ``s`` into ``p1``."
+msgstr "在解码的部分，我们创建了另一个实例 ``p1`` ， 然后调用方法 ``p1.Decode()`` 来"
+"从字节流 ``s`` 中解码数据到 ``p1`` 。"
+
+#: ../../go-guide.rst:121 10c22f2298334e6389150c6f9840c0df
+msgid ""
+"The compiler also generates json tags on the generated struct's fields. "
+"And generates a method ``String()`` to return the json format of the "
+"structure."
+msgstr "bitproto 的编译器同样在结构体的字段上生成了 json 标签，这样方便对结构体做 json 的格式化。"
+"同样为结构体生成了一个函数叫做 ``String()`` ，它返回结构体的 json 格式字符串。"
+
+#: ../../go-guide.rst:124 3b4ebccc0fb64472875fc93415bbed66
+msgid "Let's run it:"
+msgstr "现在执行它："
+
+#: ../../go-guide.rst:131 3d4224a4e4e64177bc81af66edc1e231
+msgid ""
+"The encoder and decoder functions copy bits between the structure's "
+"memory and buffer ``s`` byte-to-byte. The bitproto go library doesn't use"
+" any reflection (think the ``encoding/json``), which may slow the "
+"performance, neither use any type assertions or dynamic function "
+"generations."
+msgstr "编码函数和解码函数会一个字节一个字节的在结构体和字节流之间拷贝比特数据。"
+"bitproto 的 Go 语言支持库没有用到任何反射 （比如 ``encoding/json`` 那样），"
+"因为反射可能会影响性能。同样，也没有用到任何类型断言和动态函数构建。"
+
+#: ../../go-guide.rst:135 69c74505d6184988810e03b8d3aadab6
+msgid ""
+"There's another larger example source code on `the github "
+"<https://github.com/hit9/bitproto/tree/master/example>`_."
+msgstr "在 `github <https://github.com/hit9/bitproto/tree/master/example>`_ 上有一个更大一些的例子。"
