@@ -32,7 +32,7 @@ pygments_style = "_pygments.BitprotoStyle"
 
 language = "en"
 locale_dirs = [
-    "locale/",
+    "locales/",
 ]
 gettext_uuid = True
 gettext_compact = False
