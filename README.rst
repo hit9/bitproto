@@ -6,6 +6,8 @@ interchange data format for serializing data structures.
 
 Website: https://bitproto.readthedocs.io
 
+中文文档: https://bitproto.readthedocs.io/zh/latest
+
 Features
 ---------
 
