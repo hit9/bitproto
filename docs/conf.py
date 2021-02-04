@@ -29,5 +29,10 @@ html_theme_options = {
     },
 }
 pygments_style = "_pygments.BitprotoStyle"
+
+language = "en"
+locale_dirs = [
+    "locale/",
+]
 gettext_uuid = True
 gettext_compact = False
