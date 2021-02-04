@@ -26,7 +26,6 @@ msgid "Introduction"
 msgstr "简介"
 
 #: ../../index.rst:15 f2c59c45be644147b76c3c4e24e6379d
-#, fuzzy
 msgid ""
 "Bitproto is a fast, lightweight and easy-to-use bit level data "
 "interchange format for serializing data structures."
