@@ -69,7 +69,7 @@ msgstr "bitproto 中的 ``enum Color`` 被映射成了一个 C 语言中的 ``ty
 
 #: ../../c-guide.rst:38 9282166e030a49078e1012a4c72b7f77
 msgid "The ``Timestamp`` type in bitproto is mapped to a ``typedef`` in C:"
-msgstr "bitproto 中的 ``Timestamp`` 类型被映射成了一个 C 语言中的 ``typedef`` 拒绝："
+msgstr "bitproto 中的 ``Timestamp`` 类型被映射成了一个 C 语言中的 ``typedef`` 语句："
 
 #: ../../c-guide.rst:44 7942d61df5f04464bede6cbeeae91b2e
 msgid "The message ``Pen`` in bitproto is mapped to a ``struct`` in C:"

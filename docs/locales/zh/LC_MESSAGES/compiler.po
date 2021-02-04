@@ -76,7 +76,7 @@ msgstr "默认地，它会把代码生成到当前目录，如果想指定一个
 msgid ""
 "Validates bitproto source file syntax, exits with a non-zero code if any "
 "syntax wrongs:"
-msgstr "仅仅检查 bitproto 的语法是否正确，如果语法错误，编译器会以一个非零的码推出："
+msgstr "仅仅检查 bitproto 的语法是否正确，如果语法错误，编译器会以一个非零的码退出："
 
 #: ../../compiler.rst:57 8a1fe76a34fe42aaa132b9e047ef9ab4
 msgid ""

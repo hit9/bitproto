@@ -62,7 +62,7 @@ msgid ""
 "You can checkout `the detail benchmark results for unix on github "
 "<https://github.com/hit9/bitproto/tree/master/benchmark/unix>`_."
 msgstr ""
-"你可以在 `github 上查看 unix 系统上详细的压缩结果 "
+"你可以在 `github 上查看 unix 系统上详细的压测结果 "
 "<https://github.com/hit9/bitproto/tree/master/benchmark/unix>`_ 。"
 
 #: ../../performance.rst:28 53cb6681f3e5430d86f7dee3dab2281a
@@ -90,7 +90,7 @@ msgid ""
 "You can checkout `the detail benchmark results for stm32 on github "
 "<https://github.com/hit9/bitproto/tree/master/benchmark/stm32>`_."
 msgstr ""
-"你可以在 `github 上查看 stm32 上详细的压缩结果 "
+"你可以在 `github 上查看 stm32 上详细的压测结果 "
 "<https://github.com/hit9/bitproto/tree/master/benchmark/stm32>`_ 。"
 
 #: ../../performance.rst:39 84d37078007e461ca24d471be16638a2

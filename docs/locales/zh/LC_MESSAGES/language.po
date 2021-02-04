@@ -33,7 +33,7 @@ msgstr "分号"
 
 #: ../../language.rst:11 178b197e324844a6a4e2ce5fa3eaa544
 msgid "Semicolons are optional in bitproto:"
-msgstr "在 bitproto 中逗号是可选的额："
+msgstr "在 bitproto 中逗号是可选的："
 
 #: ../../language.rst:22 06cb95447f914d2f8495a00b71c7c43f
 msgid "Proto name"
@@ -431,7 +431,7 @@ msgid ""
 " remaining data decoding at right positions."
 msgstr ""
 "我们不得不打破 bitproto "
-"的传统的编码结构。现在的机制是这样的，在编码后的消息字节流头部添加两个描述消息大小的字节，解码一端会根据首先查看这两个字节，并跳过冗余的比特，来继续解码后续的老字段数据。"
+"的传统的编码结构。现在的机制是这样的，在编码后的消息字节流头部添加两个描述消息大小的字节，解码一端会首先查看这两个字节，并跳过冗余的比特，来继续解码后续的老字段数据。"
 
 #: ../../language.rst:474 7374dfc08e7c43388a57d0fbe4cca360
 msgid ""
