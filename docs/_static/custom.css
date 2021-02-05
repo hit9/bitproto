@@ -2,7 +2,8 @@
 
 body {
   font-family: 'Garamond', 'Georgia', serif;
-  color: black;
+  font-size: 17px;
+  color: #3e4349;
 }
 
 div.document {

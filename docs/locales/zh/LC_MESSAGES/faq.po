@@ -1,0 +1,108 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2021, Chao Wang
+# This file is distributed under the same license as the bitproto package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2021.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: bitproto 0.4.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-02-05 12:48+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.9.0\n"
+
+#: ../../faq.rst:4 3554895a891f45429a6557952afcc336
+msgid "Frequently Asked Questions"
+msgstr "常见问题"
+
+#: ../../faq.rst:6 716896ada1fc4c259199f51320d81d84
+msgid "This document answers some of the often asked questions about bitproto."
+msgstr "本文回答经常出现的关于 bitproto 的问题"
+
+#: ../../faq.rst:9 b0bf52be93f241d6811cf9a9827b8aad
+msgid "Does bitproto depend on endianness ?"
+msgstr "bitproto 是否和大小端有关？"
+
+#: ../../faq.rst:11 696fa0eba0ac4b64b351f8260ec95798
+msgid ""
+"Yes, bitproto is not endianness independent, it currently supports only "
+"little-endian systems. Endianness is always an issue for data "
+"serialization. But most of cpu processors, (including x86, armv7, armv8 "
+"and most arm cortex-m mcus) are little-endian, or little-endian as "
+"default. There's no plan for now to support big-endian systems or "
+"endianness independent serialization."
+msgstr "是的，bitproto 是大小端相关的，目前它只支持小端系统。"
+"在数据序列化方面，大小端一直是一个问题。但是对于大部分的 CPU 处理器 (包括 x86, armv7, armv8 和大多数的 arm cortex-m mcu） "
+"都是小端的，或者默认设置为小端的。目前还没有计划来支持大端系统，也没有计划做大小端无关的序列化支持。"
+
+#: ../../faq.rst:17 41b0f1c69ab7427ca3aa6dc6fc386d32
+msgid "What's the advantage of this over a bit field ?"
+msgstr "和位域相比有好处?"
+
+#: ../../faq.rst:19 e0906ce3de234a97bfd495bab4a4e3b0
+msgid ""
+"`Bit fields <https://en.wikipedia.org/wiki/Bit_field>`_ are a standard "
+"language feature of C, but almost everything about bit-field is "
+"implementation dependent, including the size of them and memory layout. "
+"Apart from the endianness issue, the ordering of bitfields in memory is "
+"not-portable even between different compilers on the same platform."
+msgstr "`位域 <https://en.wikipedia.org/wiki/Bit_field>`_ 是 C 语言标准中的一个功能，"
+"不过几乎所有关于位域的事情都是实现相关的，包括它们的大小、内存布局。"
+"除去大小端问题之外，位域在内存中的排序不止只和系统有关，还和编译器实现有关。"
+
+#: ../../faq.rst:24 78dec1ca0336497d97817e2692524b51
+msgid ""
+"Besides, bitproto also targets on Python and Golang, there are no bit "
+"fields. If we use bit fields to exchange data between programs in "
+"different languages, non-C language users need to write the encoding "
+"mechanism manually."
+msgstr "此外，bitproto 仍然需要支持 Python 和 Go 语言，它们是没有位域这种功能的。"
+"如果我们使用位域来交换数据，那么非 C 语言的用户就需要自己来手工编写编码机制了。"
+
+#: ../../faq.rst:28 7e62d691644f4cf586bd0fda2f4d4845
+msgid ""
+"Very interesting to figure out that, bitproto actually encodes the same "
+"buffer, when use bit fields with structures setting no paddings in C. For"
+" instance, the buffer ``s`` in the C program below is the same with the "
+"encoded buffer of the bitproto message ``Data`` following:"
+msgstr "非常有趣地指出下，如果我们设置位域的结构体的空隙为零，"
+"bitproto 的编码实际上会和它一致。"
+"举例来说，下面的 C 程序中获得的字符串 ``s`` 和下面的 bitproto 消息 ``Data`` 的编码后的数据是一样的："
+
+#: ../../faq.rst:54 982f0aece3ad4a459bb7ceb09ae9f210
+msgid ""
+"Even so, it's recommend to use bitproto over bitfields. It's compiler "
+"independent, cross-multiple-languages and can support extensiblity."
+msgstr "即便如此，仍然推荐使用 bitproto 而不是 bitfields。"
+"bitproto 是编译器无关的，跨多个语言的，并且可以支持扩展性协议设计。"
+
+#: ../../faq.rst:58 016c9564f9e44f3e964fbd68585c51cc
+msgid "Is it safe to use bit-level unsigned integers ?"
+msgstr "使用比特级别的整数是安全的吗？"
+
+#: ../../faq.rst:60 7e63c3606794472cb533c6463f553e49
+msgid ""
+"What if the value assigned overflows an unsigned integer type at runtime?"
+" Say what if I assign ``9`` to an ``uint3`` ?"
+msgstr "如果在运行时给一个无符号整数赋值一个数字后导致溢出怎么办？"
+"比如说，如果我要赋值给一个 ``uint3`` 类型一个数字 ``9`` ？"
+
+#: ../../faq.rst:63 d026e08a56dd4b088ab40d40485efc1f
+msgid ""
+"It's very safe for enums, the bitproto compiler checks overflows at "
+"compile-time."
+msgstr "对于枚举的情况，是非常安全的，bitproto 的编译器会在编译期检查枚举值是否溢出。"
+
+#: ../../faq.rst:72 16a9f18b890146ef997108b40b3ca279
+msgid ""
+"But it's different for ``uint{n}`` used in a literal way, you have to "
+"ensure the value fits the bit space by yourself, bitproto won't check "
+"boundaries at runtime:"
+msgstr "不过对于字面量形式使用 ``uint{n}`` 的情况，则需要自己来保证，"
+"bitproto 不会在编解码的运行时检查数值溢出情况。"

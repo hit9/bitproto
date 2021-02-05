@@ -174,5 +174,6 @@ Content list
     compiler
     language
     performance
+    faq
     changelog
     license
