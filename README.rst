@@ -4,10 +4,6 @@ bitproto
 Bitproto is a fast, lightweight and easy-to-use bit level data
 interchange format for serializing data structures.
 
-Website: https://bitproto.readthedocs.io
-
-中文文档: https://bitproto.readthedocs.io/zh/latest
-
 Features
 ---------
 
@@ -25,3 +21,19 @@ Features
   - Python - No magic :)
 
 - Blazing fast encoding/decoding.
+
+
+Links
+-----
+
+Website: https://bitproto.readthedocs.io
+
+中文文档: https://bitproto.readthedocs.io/zh/latest
+
+博客记录（bitproto 的研发过程和工作原理）：https://writings.sh/post/bitproto-notes
+
+
+License
+-------
+
+BSD3.
