@@ -119,7 +119,7 @@ Declaring a message:
 
 A message is made up of multiple message fields. The syntax is very similar to protobuf.
 
-A message field consists of a type and name on the left, a field number of the right.
+A message field consists of a type and name on the left, a field number on the right.
 It's supported to use any bitproto types as a message field's type. The field number should
 be unique in a message scope.
 
