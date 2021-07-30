@@ -16,4 +16,4 @@ For `vim-plug <https://github.com/junegunn/vim-plug>`_ users:
 
 .. sourcecode:: vim
 
-   Plug 'hit9/bitproto', {'dir': 'editors/vim'}
+   Plug 'hit9/bitproto', {'rtp': 'editors/vim'}
