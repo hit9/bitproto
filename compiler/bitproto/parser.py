@@ -689,6 +689,10 @@ class Parser:
         )
         self.current_scope().push_member(message_field)
 
+    @override_docstring(r_message_field_name)
+    def p_message_field_name(self, p: P) -> None:
+        p[0] = p[1]
+
     @override_docstring(r_boolean_literal)
     def p_boolean_literal(self, p: P) -> None:
         p[0] = p[1]

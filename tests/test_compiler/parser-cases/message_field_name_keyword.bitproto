@@ -1,0 +1,11 @@
+proto message_field_name_keyword
+
+enum PayloadDataTypeE: uint8 {
+    PAYLOAD_DATA_TYPE_UNKNOWN = 1
+    PAYLOAD_DATA_TYPE_DETECTOR = 2
+
+}
+
+message PayloadDataT {
+    PayloadDataTypeE type = 1
+}

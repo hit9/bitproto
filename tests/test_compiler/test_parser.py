@@ -491,6 +491,13 @@ def test_option_wrong_type() -> None:
         parse(bitproto_filepath("option_wrong_type.bitproto"))
 
 
+def test_parse_message_field_name_keyword() -> None:
+    proto = parse(bitproto_filepath("message_field_name_keyword.bitproto"))
+    message = cast_or_raise(Message, proto.get_member("PayloadDataT"))
+    field = cast_or_raise(MessageField, message.get_member("type"))
+    assert field.number == 1
+
+
 def test_constants() -> None:
     proto = parse(bitproto_filepath("constants.bitproto"))
 

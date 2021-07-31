@@ -245,7 +245,14 @@ message_item_unsupported : alias
 """
 
 r_message_field = """
-message_field : type IDENTIFIER '=' INT_LITERAL optional_semicolon
+message_field : type message_field_name '=' INT_LITERAL optional_semicolon
+"""
+
+# https://github.com/hit9/bitproto/issues/39
+# Allow some keywords to be message names.
+r_message_field_name = """
+message_field_name : IDENTIFIER
+                   | TYPE
 """
 
 r_boolean_literal = """

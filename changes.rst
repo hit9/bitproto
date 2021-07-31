@@ -1,5 +1,12 @@
 .. currentmodule:: bitproto
 
+.. _version-0.4.2:
+
+Version 0.4.2
+-------------
+
+- Allow using ``type`` as message field name, fixes issue #39.
+
 .. _version-0.4.0:
 
 Version 0.4.0
