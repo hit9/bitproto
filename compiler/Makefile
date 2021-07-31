@@ -45,3 +45,12 @@ dist-windows-zip: dist-windows
 
 dist-all: dist-osx dist-linux dist-windows
 dist-all-zip: dist-osx-zip dist-linux-zip dist-windows-zip
+
+clean-pip-package:
+	rm -rf dist build *egg-info
+
+build-pip-package: clean-pip-package
+	python setup.py sdist bdist_wheel
+
+upload-pip-package: build-pip-package
+	twine upload --repository pypi dist/*
