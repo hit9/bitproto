@@ -8,88 +8,98 @@ msgid ""
 msgstr ""
 "Project-Id-Version: bitproto 0.4.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-02-02 22:59+0800\n"
+"POT-Creation-Date: 2021-07-31 14:53+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.9.0\n"
+"Generated-By: Babel 2.9.1\n"
 
-#: ../../compiler.rst:4 37f87d891a9c41acb10217f25b989466
+#: ../../compiler.rst:4 18430fedb15b4d3293f76aaa45209f7c
 msgid "Compiler"
 msgstr "编译器"
 
-#: ../../compiler.rst:6 fd2928cde6e340dba5097ddc13e9eb8f
+#: ../../compiler.rst:6 9e286ee7758449789059175f86faa807
 msgid ""
 "The bitproto compiler generates language-specific code, which provides "
 "the encode and decode api functions."
 msgstr "bitproto 的编译器用来解析 bitproto 的源文件，然后生成目标语言的代码。"
 
-#: ../../compiler.rst:12 28cf28a6e2364974a57675ecfe87902d
+#: ../../compiler.rst:12 b938ad80b944441c8c87b486f9e0f4ea
 msgid "Installing the compiler"
 msgstr "安装编译器"
 
-#: ../../compiler.rst:14 d32480f115944933ad54c6199135094a
+#: ../../compiler.rst:14 a3bc78797a7a4ff482d2e84b40903627
 msgid ""
 "The bitproto compiler is written in Python, and requires `Python3.7+ "
 "<https://www.python.org/downloads/>`_ to work, it's best to be installed "
 "via `pip <http://pip-installer.org/>`_:"
-msgstr "bitproto 的编译器使用 Python 编写，依赖 "
-"`Python3.7+ <https://www.python.org/downloads/>`_ ，"
-"最佳的安装方式是通过 `pip <http://pip-installer.org/>`_ ："
+msgstr ""
+"bitproto 的编译器使用 Python 编写，依赖 `Python3.7+ "
+"<https://www.python.org/downloads/>`_ ，最佳的安装方式是通过 `pip <http://pip-"
+"installer.org/>`_ ："
 
-#: ../../compiler.rst:21 148d28a2688140bbba6898e354491ac6
+#: ../../compiler.rst:21 5bedfeb9579741369085ec9e5205f84b
 msgid ""
 "This will install a command named ``bitproto`` to your system, you can "
 "check it's version after the installation:"
 msgstr "上面的命令会安装一个叫做 ``bitproto`` 的命令行工具，你可以在安装后查看下它的版本信息："
 
-#: ../../compiler.rst:28 b131be7327c04d6e8f52b74302641b0b
+#: ../../compiler.rst:28 7a5f262f8bcb411da41e661aaea34714
 msgid ""
 "If you're new to Python, or wish to skip a Python installation, you can "
 "download the compiler from `this download link "
 "<https://github.com/hit9/bitproto/releases>`_ directly, there provides "
 "the prebuilt one-file executables for Mac OS, Windows and Linux, which "
 "works without having to install a Python3.7+."
-msgstr "如果你对 Python 不熟悉，或者希望跳过 Python 安装，可以直接进 "
-"`这个下载链接 <https://github.com/hit9/bitproto/releases>`_ "
-"提供了预先打包好的单文件可执行程序，包含 Mac OS, Windows 和 Linux 的三个版本，"
-"这些打包好的程序无需安装 Python3.7+ 就可以使用。"
+msgstr ""
+"如果你对 Python 不熟悉，或者希望跳过 Python 安装，可以直接进 `这个下载链接 "
+"<https://github.com/hit9/bitproto/releases>`_ 提供了预先打包好的单文件可执行程序，包含 Mac "
+"OS, Windows 和 Linux 的三个版本，这些打包好的程序无需安装 Python3.7+ 就可以使用。"
 
-#: ../../compiler.rst:34 a9b3325d451f41589f4bac48039474a7
+#: ../../compiler.rst:34 1d3a8dd1b86245558740171ef5223154
+#, fuzzy
+msgid "Upgrade the compiler"
+msgstr "升级编译器"
+
+#: ../../compiler.rst:36 1faec5148a96460abe43432787bee0bd
+msgid "To upgrade bitproto via ``pip``:"
+msgstr "要通过 ``pip`` 升级 bitproto 的编译器"
+
+#: ../../compiler.rst:43 a7454cdbca2746a2b91ec35990ed5d90
 msgid "Command line usage"
 msgstr "命令行使用"
 
-#: ../../compiler.rst:36 691bd9150983482b8738e966d98db43e
+#: ../../compiler.rst:45 1517ffb46cff4411a5dc33ad9aff1462
 msgid "Generates code for given language:"
 msgstr "给目标语言生成代码："
 
-#: ../../compiler.rst:44 29125a4f5f0f4350a3feb11a27885c86
+#: ../../compiler.rst:53 9d3996501f7a4d8fa7ec689ca842829a
 msgid ""
 "It generates language-specific codes to current directory by default, to "
 "specify a output directory:"
 msgstr "默认地，它会把代码生成到当前目录，如果想指定一个生成目录："
 
-#: ../../compiler.rst:51 b56183844def4a09b23ddd68d14b4f91
+#: ../../compiler.rst:60 13643cb35666433086796cf4b0e145c9
 msgid ""
 "Validates bitproto source file syntax, exits with a non-zero code if any "
 "syntax wrongs:"
 msgstr "仅仅检查 bitproto 的语法是否正确，如果语法错误，编译器会以一个非零的码退出："
 
-#: ../../compiler.rst:57 8a1fe76a34fe42aaa132b9e047ef9ab4
+#: ../../compiler.rst:66 4114f3fa739b4df6a18a1e2b04d2000b
 msgid ""
 "The compiler won't generate files but only run a protocol syntax checking"
 " if `-c` option is given."
 msgstr "如果 ``-c`` 选项传入，编译器只做语法检查，而不会进行代码生成。"
 
-#: ../../compiler.rst:61 8c4f9d30ddce4391a5447af63d612483
+#: ../../compiler.rst:70 18227812bc6941dda8cd7ac54766f9e5
 msgid ""
 "By default, the compiler runs a simple protocol linter, which gives "
 "warnings if the given bitproto file doesn't meet the :ref:`style-guide`, "
 "to disable the linter:"
-msgstr "默认地，编译器会执行一个简单的协议风格检查器，"
-"以检查是否符合 bitproto 推荐的 :ref:`语法风格 <style-guide>`。"
-"如果需要禁用它："
+msgstr ""
+"默认地，编译器会执行一个简单的协议风格检查器，以检查是否符合 bitproto 推荐的 :ref:`语法风格 <style-"
+"guide>`。如果需要禁用它："
 

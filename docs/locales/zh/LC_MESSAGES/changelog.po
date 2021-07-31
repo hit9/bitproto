@@ -8,38 +8,46 @@ msgid ""
 msgstr ""
 "Project-Id-Version: bitproto 0.4.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-02-02 22:59+0800\n"
+"POT-Creation-Date: 2021-07-31 14:53+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.9.0\n"
+"Generated-By: Babel 2.9.1\n"
 
-#: ../../changelog.rst:2 5d138e1e428f40c5bfffede35509f84f
+#: ../../changelog.rst:2 c3aafa1b86fb4406b8ad619f3bedb8d3
 msgid "Changelog"
 msgstr "版本历史"
 
-#: ../../../changes.rst:6 ed162cca74704e9ca7e17ed2957f3d00
+#: ../../../changes.rst:6 0d36e7c261c74f93925a9d1cac8e349c
+msgid "Version 0.4.2"
+msgstr ""
+
+#: ../../../changes.rst:8 45ad5c975eee4893a337aa1148e9f843
+msgid "Allow using ``type`` as message field name, fixes issue #39."
+msgstr ""
+
+#: ../../../changes.rst:13 0d36e7c261c74f93925a9d1cac8e349c
 msgid "Version 0.4.0"
 msgstr ""
 
-#: ../../../changes.rst:8 b8d2f6ccf525422aa1b31e1eb8be3ef3
+#: ../../../changes.rst:15 1f9f362e8f19439e80853d2c8e0be167
 msgid ""
 "Add support for ``message`` and ``enum`` extensiblity for protocol "
 "backward compatibility."
 msgstr ""
 
-#: ../../../changes.rst:9 1d3c22b4b6014e75b9e45f416a0cf622
+#: ../../../changes.rst:16 fd9a84c95ed546a59f5268431d877be9
 msgid "Cut down the code size of generated language-specific files."
 msgstr ""
 
-#: ../../../changes.rst:10 b79e2f9d10194a9ab2fb6a2685e64bd5
+#: ../../../changes.rst:17 ccade2fb15534d4bb0569dc800abb83f
 msgid "Refactor the bitproto compiler."
 msgstr ""
 
-#: ../../../changes.rst:11 5dfb026b331f477ab8f37e04c7ec931c
+#: ../../../changes.rst:18 2f3010514fd244ef99981b9cbc69e934
 msgid ""
 "Refactor the bitproto serialization mechanism, using language-specific "
 "libraries instead of pure compiler-generated files."
