@@ -50,7 +50,7 @@ clean-pip-package:
 	rm -rf dist build *egg-info
 
 build-pip-package: clean-pip-package
-	python setup.py sdist bdist_wheel
+	python setup.py sdist
 
 upload-pip-package: build-pip-package
 	twine upload --repository pypi dist/*
