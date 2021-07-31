@@ -23,12 +23,21 @@ This will install a command named ``bitproto`` to your system, you can check it'
 .. sourcecode:: bash
 
    $ bitproto -v
-   bitproto 0.4.0
+   bitproto v0.4.2
 
 If you're new to Python, or wish to skip a Python installation,
 you can download the compiler from `this download link <https://github.com/hit9/bitproto/releases>`_
 directly, there provides the prebuilt one-file executables for Mac OS, Windows and Linux,
 which works without having to install a Python3.7+.
+
+Upgrade the compiler
+--------------------
+
+To upgrade bitproto via ``pip``:
+
+.. sourcecode:: bash
+
+    $ pip install -U bitproto
 
 Command line usage
 ------------------
