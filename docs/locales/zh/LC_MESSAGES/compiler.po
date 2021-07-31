@@ -60,7 +60,6 @@ msgstr ""
 "OS, Windows 和 Linux 的三个版本，这些打包好的程序无需安装 Python3.7+ 就可以使用。"
 
 #: ../../compiler.rst:34 1d3a8dd1b86245558740171ef5223154
-#, fuzzy
 msgid "Upgrade the compiler"
 msgstr "升级编译器"
 
