@@ -8,7 +8,7 @@ from _pygments import *
 project = "bitproto"
 copyright = "2021, Chao Wang"
 author = "Chao Wang"
-version = "0.4.2"
+version = "0.4.4"
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 html_theme = "alabaster"
 html_static_path = ["_static"]

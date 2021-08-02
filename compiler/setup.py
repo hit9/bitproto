@@ -8,6 +8,45 @@ with open(join(dirname(__file__), "bitproto", "__init__.py"), "r") as f:
     version = about["__version__"]
     description = about["__description__"]
 
+long_docs = """
+bitproto
+========
+
+Bitproto is a fast, lightweight and easy-to-use bit level data
+interchange format for serializing data structures.
+
+Features
+---------
+
+- Supports bit level data serialization.
+- Supports protocol extensiblity, for backward-compatibility.
+- Very easy to start
+
+  - Protocol syntax is similar to the well-known protobuf.
+  - Generating code with very simple serialization api.
+
+- Supports the following languages
+
+  - C - No dynamic memory allocation.
+  - Go - No reflection or type assertions.
+  - Python - No magic :)
+
+- Blazing fast encoding/decoding.
+
+
+Links
+-----
+
+Website: https://bitproto.readthedocs.io
+
+中文文档: https://bitproto.readthedocs.io/zh/latest
+
+License
+-------
+
+BSD3.
+"""
+
 setup(
     name="bitproto",
     version=version,
@@ -17,7 +56,7 @@ setup(
     description=description,
     packages=["bitproto"],
     include_package_data=True,
-    long_description=open(join("..", "README.rst")).read(),
+    long_description=long_docs,
     zip_safe=False,
     entry_points={"console_scripts": ["bitproto=bitproto._main:run_bitproto"]},
     python_requires=">=3.7",
