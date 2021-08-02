@@ -1,5 +1,12 @@
 .. currentmodule:: bitproto
 
+.. _version-0.4.3:
+
+Version 0.4.3
+-------------
+
+- Minor fix compiler setup.py path for windows
+
 .. _version-0.4.2:
 
 Version 0.4.2
