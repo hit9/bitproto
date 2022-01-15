@@ -98,7 +98,7 @@ The optimization mode is currently supported for language C and Go, (not yet Pyt
 
 Another benefit of optimization mode is that the bitproto libraries are no longer required to be dropped in.
 The bitproto compiler in optimization mode already throws out the final encoding and decoding statements,
-so the bitproto libraries aren't required. The libraries are designed to used with standard mode, where
+so the bitproto libraries aren't required. The libraries are designed to use with standard mode, where
 protocol extensibility is a feature.
 
 Smaller Code Size
