@@ -949,7 +949,7 @@ class MessageField(Field):
 @frozen(post_init=False)
 @dataclass
 class Message(BoundScope, ScopeWithOptions, CompositeType, ExtensibleType):
-    """Message (similar to protobuf's message). """
+    """Message (similar to protobuf's message)."""
 
     name: str = ""
 

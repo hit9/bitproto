@@ -193,7 +193,7 @@ class Lexer:
         return t
 
     def t_STRING_LITERAL(self, t: LexToken) -> LexToken:
-        r"\"([^\\\n]|(\\.))*?\""
+        r"\"([^\\\n]|(\\.))*?\" "
         s: str = t.value[1:-1]
 
         # Escaping.

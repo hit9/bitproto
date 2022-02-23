@@ -51,7 +51,7 @@ class Renderer(Generic[F]):
         return os.getcwd()
 
     def get_out_filename(self) -> str:
-        """Returns the output file's name for this renderer. """
+        """Returns the output file's name for this renderer."""
         extension = self.file_extension()
         formatter = self.formatter()
         return formatter.format_out_filename(self.proto, extension=extension)
