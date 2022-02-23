@@ -7,7 +7,7 @@ The bit level data interchange format
 .. image:: https://readthedocs.org/projects/bitproto/badge/?version=latest
    :target: https://bitproto.readthedocs.io/en/latest/?badge=latest
 .. image:: https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg
-      :target: https://saythanks.io/to/hit9@icloud.com
+      :target: https://saythanks.io/to/hit9
 
 Introduction
 ------------
