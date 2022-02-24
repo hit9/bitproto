@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: bitproto 0.4.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-07-31 14:53+0800\n"
+"POT-Creation-Date: 2022-02-24 10:21+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,32 +22,40 @@ msgid "Changelog"
 msgstr "版本历史"
 
 #: ../../../changes.rst:6 0d36e7c261c74f93925a9d1cac8e349c
-msgid "Version 0.4.2"
+msgid "Version 0.4.4"
 msgstr ""
 
-#: ../../../changes.rst:8 45ad5c975eee4893a337aa1148e9f843
-msgid "Allow using ``type`` as message field name, fixes issue #39."
+#: ../../../changes.rst:8 6e50f748d8ad43cd83147fd3ad35c103
+msgid "Minor fix compiler setup.py path issue."
 msgstr ""
 
 #: ../../../changes.rst:13 0d36e7c261c74f93925a9d1cac8e349c
+msgid "Version 0.4.2"
+msgstr ""
+
+#: ../../../changes.rst:15 45ad5c975eee4893a337aa1148e9f843
+msgid "Allow using ``type`` as message field name, fixes issue #39."
+msgstr ""
+
+#: ../../../changes.rst:20 0d36e7c261c74f93925a9d1cac8e349c
 msgid "Version 0.4.0"
 msgstr ""
 
-#: ../../../changes.rst:15 1f9f362e8f19439e80853d2c8e0be167
+#: ../../../changes.rst:22 1f9f362e8f19439e80853d2c8e0be167
 msgid ""
 "Add support for ``message`` and ``enum`` extensiblity for protocol "
 "backward compatibility."
 msgstr ""
 
-#: ../../../changes.rst:16 fd9a84c95ed546a59f5268431d877be9
+#: ../../../changes.rst:23 fd9a84c95ed546a59f5268431d877be9
 msgid "Cut down the code size of generated language-specific files."
 msgstr ""
 
-#: ../../../changes.rst:17 ccade2fb15534d4bb0569dc800abb83f
+#: ../../../changes.rst:24 ccade2fb15534d4bb0569dc800abb83f
 msgid "Refactor the bitproto compiler."
 msgstr ""
 
-#: ../../../changes.rst:18 2f3010514fd244ef99981b9cbc69e934
+#: ../../../changes.rst:25 2f3010514fd244ef99981b9cbc69e934
 msgid ""
 "Refactor the bitproto serialization mechanism, using language-specific "
 "libraries instead of pure compiler-generated files."
