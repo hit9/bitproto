@@ -48,6 +48,7 @@ class BlockGeneralImports(Block[F]):
         self.push("import json")
         self.push("from dataclasses import dataclass, field")
         self.push("from typing import ClassVar, Dict, List")
+        self.push("from enum import IntEnum, unique")
         self.push_empty_line()
         self.push("from bitprotolib import bp")
 
@@ -139,9 +140,7 @@ class BlockEnumField(BlockBindEnumField[F]):
     @override(Block)
     def render(self) -> None:
         self.push_definition_comments()
-        self.push(
-            f"{self.enum_field_name}: {self.enum_field_type} = {self.enum_field_value}"
-        )
+        self.push(f"    {self.enum_field_name} = {self.enum_field_value}")
 
 
 class BlockEnumFieldList(BlockBindEnum[F], BlockComposition[F]):
@@ -163,16 +162,21 @@ class BlockEnumFieldListWrapper(BlockBindEnum[F], BlockWrapper[F]):
     def before(self) -> None:
         self.render_enum_type()
 
+    @override(BlockWrapper)
+    def after(self) -> None:
+        self.push_empty_line()
+
     def render_enum_type(self) -> None:
         self.push_definition_comments()
-        self.push(f"{self.enum_name} = int")
+        self.push("@unique")
+        self.push(f"class {self.enum_name}(IntEnum):")
         self.push_typing_hint_inline_comment()
 
 
 class BlockEnumValueToNameMapItem(BlockBindEnumField[F]):
     @override(Block)
     def render(self) -> None:
-        self.push(f'{self.enum_field_value}: "{self.enum_field_name}",')
+        self.push(f'{self.enum_field_type}.{self.enum_field_name}: "{self.enum_field_name}",')
 
 
 class BlockEnumValueToNameMapItemList(BlockBindEnum[F], BlockComposition[F]):
@@ -232,6 +236,10 @@ class BlockMessageField(BlockBindMessageField[F]):
         self.push(
             f"{self.message_field_name}: {self.message_field_type} = {self.message_field_default_value}"
         )
+        if issubclass(type(self.d.type), Enum):
+            # push a proxy field for enum  fields to hold integer value
+            self.push_comment("This field is a proxy to hold integer value of enum field")
+            self.push(f"_{self.message_field_name}: int = field(init=False, repr=False)")
         self.push_typing_hint_inline_comment()
 
 
@@ -308,6 +316,74 @@ class BlockMessageMethodProcessorFieldList(BlockMessageBase, BlockComposition[F]
     @override(BlockComposition)
     def separator(self) -> str:
         return "\n"
+
+
+class BlockMessagePostInitField(BlockBindMessageField[F]):
+
+    @override(Block)
+    def render(self) -> None:
+        self.push_comment(f"initialize handling of enum field '{self.message_field_name}' as `enum.Intenum`")
+        self.push(f'if not isinstance(getattr({self.d.message.name}, "{self.message_field_name}", False), property):')
+        self.push(f"    self._{self.message_field_name} = self.{self.message_field_name}")
+        self.push(
+            f"    {self.d.message.name}.{self.message_field_name} = property("
+            f"{self.d.message.name}._get_{self.message_field_name}, "
+            f"{self.d.message.name}._set_{self.message_field_name})"
+        )
+
+
+class BlockMessagePostInitItemList(BlockMessageBase, BlockComposition[F]):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block[F]]:
+        b: List[Block[F]] = [
+            BlockMessagePostInitField(field, indent=self.indent)
+            for field in self.d.sorted_fields()
+        ]
+        return b
+
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n"
+
+
+class BlockMessagePostInit(BlockBindMessage[F], BlockWrapper[F]):
+    @override(BlockWrapper)
+    def wraps(self) -> Block[F]:
+        return BlockMessagePostInitItemList(self.d, indent=self.indent + 4)
+
+    @override(BlockWrapper)
+    def before(self) -> None:
+        self.push("def __post_init__(self):")
+
+
+class BlockMessageEnumProxyFieldAccessorField(BlockBindMessageField[F]):
+
+    @override(Block)
+    def render(self) -> None:
+        self.push(f"def _get_{self.message_field_name}(self):")
+        self.push(f"    return {self.message_field_type}(self._{self.message_field_name})\n")
+        self.push(f"def _set_{self.message_field_name}(self, val):")
+        self.push(f"    self._{self.message_field_name} = val")
+
+
+class BlockMessageEnumProxyFieldAccessorFieldList(BlockMessageBase, BlockComposition[F]):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block[F]]:
+        b: List[Block[F]] = [
+            BlockMessageEnumProxyFieldAccessorField(field, indent=self.indent)
+            for field in self.d.sorted_fields()
+        ]
+        return b
+
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n"
+
+
+class BlockMessageEnumProxyFieldAccessors(BlockBindMessage[F], BlockWrapper[F]):
+    @override(BlockWrapper)
+    def wraps(self) -> Block[F]:
+        return BlockMessageEnumProxyFieldAccessorFieldList(self.d, indent=self.indent)
 
 
 class BlockMessageMethodProcessor(BlockMessageBase, BlockWrapper[F]):
@@ -606,6 +682,8 @@ class BlockMessage(BlockMessageBase, BlockComposition[F]):
     def blocks(self) -> List[Block[F]]:
         return [
             BlockMessageClass(self.d),
+            BlockMessagePostInit(self.d, indent=4),
+            BlockMessageEnumProxyFieldAccessors(self.d, indent=4),
             BlockMessageMethodProcessor(self.d, indent=4),
             BlockMessageMethodSetByte(self.d, indent=4),
             BlockMessageMethodGetByte(self.d, indent=4),
