@@ -122,4 +122,4 @@ def test_encoding_arrays() -> None:
 
 
 def test_encoding_scatter() -> None:
-    _TestCase("arrays").run()
+    _TestCase("scatter").run()
