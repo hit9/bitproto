@@ -49,7 +49,7 @@ class BlockGeneralImports(Block[F]):
     def render(self) -> None:
         self.push("import json")
         self.push("from dataclasses import dataclass, field")
-        self.push("from typing import ClassVar, Dict, List")
+        self.push("from typing import ClassVar, Dict, List, Union")
         self.push("from enum import IntEnum, unique")
         self.push_empty_line()
         self.push("from bitprotolib import bp")
@@ -271,16 +271,21 @@ class BlockMessageField(BlockBindMessageField[F]):
     @override(Block)
     def render(self) -> None:
         self.push_definition_comments()
-        self.push(
-            f"{self.message_field_name}: {self.message_field_type} = {self.message_field_default_value}"
-        )
         if issubclass(type(self.d.type), Enum):
+            # use union of int and IntEnum so that field assignment works as before without typing problem.
+            self.push(
+                f"{self.message_field_name}: Union[int, {self.message_field_type}] = {self.message_field_default_value}"
+            )
             # push a proxy field for enum  fields to hold integer value
             self.push_comment(
                 f"This field is a proxy to hold integer value of enum field '{self.message_field_name}'"
             )
             self.push(
                 f"{_enum_field_proxy_prefix}{self.message_field_name}: int = field(init=False, repr=False)"
+            )
+        else:
+            self.push(
+                f"{self.message_field_name}: {self.message_field_type} = {self.message_field_default_value}"
             )
         self.push_typing_hint_inline_comment()
 
