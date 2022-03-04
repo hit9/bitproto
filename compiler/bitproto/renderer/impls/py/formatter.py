@@ -132,7 +132,7 @@ class PyFormatter(Formatter):
         return f"{factory}()"
 
     def format_default_value_enum(self, t: Enum) -> str:
-        return "0"
+        return f"{self.format_type(t)}.{self.format_enum_field_name(t.fields()[0])}"
 
     def format_default_value_array(self, t: Array) -> str:
         cap = self.format_int_value(t.cap)

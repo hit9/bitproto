@@ -1,0 +1,15 @@
+// This is an example for bitproto.
+
+// Proto drone describes the structure of the drone.
+proto enums;
+
+enum MyEnum : uint2 {
+    MY_ENUM_UNKNOWN = 0;
+    MY_ENUM_ONE = 1;
+    MY_ENUM_TWO = 2;
+    MY_ENUM_THREE = 3;
+}
+
+message EnumContainer {
+    MyEnum my_enum = 2;
+}

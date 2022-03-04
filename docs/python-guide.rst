@@ -30,16 +30,22 @@ the mapped classes, constants and api methods etc.
 
 In the generated ``pen_bp.py``:
 
-* The ``enum Color`` in bitproto is mapped to a typing hint alias, and the enum values are mapped
-  to constants:
+* The ``enum Color`` in bitproto is mapped to an ``enum.IntEum`` class, and the enum values are mapped
+  to constants as well:
 
   .. sourcecode:: python
 
-     Color = int # 3bit
-     COLOR_UNKNOWN: Color = 0
-     COLOR_RED: Color = 1
-     COLOR_BLUE: Color = 2
-     COLOR_GREEN: Color = 3
+     @unique
+     class Color(IntEnum): # 3 bit
+        COLOR_UNKNOWN = 0
+        COLOR_RED = 1
+        COLOR_BLUE = 2
+        COLOR_GREEN = 3
+
+     COLOR_UNKNOWN: Color = Color.COLOR_UNKNOWN
+     COLOR_RED: Color = Color.COLOR_RED
+     COLOR_BLUE: Color = Color.COLOR_BLUE
+     COLOR_GREEN: Color = Color.COLOR_GREEN
 
 * The ``Timestamp`` in bitproto is also mapped to a typing hint alias:
 
