@@ -355,7 +355,6 @@ class BlockMessageDictFactory(BlockMessageBase, BlockWrapper[F]):
         self.push(
             f"    return {{k: v for k, v in kv_pairs if not k.startswith('{_enum_field_proxy_prefix}')}}"
         )
-        self.push_definition_docstring(indent=4)
 
 
 class BlockMessageMethodProcessorFieldItem(BlockBindMessageField[F]):
