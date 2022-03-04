@@ -8,7 +8,8 @@ Proto drone describes the structure of the drone.
 
 import json
 from dataclasses import dataclass, field
-from typing import ClassVar, Dict, List
+from typing import ClassVar, Dict, List, Union
+from enum import IntEnum, unique
 
 from bitprotolib import bp
 
@@ -31,79 +32,121 @@ def bp_default_factory_TernaryInt32() -> TernaryInt32:
     return [0 for _ in range(3)]
 
 
-DroneStatus = int # 3bit
-DRONE_STATUS_UNKNOWN: DroneStatus = 0
-DRONE_STATUS_STANDBY: DroneStatus = 1
-DRONE_STATUS_RISING: DroneStatus = 2
-DRONE_STATUS_LANDING: DroneStatus = 3
-DRONE_STATUS_FLYING: DroneStatus = 4
+@unique
+class DroneStatus(IntEnum): # 3bit
+    DRONE_STATUS_UNKNOWN = 0
+    DRONE_STATUS_STANDBY = 1
+    DRONE_STATUS_RISING = 2
+    DRONE_STATUS_LANDING = 3
+    DRONE_STATUS_FLYING = 4
+
+
+# Aliases for backwards compatibility
+DRONE_STATUS_UNKNOWN: DroneStatus = DroneStatus.DRONE_STATUS_UNKNOWN
+DRONE_STATUS_STANDBY: DroneStatus = DroneStatus.DRONE_STATUS_STANDBY
+DRONE_STATUS_RISING: DroneStatus = DroneStatus.DRONE_STATUS_RISING
+DRONE_STATUS_LANDING: DroneStatus = DroneStatus.DRONE_STATUS_LANDING
+DRONE_STATUS_FLYING: DroneStatus = DroneStatus.DRONE_STATUS_FLYING
+
 
 _DRONESTATUS_VALUE_TO_NAME_MAP: Dict[DroneStatus, str] = {
-    0: "DRONE_STATUS_UNKNOWN",
-    1: "DRONE_STATUS_STANDBY",
-    2: "DRONE_STATUS_RISING",
-    3: "DRONE_STATUS_LANDING",
-    4: "DRONE_STATUS_FLYING",
+    DroneStatus.DRONE_STATUS_UNKNOWN: "DRONE_STATUS_UNKNOWN",
+    DroneStatus.DRONE_STATUS_STANDBY: "DRONE_STATUS_STANDBY",
+    DroneStatus.DRONE_STATUS_RISING: "DRONE_STATUS_RISING",
+    DroneStatus.DRONE_STATUS_LANDING: "DRONE_STATUS_LANDING",
+    DroneStatus.DRONE_STATUS_FLYING: "DRONE_STATUS_FLYING",
 }
 
 def bp_processor_DroneStatus() -> bp.Processor:
     return bp.EnumProcessor(bp.Uint(3))
 
 
-PropellerStatus = int # 2bit
-PROPELLER_STATUS_UNKNOWN: PropellerStatus = 0
-PROPELLER_STATUS_IDLE: PropellerStatus = 1
-PROPELLER_STATUS_ROTATING: PropellerStatus = 2
+@unique
+class PropellerStatus(IntEnum): # 2bit
+    PROPELLER_STATUS_UNKNOWN = 0
+    PROPELLER_STATUS_IDLE = 1
+    PROPELLER_STATUS_ROTATING = 2
+
+
+# Aliases for backwards compatibility
+PROPELLER_STATUS_UNKNOWN: PropellerStatus = PropellerStatus.PROPELLER_STATUS_UNKNOWN
+PROPELLER_STATUS_IDLE: PropellerStatus = PropellerStatus.PROPELLER_STATUS_IDLE
+PROPELLER_STATUS_ROTATING: PropellerStatus = PropellerStatus.PROPELLER_STATUS_ROTATING
+
 
 _PROPELLERSTATUS_VALUE_TO_NAME_MAP: Dict[PropellerStatus, str] = {
-    0: "PROPELLER_STATUS_UNKNOWN",
-    1: "PROPELLER_STATUS_IDLE",
-    2: "PROPELLER_STATUS_ROTATING",
+    PropellerStatus.PROPELLER_STATUS_UNKNOWN: "PROPELLER_STATUS_UNKNOWN",
+    PropellerStatus.PROPELLER_STATUS_IDLE: "PROPELLER_STATUS_IDLE",
+    PropellerStatus.PROPELLER_STATUS_ROTATING: "PROPELLER_STATUS_ROTATING",
 }
 
 def bp_processor_PropellerStatus() -> bp.Processor:
     return bp.EnumProcessor(bp.Uint(2))
 
 
-RotatingDirection = int # 2bit
-ROTATING_DIRECTION_UNKNOWN: RotatingDirection = 0
-ROTATING_DIRECTION_CLOCK_WISE: RotatingDirection = 1
-ROTATING_DIRECTION_ANTI_CLOCK_WISE: RotatingDirection = 2
+@unique
+class RotatingDirection(IntEnum): # 2bit
+    ROTATING_DIRECTION_UNKNOWN = 0
+    ROTATING_DIRECTION_CLOCK_WISE = 1
+    ROTATING_DIRECTION_ANTI_CLOCK_WISE = 2
+
+
+# Aliases for backwards compatibility
+ROTATING_DIRECTION_UNKNOWN: RotatingDirection = RotatingDirection.ROTATING_DIRECTION_UNKNOWN
+ROTATING_DIRECTION_CLOCK_WISE: RotatingDirection = RotatingDirection.ROTATING_DIRECTION_CLOCK_WISE
+ROTATING_DIRECTION_ANTI_CLOCK_WISE: RotatingDirection = RotatingDirection.ROTATING_DIRECTION_ANTI_CLOCK_WISE
+
 
 _ROTATINGDIRECTION_VALUE_TO_NAME_MAP: Dict[RotatingDirection, str] = {
-    0: "ROTATING_DIRECTION_UNKNOWN",
-    1: "ROTATING_DIRECTION_CLOCK_WISE",
-    2: "ROTATING_DIRECTION_ANTI_CLOCK_WISE",
+    RotatingDirection.ROTATING_DIRECTION_UNKNOWN: "ROTATING_DIRECTION_UNKNOWN",
+    RotatingDirection.ROTATING_DIRECTION_CLOCK_WISE: "ROTATING_DIRECTION_CLOCK_WISE",
+    RotatingDirection.ROTATING_DIRECTION_ANTI_CLOCK_WISE: "ROTATING_DIRECTION_ANTI_CLOCK_WISE",
 }
 
 def bp_processor_RotatingDirection() -> bp.Processor:
     return bp.EnumProcessor(bp.Uint(2))
 
 
-PowerStatus = int # 2bit
-POWER_STATUS_UNKNOWN: PowerStatus = 0
-POWER_STATUS_OFF: PowerStatus = 1
-POWER_STATUS_ON: PowerStatus = 2
+@unique
+class PowerStatus(IntEnum): # 2bit
+    POWER_STATUS_UNKNOWN = 0
+    POWER_STATUS_OFF = 1
+    POWER_STATUS_ON = 2
+
+
+# Aliases for backwards compatibility
+POWER_STATUS_UNKNOWN: PowerStatus = PowerStatus.POWER_STATUS_UNKNOWN
+POWER_STATUS_OFF: PowerStatus = PowerStatus.POWER_STATUS_OFF
+POWER_STATUS_ON: PowerStatus = PowerStatus.POWER_STATUS_ON
+
 
 _POWERSTATUS_VALUE_TO_NAME_MAP: Dict[PowerStatus, str] = {
-    0: "POWER_STATUS_UNKNOWN",
-    1: "POWER_STATUS_OFF",
-    2: "POWER_STATUS_ON",
+    PowerStatus.POWER_STATUS_UNKNOWN: "POWER_STATUS_UNKNOWN",
+    PowerStatus.POWER_STATUS_OFF: "POWER_STATUS_OFF",
+    PowerStatus.POWER_STATUS_ON: "POWER_STATUS_ON",
 }
 
 def bp_processor_PowerStatus() -> bp.Processor:
     return bp.EnumProcessor(bp.Uint(2))
 
 
-LandingGearStatus = int # 2bit
-LANDING_GEAR_STATUS_UNKNOWN: LandingGearStatus = 0
-LANDING_GEAR_STATUS_UNFOLDED: LandingGearStatus = 1
-LANDING_GEAR_STATUS_FOLDED: LandingGearStatus = 2
+@unique
+class LandingGearStatus(IntEnum): # 2bit
+    LANDING_GEAR_STATUS_UNKNOWN = 0
+    LANDING_GEAR_STATUS_UNFOLDED = 1
+    LANDING_GEAR_STATUS_FOLDED = 2
+
+
+# Aliases for backwards compatibility
+LANDING_GEAR_STATUS_UNKNOWN: LandingGearStatus = LandingGearStatus.LANDING_GEAR_STATUS_UNKNOWN
+LANDING_GEAR_STATUS_UNFOLDED: LandingGearStatus = LandingGearStatus.LANDING_GEAR_STATUS_UNFOLDED
+LANDING_GEAR_STATUS_FOLDED: LandingGearStatus = LandingGearStatus.LANDING_GEAR_STATUS_FOLDED
+
 
 _LANDINGGEARSTATUS_VALUE_TO_NAME_MAP: Dict[LandingGearStatus, str] = {
-    0: "LANDING_GEAR_STATUS_UNKNOWN",
-    1: "LANDING_GEAR_STATUS_UNFOLDED",
-    2: "LANDING_GEAR_STATUS_FOLDED",
+    LandingGearStatus.LANDING_GEAR_STATUS_UNKNOWN: "LANDING_GEAR_STATUS_UNKNOWN",
+    LandingGearStatus.LANDING_GEAR_STATUS_UNFOLDED: "LANDING_GEAR_STATUS_UNFOLDED",
+    LandingGearStatus.LANDING_GEAR_STATUS_FOLDED: "LANDING_GEAR_STATUS_FOLDED",
 }
 
 def bp_processor_LandingGearStatus() -> bp.Processor:
@@ -116,8 +159,41 @@ class Propeller(bp.MessageBase):
     BYTES_LENGTH: ClassVar[int] = 2
 
     id: int = 0 # 8bit
-    status: PropellerStatus = 0 # 2bit
-    direction: RotatingDirection = 0 # 2bit
+    status: Union[int, PropellerStatus] = PropellerStatus.PROPELLER_STATUS_UNKNOWN
+    # This field is a proxy to hold integer value of enum field 'status'
+    _enum_field_proxy__status: int = field(init=False, repr=False) # 2bit
+    direction: Union[int, RotatingDirection] = RotatingDirection.ROTATING_DIRECTION_UNKNOWN
+    # This field is a proxy to hold integer value of enum field 'direction'
+    _enum_field_proxy__direction: int = field(init=False, repr=False) # 2bit
+
+    def __post_init__(self):
+        # initialize handling of enum field 'status' as `enum.IntEnum`
+        if not isinstance(getattr(Propeller, "status", False), property):
+            self._enum_field_proxy__status = self.status
+            Propeller.status = property(Propeller._get_status, Propeller._set_status)
+        # initialize handling of enum field 'direction' as `enum.IntEnum`
+        if not isinstance(getattr(Propeller, "direction", False), property):
+            self._enum_field_proxy__direction = self.direction
+            Propeller.direction = property(Propeller._get_direction, Propeller._set_direction)
+
+    @staticmethod
+    def dict_factory(kv_pairs):
+        return {k: v for k, v in kv_pairs if not k.startswith('_enum_field_proxy__')}
+
+    def _get_status(self) -> PropellerStatus:
+        """property getter for enum proxy field"""
+        return PropellerStatus(self._enum_field_proxy__status)
+
+    def _set_status(self, val):
+        """property setter for enum proxy field"""
+        self._enum_field_proxy__status = val
+    def _get_direction(self) -> RotatingDirection:
+        """property getter for enum proxy field"""
+        return RotatingDirection(self._enum_field_proxy__direction)
+
+    def _set_direction(self, val):
+        """property setter for enum proxy field"""
+        self._enum_field_proxy__direction = val
 
     def bp_processor(self) -> bp.Processor:
         field_processors: List[bp.Processor] = [
@@ -173,8 +249,28 @@ class Power(bp.MessageBase):
     BYTES_LENGTH: ClassVar[int] = 2
 
     battery: int = 0 # 8bit
-    status: PowerStatus = 0 # 2bit
+    status: Union[int, PowerStatus] = PowerStatus.POWER_STATUS_UNKNOWN
+    # This field is a proxy to hold integer value of enum field 'status'
+    _enum_field_proxy__status: int = field(init=False, repr=False) # 2bit
     is_charging: bool = False # 1bit
+
+    def __post_init__(self):
+        # initialize handling of enum field 'status' as `enum.IntEnum`
+        if not isinstance(getattr(Power, "status", False), property):
+            self._enum_field_proxy__status = self.status
+            Power.status = property(Power._get_status, Power._set_status)
+
+    @staticmethod
+    def dict_factory(kv_pairs):
+        return {k: v for k, v in kv_pairs if not k.startswith('_enum_field_proxy__')}
+
+    def _get_status(self) -> PowerStatus:
+        """property getter for enum proxy field"""
+        return PowerStatus(self._enum_field_proxy__status)
+
+    def _set_status(self, val):
+        """property setter for enum proxy field"""
+        self._enum_field_proxy__status = val
 
     def bp_processor(self) -> bp.Processor:
         field_processors: List[bp.Processor] = [
@@ -234,6 +330,13 @@ class Network(bp.MessageBase):
     # The timestamp of the last time received heartbeat packet.
     heartbeat_at: Timestamp = field(default_factory=bp_default_factory_Timestamp) # 64bit
 
+    def __post_init__(self):
+        pass
+
+    @staticmethod
+    def dict_factory(kv_pairs):
+        return {k: v for k, v in kv_pairs if not k.startswith('_enum_field_proxy__')}
+
     def bp_processor(self) -> bp.Processor:
         field_processors: List[bp.Processor] = [
             bp.MessageFieldProcessor(1, bp.Uint(4)),
@@ -282,7 +385,27 @@ class LandingGear(bp.MessageBase):
     # Number of bytes to serialize class LandingGear
     BYTES_LENGTH: ClassVar[int] = 1
 
-    status: LandingGearStatus = 0 # 2bit
+    status: Union[int, LandingGearStatus] = LandingGearStatus.LANDING_GEAR_STATUS_UNKNOWN
+    # This field is a proxy to hold integer value of enum field 'status'
+    _enum_field_proxy__status: int = field(init=False, repr=False) # 2bit
+
+    def __post_init__(self):
+        # initialize handling of enum field 'status' as `enum.IntEnum`
+        if not isinstance(getattr(LandingGear, "status", False), property):
+            self._enum_field_proxy__status = self.status
+            LandingGear.status = property(LandingGear._get_status, LandingGear._set_status)
+
+    @staticmethod
+    def dict_factory(kv_pairs):
+        return {k: v for k, v in kv_pairs if not k.startswith('_enum_field_proxy__')}
+
+    def _get_status(self) -> LandingGearStatus:
+        """property getter for enum proxy field"""
+        return LandingGearStatus(self._enum_field_proxy__status)
+
+    def _set_status(self, val):
+        """property setter for enum proxy field"""
+        self._enum_field_proxy__status = val
 
     def bp_processor(self) -> bp.Processor:
         field_processors: List[bp.Processor] = [
@@ -330,6 +453,13 @@ class Position(bp.MessageBase):
     latitude: int = 0 # 32bit
     longitude: int = 0 # 32bit
     altitude: int = 0 # 32bit
+
+    def __post_init__(self):
+        pass
+
+    @staticmethod
+    def dict_factory(kv_pairs):
+        return {k: v for k, v in kv_pairs if not k.startswith('_enum_field_proxy__')}
 
     def bp_processor(self) -> bp.Processor:
         field_processors: List[bp.Processor] = [
@@ -391,6 +521,13 @@ class Pose(bp.MessageBase):
     pitch: int = 0 # 32bit
     roll: int = 0 # 32bit
 
+    def __post_init__(self):
+        pass
+
+    @staticmethod
+    def dict_factory(kv_pairs):
+        return {k: v for k, v in kv_pairs if not k.startswith('_enum_field_proxy__')}
+
     def bp_processor(self) -> bp.Processor:
         field_processors: List[bp.Processor] = [
             bp.MessageFieldProcessor(1, bp.Int(32)),
@@ -450,6 +587,13 @@ class Flight(bp.MessageBase):
     # Acceleration at X, Y, Z axis.
     acceleration: TernaryInt32 = field(default_factory=bp_default_factory_TernaryInt32) # 96bit
 
+    def __post_init__(self):
+        pass
+
+    @staticmethod
+    def dict_factory(kv_pairs):
+        return {k: v for k, v in kv_pairs if not k.startswith('_enum_field_proxy__')}
+
     def bp_processor(self) -> bp.Processor:
         field_processors: List[bp.Processor] = [
             bp.MessageFieldProcessor(1, Pose().bp_processor()),
@@ -501,13 +645,33 @@ class Drone(bp.MessageBase):
     # Number of bytes to serialize class Drone
     BYTES_LENGTH: ClassVar[int] = 65
 
-    status: DroneStatus = 0 # 3bit
+    status: Union[int, DroneStatus] = DroneStatus.DRONE_STATUS_UNKNOWN
+    # This field is a proxy to hold integer value of enum field 'status'
+    _enum_field_proxy__status: int = field(init=False, repr=False) # 3bit
     position: Position = field(default_factory=Position) # 96bit
     flight: Flight = field(default_factory=Flight) # 288bit
     propellers: List[Propeller] = field(default_factory=lambda: [Propeller() for _ in range(4)]) # 48bit
     power: Power = field(default_factory=Power) # 11bit
     network: Network = field(default_factory=Network) # 68bit
     landing_gear: LandingGear = field(default_factory=LandingGear) # 2bit
+
+    def __post_init__(self):
+        # initialize handling of enum field 'status' as `enum.IntEnum`
+        if not isinstance(getattr(Drone, "status", False), property):
+            self._enum_field_proxy__status = self.status
+            Drone.status = property(Drone._get_status, Drone._set_status)
+
+    @staticmethod
+    def dict_factory(kv_pairs):
+        return {k: v for k, v in kv_pairs if not k.startswith('_enum_field_proxy__')}
+
+    def _get_status(self) -> DroneStatus:
+        """property getter for enum proxy field"""
+        return DroneStatus(self._enum_field_proxy__status)
+
+    def _set_status(self, val):
+        """property setter for enum proxy field"""
+        self._enum_field_proxy__status = val
 
     def bp_processor(self) -> bp.Processor:
         field_processors: List[bp.Processor] = [

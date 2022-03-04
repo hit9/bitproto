@@ -16,6 +16,8 @@
 extern "C" {
 #endif
 
+#define BITPROTO_OPTIMIZATION_MODE 1
+
 typedef int64_t Timestamp; // 64bit
 
 typedef int32_t TernaryInt32[3]; // 96bit
