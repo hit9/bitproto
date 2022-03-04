@@ -1,5 +1,12 @@
 .. currentmodule:: bitproto
 
+.. _version-0.4.5:
+
+Version 0.4.5
+-------------
+
+- Use Python IntEnum for enum generation (respecting backward compatibility)  PR#41.
+
 .. _version-0.4.4:
 
 Version 0.4.4
