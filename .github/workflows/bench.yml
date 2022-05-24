@@ -18,7 +18,7 @@ jobs:
       matrix:
         os: [ubuntu-20.04, ubuntu-18.04, macos-latest]
         python: [3.9]
-        go: [1.15]
+        go: [1.18]
 
     runs-on: ${{ matrix.os  }}
 
