@@ -17,8 +17,8 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-18.04]
-        python: [3.7, 3.8, 3.10]
-        go: [1.18, 1.16]
+        python: [3.7, 3.8, "3.10"]
+        go: ["1.18", "1.16"]
 
     runs-on: ${{ matrix.os  }}
 
