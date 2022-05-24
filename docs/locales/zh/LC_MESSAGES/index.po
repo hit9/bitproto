@@ -90,9 +90,8 @@ msgid ":ref:`Go <quickstart-go-guide>` - No reflection or type assertions."
 msgstr ":ref:`Go <quickstart-go-guide>` - 没有使用反射或者类型断言"
 
 #: ../../index.rst:54 1006b2f184f14cbcbc0b7dc4c613f9d9
-#, fuzzy
 msgid ":ref:`Python <quickstart-python-guide>` - No magic :)"
-msgstr ":ref:`Python <quickstart-python-guide>`"
+msgstr ":ref:`Python <quickstart-python-guide>` - 没有魔法 :)"
 
 #: ../../index.rst:55 a93672c3276742c6bb35137e203de956
 msgid "Blazing fast encoding/decoding (:ref:`benchmark <performance-benchmark>`)."

@@ -210,7 +210,6 @@ msgid ""
 msgstr "目前，bitproto 的优化模式只支持 C 语言和 Go 语言，目前还不支持 Python 。"
 
 #: ../../performance.rst:99 19b64ae69eb546c7b1f01eb2ced8a0f7
-#, fuzzy
 msgid ""
 "Another benefit of optimization mode is that the bitproto libraries are "
 "no longer required to be dropped in. The bitproto compiler in "

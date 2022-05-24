@@ -163,7 +163,6 @@ msgid ""
 msgstr "一个消息由多个消息字段构成，语法类似 protobuf 。"
 
 #: ../../language.rst:122 a86fedd4d9f84701877cf0073e96bbb3
-#, fuzzy
 msgid ""
 "A message field consists of a type and name on the left, a field number "
 "on the right. It's supported to use any bitproto types as a message "
