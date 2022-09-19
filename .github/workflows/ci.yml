@@ -59,12 +59,12 @@ jobs:
         sudo apt-add-repository 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-11 main'
         sudo apt update
         sudo apt-get install clang-format-11 -y
-      if: "matrix.python == '3.9'"
+      if: "matrix.python == '3.10'"
 
     - name: Run lints
       run: |
         make lint CLANG_FORMAT=clang-format-11
-      if: "matrix.python == '3.9'"
+      if: "matrix.python == '3.10'"
 
     - name: Run tests
       run: |
