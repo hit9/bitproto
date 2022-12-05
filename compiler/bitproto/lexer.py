@@ -6,7 +6,6 @@ Token lexer for bitproto.
 """
 
 from contextlib import contextmanager
-from dataclasses import dataclass
 from typing import Dict, Iterator, List, Optional, Tuple
 
 from ply import lex  # type: ignore
@@ -153,9 +152,6 @@ class Lexer:
 
     def t_INT_TYPE(self, t: LexToken) -> LexToken:
         r"\bint[0-9]+\b"
-        # Why use the regexp `int[0-9]+` instead of `int(8|16|32|64)`?
-        # We want the unsupported cases like `int0`, `int3` to raise an error instead of
-        # lexing into identifiers.
         cap: int = int(t.value[3:])
         t.value = Int(
             cap=cap, token=t.value, lineno=t.lineno, filepath=self.current_filepath()

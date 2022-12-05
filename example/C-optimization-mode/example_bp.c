@@ -141,6 +141,12 @@ int EncodeDrone(struct Drone *m, unsigned char *s) {
     s[63] |= (((unsigned char *)&((*m).network.heartbeat_at))[7] << 2) & 252;
     s[64] = (((unsigned char *)&((*m).network.heartbeat_at))[7] >> 6) & 3;
     s[64] |= (((unsigned char *)&((*m).landing_gear.status))[0] << 2) & 12;
+    s[64] |= (((unsigned char *)&((*m).pressure_sensor.pressure))[0] << 4) & 240;
+    s[65] = (((unsigned char *)&((*m).pressure_sensor.pressure))[0] >> 4) & 15;
+    s[65] |= (((unsigned char *)&((*m).pressure_sensor.pressure))[1] << 4) & 240;
+    s[66] = (((unsigned char *)&((*m).pressure_sensor.pressure))[1] >> 4) & 15;
+    s[66] |= (((unsigned char *)&((*m).pressure_sensor.pressure))[2] << 4) & 240;
+    s[67] = (((unsigned char *)&((*m).pressure_sensor.pressure))[2] >> 4) & 15;
     return 0;
 }
 
@@ -283,5 +289,11 @@ int DecodeDrone(struct Drone *m, unsigned char *s) {
     ((unsigned char *)&((*m).network.heartbeat_at))[7] = (s[63] >> 2) & 63;
     ((unsigned char *)&((*m).network.heartbeat_at))[7] |= (s[64] << 6) & 192;
     ((unsigned char *)&((*m).landing_gear.status))[0] = (s[64] >> 2) & 3;
+    ((unsigned char *)&((*m).pressure_sensor.pressure))[0] = (s[64] >> 4) & 15;
+    ((unsigned char *)&((*m).pressure_sensor.pressure))[0] |= (s[65] << 4) & 240;
+    ((unsigned char *)&((*m).pressure_sensor.pressure))[1] = (s[65] >> 4) & 15;
+    ((unsigned char *)&((*m).pressure_sensor.pressure))[1] |= (s[66] << 4) & 240;
+    ((unsigned char *)&((*m).pressure_sensor.pressure))[2] = (s[66] >> 4) & 15;
+    ((unsigned char *)&((*m).pressure_sensor.pressure))[2] |= (s[67] << 4) & 240;
     return 0;
 }

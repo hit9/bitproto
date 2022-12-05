@@ -15,6 +15,7 @@ func main() {
 	drone.Position.Altitude = 1080
 	drone.Flight.Acceleration[0] = -1001
 	drone.Power.IsCharging = true
+	drone.PressureSensor.Pressure = -11
 	s := drone.Encode()
 
 	// Decode

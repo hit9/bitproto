@@ -14,6 +14,7 @@ int main(void) {
     drone.flight.acceleration[0] = -1001;
     drone.power.is_charging = false;
     drone.propellers[0].direction = ROTATING_DIRECTION_CLOCK_WISE;
+    drone.pressure_sensor.pressure = -11;
 
     unsigned char s[BYTES_LENGTH_DRONE] = {0};
 
