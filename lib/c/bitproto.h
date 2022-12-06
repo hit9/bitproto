@@ -173,6 +173,8 @@ unsigned char BpCopyBits(unsigned char dst, unsigned char src,
 void BpCopyBufferBits(int nbits, unsigned char *dst, unsigned char *src,
                       int dst_bit_index, int src_bit_index);
 void BpEndecodeBaseType(int nbits, struct BpProcessorContext *ctx, void *data);
+void BpEndecodeInt(int nbits, int size, struct BpProcessorContext *ctx,
+                   void *data);
 void BpEndecodeMessageField(struct BpMessageFieldDescriptor *descriptor,
                             struct BpProcessorContext *ctx, void *data);
 void BpEndecodeMessage(struct BpMessageDescriptor *descriptor,

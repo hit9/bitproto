@@ -47,11 +47,14 @@ void BpEndecodeMessageField(struct BpMessageFieldDescriptor *descriptor,
                             struct BpProcessorContext *ctx, void *data) {
     switch (descriptor->type.flag) {
         case BP_TYPE_BOOL:
-        case BP_TYPE_INT:
         case BP_TYPE_UINT:
         case BP_TYPE_BYTE:
         case BP_TYPE_ENUM:
             BpEndecodeBaseType((descriptor->type).nbits, ctx, descriptor->data);
+            break;
+        case BP_TYPE_INT:
+            BpEndecodeInt((descriptor->type).size, (descriptor->type).nbits,
+                          ctx, descriptor->data);
             break;
         case BP_TYPE_ALIAS:
         case BP_TYPE_ARRAY:
@@ -69,10 +72,13 @@ void BpEndecodeAlias(struct BpAliasDescriptor *descriptor,
                      struct BpProcessorContext *ctx, void *data) {
     switch (descriptor->to.flag) {
         case BP_TYPE_BOOL:
-        case BP_TYPE_INT:
         case BP_TYPE_UINT:
         case BP_TYPE_BYTE:
             BpEndecodeBaseType((descriptor->to).nbits, ctx, data);
+            break;
+        case BP_TYPE_INT:
+            BpEndecodeInt((descriptor->to).size, (descriptor->to).nbits, ctx,
+                          data);
             break;
         case BP_TYPE_ARRAY:
             descriptor->to.processor(data, ctx);
@@ -110,11 +116,13 @@ void BpEndecodeArray(struct BpArrayDescriptor *descriptor,
 
         switch (descriptor->element_type.flag) {
             case BP_TYPE_BOOL:
-            case BP_TYPE_INT:
             case BP_TYPE_UINT:
             case BP_TYPE_BYTE:
             case BP_TYPE_ENUM:
                 BpEndecodeBaseType(element_nbits, ctx, element_data);
+                break;
+            case BP_TYPE_INT:
+                BpEndecodeInt(element_size, element_nbits, ctx, element_data);
                 break;
             case BP_TYPE_ALIAS:
             case BP_TYPE_MESSAGE:
@@ -234,13 +242,38 @@ void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src,
 
 // BpEndecodeBaseType process given base type at given data.
 void BpEndecodeBaseType(int nbits, struct BpProcessorContext *ctx, void *data) {
-    // Determine the variables above
     if (ctx->is_encode) {
         BpCopyBufferBits(nbits, ctx->s, (unsigned char *)data, ctx->i, 0);
     } else {
         BpCopyBufferBits(nbits, (unsigned char *)data, ctx->s, 0, ctx->i);
     }
     ctx->i += nbits;
+}
+
+// BpEndecodeInt process signed integer at given data.
+void BpEndecodeInt(int size, int nbits, struct BpProcessorContext *ctx,
+                   void *data) {
+    BpEndecodeBaseType(nbits, ctx, data);
+
+    // Number of bits in C intXX_t types.
+    int size_bits = 8 * size;
+    // Number of bits of the gap on the left.
+    int d = size_bits - nbits;
+
+    switch (size_bits) {
+        case 8:  // int8_t
+            *(int8_t *)data = (*(int8_t *)data) << d >> d;
+            break;
+        case 16:  // int16_t
+            *(int16_t *)data = (*(int16_t *)data) << d >> d;
+            break;
+        case 32:  // int32_t
+            *(int32_t *)data = (*(int32_t *)data) << d >> d;
+            break;
+        case 64:  // int64_t
+            *(int64_t *)data = (*(int64_t *)data) << d >> d;
+            break;
+    }
 }
 
 // BpEncodeArrayExtensibleAhead encode the array capacity as the ahead flag
