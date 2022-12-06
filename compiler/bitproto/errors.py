@@ -16,9 +16,7 @@ Errors.
 """
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, ClassVar, Optional
-from typing import Type as T
-from typing import TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, Optional, Type as T, TypeVar
 
 from bitproto.utils import Color, colored, overridable, override, write_stderr
 

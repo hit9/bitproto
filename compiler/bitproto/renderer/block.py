@@ -22,9 +22,7 @@ Block class base.
 from abc import abstractmethod
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Generic, Iterator, List, Optional
-from typing import Type as T
-from typing import TypeVar, Union, cast
+from typing import Generic, Iterator, List, Optional, Type as T, TypeVar, Union, cast
 
 from bitproto._ast import (
     Alias,

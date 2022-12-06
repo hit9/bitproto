@@ -7,9 +7,7 @@ Built-in linter, skipable but not configurable.
 
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import Callable, Generic, List, Optional, Tuple
-from typing import Type as T
-from typing import TypeVar
+from typing import Callable, Generic, List, Optional, Tuple, Type as T, TypeVar
 
 from bitproto._ast import (
     Alias,

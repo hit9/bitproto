@@ -6,11 +6,18 @@ Formatter class base.
 """
 import os
 from abc import abstractmethod
-from enum import Enum as Enum_
-from enum import unique
-from typing import Callable, Dict, List, Optional, Tuple
-from typing import Type as T
-from typing import TypeVar, Union, cast
+from enum import Enum as Enum_, unique
+from typing import (
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Type as T,
+    TypeVar,
+    Union,
+    cast,
+)
 
 from bitproto._ast import (
     Alias,
