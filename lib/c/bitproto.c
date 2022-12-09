@@ -251,28 +251,48 @@ void BpEndecodeBaseType(int nbits, struct BpProcessorContext *ctx, void *data) {
 }
 
 // BpEndecodeInt process signed integer at given data.
+// The most left bit (Nth bit for int{N}) of a signed integer indicates the
+// sign. For example 00000101 is a negative integer for a int3, but a positive
+// integer for a int4.
 void BpEndecodeInt(int size, int nbits, struct BpProcessorContext *ctx,
                    void *data) {
     // Copy bits without concern about sign bit.
     BpEndecodeBaseType(nbits, ctx, data);
 
-    // Number of bits in C intXX_t types.
-    int size_bits = 8 * size;
-    // Number of bits of the gap on the left.
-    int d = size_bits - nbits;
+    // Number of bits occupied in C intXX_t types.
+    int n = 8 * size;
 
-    switch (size_bits) {
+    switch (n) {
+        // Suppose pointer data points to a int24 value V:
+        // 1. Check its sign: (V >> (24-1)) & 1
+        // 2. If V is negative:
+        //    Make a mask that keeps right 24bits be 0, left 8bits be 1:
+        //    mask = ~(1 << 24 - 1)
+        //    Recover the original integer is: V | mask.
+        //
+        // Why not use V << 8 >> 8 solution here? This depends on arithmetic
+        // shifting. Which propagates the sign bit on the left vacant bits when
+        // doing a right shift. But C standard points that this behavior is
+        // implementation-defined.
         case 8:  // int8_t
-            *(int8_t *)data = (*(int8_t *)data) << d >> d;
+            if (((*(int8_t *)data) >> (nbits - 1)) & 1) {
+                *(int8_t *)data |= ~((1 << nbits) - 1);
+            }
             break;
         case 16:  // int16_t
-            *(int16_t *)data = (*(int16_t *)data) << d >> d;
+            if (((*(int16_t *)data) >> (nbits - 1)) & 1) {
+                *(int16_t *)data |= ~((1 << nbits) - 1);
+            }
             break;
         case 32:  // int32_t
-            *(int32_t *)data = (*(int32_t *)data) << d >> d;
+            if (((*(int32_t *)data) >> (nbits - 1)) & 1) {
+                *(int32_t *)data |= ~((1 << nbits) - 1);
+            }
             break;
         case 64:  // int64_t
-            *(int64_t *)data = (*(int64_t *)data) << d >> d;
+            if (((*(int64_t *)data) >> (nbits - 1)) & 1) {
+                *(int64_t *)data |= ~((1 << nbits) - 1);
+            }
             break;
     }
 }
