@@ -253,6 +253,7 @@ void BpEndecodeBaseType(int nbits, struct BpProcessorContext *ctx, void *data) {
 // BpEndecodeInt process signed integer at given data.
 void BpEndecodeInt(int size, int nbits, struct BpProcessorContext *ctx,
                    void *data) {
+    // Copy bits without concern about sign bit.
     BpEndecodeBaseType(nbits, ctx, data);
 
     // Number of bits in C intXX_t types.
