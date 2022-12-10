@@ -311,7 +311,7 @@ class CFormatter(Formatter):
     def format_op_mode_decoder_item(
         self, chain: str, t: Type, si: int, fi: int, shift: int, mask: int, r: int
     ) -> str:
-        """Implements format_op_mode_encoder_item for C.
+        """Implements format_op_mode_decoder_item for C.
         Generated C statement like:
 
             ((unsigned char *)&((*m).color))[0] = (s[0] << 3) & 7;

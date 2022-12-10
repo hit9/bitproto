@@ -9,7 +9,6 @@ from bitproto._ast import (
     Array,
     BoundDefinition,
     Definition,
-    Enum,
     Message,
     MessageField,
 )
@@ -17,13 +16,11 @@ from bitproto.renderer.block import (
     Block,
     BlockAheadNotice,
     BlockBindAlias,
-    BlockBindEnum,
     BlockBindMessage,
     BlockBindMessageField,
     BlockBoundDefinitionDispatcher,
     BlockComposition,
     BlockConditional,
-    BlockDeferable,
     BlockWrapper,
 )
 from bitproto.renderer.impls.c.formatter import CFormatter as F

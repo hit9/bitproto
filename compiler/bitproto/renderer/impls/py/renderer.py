@@ -12,9 +12,7 @@ from bitproto._ast import (
     Constant,
     Enum,
     Int,
-    Integer,
     Message,
-    MessageField,
     SingleType,
 )
 from bitproto.renderer.block import (

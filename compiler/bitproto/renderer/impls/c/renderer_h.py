@@ -2,10 +2,9 @@
 Renderer for C header file.
 """
 
-from typing import Any, List, Optional
+from typing import List, Optional
 
-from bitproto._ast import Alias, Array, BoundDefinition, Constant, Enum, Message, Proto
-from bitproto.errors import InternalError
+from bitproto._ast import Alias, Array, BoundDefinition, Constant, Enum, Message
 from bitproto.renderer.block import (
     Block,
     BlockAheadNotice,
@@ -23,13 +22,7 @@ from bitproto.renderer.block import (
 )
 from bitproto.renderer.impls.c.formatter import CFormatter as F
 from bitproto.renderer.renderer import Renderer
-from bitproto.utils import (
-    cached_property,
-    cast_or_raise,
-    override,
-    snake_case,
-    upper_case,
-)
+from bitproto.utils import cached_property, override, snake_case
 
 
 class BlockProtoDocstring(BlockBindProto[F]):

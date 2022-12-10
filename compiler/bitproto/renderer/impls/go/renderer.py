@@ -10,15 +10,10 @@ from bitproto._ast import (
     Array,
     Bool,
     BoundDefinition,
-    Byte,
     Constant,
     Enum,
-    Int,
-    Integer,
     Message,
-    MessageField,
     SingleType,
-    Uint,
 )
 from bitproto.renderer.block import (
     Block,
@@ -32,18 +27,11 @@ from bitproto.renderer.block import (
     BlockBindProto,
     BlockBoundDefinitionDispatcher,
     BlockComposition,
-    BlockEmptyLine,
     BlockWrapper,
 )
 from bitproto.renderer.impls.go.formatter import GoFormatter as F
 from bitproto.renderer.renderer import Renderer
-from bitproto.utils import (
-    cached_property,
-    cast_or_raise,
-    override,
-    snake_case,
-    upper_case,
-)
+from bitproto.utils import cached_property, override, snake_case
 
 GO_LIB_IMPORT_PATH = "github.com/hit9/bitproto/lib/go"
 

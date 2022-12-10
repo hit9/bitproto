@@ -22,7 +22,7 @@ Block class base.
 from abc import abstractmethod
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Generic, Iterator, List, Optional, Type as T, TypeVar, Union, cast
+from typing import Generic, Iterator, List, Optional, Union
 
 from bitproto._ast import (
     Alias,
@@ -30,7 +30,6 @@ from bitproto._ast import (
     Comment,
     Constant,
     D,
-    Definition,
     Enum,
     EnumField,
     Message,
@@ -38,7 +37,7 @@ from bitproto._ast import (
     Proto,
 )
 from bitproto.errors import InternalError
-from bitproto.renderer.formatter import F, Formatter
+from bitproto.renderer.formatter import F
 from bitproto.utils import (
     cached_property,
     final,
