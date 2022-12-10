@@ -12,3 +12,4 @@ dist
 .mypy_cache
 spam
 .DS_Store
+compile_flags.txt
