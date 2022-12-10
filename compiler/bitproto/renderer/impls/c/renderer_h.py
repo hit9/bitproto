@@ -60,7 +60,7 @@ class BlockIncludeGeneralHeaders(Block[F]):
 
 class BlockIncludeHeaders(BlockWrapper[F]):
     @override(BlockWrapper)
-    def wraps(self) -> Block[F]:
+    def wraps(self) -> Optional[Block[F]]:
         return BlockIncludeGeneralHeaders()
 
     @override(BlockWrapper)
@@ -240,7 +240,7 @@ class BlockMessageFieldList(BlockBindMessage[F], BlockComposition[F]):
 
 class BlockMessageStruct(BlockBindMessage[F], BlockWrapper[F]):
     @override(BlockWrapper)
-    def wraps(self) -> Block:
+    def wraps(self) -> Optional[Block[F]]:
         return BlockMessageFieldList(self.d, name=self.name)
 
     @override(BlockWrapper)

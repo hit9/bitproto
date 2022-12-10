@@ -67,7 +67,7 @@ class BlockArrayProcessorBody(BlockArrayBpFunctionBase):
 
 class BlockArrayProcessor(BlockArrayBpFunctionBase, BlockWrapper[F]):
     @override(BlockWrapper)
-    def wraps(self) -> Block[F]:
+    def wraps(self) -> Optional[Block[F]]:
         return BlockArrayProcessorBody(self.t, self.d, indent=4)
 
     @override(BlockWrapper)
@@ -90,7 +90,7 @@ class BlockArrayJsonFormatterBody(BlockArrayBpFunctionBase):
 
 class BlockArrayJsonFormatter(BlockArrayBpFunctionBase, BlockWrapper[F]):
     @override(BlockWrapper)
-    def wraps(self) -> Block[F]:
+    def wraps(self) -> Optional[Block[F]]:
         return BlockArrayJsonFormatterBody(self.t, self.d, indent=4)
 
     @override(BlockWrapper)
@@ -140,7 +140,7 @@ class BlockAliasProcessorBody(BlockBindAlias[F]):
 
 class BlockAliasProcessor(BlockAliasProcessorBase, BlockWrapper[F]):
     @override(BlockWrapper)
-    def wraps(self) -> Block[F]:
+    def wraps(self) -> Optional[Block[F]]:
         return BlockAliasProcessorBody(self.d, indent=4)
 
     @override(BlockWrapper)
@@ -177,7 +177,7 @@ class BlockAliasJsonFormatterBody(BlockBindAlias[F]):
 
 class BlockAliasJsonFormatter(BlockAliasJsonFormatterBase, BlockWrapper[F]):
     @override(BlockWrapper)
-    def wraps(self) -> Block[F]:
+    def wraps(self) -> Optional[Block[F]]:
         return BlockAliasJsonFormatterBody(self.d, indent=4)
 
     @override(BlockWrapper)
@@ -274,7 +274,7 @@ class BlockMessageFieldDescriptorsIniter(
     BlockMessageFieldDescriptorsIniterBase, BlockWrapper[F]
 ):
     @override(BlockWrapper)
-    def wraps(self) -> Block[F]:
+    def wraps(self) -> Optional[Block[F]]:
         return BlockMessageProcessorFieldList(self.d, indent=self.indent + 4)
 
     @override(BlockWrapper)
@@ -301,7 +301,7 @@ class BlockMessageDescriptorBuild(BlockMessageFieldDescriptorsIniterBase):
 
 class BlockMessageProcessor(BlockMessageProcessorBase, BlockWrapper[F]):
     @override(BlockWrapper)
-    def wraps(self) -> Block[F]:
+    def wraps(self) -> Optional[Block[F]]:
         return BlockMessageDescriptorBuild(self.d, indent=4)
 
     @override(BlockWrapper)
@@ -316,7 +316,7 @@ class BlockMessageProcessor(BlockMessageProcessorBase, BlockWrapper[F]):
 
 class BlockMessageBpJsonFormatter(BlockMessageBpJsonFormatterBase, BlockWrapper[F]):
     @override(BlockWrapper)
-    def wraps(self) -> Block[F]:
+    def wraps(self) -> Optional[Block[F]]:
         return BlockMessageDescriptorBuild(self.d, indent=4)
 
     @override(BlockWrapper)

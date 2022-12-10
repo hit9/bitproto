@@ -157,7 +157,7 @@ class BlockEnumFieldList(BlockBindEnum[F], BlockComposition[F]):
 
 class BlockEnumFieldListWrapper(BlockBindEnum[F], BlockWrapper[F]):
     @override(BlockWrapper)
-    def wraps(self) -> Block:
+    def wraps(self) -> Optional[Block[F]]:
         return BlockEnumFieldList(self.d)
 
     @override(BlockWrapper)
@@ -188,7 +188,7 @@ class BlockIntEnumFieldList(BlockBindEnum[F], BlockComposition[F]):
 
 class BlockIntEnumFieldListWrapper(BlockBindEnum[F], BlockWrapper[F]):
     @override(BlockWrapper)
-    def wraps(self) -> Block:
+    def wraps(self) -> Optional[Block[F]]:
         return BlockIntEnumFieldList(self.d)
 
     @override(BlockWrapper)
@@ -228,7 +228,7 @@ class BlockEnumValueToNameMapItemList(BlockBindEnum[F], BlockComposition[F]):
 
 class BlockEnumValueToNameMap(BlockBindEnum[F], BlockWrapper[F]):
     @override(BlockWrapper)
-    def wraps(self) -> Block:
+    def wraps(self) -> Optional[Block[F]]:
         return BlockEnumValueToNameMapItemList(self.d)
 
     @override(BlockWrapper)
@@ -332,7 +332,7 @@ class BlockMessageClassDefs(BlockMessageBase, BlockComposition[F]):
 
 class BlockMessageClass(BlockMessageBase, BlockWrapper[F]):
     @override(BlockWrapper)
-    def wraps(self) -> Block[F]:
+    def wraps(self) -> Optional[Block[F]]:
         return BlockMessageClassDefs(self.d, indent=4)
 
     @override(BlockWrapper)
@@ -343,8 +343,8 @@ class BlockMessageClass(BlockMessageBase, BlockWrapper[F]):
 
 
 class BlockMessageDictFactory(BlockMessageBase, BlockWrapper[F]):
-    def wraps(self) -> Block[F]:
-        pass
+    def wraps(self) -> Optional[Block[F]]:
+        return None
 
     @override(BlockWrapper)
     def before(self) -> None:
@@ -423,7 +423,7 @@ class BlockMessagePostInitItemList(BlockMessageBase, BlockComposition[F]):
 
 class BlockMessagePostInit(BlockBindMessage[F], BlockWrapper[F]):
     @override(BlockWrapper)
-    def wraps(self) -> Block[F]:
+    def wraps(self) -> Optional[Block[F]]:
         return BlockMessagePostInitItemList(self.d, indent=self.indent + 4)
 
     @override(BlockWrapper)
@@ -470,13 +470,13 @@ class BlockMessageEnumProxyFieldAccessorFieldList(
 
 class BlockMessageEnumProxyFieldAccessors(BlockBindMessage[F], BlockWrapper[F]):
     @override(BlockWrapper)
-    def wraps(self) -> Block[F]:
+    def wraps(self) -> Optional[Block[F]]:
         return BlockMessageEnumProxyFieldAccessorFieldList(self.d, indent=self.indent)
 
 
 class BlockMessageMethodProcessor(BlockMessageBase, BlockWrapper[F]):
     @override(BlockWrapper)
-    def wraps(self) -> Block[F]:
+    def wraps(self) -> Optional[Block[F]]:
         return BlockMessageMethodProcessorFieldList(self.d, indent=self.indent + 8)
 
     @override(BlockWrapper)
@@ -600,7 +600,7 @@ class BlockMessageMethodSetByteItemList(BlockMessageBase, BlockComposition[F]):
 
 class BlockMessageMethodSetByte(BlockBindMessage[F], BlockWrapper[F]):
     @override(BlockWrapper)
-    def wraps(self) -> Block[F]:
+    def wraps(self) -> Optional[Block[F]]:
         return BlockMessageMethodSetByteItemList(self.d, indent=self.indent + 4)
 
     @override(BlockWrapper)
@@ -646,7 +646,7 @@ class BlockMessageMethodGetByteItemList(BlockMessageBase, BlockComposition[F]):
 
 class BlockMessageMethodGetByte(BlockMessageBase, BlockWrapper[F]):
     @override(BlockWrapper)
-    def wraps(self) -> Block[F]:
+    def wraps(self) -> Optional[Block[F]]:
         return BlockMessageMethodGetByteItemList(self.d, indent=self.indent + 4)
 
     @override(BlockWrapper)
@@ -723,7 +723,7 @@ class BlockMessageMethodGetAccessorList(BlockBindMessage[F], BlockComposition[F]
 
 class BlockMessageMethodGetAccessor(BlockMessageBase, BlockWrapper[F]):
     @override(BlockWrapper)
-    def wraps(self) -> Block[F]:
+    def wraps(self) -> Optional[Block[F]]:
         return BlockMessageMethodGetAccessorList(self.d, indent=self.indent + 4)
 
     @override(BlockWrapper)

@@ -500,7 +500,7 @@ class BlockWrapper(Block[F]):
         self.after()
 
     @abstractmethod
-    def wraps(self) -> Block[F]:
+    def wraps(self) -> Optional[Block[F]]:
         """Returns the wrapped block instance."""
         raise NotImplementedError
 
