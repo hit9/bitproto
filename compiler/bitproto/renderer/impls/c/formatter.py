@@ -17,7 +17,6 @@ from bitproto._ast import (
     Message,
     MessageField,
     Proto,
-    SingleType,
     Type,
     Uint,
 )

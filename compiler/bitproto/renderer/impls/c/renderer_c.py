@@ -33,7 +33,6 @@ from bitproto.renderer.impls.c.renderer_h import (
     BlockMessageFieldDescriptorsIniterBase,
     BlockMessageJsonFormatterBase,
     BlockMessageProcessorBase,
-    RendererCHeader,
 )
 from bitproto.renderer.renderer import Renderer
 from bitproto.utils import cached_property, cast_or_raise, override
