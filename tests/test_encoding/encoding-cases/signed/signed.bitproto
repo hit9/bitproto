@@ -1,0 +1,16 @@
+proto signed
+
+type A = int24;
+type B = int7[3];
+
+
+message X {
+    A a = 1;
+    B b = 2;
+    int24 c = 3;
+}
+
+message Y {
+    X x = 1;
+    X[2] xs = 2;
+}

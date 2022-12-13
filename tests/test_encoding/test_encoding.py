@@ -68,7 +68,7 @@ class _TestCase:
                 assert json.loads(out.strip()) == json.loads(outputs[0].strip())
 
     def run(self) -> None:
-        """Run this case, returns the """
+        """Run this case, returns the"""
 
         if self.optimization_mode_arg and not self.support_optimization_mode:
             return
@@ -127,3 +127,7 @@ def test_encoding_scatter() -> None:
 
 def test_encoding_enums() -> None:
     _TestCase("enums").run()
+
+
+def test_encoding_signed() -> None:
+    _TestCase("signed").run()
