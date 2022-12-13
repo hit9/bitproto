@@ -2,7 +2,7 @@
 C formatter.
 """
 
-from typing import Optional
+from typing import List, Optional
 
 from bitproto._ast import (
     Alias,
@@ -319,3 +319,38 @@ class CFormatter(Formatter):
         assign = "=" if r == 0 else "|="
         shift_s = self.format_op_mode_smart_shift(shift)
         return f"((unsigned char *)&({chain}))[{fi}] {assign} (s[{si}] {shift_s}) & {mask};"
+
+    @override(Formatter)
+    def post_format_op_mode_endecode_single_type(
+        self, t: Type, chain: str, is_encode: bool
+    ) -> List[str]:
+        """
+        Hook function called after a message field is generated.
+        """
+        if isinstance(t, Int):
+            return self.post_format_op_mode_endecode_int(t, chain, is_encode)
+        return []
+
+    def post_format_op_mode_endecode_int(
+        self, t: Int, chain: str, is_encode: bool
+    ) -> List[str]:
+        """
+        Process signed integers during decoding code generation in optimization mode.
+
+        Generated C statement example:
+
+            if (((*m).pressure_sensor.pressure >> 23) & 1) (*m).pressure_sensor.pressure |= -16777216;
+        """
+        if is_encode:
+            return []
+
+        # Signed integers processing is only about decoding
+        n = t.nbits()
+
+        if n in {8, 16, 32, 64}:
+            # No need to do additional actions
+            # int8/16/32/64 signed integers' sign bit is already on the highest bit position.
+            return []
+
+        mask = ~((1 << n) - 1)
+        return [f"if (({chain} >> {n-1}) & 1) {chain} |= {mask};"]
