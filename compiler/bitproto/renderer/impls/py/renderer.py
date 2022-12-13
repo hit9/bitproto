@@ -654,6 +654,61 @@ class BlockMessageMethodGetByte(BlockMessageBase, BlockWrapper[F]):
         self.push(f"def bp_get_byte(self, di: bp.DataIndexer, rshift: int) -> bp.byte:")
 
 
+class BlockMessageMethodProcessIntItem(BlockMessageMethodGetSetByteItemBase):
+    @override(BlockMessageMethodGetSetByteItemBase)
+    def render_single(self, single: SingleType) -> None:
+        if not isinstance(single, Int):
+            # Cares only about signed integer.
+            return
+
+        n = single.nbits()
+
+        if n in {8, 16, 32, 64}:
+            # Although python doesn't have int8/int16/int32/int64 types.
+            # But bitprotolib defines some functions: int8()/int16()/int32()/int64().
+            # These functions catch overflows, recover the value back according to its
+            # type definition in the bitproto.
+            return
+
+        name = self.format_data_ref()
+        mask = ~((1 << n) - 1)
+        self.render_case()
+        self.push(f"if ({name} >> {n-1}) & 1:", indent=self.indent + 4)
+        self.push(f"{name} |= {mask}", indent=self.indent + 4 + 4)
+        self.push("return", indent=self.indent + 4)
+
+
+class BlockMessageMethodProcessIntDefaultItem(Block[F]):
+    @override(Block)
+    def render(self) -> None:
+        self.push("return")
+
+
+class BlockMessageMethodProcessIntItemList(BlockMessageBase, BlockComposition[F]):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block[F]]:
+        b: List[Block[F]] = [
+            BlockMessageMethodProcessIntItem(field, indent=self.indent)
+            for field in self.d.sorted_fields()
+        ]
+        b.append(BlockMessageMethodProcessIntDefaultItem(indent=self.indent))
+        return b
+
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n"
+
+
+class BlockMessageMethodProcessInt(BlockMessageBase, BlockWrapper[F]):
+    @override(BlockWrapper)
+    def wraps(self) -> Optional[Block[F]]:
+        return BlockMessageMethodProcessIntItemList(self.d, indent=self.indent + 4)
+
+    @override(BlockWrapper)
+    def before(self) -> None:
+        self.push(f"def bp_process_int(self, di: bp.DataIndexer) -> None:")
+
+
 class BlockMessageMethodGetAccessorItem(BlockBindMessageField[F]):
     def __init__(
         self,
@@ -779,6 +834,7 @@ class BlockMessage(BlockMessageBase, BlockComposition[F]):
             BlockMessageMethodGetAccessor(self.d, indent=4),
             BlockMessageMethodEncode(self.d, indent=4),
             BlockMessageMethodDecode(self.d, indent=4),
+            BlockMessageMethodProcessInt(self.d, indent=4),
         ]
 
     @override(BlockComposition)
