@@ -327,6 +327,8 @@ class CFormatter(Formatter):
         """
         Hook function called after a message field is generated.
         """
+        if isinstance(t, Alias):
+            t = t.type
         if isinstance(t, Int):
             return self.post_format_op_mode_endecode_int(t, chain, is_encode)
         return []
