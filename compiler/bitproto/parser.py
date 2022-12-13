@@ -7,21 +7,15 @@ Grammar parser for bitproto.
 
 import os
 from contextlib import contextmanager
-from dataclasses import dataclass
-from dataclasses import field as dataclass_field
-from typing import Iterator, List, Optional, Tuple
-from typing import Type as T
-from typing import cast
+from typing import Iterator, List, Optional, Tuple, Type as T, cast
 
 from ply import yacc  # type: ignore
 from ply.lex import LexToken  # type: ignore
-from ply.yacc import LRParser as PlyParser  # type: ignore
-from ply.yacc import YaccProduction as P  # type: ignore
+from ply.yacc import LRParser as PlyParser, YaccProduction as P  # type: ignore
 
 from bitproto._ast import (
     Alias,
     Array,
-    BooleanConstant,
     Comment,
     Constant,
     Definition,
@@ -33,7 +27,6 @@ from bitproto._ast import (
     Option,
     Proto,
     Scope,
-    StringConstant,
     Type,
 )
 from bitproto.errors import (

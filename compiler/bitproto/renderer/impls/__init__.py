@@ -2,8 +2,7 @@
 Renderer implementations.
 """
 
-from typing import Dict, Tuple
-from typing import Type as T
+from typing import Dict, Tuple, Type as T
 
 from bitproto.renderer.renderer import Renderer
 

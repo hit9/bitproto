@@ -141,6 +141,18 @@ int EncodeDrone(struct Drone *m, unsigned char *s) {
     s[63] |= (((unsigned char *)&((*m).network.heartbeat_at))[7] << 2) & 252;
     s[64] = (((unsigned char *)&((*m).network.heartbeat_at))[7] >> 6) & 3;
     s[64] |= (((unsigned char *)&((*m).landing_gear.status))[0] << 2) & 12;
+    s[64] |= (((unsigned char *)&((*m).pressure_sensor.pressures[0]))[0] << 4) & 240;
+    s[65] = (((unsigned char *)&((*m).pressure_sensor.pressures[0]))[0] >> 4) & 15;
+    s[65] |= (((unsigned char *)&((*m).pressure_sensor.pressures[0]))[1] << 4) & 240;
+    s[66] = (((unsigned char *)&((*m).pressure_sensor.pressures[0]))[1] >> 4) & 15;
+    s[66] |= (((unsigned char *)&((*m).pressure_sensor.pressures[0]))[2] << 4) & 240;
+    s[67] = (((unsigned char *)&((*m).pressure_sensor.pressures[0]))[2] >> 4) & 15;
+    s[67] |= (((unsigned char *)&((*m).pressure_sensor.pressures[1]))[0] << 4) & 240;
+    s[68] = (((unsigned char *)&((*m).pressure_sensor.pressures[1]))[0] >> 4) & 15;
+    s[68] |= (((unsigned char *)&((*m).pressure_sensor.pressures[1]))[1] << 4) & 240;
+    s[69] = (((unsigned char *)&((*m).pressure_sensor.pressures[1]))[1] >> 4) & 15;
+    s[69] |= (((unsigned char *)&((*m).pressure_sensor.pressures[1]))[2] << 4) & 240;
+    s[70] = (((unsigned char *)&((*m).pressure_sensor.pressures[1]))[2] >> 4) & 15;
     return 0;
 }
 
@@ -283,5 +295,19 @@ int DecodeDrone(struct Drone *m, unsigned char *s) {
     ((unsigned char *)&((*m).network.heartbeat_at))[7] = (s[63] >> 2) & 63;
     ((unsigned char *)&((*m).network.heartbeat_at))[7] |= (s[64] << 6) & 192;
     ((unsigned char *)&((*m).landing_gear.status))[0] = (s[64] >> 2) & 3;
+    ((unsigned char *)&((*m).pressure_sensor.pressures[0]))[0] = (s[64] >> 4) & 15;
+    ((unsigned char *)&((*m).pressure_sensor.pressures[0]))[0] |= (s[65] << 4) & 240;
+    ((unsigned char *)&((*m).pressure_sensor.pressures[0]))[1] = (s[65] >> 4) & 15;
+    ((unsigned char *)&((*m).pressure_sensor.pressures[0]))[1] |= (s[66] << 4) & 240;
+    ((unsigned char *)&((*m).pressure_sensor.pressures[0]))[2] = (s[66] >> 4) & 15;
+    ((unsigned char *)&((*m).pressure_sensor.pressures[0]))[2] |= (s[67] << 4) & 240;
+    if (((*m).pressure_sensor.pressures[0] >> 23) & 1) (*m).pressure_sensor.pressures[0] |= -16777216;
+    ((unsigned char *)&((*m).pressure_sensor.pressures[1]))[0] = (s[67] >> 4) & 15;
+    ((unsigned char *)&((*m).pressure_sensor.pressures[1]))[0] |= (s[68] << 4) & 240;
+    ((unsigned char *)&((*m).pressure_sensor.pressures[1]))[1] = (s[68] >> 4) & 15;
+    ((unsigned char *)&((*m).pressure_sensor.pressures[1]))[1] |= (s[69] << 4) & 240;
+    ((unsigned char *)&((*m).pressure_sensor.pressures[1]))[2] = (s[69] >> 4) & 15;
+    ((unsigned char *)&((*m).pressure_sensor.pressures[1]))[2] |= (s[70] << 4) & 240;
+    if (((*m).pressure_sensor.pressures[1] >> 23) & 1) (*m).pressure_sensor.pressures[1] |= -16777216;
     return 0;
 }

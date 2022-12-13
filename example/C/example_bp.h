@@ -119,8 +119,15 @@ struct Flight {
     TernaryInt32 acceleration; // 96bit
 };
 
+// Number of bytes to encode struct PressureSensor
+#define BYTES_LENGTH_PRESSURE_SENSOR 6
+
+struct PressureSensor {
+    int32_t pressures[2]; // 48bit
+};
+
 // Number of bytes to encode struct Drone
-#define BYTES_LENGTH_DRONE 65
+#define BYTES_LENGTH_DRONE 71
 
 struct Drone {
     DroneStatus status; // 3bit
@@ -130,6 +137,7 @@ struct Drone {
     struct Power power; // 11bit
     struct Network network; // 68bit
     struct LandingGear landing_gear; // 2bit
+    struct PressureSensor pressure_sensor; // 48bit
 };
 
 // Encode struct Propeller to given buffer s.
@@ -181,6 +189,13 @@ int DecodeFlight(struct Flight *m, unsigned char *s);
 // Format struct Flight to a json format string.
 int JsonFlight(struct Flight *m, char *s);
 
+// Encode struct PressureSensor to given buffer s.
+int EncodePressureSensor(struct PressureSensor *m, unsigned char *s);
+// Decode struct PressureSensor from given buffer s.
+int DecodePressureSensor(struct PressureSensor *m, unsigned char *s);
+// Format struct PressureSensor to a json format string.
+int JsonPressureSensor(struct PressureSensor *m, char *s);
+
 // Encode struct Drone to given buffer s.
 int EncodeDrone(struct Drone *m, unsigned char *s);
 // Decode struct Drone from given buffer s.
@@ -214,6 +229,9 @@ void BpXXXJsonFormatPose(void *data, struct BpJsonFormatContext *ctx);
 
 void BpXXXProcessFlight(void *data, struct BpProcessorContext *ctx);
 void BpXXXJsonFormatFlight(void *data, struct BpJsonFormatContext *ctx);
+
+void BpXXXProcessPressureSensor(void *data, struct BpProcessorContext *ctx);
+void BpXXXJsonFormatPressureSensor(void *data, struct BpJsonFormatContext *ctx);
 
 void BpXXXProcessDrone(void *data, struct BpProcessorContext *ctx);
 void BpXXXJsonFormatDrone(void *data, struct BpJsonFormatContext *ctx);

@@ -2,7 +2,7 @@
 Go formatter
 """
 
-from typing import Optional
+from typing import List, Optional
 
 from bitproto._ast import (
     Alias,
@@ -240,3 +240,45 @@ class GoFormatter(Formatter):
                 assign = "="
 
         return f"{chain} {assign} {data}{bshift}"
+
+    @override(Formatter)
+    def post_format_op_mode_endecode_single_type(
+        self, t: Type, chain: str, is_encode: bool
+    ) -> List[str]:
+        """
+        Hook function called after a message field is generated.
+        """
+        if isinstance(t, Alias):
+            t = t.type
+        if isinstance(t, Int):
+            return self.post_format_op_mode_endecode_int(t, chain, is_encode)
+        return []
+
+    def post_format_op_mode_endecode_int(
+        self, t: Int, chain: str, is_encode: bool
+    ) -> List[str]:
+        """
+        Process signed integers during decoding code generation in optimization mode.
+
+        Generated Go statement example:
+
+            m.PressureSensor.Pressure <<= 8
+            m.PressureSensor.Pressure >>= 8
+
+        """
+        if is_encode:
+            return []
+
+        # Signed integers processing is only about decoding
+        n = t.nbits()
+
+        if n in {8, 16, 32, 64}:
+            # No need to do additional actions
+            # int8/16/32/64 signed integers' sign bit is already on the highest bit position.
+            return []
+
+        d = self.get_nbits_of_integer(t) - n
+
+        # Go implements arithmetic right shifting.
+        # This means right shifting a nagetive signed integer propagates the sign bits to the vacancies.
+        return [f"{chain} <<= {d}", f"{chain} >>= {d}"]

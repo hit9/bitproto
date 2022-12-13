@@ -47,11 +47,14 @@ void BpEndecodeMessageField(struct BpMessageFieldDescriptor *descriptor,
                             struct BpProcessorContext *ctx, void *data) {
     switch (descriptor->type.flag) {
         case BP_TYPE_BOOL:
-        case BP_TYPE_INT:
         case BP_TYPE_UINT:
         case BP_TYPE_BYTE:
         case BP_TYPE_ENUM:
             BpEndecodeBaseType((descriptor->type).nbits, ctx, descriptor->data);
+            break;
+        case BP_TYPE_INT:
+            BpEndecodeInt((descriptor->type).size, (descriptor->type).nbits,
+                          ctx, descriptor->data);
             break;
         case BP_TYPE_ALIAS:
         case BP_TYPE_ARRAY:
@@ -69,10 +72,13 @@ void BpEndecodeAlias(struct BpAliasDescriptor *descriptor,
                      struct BpProcessorContext *ctx, void *data) {
     switch (descriptor->to.flag) {
         case BP_TYPE_BOOL:
-        case BP_TYPE_INT:
         case BP_TYPE_UINT:
         case BP_TYPE_BYTE:
             BpEndecodeBaseType((descriptor->to).nbits, ctx, data);
+            break;
+        case BP_TYPE_INT:
+            BpEndecodeInt((descriptor->to).size, (descriptor->to).nbits, ctx,
+                          data);
             break;
         case BP_TYPE_ARRAY:
             descriptor->to.processor(data, ctx);
@@ -110,11 +116,13 @@ void BpEndecodeArray(struct BpArrayDescriptor *descriptor,
 
         switch (descriptor->element_type.flag) {
             case BP_TYPE_BOOL:
-            case BP_TYPE_INT:
             case BP_TYPE_UINT:
             case BP_TYPE_BYTE:
             case BP_TYPE_ENUM:
                 BpEndecodeBaseType(element_nbits, ctx, element_data);
+                break;
+            case BP_TYPE_INT:
+                BpEndecodeInt(element_size, element_nbits, ctx, element_data);
                 break;
             case BP_TYPE_ALIAS:
             case BP_TYPE_MESSAGE:
@@ -234,13 +242,66 @@ void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src,
 
 // BpEndecodeBaseType process given base type at given data.
 void BpEndecodeBaseType(int nbits, struct BpProcessorContext *ctx, void *data) {
-    // Determine the variables above
     if (ctx->is_encode) {
         BpCopyBufferBits(nbits, ctx->s, (unsigned char *)data, ctx->i, 0);
     } else {
         BpCopyBufferBits(nbits, (unsigned char *)data, ctx->s, 0, ctx->i);
     }
     ctx->i += nbits;
+}
+
+// BpEndecodeInt process signed integer at given data.
+// The most left bit (Nth bit for int{N}) of a signed integer indicates the
+// sign. For example 00000101 is a negative integer for a int3, but a positive
+// integer for a int4.
+void BpEndecodeInt(int size, int nbits, struct BpProcessorContext *ctx,
+                   void *data) {
+    // Copy bits without concern about sign bit.
+    BpEndecodeBaseType(nbits, ctx, data);
+
+    // Signed integer's sign bit processing is only about decoding.
+    if (ctx->is_encode) return;
+
+    // For int8/16/32/64 signed integers, the sign bit is already on the
+    // most-left bit position. There's no additional actions should be done.
+    if (nbits == 8 || nbits == 16 || nbits == 32 || nbits == 64) return;
+
+    // Number of bits occupied in C intXX_t types.
+    int n = 8 * size;
+
+    switch (n) {
+        // Suppose pointer data points to a int24 value V:
+        // 1. Check its sign: (V >> (24-1)) & 1
+        // 2. If V is negative:
+        //    Make a mask that keeps right 24bits be 0, left 8bits be 1:
+        //    mask = ~(1 << 24 - 1)
+        //    Recover the original integer is: V | mask.
+        //
+        // Why not use V << 8 >> 8 solution here? This depends on arithmetic
+        // shifting. Which propagates the sign bit on the left vacant bits when
+        // doing a right shift. But C standard points that this behavior is
+        // implementation-defined.
+        case 8:  // int8_t
+            if (((*(int8_t *)data) >> (nbits - 1)) & 1) {
+                *(int8_t *)data |= ~((1 << nbits) - 1);
+            }
+            break;
+        case 16:  // int16_t
+            if (((*(int16_t *)data) >> (nbits - 1)) & 1) {
+                *(int16_t *)data |= ~((1 << nbits) - 1);
+            }
+            break;
+        case 32:  // int32_t
+            if (((*(int32_t *)data) >> (nbits - 1)) & 1) {
+                *(int32_t *)data |= ~((1 << nbits) - 1);
+            }
+            break;
+        case 64:  // int64_t
+            if (((*(int64_t *)data) >> (nbits - 1)) & 1) {
+                *(int64_t *)data |= ~((1 << nbits) - 1);
+            }
+            break;
+    }
 }
 
 // BpEncodeArrayExtensibleAhead encode the array capacity as the ahead flag

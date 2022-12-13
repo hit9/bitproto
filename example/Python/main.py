@@ -11,6 +11,8 @@ def main() -> None:
     drone.flight.acceleration[0] = -1001
     drone.power.is_charging = True
     drone.propellers[0].direction = bp.ROTATING_DIRECTION_CLOCK_WISE
+    drone.pressure_sensor.pressures[0] = -11
+    drone.flight.pose.yaw = -10
     s = drone.encode()  # bytearray
 
     # Decode

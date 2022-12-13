@@ -234,6 +234,13 @@ func (m *Propeller) BpGetByte(di *bp.DataIndexer, rshift int) byte {
 	}
 }
 
+func (m *Propeller) BpProcessInt(di *bp.DataIndexer) {
+	switch di.F() {
+		default:
+			return
+	}
+}
+
 type Power struct {
 	Battery uint8 `json:"battery"` // 8bit
 	Status PowerStatus `json:"status"` // 2bit
@@ -305,6 +312,13 @@ func (m *Power) BpGetByte(di *bp.DataIndexer, rshift int) byte {
 	}
 }
 
+func (m *Power) BpProcessInt(di *bp.DataIndexer) {
+	switch di.F() {
+		default:
+			return
+	}
+}
+
 type Network struct {
 	// Degree of signal, between 1~10.
 	Signal uint8 `json:"signal"` // 4bit
@@ -372,6 +386,13 @@ func (m *Network) BpGetByte(di *bp.DataIndexer, rshift int) byte {
 	}
 }
 
+func (m *Network) BpProcessInt(di *bp.DataIndexer) {
+	switch di.F() {
+		default:
+			return
+	}
+}
+
 type LandingGear struct {
 	Status LandingGearStatus `json:"status"` // 2bit
 }
@@ -428,6 +449,13 @@ func (m *LandingGear) BpGetByte(di *bp.DataIndexer, rshift int) byte {
 			return byte(m.Status >> rshift)
 		default:
 			return byte(0) // Won't reached
+	}
+}
+
+func (m *LandingGear) BpProcessInt(di *bp.DataIndexer) {
+	switch di.F() {
+		default:
+			return
 	}
 }
 
@@ -499,6 +527,13 @@ func (m *Position) BpGetByte(di *bp.DataIndexer, rshift int) byte {
 			return byte(m.Altitude >> rshift)
 		default:
 			return byte(0) // Won't reached
+	}
+}
+
+func (m *Position) BpProcessInt(di *bp.DataIndexer) {
+	switch di.F() {
+		default:
+			return
 	}
 }
 
@@ -574,6 +609,13 @@ func (m *Pose) BpGetByte(di *bp.DataIndexer, rshift int) byte {
 	}
 }
 
+func (m *Pose) BpProcessInt(di *bp.DataIndexer) {
+	switch di.F() {
+		default:
+			return
+	}
+}
+
 type Flight struct {
 	Pose Pose `json:"pose"` // 96bit
 	// Velocity at X, Y, Z axis.
@@ -645,6 +687,82 @@ func (m *Flight) BpGetByte(di *bp.DataIndexer, rshift int) byte {
 	}
 }
 
+func (m *Flight) BpProcessInt(di *bp.DataIndexer) {
+	switch di.F() {
+		default:
+			return
+	}
+}
+
+type PressureSensor struct {
+	Pressures [2]int32 `json:"pressures"` // 48bit
+}
+
+// Number of bytes to serialize struct PressureSensor
+const BYTES_LENGTH_PRESSURE_SENSOR uint32 = 6
+
+func (m *PressureSensor) Size() uint32 { return 6 }
+
+// Returns string representation for struct PressureSensor.
+func (m *PressureSensor) String() string {
+	v, _ := jsonMarshal(m)
+	return string(v)
+}
+
+// Encode struct PressureSensor to bytes buffer.
+func (m *PressureSensor) Encode() []byte {
+	ctx := bp.NewEncodeContext(int(m.Size()))
+	m.BpProcessor().Process(ctx, nil, m)
+	return ctx.Buffer()
+}
+
+func (m *PressureSensor) Decode(s []byte) {
+	ctx := bp.NewDecodeContext(s)
+	m.BpProcessor().Process(ctx, nil, m)
+}
+
+func (m *PressureSensor) BpProcessor() bp.Processor {
+	fieldDescriptors := []*bp.MessageFieldProcessor{
+		bp.NewMessageFieldProcessor(1, bp.NewArray(false, 2, bp.NewInt(24))),
+	}
+	return bp.NewMessageProcessor(false, 48, fieldDescriptors)
+}
+
+func (m *PressureSensor) BpGetAccessor(di *bp.DataIndexer) bp.Accessor {
+	switch di.F() {
+	default:
+		return nil  // Won't reached
+	}
+}
+
+func (m *PressureSensor) BpSetByte(di *bp.DataIndexer, lshift int, b byte) {
+	switch di.F() {
+		case 1:
+			m.Pressures[di.I(0)] |= (int32(b) << lshift)
+		default:
+			return
+	}
+}
+
+func (m *PressureSensor) BpGetByte(di *bp.DataIndexer, rshift int) byte {
+	switch di.F() {
+		case 1:
+			return byte(m.Pressures[di.I(0)] >> rshift)
+		default:
+			return byte(0) // Won't reached
+	}
+}
+
+func (m *PressureSensor) BpProcessInt(di *bp.DataIndexer) {
+	switch di.F() {
+		case 1:
+			m.Pressures[di.I(0)] <<= 8
+			m.Pressures[di.I(0)] >>= 8
+		default:
+			return
+	}
+}
+
 type Drone struct {
 	Status DroneStatus `json:"status"` // 3bit
 	Position Position `json:"position"` // 96bit
@@ -653,12 +771,13 @@ type Drone struct {
 	Power Power `json:"power"` // 11bit
 	Network Network `json:"network"` // 68bit
 	LandingGear LandingGear `json:"landing_gear"` // 2bit
+	PressureSensor PressureSensor `json:"pressure_sensor"` // 48bit
 }
 
 // Number of bytes to serialize struct Drone
-const BYTES_LENGTH_DRONE uint32 = 65
+const BYTES_LENGTH_DRONE uint32 = 71
 
-func (m *Drone) Size() uint32 { return 65 }
+func (m *Drone) Size() uint32 { return 71 }
 
 // Returns string representation for struct Drone.
 func (m *Drone) String() string {
@@ -687,8 +806,9 @@ func (m *Drone) BpProcessor() bp.Processor {
 		bp.NewMessageFieldProcessor(5, (&Power{}).BpProcessor()),
 		bp.NewMessageFieldProcessor(6, (&Network{}).BpProcessor()),
 		bp.NewMessageFieldProcessor(7, (&LandingGear{}).BpProcessor()),
+		bp.NewMessageFieldProcessor(8, (&PressureSensor{}).BpProcessor()),
 	}
-	return bp.NewMessageProcessor(false, 516, fieldDescriptors)
+	return bp.NewMessageProcessor(false, 564, fieldDescriptors)
 }
 
 func (m *Drone) BpGetAccessor(di *bp.DataIndexer) bp.Accessor {
@@ -705,6 +825,8 @@ func (m *Drone) BpGetAccessor(di *bp.DataIndexer) bp.Accessor {
 		return &(m.Network)
 	case 7:
 		return &(m.LandingGear)
+	case 8:
+		return &(m.PressureSensor)
 	default:
 		return nil  // Won't reached
 	}
@@ -725,5 +847,12 @@ func (m *Drone) BpGetByte(di *bp.DataIndexer, rshift int) byte {
 			return byte(m.Status >> rshift)
 		default:
 			return byte(0) // Won't reached
+	}
+}
+
+func (m *Drone) BpProcessInt(di *bp.DataIndexer) {
+	switch di.F() {
+		default:
+			return
 	}
 }

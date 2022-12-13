@@ -7,7 +7,7 @@ bp:
 	bitproto go example.bitproto Go-optimization-mode/gen-bp -O -F "Drone"
 	bitproto py example.bitproto Python
 
-build: bp 
+build: bp
 	cd C && make
 	cd Go && go build -o example
 	cd C-optimization-mode && make

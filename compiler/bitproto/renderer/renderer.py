@@ -12,7 +12,7 @@ from typing import Generic, List, Optional
 from bitproto._ast import Proto
 from bitproto.errors import InternalError, LanguageNotSupportOptimizationMode
 from bitproto.renderer.block import Block, BlockRenderContext
-from bitproto.renderer.formatter import F, Formatter
+from bitproto.renderer.formatter import F
 from bitproto.utils import final, overridable
 
 

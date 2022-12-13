@@ -42,11 +42,20 @@ Abstraction syntax tree.
 """
 
 from collections import OrderedDict as dict_
-from dataclasses import dataclass
-from dataclasses import field as dataclass_field
-from typing import Any, Callable, ClassVar, Dict, List, Optional, Tuple
-from typing import Type as T
-from typing import TypeVar, Union, cast
+from dataclasses import dataclass, field as dataclass_field
+from typing import (
+    Any,
+    Callable,
+    ClassVar,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Type as T,
+    TypeVar,
+    Union,
+    cast,
+)
 
 from bitproto.errors import (
     DuplicatedDefinition,
@@ -70,8 +79,8 @@ from bitproto.options import (
     PROTO_OPTTIONS,
     OptionDescriptor,
     OptionDescriptors,
+    Validator as OptionValidator,
 )
-from bitproto.options import Validator as OptionValidator
 from bitproto.utils import (
     cache,
     conditional_cache,
@@ -706,20 +715,20 @@ _UINT_MISSING = Uint(_is_missing=True)
 @frozen
 @dataclass
 class Int(Integer):
-    """Int is the signed Integer.
-    Different from uint, int type only supports capacity: 8, 16, 32, 64.
-    """
+    """Int is the signed Integer."""
 
     cap: int = 0
-
-    @override(Node)
-    def validate_post_freeze(self) -> None:
-        if self.cap not in (8, 16, 32, 64):
-            raise InvalidIntCap.from_token(token=self)
 
     @override(Type)
     def nbits(self) -> int:
         return self.cap
+
+    @override(Node)
+    def validate_post_freeze(self) -> None:
+        if self._is_missing:
+            return
+        if not (0 < self.cap <= 64):
+            raise InvalidIntCap.from_token(token=self)
 
     def __repr__(self) -> str:
         return "<type int{0}>".format(self.cap)

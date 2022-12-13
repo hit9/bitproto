@@ -1,0 +1,13 @@
+proto signed_int
+
+
+message Foo {
+    int3 a = 1;
+}
+
+message Test {
+    int32 a = 1;
+    int24 b = 2;
+    int37[10] c = 3;
+    Foo[2] d = 4;
+}

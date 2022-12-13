@@ -2,10 +2,9 @@
 Renderer for C header file.
 """
 
-from typing import Any, List, Optional
+from typing import List, Optional
 
-from bitproto._ast import Alias, Array, BoundDefinition, Constant, Enum, Message, Proto
-from bitproto.errors import InternalError
+from bitproto._ast import Alias, Array, BoundDefinition, Constant, Enum, Message
 from bitproto.renderer.block import (
     Block,
     BlockAheadNotice,
@@ -23,13 +22,7 @@ from bitproto.renderer.block import (
 )
 from bitproto.renderer.impls.c.formatter import CFormatter as F
 from bitproto.renderer.renderer import Renderer
-from bitproto.utils import (
-    cached_property,
-    cast_or_raise,
-    override,
-    snake_case,
-    upper_case,
-)
+from bitproto.utils import cached_property, override, snake_case
 
 
 class BlockProtoDocstring(BlockBindProto[F]):
@@ -67,7 +60,7 @@ class BlockIncludeGeneralHeaders(Block[F]):
 
 class BlockIncludeHeaders(BlockWrapper[F]):
     @override(BlockWrapper)
-    def wraps(self) -> Block[F]:
+    def wraps(self) -> Optional[Block[F]]:
         return BlockIncludeGeneralHeaders()
 
     @override(BlockWrapper)
@@ -247,7 +240,7 @@ class BlockMessageFieldList(BlockBindMessage[F], BlockComposition[F]):
 
 class BlockMessageStruct(BlockBindMessage[F], BlockWrapper[F]):
     @override(BlockWrapper)
-    def wraps(self) -> Block:
+    def wraps(self) -> Optional[Block[F]]:
         return BlockMessageFieldList(self.d, name=self.name)
 
     @override(BlockWrapper)

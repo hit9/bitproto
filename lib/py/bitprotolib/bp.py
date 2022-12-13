@@ -10,8 +10,7 @@ Keep it simple:  No magic.
 import json
 from abc import abstractmethod
 from contextlib import contextmanager
-from dataclasses import asdict, dataclass
-from dataclasses import field as dataclass_field
+from dataclasses import asdict, dataclass, field as dataclass_field
 from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 # Flags
@@ -141,6 +140,11 @@ class Accessor:
         """
         raise NotImplementedError
 
+    @abstractmethod
+    def bp_process_int(self, di: DataIndexer) -> None:
+        """Process signed integer's sign bit."""
+        raise NotImplementedError
+
 
 class NilAccessor(Accessor):
     """NilAccessor is a special accessor implementation, represents that this accessor is
@@ -155,6 +159,9 @@ class NilAccessor(Accessor):
 
     def bp_get_accessor(self, di: DataIndexer) -> "Accessor":
         return self
+
+    def bp_process_int(self, di: DataIndexer) -> None:
+        return
 
 
 @dataclass
@@ -174,6 +181,9 @@ class IntAccessor(Accessor):
 
     def bp_get_accessor(self, di: DataIndexer) -> "Accessor":
         return NilAccessor()
+
+    def bp_process_int(self, di: DataIndexer) -> None:
+        return
 
 
 class MessageBase(Accessor):
@@ -226,7 +236,14 @@ class Int(Processor):
         return FLAG_INT
 
     def process(self, ctx: ProcessContext, di: DataIndexer, accessor: Accessor) -> None:
+        # Copy bits
         process_base_type(self.nbits, ctx, di, accessor)
+
+        # Process sign bit
+        if ctx.is_encode:
+            return
+
+        accessor.bp_process_int(di)
 
 
 @dataclass

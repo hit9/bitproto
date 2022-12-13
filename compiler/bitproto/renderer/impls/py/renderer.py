@@ -12,9 +12,7 @@ from bitproto._ast import (
     Constant,
     Enum,
     Int,
-    Integer,
     Message,
-    MessageField,
     SingleType,
 )
 from bitproto.renderer.block import (
@@ -159,7 +157,7 @@ class BlockEnumFieldList(BlockBindEnum[F], BlockComposition[F]):
 
 class BlockEnumFieldListWrapper(BlockBindEnum[F], BlockWrapper[F]):
     @override(BlockWrapper)
-    def wraps(self) -> Block:
+    def wraps(self) -> Optional[Block[F]]:
         return BlockEnumFieldList(self.d)
 
     @override(BlockWrapper)
@@ -190,7 +188,7 @@ class BlockIntEnumFieldList(BlockBindEnum[F], BlockComposition[F]):
 
 class BlockIntEnumFieldListWrapper(BlockBindEnum[F], BlockWrapper[F]):
     @override(BlockWrapper)
-    def wraps(self) -> Block:
+    def wraps(self) -> Optional[Block[F]]:
         return BlockIntEnumFieldList(self.d)
 
     @override(BlockWrapper)
@@ -230,7 +228,7 @@ class BlockEnumValueToNameMapItemList(BlockBindEnum[F], BlockComposition[F]):
 
 class BlockEnumValueToNameMap(BlockBindEnum[F], BlockWrapper[F]):
     @override(BlockWrapper)
-    def wraps(self) -> Block:
+    def wraps(self) -> Optional[Block[F]]:
         return BlockEnumValueToNameMapItemList(self.d)
 
     @override(BlockWrapper)
@@ -334,7 +332,7 @@ class BlockMessageClassDefs(BlockMessageBase, BlockComposition[F]):
 
 class BlockMessageClass(BlockMessageBase, BlockWrapper[F]):
     @override(BlockWrapper)
-    def wraps(self) -> Block[F]:
+    def wraps(self) -> Optional[Block[F]]:
         return BlockMessageClassDefs(self.d, indent=4)
 
     @override(BlockWrapper)
@@ -345,8 +343,8 @@ class BlockMessageClass(BlockMessageBase, BlockWrapper[F]):
 
 
 class BlockMessageDictFactory(BlockMessageBase, BlockWrapper[F]):
-    def wraps(self) -> Block[F]:
-        pass
+    def wraps(self) -> Optional[Block[F]]:
+        return None
 
     @override(BlockWrapper)
     def before(self) -> None:
@@ -425,7 +423,7 @@ class BlockMessagePostInitItemList(BlockMessageBase, BlockComposition[F]):
 
 class BlockMessagePostInit(BlockBindMessage[F], BlockWrapper[F]):
     @override(BlockWrapper)
-    def wraps(self) -> Block[F]:
+    def wraps(self) -> Optional[Block[F]]:
         return BlockMessagePostInitItemList(self.d, indent=self.indent + 4)
 
     @override(BlockWrapper)
@@ -472,13 +470,13 @@ class BlockMessageEnumProxyFieldAccessorFieldList(
 
 class BlockMessageEnumProxyFieldAccessors(BlockBindMessage[F], BlockWrapper[F]):
     @override(BlockWrapper)
-    def wraps(self) -> Block[F]:
+    def wraps(self) -> Optional[Block[F]]:
         return BlockMessageEnumProxyFieldAccessorFieldList(self.d, indent=self.indent)
 
 
 class BlockMessageMethodProcessor(BlockMessageBase, BlockWrapper[F]):
     @override(BlockWrapper)
-    def wraps(self) -> Block[F]:
+    def wraps(self) -> Optional[Block[F]]:
         return BlockMessageMethodProcessorFieldList(self.d, indent=self.indent + 8)
 
     @override(BlockWrapper)
@@ -602,7 +600,7 @@ class BlockMessageMethodSetByteItemList(BlockMessageBase, BlockComposition[F]):
 
 class BlockMessageMethodSetByte(BlockBindMessage[F], BlockWrapper[F]):
     @override(BlockWrapper)
-    def wraps(self) -> Block[F]:
+    def wraps(self) -> Optional[Block[F]]:
         return BlockMessageMethodSetByteItemList(self.d, indent=self.indent + 4)
 
     @override(BlockWrapper)
@@ -648,12 +646,67 @@ class BlockMessageMethodGetByteItemList(BlockMessageBase, BlockComposition[F]):
 
 class BlockMessageMethodGetByte(BlockMessageBase, BlockWrapper[F]):
     @override(BlockWrapper)
-    def wraps(self) -> Block[F]:
+    def wraps(self) -> Optional[Block[F]]:
         return BlockMessageMethodGetByteItemList(self.d, indent=self.indent + 4)
 
     @override(BlockWrapper)
     def before(self) -> None:
         self.push(f"def bp_get_byte(self, di: bp.DataIndexer, rshift: int) -> bp.byte:")
+
+
+class BlockMessageMethodProcessIntItem(BlockMessageMethodGetSetByteItemBase):
+    @override(BlockMessageMethodGetSetByteItemBase)
+    def render_single(self, single: SingleType) -> None:
+        if not isinstance(single, Int):
+            # Cares only about signed integer.
+            return
+
+        n = single.nbits()
+
+        if n in {8, 16, 32, 64}:
+            # Although python doesn't have int8/int16/int32/int64 types.
+            # But bitprotolib defines some functions: int8()/int16()/int32()/int64().
+            # These functions catch overflows, recover the value back according to its
+            # type definition in the bitproto.
+            return
+
+        name = self.format_data_ref()
+        mask = ~((1 << n) - 1)
+        self.render_case()
+        self.push(f"if ({name} >> {n-1}) & 1:", indent=self.indent + 4)
+        self.push(f"{name} |= {mask}", indent=self.indent + 4 + 4)
+        self.push("return", indent=self.indent + 4)
+
+
+class BlockMessageMethodProcessIntDefaultItem(Block[F]):
+    @override(Block)
+    def render(self) -> None:
+        self.push("return")
+
+
+class BlockMessageMethodProcessIntItemList(BlockMessageBase, BlockComposition[F]):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block[F]]:
+        b: List[Block[F]] = [
+            BlockMessageMethodProcessIntItem(field, indent=self.indent)
+            for field in self.d.sorted_fields()
+        ]
+        b.append(BlockMessageMethodProcessIntDefaultItem(indent=self.indent))
+        return b
+
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n"
+
+
+class BlockMessageMethodProcessInt(BlockMessageBase, BlockWrapper[F]):
+    @override(BlockWrapper)
+    def wraps(self) -> Optional[Block[F]]:
+        return BlockMessageMethodProcessIntItemList(self.d, indent=self.indent + 4)
+
+    @override(BlockWrapper)
+    def before(self) -> None:
+        self.push(f"def bp_process_int(self, di: bp.DataIndexer) -> None:")
 
 
 class BlockMessageMethodGetAccessorItem(BlockBindMessageField[F]):
@@ -725,7 +778,7 @@ class BlockMessageMethodGetAccessorList(BlockBindMessage[F], BlockComposition[F]
 
 class BlockMessageMethodGetAccessor(BlockMessageBase, BlockWrapper[F]):
     @override(BlockWrapper)
-    def wraps(self) -> Block[F]:
+    def wraps(self) -> Optional[Block[F]]:
         return BlockMessageMethodGetAccessorList(self.d, indent=self.indent + 4)
 
     @override(BlockWrapper)
@@ -781,6 +834,7 @@ class BlockMessage(BlockMessageBase, BlockComposition[F]):
             BlockMessageMethodGetAccessor(self.d, indent=4),
             BlockMessageMethodEncode(self.d, indent=4),
             BlockMessageMethodDecode(self.d, indent=4),
+            BlockMessageMethodProcessInt(self.d, indent=4),
         ]
 
     @override(BlockComposition)

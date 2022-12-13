@@ -2,7 +2,7 @@
 C formatter.
 """
 
-from typing import Optional
+from typing import List, Optional
 
 from bitproto._ast import (
     Alias,
@@ -17,7 +17,6 @@ from bitproto._ast import (
     Message,
     MessageField,
     Proto,
-    SingleType,
     Type,
     Uint,
 )
@@ -311,7 +310,7 @@ class CFormatter(Formatter):
     def format_op_mode_decoder_item(
         self, chain: str, t: Type, si: int, fi: int, shift: int, mask: int, r: int
     ) -> str:
-        """Implements format_op_mode_encoder_item for C.
+        """Implements format_op_mode_decoder_item for C.
         Generated C statement like:
 
             ((unsigned char *)&((*m).color))[0] = (s[0] << 3) & 7;
@@ -320,3 +319,55 @@ class CFormatter(Formatter):
         assign = "=" if r == 0 else "|="
         shift_s = self.format_op_mode_smart_shift(shift)
         return f"((unsigned char *)&({chain}))[{fi}] {assign} (s[{si}] {shift_s}) & {mask};"
+
+    @override(Formatter)
+    def post_format_op_mode_endecode_single_type(
+        self, t: Type, chain: str, is_encode: bool
+    ) -> List[str]:
+        """
+        Hook function called after a message field is generated.
+        """
+        if isinstance(t, Alias):
+            t = t.type
+        if isinstance(t, Int):
+            return self.post_format_op_mode_endecode_int(t, chain, is_encode)
+        return []
+
+    def post_format_op_mode_endecode_int(
+        self, t: Int, chain: str, is_encode: bool
+    ) -> List[str]:
+        """
+        Process signed integers during decoding code generation in optimization mode.
+
+        Generated C statement example:
+
+            if (((*m).pressure_sensor.pressure >> 23) & 1) (*m).pressure_sensor.pressure |= -16777216;
+        """
+        if is_encode:
+            return []
+
+        # Signed integers processing is only about decoding
+        n = t.nbits()
+
+        if n in {8, 16, 32, 64}:
+            # No need to do additional actions
+            # int8/16/32/64 signed integers' sign bit is already on the highest bit position.
+            return []
+
+        m = ~((1 << n) - 1)
+        mask = f"{m}"
+
+        if n == 63:
+            # Avoid this compiler error for mask == -9223372036854775808;
+            # warning: integer literal is too large to be represented in a signed integer type,
+            # interpreting as unsigned [-Wimplicitly-unsigned-literal]
+            mask = f"(-9223372036854775807 - 1)"
+
+        # For a signed integer e.g. 16777205, the most concise approach should be: 16777205 << 24 >> 24,
+        # this shifts the 24th bit to the highest bit position, and then shift right again.
+        # By doing an arithmetic right shifting, the leftmost sign bit got propagated, the result is -11.
+        # This way is concise, but may not be portable.
+        # Right shift behavior on negative signed integers is implementation-defined.
+        # Another safe approach is: test the 24th bit at first ((16777205 >> 23) & 1), if it’s 1,
+        # then do a OR operation with a mask,  16777205 |= ~(1<<24 -1) , the result is also -11.
+        return [f"if (({chain} >> {n-1}) & 1) {chain} |= {mask};"]

@@ -253,6 +253,21 @@ func (m *Flight) String() string {
 	return string(v)
 }
 
+type PressureSensor struct {
+	Pressures [2]int32 `json:"pressures"` // 48bit
+}
+
+// Number of bytes to serialize struct PressureSensor
+const BYTES_LENGTH_PRESSURE_SENSOR uint32 = 6
+
+func (m *PressureSensor) Size() uint32 { return 6 }
+
+// Returns string representation for struct PressureSensor.
+func (m *PressureSensor) String() string {
+	v, _ := jsonMarshal(m)
+	return string(v)
+}
+
 type Drone struct {
 	Status DroneStatus `json:"status"` // 3bit
 	Position Position `json:"position"` // 96bit
@@ -261,12 +276,13 @@ type Drone struct {
 	Power Power `json:"power"` // 11bit
 	Network Network `json:"network"` // 68bit
 	LandingGear LandingGear `json:"landing_gear"` // 2bit
+	PressureSensor PressureSensor `json:"pressure_sensor"` // 48bit
 }
 
 // Number of bytes to serialize struct Drone
-const BYTES_LENGTH_DRONE uint32 = 65
+const BYTES_LENGTH_DRONE uint32 = 71
 
-func (m *Drone) Size() uint32 { return 65 }
+func (m *Drone) Size() uint32 { return 71 }
 
 // Returns string representation for struct Drone.
 func (m *Drone) String() string {
@@ -276,7 +292,7 @@ func (m *Drone) String() string {
 
 // Encode struct Drone to bytes buffer.
 func (m *Drone) Encode() []byte {
-	s := make([]byte, 65)
+	s := make([]byte, 71)
 	s[0] |= (byte(m.Status) ) & 7
 	s[0] |= (byte(m.Position.Latitude) << 3) & 248
 	s[1] |= (byte(m.Position.Latitude) >> 5) & 7
@@ -415,6 +431,18 @@ func (m *Drone) Encode() []byte {
 	s[63] |= (byte(m.Network.HeartbeatAt >> 56) << 2) & 252
 	s[64] |= (byte(m.Network.HeartbeatAt >> 56) >> 6) & 3
 	s[64] |= (byte(m.LandingGear.Status) << 2) & 12
+	s[64] |= (byte(m.PressureSensor.Pressures[0]) << 4) & 240
+	s[65] |= (byte(m.PressureSensor.Pressures[0]) >> 4) & 15
+	s[65] |= (byte(m.PressureSensor.Pressures[0] >> 8) << 4) & 240
+	s[66] |= (byte(m.PressureSensor.Pressures[0] >> 8) >> 4) & 15
+	s[66] |= (byte(m.PressureSensor.Pressures[0] >> 16) << 4) & 240
+	s[67] |= (byte(m.PressureSensor.Pressures[0] >> 16) >> 4) & 15
+	s[67] |= (byte(m.PressureSensor.Pressures[1]) << 4) & 240
+	s[68] |= (byte(m.PressureSensor.Pressures[1]) >> 4) & 15
+	s[68] |= (byte(m.PressureSensor.Pressures[1] >> 8) << 4) & 240
+	s[69] |= (byte(m.PressureSensor.Pressures[1] >> 8) >> 4) & 15
+	s[69] |= (byte(m.PressureSensor.Pressures[1] >> 16) << 4) & 240
+	s[70] |= (byte(m.PressureSensor.Pressures[1] >> 16) >> 4) & 15
 	return s
 }
 
@@ -557,6 +585,22 @@ func (m *Drone) Decode(s []byte) {
 	m.Network.HeartbeatAt |= Timestamp(byte(s[63] >> 2) & 63) << 56
 	m.Network.HeartbeatAt |= Timestamp(byte(s[64] << 6) & 192) << 56
 	m.LandingGear.Status |= LandingGearStatus(byte(s[64] >> 2) & 3)
+	m.PressureSensor.Pressures[0] |= int32(byte(s[64] >> 4) & 15)
+	m.PressureSensor.Pressures[0] |= int32(byte(s[65] << 4) & 240)
+	m.PressureSensor.Pressures[0] |= int32(byte(s[65] >> 4) & 15) << 8
+	m.PressureSensor.Pressures[0] |= int32(byte(s[66] << 4) & 240) << 8
+	m.PressureSensor.Pressures[0] |= int32(byte(s[66] >> 4) & 15) << 16
+	m.PressureSensor.Pressures[0] |= int32(byte(s[67] << 4) & 240) << 16
+	m.PressureSensor.Pressures[0] <<= 8
+	m.PressureSensor.Pressures[0] >>= 8
+	m.PressureSensor.Pressures[1] |= int32(byte(s[67] >> 4) & 15)
+	m.PressureSensor.Pressures[1] |= int32(byte(s[68] << 4) & 240)
+	m.PressureSensor.Pressures[1] |= int32(byte(s[68] >> 4) & 15) << 8
+	m.PressureSensor.Pressures[1] |= int32(byte(s[69] << 4) & 240) << 8
+	m.PressureSensor.Pressures[1] |= int32(byte(s[69] >> 4) & 15) << 16
+	m.PressureSensor.Pressures[1] |= int32(byte(s[70] << 4) & 240) << 16
+	m.PressureSensor.Pressures[1] <<= 8
+	m.PressureSensor.Pressures[1] >>= 8
 }
 
 func bool2byte(b bool) byte {

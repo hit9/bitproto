@@ -6,11 +6,18 @@ Formatter class base.
 """
 import os
 from abc import abstractmethod
-from enum import Enum as Enum_
-from enum import unique
-from typing import Callable, Dict, List, Optional, Tuple
-from typing import Type as T
-from typing import TypeVar, Union, cast
+from enum import Enum as Enum_, unique
+from typing import (
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Type as T,
+    TypeVar,
+    Union,
+    cast,
+)
 
 from bitproto._ast import (
     Alias,
@@ -258,6 +265,21 @@ class Formatter:
         Defaults to "".
         """
         return ""
+
+    @overridable
+    def post_format_op_mode_endecode_single_type(
+        self, t: Type, chain: str, is_encode: bool
+    ) -> List[str]:
+        """
+        Overridable hook function that would be called every time after a single type's encoding or decoding
+        code is generated in the optimization mode. The lines returned by this function would be generated
+        right follow the field' encoding (or decoding) code.
+
+        :param t: The type of this value.
+        :param chain: The chained name in this message's encode/decode function.
+        :param is_encode: Is generating code for encoding or decoding now.
+        """
+        return []
 
     ###########
     # Finals
@@ -634,6 +656,9 @@ class Formatter:
             # Maintains the j and i counter
             j += c
             i[0] += c
+
+        # hook function
+        l.extend(self.post_format_op_mode_endecode_single_type(t, chain, is_encode))
         return l
 
     @final
