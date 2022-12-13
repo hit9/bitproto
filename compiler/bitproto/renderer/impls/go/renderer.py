@@ -3,7 +3,7 @@ Renderer for Go.
 """
 
 from abc import abstractmethod
-from typing import Any, List, Optional, cast
+from typing import Any, List, Optional
 
 from bitproto._ast import (
     Alias,
@@ -15,7 +15,6 @@ from bitproto._ast import (
     Int,
     Message,
     SingleType,
-    Uint,
 )
 from bitproto.renderer.block import (
     Block,
