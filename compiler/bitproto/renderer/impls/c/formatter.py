@@ -352,5 +352,13 @@ class CFormatter(Formatter):
             # int8/16/32/64 signed integers' sign bit is already on the highest bit position.
             return []
 
-        mask = ~((1 << n) - 1)
+        m = ~((1 << n) - 1)
+        mask = f"{m}"
+
+        if n == 63:
+            # Avoid this compiler error for mask == -9223372036854775808;
+            # warning: integer literal is too large to be represented in a signed integer type,
+            # interpreting as unsigned [-Wimplicitly-unsigned-literal]
+            mask = f"(-9223372036854775807 - 1)"
+
         return [f"if (({chain} >> {n-1}) & 1) {chain} |= {mask};"]
