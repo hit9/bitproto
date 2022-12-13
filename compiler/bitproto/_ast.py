@@ -715,9 +715,7 @@ _UINT_MISSING = Uint(_is_missing=True)
 @frozen
 @dataclass
 class Int(Integer):
-    """Int is the signed Integer.
-    Different from uint, int type only supports capacity: 8, 16, 32, 64.
-    """
+    """Int is the signed Integer."""
 
     cap: int = 0
 
