@@ -3,10 +3,10 @@
 // Package bitproto is the encoding library for bitproto in Go language.
 //
 // Keep it simple:
-//	* Pure golang.
-//	* No reflection.
-//	* No type assertion.
-//	* No dynamic function construction.
+//   - Pure golang.
+//   - No reflection.
+//   - No type assertion.
+//   - No dynamic function construction.
 package bitproto
 
 // Exported for generated go files to reference to avoid bp imported but not used error.
@@ -84,6 +84,9 @@ type Accessor interface {
 	// BpGetAccessor gets the child accessor data container by indexer di.
 	// This function works only if target data is a message.
 	BpGetAccessor(di *DataIndexer) Accessor
+
+	// BpProcessInt processes the signed integers right after bite coping is done.
+	BpProcessInt(di *DataIndexer)
 }
 
 // Uint8Accessor implements Accessor for uint8 value encoding and decoding.
@@ -104,6 +107,7 @@ func (m *Uint8Accessor) BpGetByte(di *DataIndexer, rshift int) byte {
 	}
 }
 func (m *Uint8Accessor) BpGetAccessor(di *DataIndexer) Accessor { return nil }
+func (m *Uint8Accessor) BpProcessInt(di *DataIndexer)           { return }
 
 // Uint16Accessor implements Accessor for uint16 value encoding and decoding.
 type Uint16Accessor struct{ data uint16 }
@@ -123,6 +127,7 @@ func (m *Uint16Accessor) BpGetByte(di *DataIndexer, rshift int) byte {
 	}
 }
 func (m *Uint16Accessor) BpGetAccessor(di *DataIndexer) Accessor { return nil }
+func (m *Uint16Accessor) BpProcessInt(di *DataIndexer)           { return }
 
 // DataIndexer contains the argument to index data from current accessor.
 type DataIndexer struct {
@@ -153,7 +158,10 @@ type Int struct{ nbits int }
 func NewInt(nbits int) *Int { return &Int{nbits} }
 func (t *Int) Flag() Flag   { return FlagInt }
 func (t *Int) Process(ctx *ProcessContext, di *DataIndexer, accessor Accessor) {
+	// Copy bits
 	processBaseType(t.nbits, ctx, di, accessor)
+	// Process the sign bit
+	accessor.BpProcessInt(di)
 }
 
 // Uint implements Processor for uint type.
@@ -424,9 +432,11 @@ func decodeSingleByte(ctx *ProcessContext, di *DataIndexer, accessor Accessor, j
 
 // Returns the number of bits to copy during a single byte process.
 // Argument i, j, n:
+//
 //	i is the number of the total bits processed.
 //	j is the number of bits processed on current base type.
 //	n is the number of bits current base type occupy.
+//
 // The returned value always in [0, 8].
 func getNbitsToCopy(i, j, n int) int {
 	return min(min(n-j, 8-(j%8)), 8-(i%8))
@@ -438,10 +448,10 @@ func getNbitsToCopy(i, j, n int) int {
 //
 // Examples of returned mask:
 //
-//   Returns                Arguments
-//   00001111               k=0, c=4
-//   01111100               k=2, c=5
-//   00111100               k=2, c=4
+//	Returns                Arguments
+//	00001111               k=0, c=4
+//	01111100               k=2, c=5
+//	00111100               k=2, c=4
 func getMask(k, c int) int {
 	if k == 0 {
 		return (1 << c) - 1

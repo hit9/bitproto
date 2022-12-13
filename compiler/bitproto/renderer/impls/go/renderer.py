@@ -3,7 +3,7 @@ Renderer for Go.
 """
 
 from abc import abstractmethod
-from typing import Any, List, Optional
+from typing import Any, List, Optional, cast
 
 from bitproto._ast import (
     Alias,
@@ -12,8 +12,10 @@ from bitproto._ast import (
     BoundDefinition,
     Constant,
     Enum,
+    Int,
     Message,
     SingleType,
+    Uint,
 )
 from bitproto.renderer.block import (
     Block,
@@ -409,7 +411,6 @@ class BlockMessageMethodBpGetSetByteItemBase(BlockBindMessageField[F]):
 class BlockMessageMethodBpSetByteItem(BlockMessageMethodBpGetSetByteItemBase):
     @override(BlockMessageMethodBpGetSetByteItemBase)
     def render_single(self, single: SingleType, alias: Optional[Alias] = None) -> None:
-        field_number = self.formatter.format_int_value(self.d.number)
         left = self.format_data_ref()
         assign = "|="
 
@@ -525,6 +526,65 @@ class BlockMessageMethodBpGetByte(BlockBindMessage[F], BlockWrapper[F]):
         self.push(
             f"func (m *{self.message_name}) BpGetByte(di *bp.DataIndexer, rshift int) byte {{"
         )
+        self.push("switch di.F() {", indent=self.indent + 1)
+
+    @override(BlockWrapper)
+    def after(self) -> None:
+        self.push("}", indent=self.indent + 1)
+        self.push("}")
+
+
+class BlockMessageMethodBpProcessIntItem(BlockMessageMethodBpGetSetByteItemBase):
+    @override(BlockMessageMethodBpGetSetByteItemBase)
+    def render_single(self, single: SingleType, alias: Optional[Alias] = None) -> None:
+        if not isinstance(single, Int):
+            # BpProcessInt cares only about signed integer type
+            return
+
+        # d is how many bits to shift
+        d = self.formatter.get_nbits_of_integer(single) - single.nbits()
+        if d <= 0:
+            return
+
+        left = self.format_data_ref()
+        self.render_case()
+
+        # '>>' is arithmetic right shifting in go.
+        # Ref: https://go.dev/ref/spec#Arithmetic_operators
+        self.push(f"{left} <<= {d}", indent=self.indent + 1)
+        self.push(f"{left} >>= {d}", indent=self.indent + 1)
+
+
+class BlockMessageMethodBpProcessIntItemDefault(Block[F]):
+    @override(Block)
+    def render(self) -> None:
+        self.push("default:")
+        self.push("return", indent=self.indent + 1)
+
+
+class BlockMessageMethodBpProcessIntItemList(BlockBindMessage[F], BlockComposition[F]):
+    @override(BlockComposition)
+    def blocks(self) -> List[Block[F]]:
+        b: List[Block[F]] = [
+            BlockMessageMethodBpProcessIntItem(field, indent=self.indent)
+            for field in self.d.sorted_fields()
+        ]
+        b.append(BlockMessageMethodBpProcessIntItemDefault(indent=self.indent))
+        return b
+
+    @override(BlockComposition)
+    def separator(self) -> str:
+        return "\n"
+
+
+class BlockMessageMethodBpProcessInt(BlockBindMessage[F], BlockWrapper[F]):
+    @override(BlockWrapper)
+    def wraps(self) -> Optional[Block[F]]:
+        return BlockMessageMethodBpProcessIntItemList(self.d, indent=self.indent + 2)
+
+    @override(BlockWrapper)
+    def before(self) -> None:
+        self.push(f"func (m *{self.message_name}) BpProcessInt(di *bp.DataIndexer) {{")
         self.push("switch di.F() {", indent=self.indent + 1)
 
     @override(BlockWrapper)
@@ -665,6 +725,7 @@ class BlockMessage(BlockBindMessage[F], BlockComposition[F]):
             BlockMessageMethodBpGetAccessor(self.d),
             BlockMessageMethodBpSetByte(self.d),
             BlockMessageMethodBpGetByte(self.d),
+            BlockMessageMethodBpProcessInt(self.d),
         ]
 
 

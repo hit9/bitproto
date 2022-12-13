@@ -66,7 +66,6 @@ from bitproto.errors import (
     InvalidAliasedType,
     InvalidArrayCap,
     InvalidEnumFieldValue,
-    InvalidIntCap,
     InvalidMessageFieldNumber,
     InvalidOptionValue,
     InvalidUintCap,
