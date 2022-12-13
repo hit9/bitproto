@@ -148,7 +148,7 @@ class InvalidUintCap(LexerError):
 
 @dataclass
 class InvalidIntCap(LexerError):
-    """Invalid bits capacity for a int type, should be one of 8,16,32,64."""
+    """Invalid bits capacity for a int type, should between [1, 64]."""
 
 
 @dataclass

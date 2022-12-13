@@ -66,6 +66,7 @@ from bitproto.errors import (
     InvalidAliasedType,
     InvalidArrayCap,
     InvalidEnumFieldValue,
+    InvalidIntCap,
     InvalidMessageFieldNumber,
     InvalidOptionValue,
     InvalidUintCap,
@@ -721,6 +722,13 @@ class Int(Integer):
     @override(Type)
     def nbits(self) -> int:
         return self.cap
+
+    @override(Node)
+    def validate_post_freeze(self) -> None:
+        if self._is_missing:
+            return
+        if not (0 < self.cap <= 64):
+            raise InvalidIntCap.from_token(token=self)
 
     def __repr__(self) -> str:
         return "<type int{0}>".format(self.cap)
