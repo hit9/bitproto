@@ -2,9 +2,21 @@ import os
 from typing import Union as Fixture
 
 import pytest
-from bitproto._ast import (Alias, Array, Bool, BooleanConstant, Constant, Enum,
-                           Int, IntegerConstant, Message, MessageField, Option,
-                           Proto, StringConstant)
+from bitproto._ast import (
+    Alias,
+    Array,
+    Bool,
+    BooleanConstant,
+    Constant,
+    Enum,
+    Int,
+    IntegerConstant,
+    Message,
+    MessageField,
+    Option,
+    Proto,
+    StringConstant,
+)
 from bitproto.errors import GrammarError
 from bitproto.parser import parse
 from bitproto.utils import cast_or_raise
@@ -512,3 +524,7 @@ def test_constants() -> None:
     assert constant_c.value is False
     assert constant_d.value is True
     assert constant_e.value is False
+
+
+def test_parse_signed_int() -> None:
+    parse(bitproto_filepath("signed_int.bitproto"))
