@@ -160,7 +160,11 @@ func (t *Int) Flag() Flag   { return FlagInt }
 func (t *Int) Process(ctx *ProcessContext, di *DataIndexer, accessor Accessor) {
 	// Copy bits
 	processBaseType(t.nbits, ctx, di, accessor)
+
 	// Process the sign bit
+	if ctx.isEncode {
+		return
+	}
 	accessor.BpProcessInt(di)
 }
 

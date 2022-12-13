@@ -238,7 +238,11 @@ class Int(Processor):
     def process(self, ctx: ProcessContext, di: DataIndexer, accessor: Accessor) -> None:
         # Copy bits
         process_base_type(self.nbits, ctx, di, accessor)
+
         # Process sign bit
+        if ctx.is_encode:
+            return
+
         accessor.bp_process_int(di)
 
 
