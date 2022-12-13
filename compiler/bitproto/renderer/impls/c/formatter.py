@@ -361,4 +361,11 @@ class CFormatter(Formatter):
             # interpreting as unsigned [-Wimplicitly-unsigned-literal]
             mask = f"(-9223372036854775807 - 1)"
 
+        # For a signed integer e.g. 16777205, the most concise approach should be: 16777205 << 24 >> 24,
+        # this shifts the 24th bit to the highest bit position, and then shift right again.
+        # By doing an arithmetic right shifting, the leftmost sign bit got propagated, the result is -11.
+        # This way is concise, but may not be portable.
+        # Right shift behavior on negative signed integers is implementation-defined.
+        # Another safe approach is: test the 24th bit at first ((16777205 >> 23) & 1), if it’s 1,
+        # then do a OR operation with a mask,  16777205 |= ~(1<<24 -1) , the result is also -11.
         return [f"if (({chain} >> {n-1}) & 1) {chain} |= {mask};"]

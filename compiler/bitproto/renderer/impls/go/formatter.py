@@ -277,4 +277,6 @@ class GoFormatter(Formatter):
 
         d = self.get_nbits_of_integer(t) - n
 
+        # Go implements arithmetic right shifting.
+        # This means right shifting a nagetive signed integer propagates the sign bits to the vacancies.
         return [f"{chain} <<= {d}", f"{chain} >>= {d}"]
