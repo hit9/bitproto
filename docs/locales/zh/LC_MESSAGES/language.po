@@ -8,66 +8,66 @@ msgid ""
 msgstr ""
 "Project-Id-Version: bitproto 0.4.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-07-31 14:53+0800\n"
+"POT-Creation-Date: 2022-12-13 22:41+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.9.1\n"
+"Generated-By: Babel 2.11.0\n"
 
-#: ../../language.rst:4 0cb47463a63d4e25891988c71c630930
+#: ../../language.rst:4 1f779ce1fb214cc7a376e7eb752bae1d
 msgid "Language Guide"
 msgstr "语法引导"
 
-#: ../../language.rst:6 027ee00b95de4ed0a926fe8276de6c58
+#: ../../language.rst:6 f505b233d97f4d838e695875d1671399
 msgid ""
 "This document will introduce how to use bitproto language to describe "
 "data structures."
 msgstr "本文将介绍如何使用 bitproto 的语法对结构化数据进行描述。"
 
-#: ../../language.rst:9 c3ce2d7d71f14a3383db800fec953d36
+#: ../../language.rst:9 3ae43708c1ea4b1d9c32dd8f768ff7fb
 msgid "Semicolon"
 msgstr "分号"
 
-#: ../../language.rst:11 c4abf4db50d942f38a22bd18c222750a
+#: ../../language.rst:11 5972a6dbd3da42f8bb76ff7a67fab312
 msgid "Semicolons are optional in bitproto:"
 msgstr "在 bitproto 中逗号是可选的："
 
-#: ../../language.rst:22 07d9d71944d6406cb06257902716ad2e
+#: ../../language.rst:22 e6093e19373e46b9a7692ed80c296e8e
 msgid "Proto name"
 msgstr "协议名字"
 
-#: ../../language.rst:24 c4ef34ed4cc64a4e86e3ea5591bc57ba
+#: ../../language.rst:24 e0e5704ccf3142a494105d32bc4bcda8
 msgid "A bitproto file must declare its name:"
 msgstr "任何一个 bitproto 文件都必须定义它的名字："
 
-#: ../../language.rst:31 3387724f1b5941a4899170346e5553a6
+#: ../../language.rst:31 15a3e0fc0ff74546af104f514ad8482b
 msgid "Basic Types"
 msgstr "基本类型"
 
-#: ../../language.rst:33 d4aa38c980fa434682ac4fe3b9abac61
+#: ../../language.rst:33 5b7414bb63574ab0bb1da0685e24e7a6
 msgid "An overview of bitproto basic types:"
 msgstr "bitproto 的基本类型的总览："
 
-#: ../../language.rst:36 e901fee164744dab9628a310adc9374a
+#: ../../language.rst:36 92f898ceaa364a1c84ed43955e28b226
 msgid "``bool``"
 msgstr ""
 
-#: ../../language.rst d17b32661a004832bbae862dd58ecb3b
+#: ../../language.rst 3cc764dfad1b4a5a8156978029739b9a
 msgid "Boolean type. A bool value occupies a single bit."
 msgstr "布尔类型，一个布尔占用 1 个比特。"
 
-#: ../../language.rst:44 48c2f4208c234a94ac7e6a90695cbd32
+#: ../../language.rst:44 9f7bd3f0a7de4088ac63d8532baf5bd8
 msgid "``uint{n}``"
 msgstr ""
 
-#: ../../language.rst da59b8a280dc44ba88c8385f6180ca39
+#: ../../language.rst 688707be280f4d768842a3ca8947751b
 msgid ""
 "Unsigned bit-level integer type, where ``n`` ranges from ``1`` to ``64``."
 " For examples: ``uint3``, ``uint13``, ``uint41``, ``uint64`` are all "
-"supported. An unsigned integer ``uint{n}`` occupies extactly ``n`` bits "
+"supported. An unsigned integer ``uint{n}`` occupies exactly ``n`` bits "
 "after encoding. In code generation, ``uint{n}`` is mapped to the smallest"
 " type in target language that can cover its size, for examples for C, "
 "``uint3`` maps to ``uint8_t``, ``uint13`` maps to ``uint16_t`` and so on."
@@ -77,27 +77,34 @@ msgstr ""
 "``n`` 个比特。在代码生成时，``uint{n}`` 将会被映射成为最小可以容纳这些数量的比特的对应语言中的整数类型。举例来说， 生成 C "
 "语言代码时，``uint3`` 将映射成 ``uint8_t``, ``uint13`` 映射到 ``uint16_t`` ，依次类推."
 
-#: ../../language.rst:52 92d443f64ecd4c7a911586633d0ac382
-msgid "``int{8,16,32,64}``"
+#: ../../language.rst:56 437f1189ebbe4debb326d3414e707e7a
+msgid "``int{n}``"
 msgstr ""
 
-#: ../../language.rst e73cb1d6e43741c1aec181a9d1688400
+#: ../../language.rst 01c830a6588b4c109d57dd185d103ab3
 msgid ""
-"Signed integers. It's different from unsigned integers that only four "
-"signed integer types are supported: ``int8``, ``int16``, ``int32``, "
-"``int64``. Signed integers with non-integer number of bytes are not "
-"supported. For examples, ``int16`` is valid, but ``int3`` is not. A "
-"signed integer ``int{n}`` occupies ``n`` bits after encoded.,"
-msgstr ""
-"有符号的整数类型。和无符号的整数类型不同的是，只有四个整数类型是支持的，分别是 ``int8``, ``int16``, ``int32`` 和 "
-"``int64`` 。非整数倍字节量大小的有符号的整数类型是不支持的。举例来说，``int16`` 是支持的，但是 ``int3`` "
-"类型是不支持的。一个有符号的整数类型 ``int{n}`` 将会在编码后占用 ``n`` 个比特。"
+"Signed bit-level integers, where ``n`` ranges from ``1`` to ``64``. For "
+"examples: ``int24``, ``int32``, ``int64`` are all supported. A signed "
+"integer ``int{n}`` occupies exactly ``n`` bits after encoding. Similar to"
+" ``uint{n}``, in code generation, ``int{n}`` is mapped to the smallest "
+"type in target language that can cover its size, for examples for C, "
+"``int3`` maps to ``int8_t``, ``int13`` maps to ``int16_t`` and so on. For"
+" a bitproto signed integer ``int{n}``, the ``nth`` bit is considered the "
+"sign bit, for instance, the ``24th`` bit is the sign bit for a ``int24`` "
+"integer. For bitproto <= v0.4.5, only ``int8,int16,int32,int64`` are "
+"supported. But since bitproto 0.4.6, signed integers with arbitrary bits "
+"are supported."
+msgstr "有符号的比特级别的整数类型, 其中 ``n`` 是一个从 ``1`` 到 ``64`` 的数字。举例来说，``int24``, ``int32``, ``int64`` 都支持。"
+"一个有符号整数 ``int{n}`` 在编码后将占用 ``n`` 个比特。在代码生成时，``int{n}`` 将会被映射成为最小可以容纳这些数量的比特的对应语言中的整数类型，"
+"例如生成 C 语言时，``int3`` 将映射成 ``int8_t``, ``int13`` 将映射成 ``int16_t``，依此类推。"
+"对于一个有符号类型的整数 ``int{n}`` 而言，第 ``n`` 位比特会被认为是其符号位，比如说 ``int24`` 的符号位是第 ``24`` 个比特。"
+"在 bitproto v0.4.5 之前的版本，只有 ``int8,int16,int32,int64`` 才被支持, 但是自从 v0.4.6 以后，任意比特数目大小的有符号整数都支持了。"
 
-#: ../../language.rst:56 e32e85704c104ba9a2319e9f2022ca2c
+#: ../../language.rst:60 83beae3ea0194637af4e2b8a05064115
 msgid "``byte``"
 msgstr ""
 
-#: ../../language.rst de0d932455814864b2b98b281cbd346e
+#: ../../language.rst a1fed9a12da14f9693e048d769aea51c
 msgid ""
 "Byte type. A byte value occupies 8 bits. The ``byte`` maps to ``unsigned "
 "char`` in C, ``byte`` in Go, and ``int`` in Python."
@@ -105,11 +112,11 @@ msgstr ""
 "字节类型。一个字节将会在编码后占用 ``8`` 个比特。字节类型会在 C 语言中映射到 ``unsigned char`` ， 在 Go "
 "语言中映射到 ``byte`` , 在 Python 中映射到 ``int`` 。"
 
-#: ../../language.rst:58 877491c8966a44338509167566a69cff
+#: ../../language.rst:62 42f4ae0de37f4ee69b0d1b6ca0102858
 msgid "Further talks"
 msgstr "更进一步的讨论"
 
-#: ../../language.rst:60 3fc666873e69479ea735dfe89d057467
+#: ../../language.rst:64 3176c36f9e2040ed9dffe4d7cb5cc9a8
 msgid ""
 "Maybe interesting, are ``uint1`` and ``bool`` the same? Don't be confused"
 " that, bitproto still maps ``uint1`` to ``uint8_t`` rather than ``bool``,"
@@ -120,56 +127,56 @@ msgstr ""
 "映射到 ``uint8_t`` 而不是 ``bool`` ，就像 ``uint8`` 不是一个 ``byte`` 一样的道理。前者 "
 "``uint1`` 是在讲一个数字，后者 ``bool`` 则是一个布尔，语义是关于是或者否的。"
 
-#: ../../language.rst:68 c3847bfb3c4d4f048e91f788f4100460
+#: ../../language.rst:72 2d002fe04782475d869211feb0fb2f56
 msgid "Enum"
 msgstr "Enum - 枚举"
 
-#: ../../language.rst:70 b4b8d12f48f34baca18de082dcfcca1a
+#: ../../language.rst:74 b880d93b93674b7ba5a7e303f807e33d
 msgid "Declaring an enum:"
 msgstr "声明一个枚举类型："
 
-#: ../../language.rst:81 3bbae3dcb23b48f4bca6ee0b283d48de
+#: ../../language.rst:85 d782b38978994ee8a6fe0d0b409f8085
 msgid ""
 "An enum is bound to an unsigned integer type ``uint{n}``, and occupies "
 "``n`` bits."
 msgstr "一个枚举类型会绑定到一个无符号的整数类型 ``uint{n}`` ， 并在编码后占用 ``n`` 个比特。"
 
-#: ../../language.rst:83 db17a8adc20849f3a89a4eb0166b543a
+#: ../../language.rst:87 bec1b3d7074f42fdb38be0a2edac7342
 msgid ""
 "It's highly recommended to define the first value of an enum to ``0``, "
 "which usually represents for the unknown value."
 msgstr "非常推荐的是，为每一个枚举类型定义一个值为 ``0`` 的枚举值，来表示未知的数据。"
 
-#: ../../language.rst:86 cbe96a120486480e89431733dfe3d9c4
+#: ../../language.rst:90 79c825a7981640c897bce55fd734f3f8
 msgid "Use the enum as a field's type in message:"
 msgstr "可以把枚举作为消息字段的一个类型："
 
-#: ../../language.rst:95 af6b2f82720c4d81bc84979744acd7e4
+#: ../../language.rst:99 4660406632854bea93cb354180fc152d
 msgid "Enum value in hex format is also supported:"
 msgstr "HEX 16 进制格式的枚举值也是支持的："
 
-#: ../../language.rst:108 e41f0a4ae1da439bb4233ad3a126eb66
+#: ../../language.rst:112 d1608c164cd6453e8861bdcb644b6f40
 msgid "Message"
 msgstr "Message - 消息"
 
-#: ../../language.rst:110 d39ba85ec3854667a78dd1d997b1da28
+#: ../../language.rst:114 6e40836bce1f46768be3c020f9a43e5a
 msgid "Declaring a message:"
 msgstr "声明一个消息类型："
 
-#: ../../language.rst:120 fc586972c391452e9158ff91c738d333
+#: ../../language.rst:124 67f654a690a541059398839cb9f78290
 msgid ""
 "A message is made up of multiple message fields. The syntax is very "
 "similar to protobuf."
 msgstr "一个消息由多个消息字段构成，语法类似 protobuf 。"
 
-#: ../../language.rst:122 a86fedd4d9f84701877cf0073e96bbb3
+#: ../../language.rst:126 e54be10ce48d4ef1b455a035f4c9bbbe
 msgid ""
 "A message field consists of a type and name on the left, a field number "
 "on the right. It's supported to use any bitproto types as a message "
 "field's type. The field number should be unique in a message scope."
 msgstr "一个消息字段由字段类型、字段名字和字段标号组成。任何 bitproto 支持的类型都是可以作为字段的类型的。字段的标号应该在一个消息中是唯一的。"
 
-#: ../../language.rst:126 660f2f8cff164ac6ba6665dc85d6a78c
+#: ../../language.rst:130 48ae70aeda1f4935831914919c8cc672
 msgid ""
 "Bitproto encodes the message to bytes following the order of field "
 "numbers. Field numbers shouldn't be changed once they are in use. What's "
@@ -179,79 +186,79 @@ msgstr ""
 "bitproto "
 "在编码一个消息时，会按照字段标号的大小顺序由小到大编码各个字段。因此，一旦字段标号在通信中已经使用起来，后面就不应该更改标号的值了。每次我们新增字段时，应当为新字段设置一个更大一些的字段标号。"
 
-#: ../../language.rst:139 4f2adde80493478abc2e20a9c755369d
+#: ../../language.rst:143 5a10a8cabea847a9af94c7330ae4f3c8
 msgid ""
 "The number of bits occupied by a message is the sum of the number of bits"
 " occupied by all its fields. For instance, the ``Pen`` in the example "
 "above occupies ``6`` bits after encoded."
 msgstr "一个消息在编码后占用的比特数量是所有字段占用的比特数量的总和。举例来说，上面例子中的 ``Pen`` 消息将会在编码后占用 ``6`` 个比特。"
 
-#: ../../language.rst:142 05b0c24f11cc4ef991cc31fe7258d5c6
+#: ../../language.rst:146 5140c574058a4a968b020c2badc10ee9
 msgid "A message can of course be used as a field type:"
 msgstr "一个消息当然也可以被用作一个字段的类型："
 
-#: ../../language.rst:157 64a4236584394c30b01ad59173429c47
+#: ../../language.rst:161 91d829649623424eb1b14d6bc259e5ac
 msgid ""
 "In bitproto, message size is constrained up to ``65535`` bits (``8191`` "
 "bytes)."
 msgstr "在 bitproto 中，消息的大小被限制不得大于 ``65535`` 比特 （即 ``8191`` 字节）。"
 
-#: ../../language.rst:158 a6e971396aba4e51be77b35b427f8f86
+#: ../../language.rst:162 8112dddc89074bf08e04a4601e949a40
 msgid "The message field number is constrained up to ``255``."
 msgstr "消息字段的标号被限制不得大于 ``255`` 。"
 
-#: ../../language.rst:163 6d5fd743184a4d5892d023db5813e93b
+#: ../../language.rst:167 de3873b049904e3f892eda0e51769b30
 msgid "Array"
 msgstr "数组"
 
-#: ../../language.rst:165 306955e812e54a07941543bd64c264a2
+#: ../../language.rst:169 1a45c934ae4a4d49bce523d4d105385f
 msgid "Examples:"
 msgstr "例子："
 
-#: ../../language.rst:175 f2719f0f40d847989bdd078e756e84a2
+#: ../../language.rst:179 3633cf521f064855b967893e6537f2fd
 msgid "An array is made up of an element type and a capacity number."
 msgstr "一个数组由数组元素的类型和数组的容量构成。"
 
-#: ../../language.rst:177 ff066a89f56a44be9b5f539975a1ede2
+#: ../../language.rst:181 dc25dd615b124cd093052b6500380f2b
 msgid ""
 "In bitproto, it's required specify the capacity to a constant number of "
 "array. The varying capacity array is not supported in bitproto."
 msgstr "在 bitproto 中，我们必须用一个常量来清楚地指定数组的容量。变长数组在 bitproto 中是不支持的。"
 
-#: ../../language.rst:180 bc66d33ffdef432fab3de006c3f46556
+#: ../../language.rst:184 ab899db55f284fad9a71c11d7c095de1
 msgid ""
 "The number of bits occupied by an array is the sum of the number of bits "
 "occupied by all its elements. For instance, ``byte[10]`` occupies ``8 * "
 "10`` bits."
 msgstr "数组在编码后占用的比特数量是它所有的元素占用的比特数量的总和。比如，``byte[10]`` 将占用 ``8 * 10`` 个比特。"
 
-#: ../../language.rst:183 a672267ea1f44bd1ae6e70ccde33a27a
+#: ../../language.rst:187 f982007d817d49219b63e0b0fcde0308
 msgid "Example to use an array in message:"
 msgstr "一个在消息中使用数组的例子："
 
-#: ../../language.rst:195 e222cd2f2b324a9e9620de4b36d54952
+#: ../../language.rst:199 638e41f01c9246cdab8990835cb8627e
 msgid "In bitproto, array's capacity is constrained up to ``65535``."
 msgstr "在 bitproto 中，数组的容量被限制不可大于 ``65535`` 。"
 
-#: ../../language.rst:198 ae5f0ee98b554ed6baad98536b6e8021
+#: ../../language.rst:202 f99631a06ca4427689a07d3abe100f2e
 msgid "Type Alias"
 msgstr "自定义类型"
 
-#: ../../language.rst:200 2496f612c5cb4366bc660bbb886e899f
+#: ../../language.rst:204 2960d3a5ca3d4bb3a6cae23d1e10799a
 msgid "Similar to ``typedef`` in C, we can name a type in bitproto:"
 msgstr "类似于 C 语言中的 ``typedef`` 关键字，我们可以在 bitproto 中自定义类型："
 
-#: ../../language.rst:208 fda26d8399dd4fef988663ce008a56af
+#: ../../language.rst:212 dfd5b176e47640189e15d7751e386d27
 msgid "Example to use a type alias in message:"
 msgstr "一个在消息中使用自定义类型的例子："
 
-#: ../../language.rst:218 7389b79ec02f4366af86eb770919a1e5
+#: ../../language.rst:222 68067e93bab64f478f49fcc0c1d02546
 msgid ""
 "The number of bits occupied by a type alias is the same as the number of "
 "bits occupied by the type it names."
 msgstr "自定义类型在编码后占用的比特数目等于它所绑定的类型所占用的比特数量。"
 
-#: ../../language.rst:220 3b6494804c7744428a4cc7a7b5cd5f1a
+#: ../../language.rst:224 bec7f409f38a482899dee1df3c639662
 msgid ""
 "Note that there's a constraint in bitproto that types already with a name"
 " (messages, enums) cannot be referenced in type alias, for instance, the "
@@ -260,19 +267,19 @@ msgstr ""
 "注意，bitproto 中有一个限制，我们无法为依据有名字的类型起别名。也就是说，消息和枚举是无法被绑定为一个自定义类型的。举例说，下面的 "
 "bitproto 语法是不正确的："
 
-#: ../../language.rst:232 bfa421a63bba4937b6ef9df103b6bd84
+#: ../../language.rst:236 7128d1d1e93647c99b6b73955c9c0606
 msgid "Constant"
 msgstr "常量"
 
-#: ../../language.rst:234 cce7648bb52d46b4826436f2766a3642
+#: ../../language.rst:238 f30c34fd55474e3ab8fb9e5edae104fa
 msgid "Declaring constants:"
 msgstr "声明一个常量："
 
-#: ../../language.rst:243 635a6bd5ec3a44a6a21f8167657ab997
+#: ../../language.rst:247 05506c0a70124d4988d7c4d01a16c1c5
 msgid "Constants can be integers, booleans or strings."
 msgstr "整数、布尔和字符串都可以是一个常量。"
 
-#: ../../language.rst:245 4329662c1d9c4d07b0b32f1f736b5023
+#: ../../language.rst:249 dbbfe6681b344d6385a04f0704075a94
 msgid ""
 "Constant is designed for protocol related constants sharing, such as the "
 "widely used sof (start of frame) byte etc, it's a part of the protocol "
@@ -281,31 +288,31 @@ msgstr ""
 "常量语法的设计是为了维护和协议相关的一些常量，比如我们常用的 sof "
 "字节(协议头字节)。虽然常量并不是一个类型，不参与序列化过程，但是它仍然是协议的一部分。"
 
-#: ../../language.rst:249 b09386221cd545b38e68da0cf8c707a8
+#: ../../language.rst:253 14af413ec4464c5b9141cd70ad8a9d2f
 msgid "Integer constants can be used as array's capacity:"
 msgstr "此外，整数常量可以用在数组的容量声明中："
 
-#: ../../language.rst:262 727c866363f8413186bfb505d7fc7bce
+#: ../../language.rst:266 b012f5d6d2c24fa68e90eaeda9aed12e
 msgid "Nested Types"
 msgstr "嵌套类型"
 
-#: ../../language.rst:264 ffce40784f9341a1a973c9c677b98190
+#: ../../language.rst:268 0af31ee5f23f4bab958e198f372a347b
 msgid "You can declare messages inside messages:"
 msgstr "我们可以在消息中定义消息："
 
-#: ../../language.rst:276 65e1cb9495ff4fb5bdd7fb67cc089e70
+#: ../../language.rst:280 ff4ea23c59d34d768653902b90dcbe0d
 msgid "Nested enums inside messages are also supported:"
 msgstr "也可以在消息中定义枚举："
 
-#: ../../language.rst:288 507a78c9bbce472e93abb2400ca59ebe
+#: ../../language.rst:292 fda3cb36e5fe43079007e0a0b0271dfb
 msgid "You can nest messages as deeply as you like:"
 msgstr "或者嵌套更多层："
 
-#: ../../language.rst:302 bd49e317a65948c5becfb8aad5a3d9de
+#: ../../language.rst:306 798cbb860cc5436a9bf9d19123f3a17f
 msgid "Nested types can also be referenced across message scopes:"
 msgstr "嵌套的类型可以跨消息作用域进行引用使用："
 
-#: ../../language.rst:317 537a4989db7746fca70051ee15c70359
+#: ../../language.rst:321 b553b9083d72491c9c5b5e7c99724059
 msgid ""
 "A bitproto message opens a scope, bitproto will lookup a type from local "
 "scopes first and then the outer scopes. In the following example, the "
@@ -314,11 +321,11 @@ msgstr ""
 "一个 bitproto 的消息会开一个作用域，bitproto 会优先扫描本地作用域，其次是外部作用域。在下面的例子中，字段 ``color`` "
 "的类型是本地消息 ``B`` 中定义的枚举 ``Color`` ："
 
-#: ../../language.rst:335 280f3ebcd2cb4a04985240990741317d
+#: ../../language.rst:339 7c789b6634014cd6b0257d98a448c90c
 msgid "In bitproto, only messages and enums can be nested declared."
 msgstr "在 bitproto 中，只有消息和枚举可以嵌套定义。"
 
-#: ../../language.rst:337 e84daaad33904816b6d75875c2bb78d4
+#: ../../language.rst:341 ccead49041b64c6c89a7436d32a2e428
 msgid ""
 "A nested type is mapped to a global type definition in code generation "
 "with concatenated names, for instance, in the following example, bitproto"
@@ -327,68 +334,68 @@ msgstr ""
 "在代码生成过程中，一个嵌套的类型会映射到目标语言的全局作用域中，映射后的名字是拼接的。举例说，下面的例子中，bitproto 会为 C "
 "语言生成一个全局的结构体 ``struct ZooMonkey`` ："
 
-#: ../../language.rst:355 f010d472f10c4448bbff75cddf55f8fe
+#: ../../language.rst:359 36825e04df5c4584b50515fcc2233a5f
 msgid "Array of Array"
 msgstr "数组的数组"
 
-#: ../../language.rst:357 58bd84672f0548af9fed1ce6be649e4b
+#: ../../language.rst:361 599bfaa528df4b4f82196ef993502fda
 msgid ""
 "It's invalid to declare an array of array (aka the two-dimensional array)"
 " using simple double square-bracket pairs, due to its lack of "
 "readability:"
 msgstr "在 bitproto 中直接通过字面量的方式声明一个数组的数组（也就是二维数组）是不可行的，因为这种方式缺少可读性："
 
-#: ../../language.rst:364 62ef5d326b8e44fb949021be08ca0e56
+#: ../../language.rst:368 27558557503843bfa5881ca771bcd7b3
 msgid ""
 "But, we can still use the :ref:`type alias <language-guide-alias>` syntax"
 " to implement a two-dimensional array:"
 msgstr "但是，我们仍然可以通过 :ref:`自定义类型 <language-guide-alias>` 的语法来实现一个二维数组："
 
-#: ../../language.rst:372 18d2cb3698d54b8582059bd42e560d3e
+#: ../../language.rst:376 858c8683344f4cf0a1d440bbc5064aa4
 msgid "In the same way, we can declare three or more dimensional array type."
 msgstr "通过这种方式，我们可以声明三维数组或者更高维的数组。"
 
-#: ../../language.rst:381 3e31b2f0390e4d928dde763af12ed052
+#: ../../language.rst:385 57d6819454194c69bbe7f90900995f5e
 msgid "By this design, the readability is much better."
 msgstr "这种设计下，可读性会大大提升。"
 
-#: ../../language.rst:386 102be327dd4a4ae8948b37a1be4486fe
+#: ../../language.rst:390 5aae1fb4bea6471aadbe15fe990fbd7c
 msgid "Import"
 msgstr "导入语句"
 
-#: ../../language.rst:388 9a4045844c1848168658e9c6a79c51e9
+#: ../../language.rst:392 6c97b1448d334313a68f1e4331cd22d5
 msgid "We can import another bitproto via the import statement:"
 msgstr "我们可以通过 import 语句导入另一个 bitproto 文件："
 
-#: ../../language.rst:394 47a7a2ae58614ffd8bd71cfa5bc0f6d0
+#: ../../language.rst:398 a616c2d553334246a7b41e265c9b3327
 msgid ""
 "The path of the importing bitproto can be an absolute path or a path "
 "relative to current bitproto:"
 msgstr "导入的路径是一个绝对路径，也可以是相对于当前 bitproto 文件的一个相对路径："
 
-#: ../../language.rst:402 5d6aa71e53ab4fb4809f9ed4424f734d
+#: ../../language.rst:406 3e07896681bb4a2696a1184463948b3f
 msgid ""
 "The import statement binds the name of imported bitproto to local, we can"
 " refer imported definitions via dot:"
 msgstr "导入语句会把要导入的 bitproto 绑定到本地的全局作用域中，我们可以通过点的方式对其中的类型进行引用："
 
-#: ../../language.rst:413 8230f1dc89ce456787695059c0697393
+#: ../../language.rst:417 0c0e198b3f454127ae547146b0807664
 msgid ""
 "However it is sometimes desirable to bind to a different name, to avoid "
 "name clashes:"
 msgstr "有时候，我们希望绑定到一个其他的名字，来避免命名冲突："
 
-#: ../../language.rst:419 09c63c4d440e41b8be1a84e966d3049f
+#: ../../language.rst:423 da2b2803c2b748988399982b6af5d003
 msgid ""
 "The statement above import ``shared.bitproto`` as a name ``lib`` in "
 "current bitproto, the reference now starts with ``lib.``:"
 msgstr "上面的语句导入了 ``shared.bitproto`` ，导入进来的名字是 ``lib`` ，这样就可以使用 ``lib.`` 的方式进行引用了："
 
-#: ../../language.rst:433 eef64f185aa8425299604c1078199c75
+#: ../../language.rst:437 c1d1a417538c4b7c84f26ba524635de4
 msgid "Extensibility"
 msgstr "扩展性"
 
-#: ../../language.rst:435 8fc0d7ee943047b0882d4f8ec8622bc1
+#: ../../language.rst:439 5f70af344e4f486d9190b6bd0e313be6
 msgid ""
 "Bitproto knows exactly how many bits a message will occupy at compile "
 "time, because all types are fix-sized. This may make backwards-"
@@ -397,7 +404,7 @@ msgstr ""
 "因为 bitproto 中所有类型都是定长的，因此 "
 "bitproto编译器在代码生成阶段就可以清楚地知道一个消息会在编码后占用多少比特。但是，这给协议的兼容性设计造成了一点麻烦。"
 
-#: ../../language.rst:438 48813bf9f81d48ab9e90d458daf33cde
+#: ../../language.rst:442 7078e4547b7d433c8b93df3a7ece21be
 msgid ""
 "It seems ok to add new fields to the end of a message in use, because the"
 " structures of existing fields are unchanged, the decoding end won't scan"
@@ -407,7 +414,7 @@ msgstr ""
 "如果我们把新增字段追加到消息的尾巴上，看上去似乎满足了协议的兼容性设计。因为已经存在的老的字段的结构是不变的，解码的一端不会扫描到新增的字段的数据，这样就实现了"
 " \"协议向后兼容\" 。"
 
-#: ../../language.rst:450 e4261f6b5f314512bd82afbffe1181ea
+#: ../../language.rst:454 404d3fdb75a5452191b2846bf3735601
 msgid ""
 "But this mechanism works only if there's no data after this message, "
 "that's to say, to make this mechanism work, this message should be a top-"
@@ -415,14 +422,14 @@ msgid ""
 "only be a communication packet itself."
 msgstr "但是这种机制只有当这个消息后面没有其他数据的时候管用。也就是说，只有这个消息是最顶级的消息的时候，没有其他消息引用这个消息作为一个字段类型的时候，这个机制才可以管用。"
 
-#: ../../language.rst:454 420c47446ada4a0dae392e24066e40c2
+#: ../../language.rst:458 17a6556c4e3d488fa45b43d6644866d9
 msgid ""
 "This mechanism fails with in-middle messages, for instance, we can't add "
 "new fields to the following message ``Middle``, it affects the decoding "
 "of other old fields, like the ``following_field``:"
 msgstr "就是说，这种机制对于 \"中间的消息\" 的解码会失败，因为会影响到消息后面的老字段的解码："
 
-#: ../../language.rst:469 a5d2fe3397024ccf8aa160bd00de8f31
+#: ../../language.rst:473 7e97109ee9324840a875680840098a92
 msgid ""
 "We have to break the traditional encoding layout of bitproto. The current"
 " mechanism of bitproto is to put additional bytes at the head of messages"
@@ -433,7 +440,7 @@ msgstr ""
 "我们不得不打破 bitproto "
 "的传统的编码结构。现在的机制是这样的，在编码后的消息字节流头部添加两个描述消息大小的字节，解码一端会首先查看这两个字节，并跳过冗余的比特，来继续解码后续的老字段数据。"
 
-#: ../../language.rst:474 3fbfa141deb3435cb74fa0f96d58ca5d
+#: ../../language.rst:478 b06aea7146724ba59913dffba8b4390c
 msgid ""
 "There are two kinds of messages in bitproto, extensible messages and "
 "traditional messages. For an extensible message, bitproto adds ``2`` "
@@ -443,11 +450,11 @@ msgstr ""
 "在 bitproto 中有两种消息，一种叫做可扩展消息，一种叫做传统的消息。bitproto 会对一个可扩展消息新增 ``2`` "
 "个字节到编码后的字节流中，对于传统的消息，不会新增任何额外字节。"
 
-#: ../../language.rst:478 47ee1ae2ee44421eb1bcae590cb8c258
+#: ../../language.rst:482 3953bce631b74e459c790c082f16ce01
 msgid "Bitproto introduces a symbol ``'`` to mark a message to be extensible:"
 msgstr "通过单引号 ``'`` 的语法来标记一个消息是可扩展的："
 
-#: ../../language.rst:490 029c6e92441c499d831c8e378b323a76
+#: ../../language.rst:494 2f72da7a797f4b1bbb05c1a870ad7032
 msgid ""
 "In the code above, ``ExtensibleMessage`` occupies ``1+16`` bits, and "
 "``TraditionalMessage`` still occupies ``1`` bit."
@@ -455,7 +462,7 @@ msgstr ""
 "在上面的代码中， ``ExtensibleMessage`` 将会占用 ``1+16`` 个比特，``TraditionalMessage`` "
 "仍然占用 ``1`` 个比特。"
 
-#: ../../language.rst:493 87b6caf9baa049cfa982c631b8363554
+#: ../../language.rst:497 3da4ba7e866846589c8d254956fd4df0
 msgid ""
 "By marking a message to be extensible via a single quote, we increase "
 "buffer size by two bytes in exchange for the possibility of adding new "
@@ -464,7 +471,7 @@ msgid ""
 " future."
 msgstr "通过一个单引号标记消息为可扩展消息的方式，我们增大了消息的长度，以换取未来添加字段的可能。你应该在编码大小和扩展性做权衡，只标记那些未来可能会扩展的消息。"
 
-#: ../../language.rst:497 415bca76c88c4df08868afa677c28485
+#: ../../language.rst:501 a6a12c5d52654d7091ab00745aabd168
 msgid ""
 "Back to the example of message ``Middle``, if this message in use is "
 "marked to be extensible in advance (by both encoding and decoding ends), "
@@ -473,31 +480,31 @@ msgstr ""
 "回到 ``Middle`` 消息的例子来，如果这个消息已经事先被标记为可扩展的 "
 "(通信的双方都标记)，那么向这个消息中新增一个新的字段，是不影响老的通信方的解码的："
 
-#: ../../language.rst:528 e363f77b31814e39bcdaf3c6021954bc
+#: ../../language.rst:532 8ae1f37f83a54aeb99cd858ad557d91e
 msgid ""
 "But decoding will go wrong if you exchange data between two ends, of "
 "which one marks this message as extensible, and the other marks it as "
 "traditional."
 msgstr "但是，如果通信的一方标记一个消息为可扩展的，另一方标记这个消息是传统的，那么通信将出错。"
 
-#: ../../language.rst:531 36c93eb691994f15b7b7db3972ccf65a
+#: ../../language.rst:535 6e6607b106934644b17f1932bf8081e1
 msgid ""
 "Extensible messages can also be nested declared, in the example below, "
 "message ``Outer`` occupies ``2+2`` bytes:"
 msgstr "可扩展消息也可以嵌套使用，例如下面的例子，消息 ``Outer`` 占用 ``2+2`` 个字节："
 
-#: ../../language.rst:540 4fcc21038d7147d9976abb9464e55738
+#: ../../language.rst:544 9ca2d9e5dba1451e9a344d9f52563db2
 msgid "In addtion, arrays are also supported to be marked as extensible:"
 msgstr "此外，数组也可以支持标记为可扩展数组："
 
-#: ../../language.rst:548 51382c3c9a2a4a17b5f406b193999a40
+#: ../../language.rst:552 226f2d93517d4a77a36585302a839370
 msgid ""
 "The decoding end will skip redundant elements if the encoder end "
 "increases the array's capacity. It is the same with extensible messages, "
 "an extensible array gains ``2`` bytes on its size."
 msgstr "当编码的一端扩大了数组的容量，解码的一端会跳过冗余的元素。和可扩展消息一样，可扩展数组会对原数组的占用的字节扩大 ``2`` 个字节。"
 
-#: ../../language.rst:553 3273c462a7244de18b1ab067264ba6f2
+#: ../../language.rst:557 d1cdf3fa8d224d0abceca4c457a9c723
 msgid ""
 "For enums, extensibility is not supported, because enum values are atomic"
 " in targeting languages, the decoding end holding an older version "
@@ -506,23 +513,23 @@ msgid ""
 " cast large values to unexpected smaller values."
 msgstr "对于枚举类型，扩展性是不支持的，因为枚举值在目标语言中一般是原子性的。如果编码一端增大了枚举的容量，持有较老版本协议的解码端会按照一个较小的类型解出一个错误的数据。"
 
-#: ../../language.rst:561 a84a874186e54c6eb40a556a522a9fec
+#: ../../language.rst:565 d93c54f68f1a4bcfa0ce17a359d1cdd2
 msgid "Option"
 msgstr "协议选项"
 
-#: ../../language.rst:563 445020f93e8a48329debce6d5c965ffc
+#: ../../language.rst:567 09b5427086f448c7aa76a26da09a0121
 msgid ""
 "The bitproto language supports a few options. We can define an option in "
 "global scope and message scopes, like this:"
 msgstr "bitproto 语言支持少量的选项。我们可以在协议文件的全局作用域或者消息中使用它们:"
 
-#: ../../language.rst:570 31f01dbf2f9947659b9622d2ea99da37
+#: ../../language.rst:574 872b818333a34dc0b01b9668e334ec32
 msgid ""
 "The value of an option can be an integer, string or boolean, according to"
 " the option itself."
 msgstr "协议选项的值可以是一个整数、字符串或者布尔，视选项的含义而定。"
 
-#: ../../language.rst:572 3bdd2279fac844da840dc68fe99573a1
+#: ../../language.rst:576 3fa22c64da3a4b84931a30c974d387b1
 msgid ""
 "For an example, there's an option named ``max_bytes`` to constraint "
 "message sizes, the bitproto compiler will report an error and refuse to "
@@ -530,114 +537,114 @@ msgid ""
 "value:"
 msgstr "距离来说，消息有一个选项叫做 ``max_bytes`` 来约束消息的大小，当我们设计的消息的大小超出这个选项配置的值时，编译器则会报错，拒绝编译："
 
-#: ../../language.rst:583 9598d9fed6244edf82b0d76fc978c4a5
+#: ../../language.rst:587 13518676f0524ac488a8268caa54504a
 msgid "Full table of options supported:"
 msgstr "所有的选项列表："
 
-#: ../../language.rst:588 078421f26e944c6a8be34b8cdc8114c8
+#: ../../language.rst:592 a2fccabb6e1546cda25ac6d1b303e231
 msgid "``c.struct_packing_alignment``"
 msgstr ""
 
-#: ../../language.rst 895d9464a6824e2e91548c95ed39f446
+#: ../../language.rst 7614f0a0a0a74d71bb600acc962262ae
 msgid "Proto level option, defaults to ``0``."
 msgstr "协议级别选项，默认是 ``0`` 。"
 
-#: ../../language.rst 68a46aaf8b644d8285a886471c8f5da7
+#: ../../language.rst 8398835550af4b55b008ece3c2619044
 msgid "The struct alignment of generated C structs."
 msgstr "生成的 C 代码中结构体对齐的字节数。"
 
-#: ../../language.rst 6675065040f3471ca26daf7dd0013ff6
+#: ../../language.rst 1515253a07774e4e87ea4c1762f006b1
 msgid "Setting to ``0`` means to left the attribute unset."
 msgstr "设置为 ``0`` 表示不设置。"
 
-#: ../../language.rst:592 8c60143efad745f882627b8e540f6c33
+#: ../../language.rst:596 dfbe6448268f488793dd67bb312c8a58
 msgid "``c.name_prefix``"
 msgstr ""
 
-#: ../../language.rst 0fe15eae72794bebaaa5e6d11286bd68
-#: 87a8a8b8c3eb4b6c8dd1638de4a84870 c76f24f8a52c4270b1245d98263e0464
+#: ../../language.rst 19c414082f814a7c828b9555c7ed4bd1
+#: 79e1a6f6b26c4dab9405711acc1c06e9 b4f10eb852f74543af36c0252c5e6510
 msgid "Proto level option, defaults to ``\"\"``."
 msgstr "协议级别选项，默认是 ``\"\"`` 。"
 
-#: ../../language.rst 0d78c485dd61460e98d33367ae99e97e
+#: ../../language.rst 995df387f525449c98299851286a7368
 msgid "Name prefix of generated C types's names."
 msgstr "生成的 C 代码中的类型命名前缀。"
 
-#: ../../language.rst:597 62e7988d097b4bf190ead85dee2db7c5
+#: ../../language.rst:601 755f8216586648b0b3556b7a7776c5c0
 msgid "``go.package_path``"
 msgstr ""
 
-#: ../../language.rst 228b2473afe74a6a9e163b80933bfa89
+#: ../../language.rst 16e24970a6b941239af4c18a940b575b
 msgid ""
 "Importing path of current bitproto. Used when another bitproto import "
 "this bitproto, the path of the import statement in Go will be replaced by"
 " this value if set."
 msgstr "当前 bitproto 作为一个被导入 bitproto 的文件时，在 Go 语言中的导入路径。"
 
-#: ../../language.rst:602 4093d90788bc43339acf1fc97ae63579
+#: ../../language.rst:606 4201999c65ce4e7089b9d739737200b2
 msgid "``py.module_name``"
 msgstr ""
 
-#: ../../language.rst a24ebb5604774a6989b394629e35b8de
+#: ../../language.rst f3a84e969e67439b95cdd6b1bd61d0bb
 msgid ""
 "Importing path of current bitproto. Used when another bitproto import "
 "this bitproto, the name to import in Python will be replaced by this "
 "value if set."
 msgstr "当前 bitproto 作为一个被导入 bitproto 的文件时，在 Python 语言中的导入名称。"
 
-#: ../../language.rst:607 997fc4f340674067bb1db8ee7503d476
+#: ../../language.rst:611 a16b7c6c353f4bff85e950868bff6ec4
 msgid "``max_bytes``"
 msgstr ""
 
-#: ../../language.rst d7022c74af794ab2bd5d6db6cdf9ce5c
+#: ../../language.rst aedf4f477a374df59723ac3e88c27385
 msgid "Message level option, defaults to ``0``."
 msgstr "消息级别选项，默认是 ``0`` 。"
 
-#: ../../language.rst 0a60a3a9636c42c984a7d6ceb28117fa
+#: ../../language.rst 5dd659df9b57465f9f65506bc4d31828
 msgid "Setting the maximum limit of number of bytes for current message."
 msgstr "设置当前消息编码后最大占用的字节数目。"
 
-#: ../../language.rst 3383302d5b1547cea2b1c38b3dc9532e
+#: ../../language.rst 8837a1a4f091465c86265901312d3b28
 msgid "Setting to ``0`` means no size limitation."
 msgstr "设置为 ``0`` 表示没有限制。"
 
-#: ../../language.rst:612 6e533786d5ee4b4195986d91e3d56bd1
+#: ../../language.rst:616 624730cc5ffa4c24a09a1a8997d32824
 msgid "Style Guide"
 msgstr "风格引导"
 
-#: ../../language.rst:614 913e506cacbb45168d4cf3d53c78e1e7
+#: ../../language.rst:618 c05a1d6ed7e4417280743e276d6c8591
 msgid ""
 "The bitproto compiler :ref:`contains a simple linter <compiler-linter>`, "
 "which gives warnings if given bitproto violates style guidelines."
 msgstr "bitproto 的编译器包含一个 :ref:`简单的风格检查器 <compiler-linter>` ，它会在运行编译器时做语言风格上的检查。"
 
-#: ../../language.rst:618 d933b3e9b3f14eb3b5643a5287204f06
+#: ../../language.rst:622 1be148c393db45429bcb727ffd95553b
 msgid "Indentation"
 msgstr "缩进"
 
-#: ../../language.rst:620 f8ec0d5e97ea42d99fcb09b84a5acd75
+#: ../../language.rst:624 e1d9ffc523c84bc9aa5063ede18901ea
 msgid ""
 "The parser ignores all whitespaces, but it's recommended to use 4 spaces "
 "as indentation."
 msgstr "语法解析器会忽略所有空白字符，推荐使用 4 个空格对齐。"
 
-#: ../../language.rst:624 5760f36623bb4dc0acf2681ed36a7a69
+#: ../../language.rst:628 5266fcd7113f44dbbea62710c4d8ba95
 msgid "Naming Style"
 msgstr "命名风格"
 
-#: ../../language.rst:626 b4e3fb94892d45708ab4efd50f67e844
+#: ../../language.rst:630 8d75b6f178b3434489d47d63c90e3920
 msgid "The bitproto naming guidelines are introduced in following code example:"
 msgstr "bitproto 推荐的命名风格如下面的 bitproto 代码所示："
 
-#: ../../language.rst:647 c21bf6a392454c31a91a4bb7f8aacd3b
+#: ../../language.rst:651 1327cba3a7d14e969b1b3ee4aeffa044
 msgid "Editor Integration"
 msgstr "编辑器集成"
 
-#: ../../language.rst:650 9b6c6958f211460fba67032df7568d4f
+#: ../../language.rst:654 835c8d3d3ef54b5f95a8982e37b7f8b5
 msgid "Vim"
 msgstr ""
 
-#: ../../language.rst:651 e60442e66fbf4c1882ca8d821771ea9d
+#: ../../language.rst:655 5a4e97973e144d95a1fd7c4f02c45249
 msgid ""
 "A syntax plugin for `vim <https://www.vim.org/>`_ is available from "
 "`bitproto's github repository "
@@ -647,4 +654,39 @@ msgstr ""
 "在 `bitproto 的 github 仓库 "
 "<https://github.com/hit9/bitproto/tree/master/editors/vim>`_ 中包含一个 `vim "
 "编辑器 <https://www.vim.org/>`_ 的语法高亮插件。"
+
+#: ../../language.rst:660 feb48e90635541dfbf0aef396b7cc460
+msgid "PyCharm"
+msgstr ""
+
+#: ../../language.rst:662 d8243880ab7145a0ad9b686f35e3dbc1
+#, fuzzy
+msgid ""
+"Syntax highlighting settings for PyCharm is available from `bitproto's "
+"github repository "
+"<https://github.com/hit9/bitproto/tree/master/editors/pycharm>`_."
+msgstr ""
+"在 `bitproto 的 github 仓库 "
+"<https://github.com/hit9/bitproto/tree/master/editors/vim>`_ 中包含一个 `vim "
+"编辑器 <https://www.vim.org/>`_ 的语法高亮插件。"
+
+#~ msgid "``int{8,16,32,64}``"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Signed integers. It's different from "
+#~ "unsigned integers that only four signed"
+#~ " integer types are supported: ``int8``, "
+#~ "``int16``, ``int32``, ``int64``. Signed "
+#~ "integers with non-integer number of "
+#~ "bytes are not supported. For examples,"
+#~ " ``int16`` is valid, but ``int3`` is"
+#~ " not. A signed integer ``int{n}`` "
+#~ "occupies ``n`` bits after encoded.,"
+#~ msgstr ""
+#~ "有符号的整数类型。和无符号的整数类型不同的是，只有四个整数类型是支持的，分别是 ``int8``, "
+#~ "``int16``, ``int32`` 和 ``int64`` "
+#~ "。非整数倍字节量大小的有符号的整数类型是不支持的。举例来说，``int16`` 是支持的，但是 ``int3``"
+#~ " 类型是不支持的。一个有符号的整数类型 ``int{n}`` 将会在编码后占用 ``n`` "
+#~ "个比特。"
 

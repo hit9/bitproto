@@ -2,6 +2,9 @@
 
 .. _version-0.4.6:
 
+Version 0.4.6
+-------------
+
 - Support signed integers with arbitrary bits, e.g. int24 PR#45.
 
 .. _version-0.4.5:

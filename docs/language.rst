@@ -38,18 +38,22 @@ An overview of bitproto basic types:
 ``uint{n}``
   | Unsigned bit-level integer type, where ``n`` ranges from ``1`` to ``64``.
     For examples: ``uint3``, ``uint13``, ``uint41``, ``uint64`` are all supported.
-    An unsigned integer ``uint{n}`` occupies extactly ``n`` bits after encoding.
+    An unsigned integer ``uint{n}`` occupies exactly ``n`` bits after encoding.
     In code generation, ``uint{n}`` is mapped to the smallest type in target language
     that can cover its size, for examples for C, ``uint3`` maps to ``uint8_t``, ``uint13``
     maps to ``uint16_t`` and so on.
 
-``int{8,16,32,64}``
-  | Signed integers. It's different from unsigned
-    integers that only four signed integer types are supported:
-    ``int8``, ``int16``, ``int32``, ``int64``. Signed integers with non-integer number
-    of bytes are not supported.
-    For examples, ``int16`` is valid, but ``int3`` is not.
-    A signed integer ``int{n}`` occupies ``n`` bits after encoded.,
+``int{n}``
+  | Signed bit-level integers, where ``n`` ranges from ``1`` to ``64``.
+    For examples: ``int24``, ``int32``, ``int64`` are all supported.
+    A signed integer ``int{n}`` occupies exactly ``n`` bits after encoding.
+    Similar to ``uint{n}``, in code generation, ``int{n}`` is mapped to the smallest type in target language
+    that can cover its size, for examples for C, ``int3`` maps to ``int8_t``, ``int13``
+    maps to ``int16_t`` and so on.
+    For a bitproto signed integer ``int{n}``, the ``nth`` bit is considered the sign bit, for instance,
+    the ``24th`` bit is the sign bit for a ``int24`` integer.
+    For bitproto <= v0.4.5, only ``int8,int16,int32,int64`` are supported.
+    But since bitproto 0.4.6, signed integers with arbitrary bits are supported.
 
 ``byte``
   | Byte type. A byte value occupies 8 bits.
