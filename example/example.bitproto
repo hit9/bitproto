@@ -84,7 +84,7 @@ message Flight {
 }
 
 message PressureSensor {
-    int24 pressure = 1;
+    int24[2] pressures = 1;
 }
 
 message Drone {

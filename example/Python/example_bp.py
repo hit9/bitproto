@@ -242,6 +242,9 @@ class Propeller(bp.MessageBase):
         ctx = bp.ProcessContext(False, s)
         self.bp_processor().process(ctx, bp.NIL_DATA_INDEXER, self)
 
+    def bp_process_int(self, di: bp.DataIndexer) -> None:
+        return
+
 
 @dataclass
 class Power(bp.MessageBase):
@@ -319,6 +322,9 @@ class Power(bp.MessageBase):
         ctx = bp.ProcessContext(False, s)
         self.bp_processor().process(ctx, bp.NIL_DATA_INDEXER, self)
 
+    def bp_process_int(self, di: bp.DataIndexer) -> None:
+        return
+
 
 @dataclass
 class Network(bp.MessageBase):
@@ -378,6 +384,9 @@ class Network(bp.MessageBase):
         assert len(s) >= self.BYTES_LENGTH, bp.NotEnoughBytes()
         ctx = bp.ProcessContext(False, s)
         self.bp_processor().process(ctx, bp.NIL_DATA_INDEXER, self)
+
+    def bp_process_int(self, di: bp.DataIndexer) -> None:
+        return
 
 
 @dataclass
@@ -444,6 +453,9 @@ class LandingGear(bp.MessageBase):
         ctx = bp.ProcessContext(False, s)
         self.bp_processor().process(ctx, bp.NIL_DATA_INDEXER, self)
 
+    def bp_process_int(self, di: bp.DataIndexer) -> None:
+        return
+
 
 @dataclass
 class Position(bp.MessageBase):
@@ -507,6 +519,9 @@ class Position(bp.MessageBase):
         assert len(s) >= self.BYTES_LENGTH, bp.NotEnoughBytes()
         ctx = bp.ProcessContext(False, s)
         self.bp_processor().process(ctx, bp.NIL_DATA_INDEXER, self)
+
+    def bp_process_int(self, di: bp.DataIndexer) -> None:
+        return
 
 
 @dataclass
@@ -575,6 +590,9 @@ class Pose(bp.MessageBase):
         ctx = bp.ProcessContext(False, s)
         self.bp_processor().process(ctx, bp.NIL_DATA_INDEXER, self)
 
+    def bp_process_int(self, di: bp.DataIndexer) -> None:
+        return
+
 
 @dataclass
 class Flight(bp.MessageBase):
@@ -639,13 +657,16 @@ class Flight(bp.MessageBase):
         ctx = bp.ProcessContext(False, s)
         self.bp_processor().process(ctx, bp.NIL_DATA_INDEXER, self)
 
+    def bp_process_int(self, di: bp.DataIndexer) -> None:
+        return
+
 
 @dataclass
 class PressureSensor(bp.MessageBase):
     # Number of bytes to serialize class PressureSensor
-    BYTES_LENGTH: ClassVar[int] = 3
+    BYTES_LENGTH: ClassVar[int] = 6
 
-    pressure: int = 0 # 24bit
+    pressures: List[int] = field(default_factory=lambda: [0 for _ in range(2)]) # 48bit
 
     def __post_init__(self):
         pass
@@ -656,18 +677,18 @@ class PressureSensor(bp.MessageBase):
 
     def bp_processor(self) -> bp.Processor:
         field_processors: List[bp.Processor] = [
-            bp.MessageFieldProcessor(1, bp.Int(24)),
+            bp.MessageFieldProcessor(1, bp.Array(False, 2, bp.Int(24))),
         ]
-        return bp.MessageProcessor(False, 24, field_processors)
+        return bp.MessageProcessor(False, 48, field_processors)
 
     def bp_set_byte(self, di: bp.DataIndexer, lshift: int, b: bp.byte) -> None:
         if di.field_number == 1:
-            self.pressure |= bp.int32((int(b) << lshift))
+            self.pressures[di.i(0)] |= bp.int32((int(b) << lshift))
         return
 
     def bp_get_byte(self, di: bp.DataIndexer, rshift: int) -> bp.byte:
         if di.field_number == 1:
-            return (self.pressure >> rshift) & 255
+            return (self.pressures[di.i(0)] >> rshift) & 255
         return bp.byte(0)  # Won't reached
 
     def bp_get_accessor(self, di: bp.DataIndexer) -> bp.Accessor:
@@ -691,11 +712,18 @@ class PressureSensor(bp.MessageBase):
         ctx = bp.ProcessContext(False, s)
         self.bp_processor().process(ctx, bp.NIL_DATA_INDEXER, self)
 
+    def bp_process_int(self, di: bp.DataIndexer) -> None:
+        if di.field_number == 1:
+            if (self.pressures[di.i(0)] >> 23) & 1:
+                self.pressures[di.i(0)] |= -16777216
+            return
+        return
+
 
 @dataclass
 class Drone(bp.MessageBase):
     # Number of bytes to serialize class Drone
-    BYTES_LENGTH: ClassVar[int] = 68
+    BYTES_LENGTH: ClassVar[int] = 71
 
     status: Union[int, DroneStatus] = DroneStatus.DRONE_STATUS_UNKNOWN
     # This field is a proxy to hold integer value of enum field 'status'
@@ -706,7 +734,7 @@ class Drone(bp.MessageBase):
     power: Power = field(default_factory=Power) # 11bit
     network: Network = field(default_factory=Network) # 68bit
     landing_gear: LandingGear = field(default_factory=LandingGear) # 2bit
-    pressure_sensor: PressureSensor = field(default_factory=PressureSensor) # 24bit
+    pressure_sensor: PressureSensor = field(default_factory=PressureSensor) # 48bit
 
     def __post_init__(self):
         # initialize handling of enum field 'status' as `enum.IntEnum`
@@ -737,7 +765,7 @@ class Drone(bp.MessageBase):
             bp.MessageFieldProcessor(7, LandingGear().bp_processor()),
             bp.MessageFieldProcessor(8, PressureSensor().bp_processor()),
         ]
-        return bp.MessageProcessor(False, 540, field_processors)
+        return bp.MessageProcessor(False, 564, field_processors)
 
     def bp_set_byte(self, di: bp.DataIndexer, lshift: int, b: bp.byte) -> None:
         if di.field_number == 1:
@@ -783,3 +811,6 @@ class Drone(bp.MessageBase):
         assert len(s) >= self.BYTES_LENGTH, bp.NotEnoughBytes()
         ctx = bp.ProcessContext(False, s)
         self.bp_processor().process(ctx, bp.NIL_DATA_INDEXER, self)
+
+    def bp_process_int(self, di: bp.DataIndexer) -> None:
+        return

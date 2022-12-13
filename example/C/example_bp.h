@@ -120,14 +120,14 @@ struct Flight {
 };
 
 // Number of bytes to encode struct PressureSensor
-#define BYTES_LENGTH_PRESSURE_SENSOR 3
+#define BYTES_LENGTH_PRESSURE_SENSOR 6
 
 struct PressureSensor {
-    int32_t pressure; // 24bit
+    int32_t pressures[2]; // 48bit
 };
 
 // Number of bytes to encode struct Drone
-#define BYTES_LENGTH_DRONE 68
+#define BYTES_LENGTH_DRONE 71
 
 struct Drone {
     DroneStatus status; // 3bit
@@ -137,7 +137,7 @@ struct Drone {
     struct Power power; // 11bit
     struct Network network; // 68bit
     struct LandingGear landing_gear; // 2bit
-    struct PressureSensor pressure_sensor; // 24bit
+    struct PressureSensor pressure_sensor; // 48bit
 };
 
 // Encode struct Propeller to given buffer s.

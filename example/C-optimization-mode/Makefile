@@ -11,4 +11,4 @@ run: build
 clean:
 	rm example_bp.h example_bp.c example
 
-.PHONY: build run clean 
+.PHONY: build run clean
