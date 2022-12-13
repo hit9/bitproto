@@ -259,6 +259,9 @@ void BpEndecodeInt(int size, int nbits, struct BpProcessorContext *ctx,
     // Copy bits without concern about sign bit.
     BpEndecodeBaseType(nbits, ctx, data);
 
+    // Signed integer's sign bit processing is only about decoding.
+    if (ctx->is_encode) return;
+
     // For int8/16/32/64 signed integers, the sign bit is already on the
     // most-left bit position. There's no additional actions should be done.
     if (nbits == 8 || nbits == 16 || nbits == 32 || nbits == 64) return;
