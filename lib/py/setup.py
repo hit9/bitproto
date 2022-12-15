@@ -2,7 +2,7 @@ from setuptools import setup  # type: ignore
 
 setup(
     name="bitprotolib",
-    version="0.1.2",
+    version="1.0.0",
     url="https://github.com/hit9/bitproto",
     author="Chao Wang",
     author_email="hit9@icloud.com",
