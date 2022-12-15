@@ -1,5 +1,12 @@
 .. currentmodule:: bitproto
 
+Version 1.0.0
+-------------
+
+.. _version-1.0.0:
+
+- First fully release version
+
 .. _version-0.4.6:
 
 Version 0.4.6
