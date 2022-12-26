@@ -1,0 +1,31 @@
+{
+    "name": "bitproto",
+    "displayName": "bitproto",
+    "description": "Syntax support for bitproto",
+    "version": "1.0.0",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/hit9/bitproto.git"
+    },
+    "publisher": "hit9",
+    "icon": "bitproto-logo.png",
+    "engines": {
+        "vscode": "^1.51.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [{
+            "id": "bitproto",
+            "aliases": ["bitproto", "bitproto"],
+            "extensions": [".bitproto"],
+            "configuration": "./language-configuration.json"
+        }],
+        "grammars": [{
+            "language": "bitproto",
+            "scopeName": "source.bitproto",
+            "path": "./syntaxes/bitproto.tmLanguage.json"
+        }]
+    }
+}
