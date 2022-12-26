@@ -661,3 +661,9 @@ PyCharm
 
 Syntax highlighting settings for PyCharm is available from
 `bitproto's github repository <https://github.com/hit9/bitproto/tree/master/editors/pycharm>`_.
+
+VSCode
+""""""
+
+Install the extension from marketplace:
+`bitproto vscode extension <https://marketplace.visualstudio.com/items?itemName=hit9.bitproto>`_.

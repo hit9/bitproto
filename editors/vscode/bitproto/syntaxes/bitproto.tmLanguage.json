@@ -1,0 +1,114 @@
+{
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "bitproto",
+    "patterns": [
+        {
+            "include": "#comments"
+        },
+        {
+            "include": "#keywords"
+        },
+        {
+            "include": "#strings"
+        },
+        {
+            "include": "#constants"
+        },
+        {
+            "include": "#types"
+        },
+        {
+            "include": "#defintions"
+        },
+        {
+            "include": "#identifiers"
+        }
+    ],
+    "repository": {
+        "keywords": {
+            "patterns": [
+                {
+                    "name": "keyword.other.bitproto",
+                    "match": "\\b(proto|import|const|option)\\b"
+                },
+                {
+                    "name": "storage.type.bitproto",
+                    "match": "\\b(typedef|type|message|enum|bool|byte)\\b"
+                }
+            ]
+        },
+        "comments": {
+            "name": "comment.line.double-slash.bitproto",
+            "begin": "//",
+            "end": "$"
+        },
+        "strings": {
+            "name": "string.quoted.double.bitproto",
+            "begin": "\"",
+            "end": "\"",
+            "patterns": [
+                {
+                    "name": "constant.character.escape.bitproto",
+                    "match": "\\\\."
+                }
+            ]
+        },
+        "constants": {
+            "patterns": [
+                {
+                    "name": "constant.numeric.integer.bitproto",
+                    "match": "\\b[0-9]+\\b"
+                },
+                {
+                    "name": "constant.numeric.integer.hexadecimal.bitproto",
+                    "match": "\\b0x[0-9A-Fa-f]+\\b"
+                },
+                {
+                    "name": "constant.language.bitproto",
+                    "match": "\\b(true)|(false)|(yes)|(no)\\b"
+                }
+            ]
+        },
+        "types": {
+            "patterns": [
+                {
+                    "name": "storage.type.bitproto",
+                    "match": "\\b(typedef|type|message|enum|bool|byte)\\b"
+                },
+                {
+                    "name": "storage.type.bitproto",
+                    "match": "\\buint\\d+\\b"
+                },
+                {
+                    "name": "storage.type.bitproto",
+                    "match": "\\bint\\d+\\b"
+                }
+            ]
+        },
+        "defintions": {
+            "patterns": [
+                {
+                    "name": "entity.name.type.bitproto",
+                    "match": "(?<=const)\\s\\w+"
+                },
+                {
+                    "name": "entity.name.attribute-name.bitproto",
+                    "match": "(?<=option)\\s\\w+"
+                },
+                {
+                    "name": "entity.name.type.bitproto",
+                    "match": "(?<=message)\\s\\w+"
+                },
+                {
+                    "name": "entity.name.type.bitproto",
+                    "match": "(?<=enum)\\s\\w+"
+                }
+            ]
+        },
+        "identifiers": {
+            "name": "variable.name.bitproto",
+            "match": "\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b"
+        }
+    },
+    "scopeName": "source.bitproto"
+}
