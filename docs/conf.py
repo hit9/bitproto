@@ -25,6 +25,10 @@ html_theme_options = {
     "extra_nav_links": {
         "bitproto @ github": "https://github.com/hit9/bitproto",
         "bitproto @ pypi": "https://pypi.org/project/bitproto",
+        "bitprotolib (c)": "https://github.com/hit9/bitproto/tree/master/lib/c",
+        "bitprotolib (go)": "https://github.com/hit9/bitproto/tree/master/lib/go",
+        "bitprotolib (python)": "https://pypi.org/project/bitprotolib",
+        "editor plugins": "https://github.com/hit9/bitproto/tree/master/editors",
         "中文文档": "https://bitproto.readthedocs.io/zh/latest",
     },
 }
