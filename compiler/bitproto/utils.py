@@ -126,7 +126,7 @@ class cached_property:
         ...
 
     @overload
-    def __get__(self, obj: I, cls: T[I]) -> O:
+    def __get__(self, obj: I, cls: T[I]) -> O:  # type: ignore
         ...
 
     def __get__(self, obj: Optional[I], cls: T[I]) -> Union["cached_property", O]:
