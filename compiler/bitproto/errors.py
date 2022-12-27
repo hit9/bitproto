@@ -16,7 +16,7 @@ Errors.
 """
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, ClassVar, Optional, Type as T, TypeVar
+from typing import TYPE_CHECKING, Any, Optional, Type as T, TypeVar
 
 from bitproto.utils import Color, colored, overridable, override, write_stderr
 
@@ -40,7 +40,7 @@ class Base:
 
     @overridable
     def _message_prefix(self) -> str:
-        pass
+        raise NotImplementedError
 
     def __str__(self) -> str:
         description = self.description

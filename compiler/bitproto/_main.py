@@ -137,6 +137,7 @@ def main(
         fatal(str(error))
 
     # Lint
+    lint_warnings = 0
     if not disable_linter:
         lint_warnings = lint(proto)
 

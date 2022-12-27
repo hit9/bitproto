@@ -761,7 +761,7 @@ class Array(CompositeType, ExtensibleType):
     Constraint: Capacity of array should be smaller than 65536.
     """
 
-    element_type: Type = _TYPE_MISSING
+    element_type: Type = dataclass_field(default_factory=lambda: _TYPE_MISSING)
     cap: int = 0
 
     @classmethod
@@ -817,7 +817,7 @@ class Alias(Type, BoundDefinition):
     :param type: The referenced type.
     """
 
-    type: Type = _TYPE_MISSING
+    type: Type = dataclass_field(default_factory=lambda: _TYPE_MISSING)
 
     def __repr__(self) -> str:
         return f"<alias {self.name}>"
@@ -884,7 +884,7 @@ class Enum(BoundScope, SingleType):
     Enum in bitproto constraints to uint type.
     """
 
-    type: Uint = _UINT_MISSING
+    type: Uint = dataclass_field(default_factory=lambda: _UINT_MISSING)
 
     def __repr__(self) -> str:
         return f"<enum {self.name}>"
@@ -934,7 +934,7 @@ class Enum(BoundScope, SingleType):
 @frozen
 @dataclass
 class MessageField(Field):
-    type: Type = Type()
+    type: Type = dataclass_field(default_factory=Type)
     number: int = 0
 
     def __repr__(self) -> str:
