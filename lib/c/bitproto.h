@@ -22,6 +22,8 @@
 extern "C" {
 #endif
 
+#define __BITPROTO_VERSION__ "1.0.1"
+
 ////////////////////
 // Macros
 ////////////////////

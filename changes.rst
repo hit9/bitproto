@@ -1,5 +1,12 @@
 .. currentmodule:: bitproto
 
+Version 1.0.1
+-------------
+
+.. _version-1.0.1
+
+- Add support for Python 3.11
+
 Version 1.0.0
 -------------
 
