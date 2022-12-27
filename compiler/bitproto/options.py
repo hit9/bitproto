@@ -6,7 +6,7 @@ Options bitproto supports.
 """
 
 from dataclasses import dataclass
-from typing import Callable, Optional, Tuple, Union, cast
+from typing import Callable, Optional, Tuple, Union
 
 Value = Union[bool, int, str]
 Validator = Callable[..., bool]

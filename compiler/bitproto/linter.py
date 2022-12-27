@@ -6,8 +6,7 @@ Built-in linter, skipable but not configurable.
 """
 
 from abc import abstractmethod
-from dataclasses import dataclass
-from typing import Callable, Generic, List, Optional, Tuple, Type as T, TypeVar
+from typing import Generic, List, Optional, Tuple, Type as T, TypeVar
 
 from bitproto._ast import (
     Alias,
@@ -18,7 +17,6 @@ from bitproto._ast import (
     EnumField,
     Message,
     MessageField,
-    Node,
     Proto,
 )
 from bitproto.errors import (
@@ -31,7 +29,6 @@ from bitproto.errors import (
     LintWarning,
     MessageFieldNameNotSnake,
     MessageNameNotPascal,
-    Warning,
     warning,
 )
 from bitproto.utils import pascal_case, snake_case
