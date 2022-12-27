@@ -8,6 +8,7 @@ from typing import (
     Any,
     Callable,
     List,
+    NoReturn,
     Optional,
     Type as T,
     TypeVar,
@@ -292,7 +293,7 @@ def write_stderr(s: str) -> None:
     sys.stderr.write(s + "\n")
 
 
-def fatal(s: str = "", code: int = 1) -> None:
+def fatal(s: str = "", code: int = 1) -> NoReturn:
     """Exit the whole program with given code and message."""
     if s:
         write_stderr(s)
