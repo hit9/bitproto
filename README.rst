@@ -167,26 +167,6 @@ We can have an overview of the generated code for the C language:
 
 You can checkout directory `example <example>`_ for a larger example.
 
-Documentation and Links
------------------------
-
-Documentation:
-
-- Website: https://bitproto.readthedocs.io
-- Documentation in Chinese: https://bitproto.readthedocs.io/zh/latest
-- `Quick start tutorial <https://bitproto.readthedocs.io/en/latest/quickstart.html>`_
-- `Grammar guide, in one page <https://bitproto.readthedocs.io/en/latest/language.html>`_
-
-Faq:
-
-- `What’s the advantage of this over a bit field? <https://bitproto.readthedocs.io/en/latest/faq.html#what-s-the-advantage-of-this-over-a-bit-field>`_
-
-Editor syntax highlighting plugins:
-
-- `Vim Plugin <editors/vim>`_
-- `PyCharm Settings <editors/pycharm>`_
-- `VS Code Extension <https://marketplace.visualstudio.com/items?itemName=hit9.bitproto>`_.
-
 Why bitproto ?
 --------------
 
@@ -267,6 +247,30 @@ Known Shortcomes
   types in bitproto are fixed-sized, how-to-encode can be determined earlier at code-generation
   time. This mode gives a huge performance improvement, but I still haven't found a way to
   make it work with bitproto's extensibility mechanism together.
+
+Documentation and Links
+-----------------------
+
+Documentation:
+
+- Website: https://bitproto.readthedocs.io
+- Documentation in Chinese: https://bitproto.readthedocs.io/zh/latest
+- `Quick start tutorial <https://bitproto.readthedocs.io/en/latest/quickstart.html>`_
+- `Grammar guide, in one page <https://bitproto.readthedocs.io/en/latest/language.html>`_
+
+Editor syntax highlighting plugins:
+
+- `Vim Plugin <editors/vim>`_
+- `PyCharm Settings <editors/pycharm>`_
+- `VS Code Extension <https://marketplace.visualstudio.com/items?itemName=hit9.bitproto>`_.
+
+Faq:
+
+- `What’s the advantage of this over a bit field? <https://bitproto.readthedocs.io/en/latest/faq.html#what-s-the-advantage-of-this-over-a-bit-field>`_
+
+Blog posts:
+
+- Dev notes in Chinese: https://writings.sh/post/bitproto-notes
 
 License
 -------
