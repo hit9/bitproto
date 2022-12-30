@@ -1,13 +1,12 @@
 The bit level data interchange format
 =====================================
 
-.. image:: https://img.shields.io/badge/license-BSD3-brightgreen
 .. image:: https://github.com/hit9/bitproto/workflows/bitproto%20ci/badge.svg
-      :target: https://github.com/hit9/bitproto/actions?query=workflow%3A%22bitproto+ci%22
+   :target: https://github.com/hit9/bitproto/actions?query=workflow%3A%22bitproto+ci%22
 .. image:: https://readthedocs.org/projects/bitproto/badge/?version=latest
    :target: https://bitproto.readthedocs.io/en/latest/?badge=latest
-.. image:: https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg
-      :target: https://saythanks.io/to/hit9
+.. image:: https://img.shields.io/badge/license-BSD3-brightgreen
+   :target: https://bitproto.readthedocs.io/en/latest/license.html
 
 Introduction
 ------------
@@ -20,6 +19,8 @@ The protocol describing syntax looks like the great
 but in bit level:
 
 .. sourcecode:: bitproto
+
+   proto example
 
    message Data {
        uint3 the = 1
@@ -43,16 +44,12 @@ This image shows the layout of data fields in the encoded bytes buffer:
 Features
 ---------
 
-- Supports bit level data serialization.
+- Supports bit level data serialization,  **born for embedded development**.
 - Supports protocol :ref:`extensiblity <language-guide-extensibility>`, for backward-compatibility.
-- Very easy to :ref:`start <quickstart>`:
-   - :ref:`Protocol syntax <language-guide>` is similar to the well-known protobuf.
-   - Generating code with very simple serialization api.
-- Supports the following languages:
-   - :ref:`C (ANSI C)<quickstart-c-guide>` - No dynamic memory allocation.
-   - :ref:`Go <quickstart-go-guide>` - No reflection or type assertions.
-   - :ref:`Python <quickstart-python-guide>` - No magic :)
-- Blazing fast encoding/decoding (:ref:`benchmark <performance-benchmark>`).
+- Easy to start, syntax is similar to the well-known protobuf.
+- Supports languages: - :ref:`C <quickstart-c-guide>` (without dynamic memory allocation), :ref:`Go <quickstart-go-guide>`, - :ref:`Python <quickstart-python-guide>`.
+- Blazing fast encoding/decoding, :ref:`benchmark <performance-benchmark>`.
+- We can **clearly know the size and arrangement** of encoded data, fields are compact without a single bit gap.
 
 Code Example
 ------------
@@ -61,16 +58,25 @@ Code example to encode bitproto message in C:
 
 .. sourcecode:: c
 
-    struct Data data = {};
+    struct Data data = {.the = 7,
+                        .bit = 7,
+                        .level = 31,
+                        .data = 15,
+                        .interchange = 2047,
+                        .format = 63};
     unsigned char s[BYTES_LENGTH_DATA] = {0};
     EncodeData(&data, s);
+    // length of s is 4, and the hex format is
+    // 0xFF 0xFF 0xFF 0xFF
 
 And the decoding example:
 
 .. sourcecode:: c
 
-    struct Data data = {};
-    DecodeData(&data, s);
+    struct Data d = {};
+    DecodeData(&d, s);
+    // values of d's fields is now:
+    // 7 7 31 15 2047 63
 
 Simple and green, isn't it?
 
