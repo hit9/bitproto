@@ -7,6 +7,9 @@
 // Implementations
 ///////////////////
 
+// BpMin returns the smaller one int.
+static inline int BpMin(int a, int b) { return (a < b) ? a : b; }
+
 // BpMinTriple returns the smaller one of given three integers.
 static inline int BpMinTriple(int a, int b, int c) {
     return (a < b) ? ((a < c) ? a : c) : ((b < c) ? b : c);
@@ -175,6 +178,16 @@ unsigned char BpCopyBits(unsigned char dst, unsigned char src, int dst_bit_idx,
     return dst | (BpSmartShift(src, shift) & mask);
 }
 
+// BpCopyBitsDst0 is a special case implementation of BpCopyBits when
+// dst_bit_idx == 0. We reimplement a new simpler function BpCopyBitsDst0 for
+// the little performance, since there's no call to BpSmartShift and shifts
+// becomes more simple.
+unsigned char BpCopyBitsDst0(unsigned char dst, unsigned char src, int shift,
+                             int c) {
+    unsigned char mask = (1 << c) - 1;
+    return dst | ((src >> shift) & mask);
+}
+
 // BpCopyBufferBits copy number of nbits from source buffer src to destination
 // buffer dst.
 // The argument n is the total number of bits to copy.
@@ -210,12 +223,48 @@ void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src,
         // Number of bits to copy this iteration.
         int c = 0;
 
-        if (dst_bit_im == 0 && src_bit_im == 0 && n >= 8) {
-            // Assign directly if already aligned to 0.
-            dst_ptr[0] = src_ptr[0];
-            c = 8;
-        } else if (dst_bit_im != 0 || bits < 8) {
-            // Copy on single byte.
+        if (dst_bit_im == 0) {
+            // When dst_bit_im == 0, we can directly ASSGIN values from shifted
+            // src byte.
+            if (bits >= 32) {
+                // Copy as an uint32 integer.
+                // This way, performance faster x2 than BpCopyBits iteration.
+                // An alternative statment for the assignment is:
+                //  ((uint32_t *)dst_ptr)[0] = (*(uint32_t *)(src_ptr)) >>
+                //  shift;
+                // That's the array indexing assignment, however it's slower
+                // than the pointer version, at least on my benchmark on a stm32
+                // board. 150us vs 120us.
+                *(uint32_t *)dst_ptr = (*(uint32_t *)(src_ptr)) >> shift;
+                c = 32 - shift;
+            } else if (bits >= 16) {
+                // Copy as an uint16 integer.
+                *(uint16_t *)dst_ptr = (*(uint16_t *)(src_ptr)) >> shift;
+                c = 16 - shift;
+            } else if (bits >= 8) {
+                // Copy as an unsigned char.
+                dst_ptr[0] = (src_ptr[0] >> shift) & 0xff;
+                c = 8 - shift;
+            } else {
+                // When bits < 8 and dst_bit_im == 0
+                // Copy partial bits inside a byte.
+                // For the original statement:
+                // c = BpMinTriple(8 - dst_bit_im, 8 - src_bit_im, n);
+                // since dst_bit_im is 0 and bits <8, then 8-dst_bit_im is 8 and
+                // n <8 , the 8-dst_bit_im won't be the smallest, we just pick
+                // function BpMin over BpMinTriple for the little little
+                // performance improvement.
+                c = BpMin(8 - src_bit_im, n);
+                // Also, when dst_bit_im is 0, we pick function BpCopyBitsDst0
+                // over BpCopyBits, for performance.
+                dst_ptr[0] =
+                    BpCopyBitsDst0(dst_ptr[0], src_ptr[0], src_bit_im, c);
+            }
+        } else {
+            // When dst_bit_im != 0, we have to copy partial bits inside a
+            // single byte.
+            // But, after some rounds of this case, dst_bit_im would goes to 0,
+            // for large sized types.
 
             // Number of bits to copy.
             // 8-dst_bit_im ensures the destination space is enough.
@@ -224,23 +273,6 @@ void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src,
             c = BpMinTriple(8 - dst_bit_im, 8 - src_bit_im, n);
             dst_ptr[0] =
                 BpCopyBits(dst_ptr[0], src_ptr[0], dst_bit_im, src_bit_im, c);
-
-        } else if (bits >= 32) {
-            // Copy as an uint32 integer.
-            // This way, performance faster x2 than BpCopyBits iteration.
-            *((uint32_t *)dst_ptr) = (*((uint32_t *)(src_ptr))) >> shift;
-
-            c = 32 - shift;
-        } else if (bits >= 16) {
-            // Copy as an uint16 integer.
-            *((uint16_t *)dst_ptr) = (*(uint16_t *)(src_ptr)) >> shift;
-
-            c = 16 - shift;
-        } else if (bits >= 8) {
-            // Copy as an unsigned char.
-            dst_ptr[0] = (src_ptr[0] >> shift) & 0xff;
-
-            c = 8 - shift;
         }
 
         // Maintain in(de)crements.
