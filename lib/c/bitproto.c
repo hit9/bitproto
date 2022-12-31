@@ -121,28 +121,30 @@ void BpEndecodeArray(struct BpArrayDescriptor *descriptor,
 
     int element_nbits = descriptor->element_type.nbits;
     int element_size = descriptor->element_type.size;
+
     unsigned char *data_ptr = (unsigned char *)data;
 
     // Process array elements.
     for (int k = 0; k < descriptor->cap; k++) {
         // Lookup the address of this element's data.
-        void *element_data = (void *)(data_ptr + k * element_size);
 
         switch (descriptor->element_type.flag) {
             case BP_TYPE_BOOL:
             case BP_TYPE_UINT:
             case BP_TYPE_BYTE:
             case BP_TYPE_ENUM:
-                BpEndecodeBaseType(element_nbits, ctx, element_data);
+                BpEndecodeBaseType(element_nbits, ctx, data_ptr);
                 break;
             case BP_TYPE_INT:
-                BpEndecodeInt(element_size, element_nbits, ctx, element_data);
+                BpEndecodeInt(element_size, element_nbits, ctx, data_ptr);
                 break;
             case BP_TYPE_ALIAS:
             case BP_TYPE_MESSAGE:
-                descriptor->element_type.processor(element_data, ctx);
+                descriptor->element_type.processor(data_ptr, ctx);
                 break;
         }
+
+        data_ptr += element_size;
     }
 
     // Skip redundant bits if decoding.
