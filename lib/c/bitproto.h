@@ -213,11 +213,6 @@ void BpJsonFormatMessageField(struct BpMessageFieldDescriptor *descriptor,
 void BpJsonFormatArray(struct BpArrayDescriptor *descriptor,
                        struct BpJsonFormatContext *ctx, void *data);
 
-// Utils
-
-int BpMinTriple(int a, int b, int c);
-unsigned char BpSmartShift(unsigned char n, int k);
-
 #if defined(__cplusplus)
 }
 #endif
