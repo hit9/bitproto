@@ -15,6 +15,9 @@ def main() -> None:
         m.e[i] = i + 118
     for i in range(7):
         m.f[i] = bp.Note(i, False, [j for j in range(1, 8)])
+    for i in range(7):
+        for j in range(7):
+            m.t[i][j] = i + j + 129
     m.g = bp.Note(2, False, [7, 2, 3, 4, 5, 6, 7])
     s = m.encode()
 
@@ -43,6 +46,9 @@ def main() -> None:
         assert m1.g.arr[j] == m.g.arr[j]
     assert m1.g.number == m.g.number
     assert m1.g.ok == m.g.ok
+    for i in range(7):
+        for j in range(7):
+            assert m1.t[i][j] == m.t[i][j]
 
 
 if __name__ == "__main__":

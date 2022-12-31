@@ -1,4 +1,3 @@
-
 #include <assert.h>
 #include <stdio.h>
 
@@ -15,6 +14,8 @@ int main(void) {
     for (int i = 0; i < 7; i++)
         m.f[i] = (struct Note){i, false, {1, 2, 3, 4, 5, 6, 7}};
     m.g = (struct Note){2, false, {7, 2, 3, 4, 5, 6, 7}};
+    for (int i = 0; i < 7; i++)
+        for (int j = 0; j < 7; j++) m.t[i][j] = (int32_t)(i + j + 129);
     unsigned char s[BYTES_LENGTH_M] = {0};
     EncodeM(&m, s);
 
@@ -38,6 +39,8 @@ int main(void) {
     for (int j = 0; j < 7; j++) assert(m1.g.arr[j] == m.g.arr[j]);
     assert(m1.g.number == m.g.number);
     assert(m1.g.ok == m.g.ok);
+    for (int i = 0; i < 7; i++)
+        for (int j = 0; j < 7; j++) assert(m1.t[i][j] = m.t[i][j]);
 
     return 0;
 }
