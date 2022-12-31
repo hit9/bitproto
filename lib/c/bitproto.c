@@ -185,11 +185,13 @@ void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src,
     // n is the number of bits remaining to process.
     while (n > 0) {
         // Byte index in destination buffer.
+        // `>> 3` just is faster `/8`
         int dst_byte_idx = dst_bit_idx >> 3;
         // Byte index in source buffer.
         int src_byte_idx = src_bit_idx >> 3;
 
         // Remainder of destination bit index on 8.
+        // `& 7` just is faster `%8`
         int dst_bit_im = dst_bit_idx & 7;
         // Remainder of source bit index on 8.
         int src_bit_im = src_bit_idx & 7;
@@ -226,20 +228,12 @@ void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src,
         } else if (bits >= 32) {
             // Copy as an uint32 integer.
             // This way, performance faster x2 than BpCopyBits iteration.
-            uint32_t v32 = (*((uint32_t *)(src_ptr))) >> shift;
-            unsigned char *ptr = (unsigned char *)(&v32);
-            dst_ptr[0] = ptr[0];
-            dst_ptr[1] = ptr[1];
-            dst_ptr[2] = ptr[2];
-            dst_ptr[3] = ptr[3];
+            *((uint32_t *)dst_ptr) = (*((uint32_t *)(src_ptr))) >> shift;
 
             c = 32 - shift;
         } else if (bits >= 16) {
             // Copy as an uint16 integer.
-            uint16_t v16 = (*(uint16_t *)(src_ptr)) >> shift;
-            unsigned char *ptr = (unsigned char *)(&v16);
-            dst_ptr[0] = ptr[0];
-            dst_ptr[1] = ptr[1];
+            *((uint16_t *)dst_ptr) = (*(uint16_t *)(src_ptr)) >> shift;
 
             c = 16 - shift;
         } else if (bits >= 8) {
