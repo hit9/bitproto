@@ -161,31 +161,26 @@ void BpEndecodeArray(struct BpArrayDescriptor *descriptor,
 
 // BpCopyBits copy number of c bits from given char src to given char dst.
 // Returns the new value of dst.
-// The argument src_bit_idx is the index in the single byte src to start
-// coping. The argument dst_bit_idx is the index in the single byte dst to
+//  dst |= BpCopyBits(src, di, si, c)
+// The argument si is the index in the single byte src to start
+// coping. The argument di is the index in the single byte dst to
 // start coping.
-unsigned char BpCopyBits(unsigned char dst, unsigned char src, int dst_bit_idx,
-                         int src_bit_idx, int c) {
-    // The number of bits to shift char src.
-    // If given src_bit_idx is smaller than dst_bit_idx, performs a shift
-    // left. Else shifts right.
-    int shift = src_bit_idx - dst_bit_idx;
-    // Mask to clear char src's right remaining bits all to 0.
-    // The following expression gives a number like 0b11110000.
-    unsigned char mask = (1 << (dst_bit_idx + c)) - (1 << dst_bit_idx);
-    // Result of a new dst byte.
-    // dst | (src >> shift) & mask
-    return dst | (BpSmartShift(src, shift) & mask);
+unsigned char BpCopyBits(unsigned char src, int di, int si, int c) {
+    // Explaination:
+    // src >> si << di  Margins byte src with byte dst at position di.
+    // this also clears the right bits up to position si.
+    // ~(0xff << di << c) Gives a mask to clear higher not-need bits all to 0,
+    // e.g. 00001111 on di=4, c=4;
+    return ((src >> si << di) & ~(0xff << di << c));
 }
 
 // BpCopyBitsDst0 is a special case implementation of BpCopyBits when
-// dst_bit_idx == 0. We reimplement a new simpler function BpCopyBitsDst0 for
+// di == 0. We reimplement a new simpler function BpCopyBitsDst0 for
 // the little performance, since there's no call to BpSmartShift and shifts
 // becomes more simple.
-unsigned char BpCopyBitsDst0(unsigned char dst, unsigned char src, int shift,
+unsigned char BpCopyBitsDst0(unsigned char dst, unsigned char src, int si,
                              int c) {
-    unsigned char mask = (1 << c) - 1;
-    return dst | ((src >> shift) & mask);
+    return dst | ((src >> si) & ~(0xff << c));
 }
 
 // BpCopyBufferBits copy number of nbits from source buffer src to destination
@@ -265,8 +260,7 @@ void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src,
             // 8-src_bit_im ensures the source space is enough.
             // nbits ensures the total bits remaining enough.
             c = BpMinTriple(8 - dst_bit_im, 8 - src_bit_im, n);
-            dst_ptr[0] =
-                BpCopyBits(dst_ptr[0], src_ptr[0], dst_bit_im, src_bit_im, c);
+            dst_ptr[0] |= BpCopyBits(src_ptr[0], dst_bit_im, src_bit_im, c);
         }
 
         // Maintain in(de)crements.
