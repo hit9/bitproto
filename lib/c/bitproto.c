@@ -276,7 +276,10 @@ void BpEndecodeInt(int size, int nbits, struct BpProcessorContext *ctx,
 
     // For int8/16/32/64 signed integers, the sign bit is already on the
     // most-left bit position. There's no additional actions should be done.
-    if (nbits == 8 || nbits == 16 || nbits == 32 || nbits == 64) return;
+    // Explaination for the statement: nbits & 7 == 0
+    // Faster than nbits % 8 == 0
+    // Faster than nbits == 8 || nbits == 16 || nbits == 32 || nbits == 64
+    if ((nbits & 7) == 0) return;
 
     // Number of bits occupied in C intXX_t types.
     int n = 8 * size;
