@@ -15,15 +15,6 @@ static inline int BpMinTriple(int a, int b, int c) {
     return (a < b) ? ((a < c) ? a : c) : ((b < c) ? b : c);
 }
 
-// BpSmartShift shifts given unsigned char n by k.
-// If k is larger than 0, performs a right shift, otherwise left.
-static inline unsigned char BpSmartShift(unsigned char n, int k) {
-    // Quote: If the value of the right operand is negative or is greater
-    // than or equal to the width of the promoted left operand, the behavior
-    // is undefined.
-    return (k > 0) ? (n >> k) : ((k == 0) ? n : (n << (0 - k)));
-}
-
 // BpEndecodeMessage process given message at data with provided message
 // descriptor. It iterates all message fields to process.
 void BpEndecodeMessage(struct BpMessageDescriptor *descriptor,
