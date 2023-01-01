@@ -159,30 +159,6 @@ void BpEndecodeArray(struct BpArrayDescriptor *descriptor,
     }
 }
 
-// BpCopyBits copy number of c bits from given char src to given char dst.
-// Returns the new value of dst.
-//  dst |= BpCopyBits(src, di, si, c)
-// The argument si is the index in the single byte src to start
-// coping. The argument di is the index in the single byte dst to
-// start coping.
-unsigned char BpCopyBits(unsigned char src, int di, int si, int c) {
-    // Explaination:
-    // src >> si << di  Margins byte src with byte dst at position di.
-    // this also clears the right bits up to position si.
-    // ~(0xff << di << c) Gives a mask to clear higher not-need bits all to 0,
-    // e.g. 00001111 on di=4, c=4;
-    return ((src >> si << di) & ~(0xff << di << c));
-}
-
-// BpCopyBitsDst0 is a special case implementation of BpCopyBits when
-// di == 0. We reimplement a new simpler function BpCopyBitsDst0 for
-// the little performance, since there's no call to BpSmartShift and shifts
-// becomes more simple.
-unsigned char BpCopyBitsDst0(unsigned char dst, unsigned char src, int si,
-                             int c) {
-    return dst | ((src >> si) & ~(0xff << c));
-}
-
 // BpCopyBufferBits copy number of nbits from source buffer src to destination
 // buffer dst.
 // The argument n is the total number of bits to copy.
@@ -223,7 +199,7 @@ void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src,
             // src byte.
             if (bits >= 32) {
                 // Copy as an uint32 integer.
-                // This way, performance faster x2 than BpCopyBits iteration.
+                // This way, performance faster x2 than bits copy approach.
                 ((uint32_t *)dst_ptr)[0] = (*(uint32_t *)(src_ptr)) >> shift;
                 c = 32 - shift;
             } else if (bits >= 16) {
@@ -244,10 +220,8 @@ void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src,
                 // function BpMin over BpMinTriple for the little little
                 // performance improvement.
                 c = BpMin(8 - src_bit_im, n);
-                // Also, when dst_bit_im is 0, we pick function BpCopyBitsDst0
-                // over BpCopyBits, for performance.
-                dst_ptr[0] =
-                    BpCopyBitsDst0(dst_ptr[0], src_ptr[0], src_bit_im, c);
+                // Also, when dst_bit_im is 0, special case of next case.
+                dst_ptr[0] |= ((src_ptr[0] >> src_bit_im) & ~(0xff << c));
             }
         } else {
             // When dst_bit_im != 0, we have to copy partial bits inside a
@@ -260,7 +234,15 @@ void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src,
             // 8-src_bit_im ensures the source space is enough.
             // nbits ensures the total bits remaining enough.
             c = BpMinTriple(8 - dst_bit_im, 8 - src_bit_im, n);
-            dst_ptr[0] |= BpCopyBits(src_ptr[0], dst_bit_im, src_bit_im, c);
+
+            // Explaination:
+            // src >> si << di  Margins byte src with byte dst at position di.
+            // this also clears the right bits up to position si.
+            // ~(0xff << di << c) Gives a mask to clear higher not-need bits all
+            // to 0, e.g. 00001111 on di=4, c=4;
+            // Finally: dst |= src to copy bits.
+            dst_ptr[0] |= ((src_ptr[0] >> src_bit_im << dst_bit_im) &
+                           ~(0xff << dst_bit_im << c));
         }
 
         // Maintain in(de)crements.
