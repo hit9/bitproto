@@ -181,11 +181,11 @@ void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src, int di,
             if (bits >= 32) {
                 // Copy as an uint32 integer.
                 // This way, performance faster x2 than bits copy approach.
-                ((uint32_t *)dst)[0] = (*(uint32_t *)(src)) >> si;
+                ((uint32_t *)dst)[0] = ((uint32_t *)(src))[0] >> si;
                 c = 32 - si;
             } else if (bits >= 16) {
                 // Copy as an uint16 integer.
-                ((uint16_t *)dst)[0] = (*(uint16_t *)(src)) >> si;
+                ((uint16_t *)dst)[0] = ((uint16_t *)(src))[0] >> si;
                 c = 16 - si;
             } else if (bits >= 8) {
                 // Copy as an unsigned char.
