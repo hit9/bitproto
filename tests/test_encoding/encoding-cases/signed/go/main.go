@@ -23,6 +23,8 @@ func main() {
 	y.X.C = 23009
 	y.Xs[0].A = 1
 	y.Xs[1].A = -2008
+	y.P = 0
+	y.Q = -1
 
 	s := y.Encode()
 
@@ -41,4 +43,6 @@ func main() {
 	assert(y1.X.C == y.X.C)
 	assert(y1.Xs[0].A == y.Xs[0].A)
 	assert(y1.Xs[1].A == y.Xs[1].A)
+	assert(y1.P == y.P)
+	assert(y1.Q == y.Q)
 }
