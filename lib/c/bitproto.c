@@ -222,7 +222,12 @@ void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src, int di,
             // ~(0xff << di << c) Gives a mask to clear higher not-need bits
             // all to 0, e.g. 00001111 on di=4, c=4; Finally: dst |= src to
             // copy bits.
-            dst[0] |= ((src[0] >> si << di) & ~(0xff << di << c));
+            // The ch is the first byte at pointer src. If this byte is Zero,
+            // then there's no need to copy anything, just count c. The
+            // benchmark on stm32 seems performance is improved by 2us by adding
+            // an if statement that skip the Zero byte.
+            unsigned char ch = src[0];
+            if (ch) dst[0] |= ((ch >> si << di) & ~(0xff << di << c));
         }
 
         // Maintain in(de)crements.
