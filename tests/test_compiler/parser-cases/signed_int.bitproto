@@ -10,4 +10,6 @@ message Test {
     int24 b = 2;
     int37[10] c = 3;
     Foo[2] d = 4;
+    int1 e = 5;
+    int2 f = 6;
 }
