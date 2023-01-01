@@ -229,17 +229,11 @@ void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src,
             if (bits >= 32) {
                 // Copy as an uint32 integer.
                 // This way, performance faster x2 than BpCopyBits iteration.
-                // An alternative statment for the assignment is:
-                //  ((uint32_t *)dst_ptr)[0] = (*(uint32_t *)(src_ptr)) >>
-                //  shift;
-                // That's the array indexing assignment, however it's slower
-                // than the pointer version, at least on my benchmark on a stm32
-                // board. 150us vs 120us.
-                *(uint32_t *)dst_ptr = (*(uint32_t *)(src_ptr)) >> shift;
+                ((uint32_t *)dst_ptr)[0] = (*(uint32_t *)(src_ptr)) >> shift;
                 c = 32 - shift;
             } else if (bits >= 16) {
                 // Copy as an uint16 integer.
-                *(uint16_t *)dst_ptr = (*(uint16_t *)(src_ptr)) >> shift;
+                ((uint16_t *)dst_ptr)[0] = (*(uint16_t *)(src_ptr)) >> shift;
                 c = 16 - shift;
             } else if (bits >= 8) {
                 // Copy as an unsigned char.
