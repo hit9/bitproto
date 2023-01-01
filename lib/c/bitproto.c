@@ -150,96 +150,85 @@ void BpEndecodeArray(struct BpArrayDescriptor *descriptor,
     }
 }
 
-// BpCopyBufferBits copy number of nbits from source buffer src to destination
-// buffer dst.
-// The argument n is the total number of bits to copy.
-// The argument src_bit_idx is the index to start coping on buffer src.
-// The argument dst_bit_idx is the index to start coping on buffer dst.
-void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src,
-                      int dst_bit_idx, int src_bit_idx) {
+// BpCopyBufferBits copy number of nbits from source buffer src to
+// destination buffer dst. The argument n is the total number of bits to
+// copy. The argument si is the index to start coping on buffer src.
+// The argument di is the index to start coping on buffer dst.
+void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src, int di,
+                      int si) {
     // n is the number of bits remaining to process.
-    while (n > 0) {
-        // Byte index in destination buffer.
-        // `>> 3` just is faster `/8`
-        int dst_byte_idx = dst_bit_idx >> 3;
-        // Byte index in source buffer.
-        int src_byte_idx = src_bit_idx >> 3;
+    while (n) {
+        // Byte index in buffer is (idx >> 3)
+        // where `>> 3` is faster than `/8`.
+        dst += (di >> 3);
+        src += (si >> 3);
 
-        // Remainder of destination bit index on 8.
-        // `& 7` just is faster `%8`
-        int dst_bit_im = dst_bit_idx & 7;
-        // Remainder of source bit index on 8.
-        int src_bit_im = src_bit_idx & 7;
+        // Bit position inside current buffer byte.
+        // where `& 7` faster than `%8`
+        di &= 7;
+        si &= 7;
 
-        // Pointer to the destination to write this iteration.
-        unsigned char *dst_ptr = dst + dst_byte_idx;
-        // Pointer to the destination to read this iteration.
-        unsigned char *src_ptr = src + src_byte_idx;
-
-        // Number of bits to shift if goes into the optimized batch writing
-        // branch.
-        int shift = src_bit_im;
-        // The capacity of bits for batch writing.
-        int bits = n + shift;
-
-        // Number of bits to copy this iteration.
+        // c is the number of bits to copy in this iteration.
         int c = 0;
 
-        if (dst_bit_im == 0) {
-            // When dst_bit_im == 0, we can directly ASSGIN values from shifted
-            // src byte.
+        if (di == 0) {
+            // When di == 0, we can directly ASSGIN values from
+            // shifted src byte.
+
+            // Number of bits to process during batch copy.
+            int bits = n + si;
+
             if (bits >= 32) {
                 // Copy as an uint32 integer.
                 // This way, performance faster x2 than bits copy approach.
-                ((uint32_t *)dst_ptr)[0] = (*(uint32_t *)(src_ptr)) >> shift;
-                c = 32 - shift;
+                ((uint32_t *)dst)[0] = (*(uint32_t *)(src)) >> si;
+                c = 32 - si;
             } else if (bits >= 16) {
                 // Copy as an uint16 integer.
-                ((uint16_t *)dst_ptr)[0] = (*(uint16_t *)(src_ptr)) >> shift;
-                c = 16 - shift;
+                ((uint16_t *)dst)[0] = (*(uint16_t *)(src)) >> si;
+                c = 16 - si;
             } else if (bits >= 8) {
                 // Copy as an unsigned char.
-                dst_ptr[0] = (src_ptr[0] >> shift) & 0xff;
-                c = 8 - shift;
+                dst[0] = (src[0] >> si) & 0xff;
+                c = 8 - si;
             } else {
-                // When bits < 8 and dst_bit_im == 0
+                // When bits < 8 and di == 0
                 // Copy partial bits inside a byte.
                 // For the original statement:
-                // c = BpMinTriple(8 - dst_bit_im, 8 - src_bit_im, n);
-                // since dst_bit_im is 0 and bits <8, then 8-dst_bit_im is 8 and
-                // n <8 , the 8-dst_bit_im won't be the smallest, we just pick
-                // function BpMin over BpMinTriple for the little little
-                // performance improvement.
-                c = BpMin(8 - src_bit_im, n);
-                // Also, when dst_bit_im is 0, special case of next case.
-                dst_ptr[0] |= ((src_ptr[0] >> src_bit_im) & ~(0xff << c));
+                // c = BpMinTriple(8 - di, 8 - si, n);
+                // since di is 0 and bits <8, then 8-di is 8
+                // and n <8 , the 8-di won't be the smallest, we
+                // just pick function BpMin over BpMinTriple for the little
+                // little performance improvement.
+                c = BpMin(8 - si, n);
+                // Also, when di is 0, special case of next case.
+                dst[0] |= ((src[0] >> si) & ~(0xff << c));
             }
         } else {
-            // When dst_bit_im != 0, we have to copy partial bits inside a
+            // When di != 0, we have to copy partial bits inside a
             // single byte.
-            // But, after some rounds of this case, dst_bit_im would goes to 0,
+            // But, after some rounds of this case, di would goes to 0,
             // for large sized types.
 
             // Number of bits to copy.
-            // 8-dst_bit_im ensures the destination space is enough.
-            // 8-src_bit_im ensures the source space is enough.
+            // 8-di ensures the destination space is enough.
+            // 8-si ensures the source space is enough.
             // nbits ensures the total bits remaining enough.
-            c = BpMinTriple(8 - dst_bit_im, 8 - src_bit_im, n);
+            c = BpMinTriple(8 - di, 8 - si, n);
 
             // Explaination:
-            // src >> si << di  Margins byte src with byte dst at position di.
-            // this also clears the right bits up to position si.
-            // ~(0xff << di << c) Gives a mask to clear higher not-need bits all
-            // to 0, e.g. 00001111 on di=4, c=4;
-            // Finally: dst |= src to copy bits.
-            dst_ptr[0] |= ((src_ptr[0] >> src_bit_im << dst_bit_im) &
-                           ~(0xff << dst_bit_im << c));
+            // src >> si << di  Margins byte src with byte dst at position
+            // di. this also clears the right bits up to position si.
+            // ~(0xff << di << c) Gives a mask to clear higher not-need bits
+            // all to 0, e.g. 00001111 on di=4, c=4; Finally: dst |= src to
+            // copy bits.
+            dst[0] |= ((src[0] >> si << di) & ~(0xff << di << c));
         }
 
         // Maintain in(de)crements.
         n -= c;
-        dst_bit_idx += c;
-        src_bit_idx += c;
+        di += c;
+        si += c;
     }
 }
 
@@ -255,10 +244,10 @@ void BpEndecodeBaseType(int nbits, struct BpProcessorContext *ctx, void *data) {
 
 // BpEndecodeInt process signed integer at given data.
 // The most left bit (Nth bit for int{N}) of a signed integer indicates the
-// sign. For example 00000101 is a negative integer for a int3, but a positive
-// integer for a int4.
-// Where nbits is the number of bits for this bitproto signed integer, for
-// int{N}, its the N, the argument size is the number of bytes in C language.
+// sign. For example 00000101 is a negative integer for a int3, but a
+// positive integer for a int4. Where nbits is the number of bits for this
+// bitproto signed integer, for int{N}, its the N, the argument size is the
+// number of bytes in C language.
 void BpEndecodeInt(int size, int nbits, struct BpProcessorContext *ctx,
                    void *data) {
     // Copy bits without concern about sign bit.
@@ -283,9 +272,9 @@ void BpEndecodeInt(int size, int nbits, struct BpProcessorContext *ctx,
         //    Recover the original integer is: V | mask.
         //
         // Why not use V << 8 >> 8 solution here? This depends on arithmetic
-        // shifting. Which propagates the sign bit on the left vacant bits when
-        // doing a right shift. But C standard points that this behavior is
-        // implementation-defined.
+        // shifting. Which propagates the sign bit on the left vacant bits
+        // when doing a right shift. But C standard points that this
+        // behavior is implementation-defined.
         case 8:  // int8_t
             if (((*(int8_t *)data) >> (nbits - 1)) & 1) {
                 *(int8_t *)data |= ~((1 << nbits) - 1);
