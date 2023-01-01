@@ -266,6 +266,8 @@ void BpEndecodeBaseType(int nbits, struct BpProcessorContext *ctx, void *data) {
 // The most left bit (Nth bit for int{N}) of a signed integer indicates the
 // sign. For example 00000101 is a negative integer for a int3, but a positive
 // integer for a int4.
+// Where nbits is the number of bits for this bitproto signed integer, for
+// int{N}, its the N, the argument size is the number of bytes in C language.
 void BpEndecodeInt(int size, int nbits, struct BpProcessorContext *ctx,
                    void *data) {
     // Copy bits without concern about sign bit.
@@ -276,13 +278,21 @@ void BpEndecodeInt(int size, int nbits, struct BpProcessorContext *ctx,
 
     // For int8/16/32/64 signed integers, the sign bit is already on the
     // most-left bit position. There's no additional actions should be done.
-    // Explaination for the statement: nbits & 7 == 0
-    // Faster than nbits % 8 == 0
-    // Faster than nbits == 8 || nbits == 16 || nbits == 32 || nbits == 64
-    if ((nbits & (nbits - 1)) == 0) return;
+    // Explaination for the statement:
+    //   ((nbits & 7) == 0) && (nbits & (nbits - 1)) == 0
+    // The first part: (nbits & 7) == 0 is the faster version of nbits % 8 == 0,
+    // which test if nbits is one of 8/16/24/32/40/48/56/64.
+    // The second part: nbits & (nbits - 1) test if nbits is 2's power:
+    // 1/2/4/8/16/32/64.
+    // So this statement test if nbits is one of 8/16/32/64.
+    // On my benchmark on stm32, this is faster than:
+    // nbits == 8 || nbits == 16 || nbits == 32 || nbits == 64
+    // Whats'more, the (nbits & 7) case runs fast and fails easily, should be
+    // placed on the left.
+    if (((nbits & 7) == 0) && (nbits & (nbits - 1)) == 0) return;
 
-    // Number of bits occupied in C intXX_t types.
-    int n = 8 * size;
+    // Number of bits occupied in C intXX_t types, aka: n = size * 8
+    int n = size << 3;
 
     switch (n) {
         // Suppose pointer data points to a int24 value V:
