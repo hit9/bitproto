@@ -28,7 +28,7 @@ Embedded
 '''''''''
 
 I have tested the benchmark on a `stm32 board <https://www.st.com/content/st_com/en/products/microcontrollers-microprocessors/stm32-32-bit-arm-cortex-mcus/stm32-mainstream-mcus/stm32f1-series/stm32f103/stm32f103ze.html>`_
-(arm cortex-m3 72MHz cpu) for a `100 bytes` message, a single encoding/decoding call costs around ``130~140 μs``, and can be optimized to around ``15 μs``
+(arm cortex-m3 72MHz cpu) for a `100 bytes` message, a single encoding/decoding call costs around ``120~140 μs``, and can be optimized to around ``15 μs``
 in :ref:`the optimization mode <performance-optimization-mode>`.
 
 You can checkout `the detail benchmark results for stm32 on github <https://github.com/hit9/bitproto/tree/master/benchmark/stm32>`_.
