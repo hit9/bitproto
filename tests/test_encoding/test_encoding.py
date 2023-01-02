@@ -131,3 +131,7 @@ def test_encoding_enums() -> None:
 
 def test_encoding_signed() -> None:
     _TestCase("signed").run()
+
+
+def test_encoding_complexx() -> None:
+    _TestCase("complexx", support_optimization_mode=False).run()

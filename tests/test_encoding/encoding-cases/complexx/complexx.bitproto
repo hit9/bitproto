@@ -1,0 +1,99 @@
+proto large
+
+enum E1 : uint1 {
+    E11 = 0
+}
+
+enum E2 : uint2 {
+    E21 = 0
+    E22 = 1
+}
+
+enum E3 : uint3 {
+    E31 = 0
+    E32 = 1
+    E33 = 2
+}
+
+enum E4 : uint4 {
+    E41 = 0
+    E42 = 1
+    E43 = 2
+    E44 = 3
+}
+
+enum E8 : uint8 {
+    E81 = 0
+    E82 = 1
+    E83 = 2
+    E84 = 3
+    E85 = 4
+}
+
+
+type Bytes = byte[14]
+type ArrayInt7 = int7[49]
+type Row = int24[11]
+type Table = Row[13]
+
+type RowX = int24[11]'
+type TableX = Row[13]'
+
+message X' {
+    uint63 b = 2;
+    bool a = 1;
+    uint64 c = 3;
+
+    enum E9 : uint3 {
+        E91 = 0
+        E92 = 2
+    }
+
+    int62 d = 4;
+    E9 e9 = 10;
+}
+
+message M1 {
+    uint1 a = 1;
+    bool b = 2;
+    uint3 c = 3;
+
+    message M2 {
+        // Empty
+    }
+    M2 d = 4;
+
+
+    message M3 {
+        uint7 e = 1;
+        int23 f = 2;
+        Bytes bytes = 3;
+        M2 m2 = 4;
+        Table table = 5;
+        E8 e8 = 7;
+    }
+
+    M3 m3 = 5;
+
+    X x = 6;
+
+    message M4 {
+        int3 xy = 1;
+        bool b = 2;
+    }
+
+    M4 m4 = 7;
+
+    int17[5]' o = 8;
+
+    M3[8] m = 9;
+
+    ArrayInt7 n = 10;
+
+    TableX tx = 11;
+
+    E1 e1 = 12;
+
+    Bytes t = 13
+}
+
