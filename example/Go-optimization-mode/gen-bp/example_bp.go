@@ -12,7 +12,7 @@ import (
 var formatInt = strconv.FormatInt
 var jsonMarshal = json.Marshal
 
-type Timestamp int64 // 64bit
+type Timestamp int32 // 32bit
 
 type TernaryInt32 [3]int32 // 96bit
 
@@ -170,13 +170,13 @@ type Network struct {
 	// Degree of signal, between 1~10.
 	Signal uint8 `json:"signal"` // 4bit
 	// The timestamp of the last time received heartbeat packet.
-	HeartbeatAt Timestamp `json:"heartbeat_at"` // 64bit
+	HeartbeatAt Timestamp `json:"heartbeat_at"` // 32bit
 }
 
 // Number of bytes to serialize struct Network
-const BYTES_LENGTH_NETWORK uint32 = 9
+const BYTES_LENGTH_NETWORK uint32 = 5
 
-func (m *Network) Size() uint32 { return 9 }
+func (m *Network) Size() uint32 { return 5 }
 
 // Returns string representation for struct Network.
 func (m *Network) String() string {
@@ -274,15 +274,15 @@ type Drone struct {
 	Flight Flight `json:"flight"` // 288bit
 	Propellers [4]Propeller `json:"propellers"` // 48bit
 	Power Power `json:"power"` // 11bit
-	Network Network `json:"network"` // 68bit
+	Network Network `json:"network"` // 36bit
 	LandingGear LandingGear `json:"landing_gear"` // 2bit
 	PressureSensor PressureSensor `json:"pressure_sensor"` // 48bit
 }
 
 // Number of bytes to serialize struct Drone
-const BYTES_LENGTH_DRONE uint32 = 71
+const BYTES_LENGTH_DRONE uint32 = 67
 
-func (m *Drone) Size() uint32 { return 71 }
+func (m *Drone) Size() uint32 { return 67 }
 
 // Returns string representation for struct Drone.
 func (m *Drone) String() string {
@@ -292,7 +292,7 @@ func (m *Drone) String() string {
 
 // Encode struct Drone to bytes buffer.
 func (m *Drone) Encode() []byte {
-	s := make([]byte, 71)
+	s := make([]byte, 67)
 	s[0] |= (byte(m.Status) ) & 7
 	s[0] |= (byte(m.Position.Latitude) << 3) & 248
 	s[1] |= (byte(m.Position.Latitude) >> 5) & 7
@@ -422,27 +422,19 @@ func (m *Drone) Encode() []byte {
 	s[59] |= (byte(m.Network.HeartbeatAt >> 16) >> 6) & 3
 	s[59] |= (byte(m.Network.HeartbeatAt >> 24) << 2) & 252
 	s[60] |= (byte(m.Network.HeartbeatAt >> 24) >> 6) & 3
-	s[60] |= (byte(m.Network.HeartbeatAt >> 32) << 2) & 252
-	s[61] |= (byte(m.Network.HeartbeatAt >> 32) >> 6) & 3
-	s[61] |= (byte(m.Network.HeartbeatAt >> 40) << 2) & 252
-	s[62] |= (byte(m.Network.HeartbeatAt >> 40) >> 6) & 3
-	s[62] |= (byte(m.Network.HeartbeatAt >> 48) << 2) & 252
-	s[63] |= (byte(m.Network.HeartbeatAt >> 48) >> 6) & 3
-	s[63] |= (byte(m.Network.HeartbeatAt >> 56) << 2) & 252
-	s[64] |= (byte(m.Network.HeartbeatAt >> 56) >> 6) & 3
-	s[64] |= (byte(m.LandingGear.Status) << 2) & 12
-	s[64] |= (byte(m.PressureSensor.Pressures[0]) << 4) & 240
-	s[65] |= (byte(m.PressureSensor.Pressures[0]) >> 4) & 15
-	s[65] |= (byte(m.PressureSensor.Pressures[0] >> 8) << 4) & 240
-	s[66] |= (byte(m.PressureSensor.Pressures[0] >> 8) >> 4) & 15
-	s[66] |= (byte(m.PressureSensor.Pressures[0] >> 16) << 4) & 240
-	s[67] |= (byte(m.PressureSensor.Pressures[0] >> 16) >> 4) & 15
-	s[67] |= (byte(m.PressureSensor.Pressures[1]) << 4) & 240
-	s[68] |= (byte(m.PressureSensor.Pressures[1]) >> 4) & 15
-	s[68] |= (byte(m.PressureSensor.Pressures[1] >> 8) << 4) & 240
-	s[69] |= (byte(m.PressureSensor.Pressures[1] >> 8) >> 4) & 15
-	s[69] |= (byte(m.PressureSensor.Pressures[1] >> 16) << 4) & 240
-	s[70] |= (byte(m.PressureSensor.Pressures[1] >> 16) >> 4) & 15
+	s[60] |= (byte(m.LandingGear.Status) << 2) & 12
+	s[60] |= (byte(m.PressureSensor.Pressures[0]) << 4) & 240
+	s[61] |= (byte(m.PressureSensor.Pressures[0]) >> 4) & 15
+	s[61] |= (byte(m.PressureSensor.Pressures[0] >> 8) << 4) & 240
+	s[62] |= (byte(m.PressureSensor.Pressures[0] >> 8) >> 4) & 15
+	s[62] |= (byte(m.PressureSensor.Pressures[0] >> 16) << 4) & 240
+	s[63] |= (byte(m.PressureSensor.Pressures[0] >> 16) >> 4) & 15
+	s[63] |= (byte(m.PressureSensor.Pressures[1]) << 4) & 240
+	s[64] |= (byte(m.PressureSensor.Pressures[1]) >> 4) & 15
+	s[64] |= (byte(m.PressureSensor.Pressures[1] >> 8) << 4) & 240
+	s[65] |= (byte(m.PressureSensor.Pressures[1] >> 8) >> 4) & 15
+	s[65] |= (byte(m.PressureSensor.Pressures[1] >> 16) << 4) & 240
+	s[66] |= (byte(m.PressureSensor.Pressures[1] >> 16) >> 4) & 15
 	return s
 }
 
@@ -576,29 +568,21 @@ func (m *Drone) Decode(s []byte) {
 	m.Network.HeartbeatAt |= Timestamp(byte(s[59] << 6) & 192) << 16
 	m.Network.HeartbeatAt |= Timestamp(byte(s[59] >> 2) & 63) << 24
 	m.Network.HeartbeatAt |= Timestamp(byte(s[60] << 6) & 192) << 24
-	m.Network.HeartbeatAt |= Timestamp(byte(s[60] >> 2) & 63) << 32
-	m.Network.HeartbeatAt |= Timestamp(byte(s[61] << 6) & 192) << 32
-	m.Network.HeartbeatAt |= Timestamp(byte(s[61] >> 2) & 63) << 40
-	m.Network.HeartbeatAt |= Timestamp(byte(s[62] << 6) & 192) << 40
-	m.Network.HeartbeatAt |= Timestamp(byte(s[62] >> 2) & 63) << 48
-	m.Network.HeartbeatAt |= Timestamp(byte(s[63] << 6) & 192) << 48
-	m.Network.HeartbeatAt |= Timestamp(byte(s[63] >> 2) & 63) << 56
-	m.Network.HeartbeatAt |= Timestamp(byte(s[64] << 6) & 192) << 56
-	m.LandingGear.Status |= LandingGearStatus(byte(s[64] >> 2) & 3)
-	m.PressureSensor.Pressures[0] |= int32(byte(s[64] >> 4) & 15)
-	m.PressureSensor.Pressures[0] |= int32(byte(s[65] << 4) & 240)
-	m.PressureSensor.Pressures[0] |= int32(byte(s[65] >> 4) & 15) << 8
-	m.PressureSensor.Pressures[0] |= int32(byte(s[66] << 4) & 240) << 8
-	m.PressureSensor.Pressures[0] |= int32(byte(s[66] >> 4) & 15) << 16
-	m.PressureSensor.Pressures[0] |= int32(byte(s[67] << 4) & 240) << 16
+	m.LandingGear.Status |= LandingGearStatus(byte(s[60] >> 2) & 3)
+	m.PressureSensor.Pressures[0] |= int32(byte(s[60] >> 4) & 15)
+	m.PressureSensor.Pressures[0] |= int32(byte(s[61] << 4) & 240)
+	m.PressureSensor.Pressures[0] |= int32(byte(s[61] >> 4) & 15) << 8
+	m.PressureSensor.Pressures[0] |= int32(byte(s[62] << 4) & 240) << 8
+	m.PressureSensor.Pressures[0] |= int32(byte(s[62] >> 4) & 15) << 16
+	m.PressureSensor.Pressures[0] |= int32(byte(s[63] << 4) & 240) << 16
 	m.PressureSensor.Pressures[0] <<= 8
 	m.PressureSensor.Pressures[0] >>= 8
-	m.PressureSensor.Pressures[1] |= int32(byte(s[67] >> 4) & 15)
-	m.PressureSensor.Pressures[1] |= int32(byte(s[68] << 4) & 240)
-	m.PressureSensor.Pressures[1] |= int32(byte(s[68] >> 4) & 15) << 8
-	m.PressureSensor.Pressures[1] |= int32(byte(s[69] << 4) & 240) << 8
-	m.PressureSensor.Pressures[1] |= int32(byte(s[69] >> 4) & 15) << 16
-	m.PressureSensor.Pressures[1] |= int32(byte(s[70] << 4) & 240) << 16
+	m.PressureSensor.Pressures[1] |= int32(byte(s[63] >> 4) & 15)
+	m.PressureSensor.Pressures[1] |= int32(byte(s[64] << 4) & 240)
+	m.PressureSensor.Pressures[1] |= int32(byte(s[64] >> 4) & 15) << 8
+	m.PressureSensor.Pressures[1] |= int32(byte(s[65] << 4) & 240) << 8
+	m.PressureSensor.Pressures[1] |= int32(byte(s[65] >> 4) & 15) << 16
+	m.PressureSensor.Pressures[1] |= int32(byte(s[66] << 4) & 240) << 16
 	m.PressureSensor.Pressures[1] <<= 8
 	m.PressureSensor.Pressures[1] >>= 8
 }

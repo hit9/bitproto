@@ -18,7 +18,7 @@
 extern "C" {
 #endif
 
-typedef int64_t Timestamp; // 64bit
+typedef int32_t Timestamp; // 32bit
 
 typedef int32_t TernaryInt32[3]; // 96bit
 
@@ -73,13 +73,13 @@ struct Power {
 };
 
 // Number of bytes to encode struct Network
-#define BYTES_LENGTH_NETWORK 9
+#define BYTES_LENGTH_NETWORK 5
 
 struct Network {
     // Degree of signal, between 1~10.
     uint8_t signal; // 4bit
     // The timestamp of the last time received heartbeat packet.
-    Timestamp heartbeat_at; // 64bit
+    Timestamp heartbeat_at; // 32bit
 };
 
 // Number of bytes to encode struct LandingGear
@@ -127,7 +127,7 @@ struct PressureSensor {
 };
 
 // Number of bytes to encode struct Drone
-#define BYTES_LENGTH_DRONE 71
+#define BYTES_LENGTH_DRONE 67
 
 struct Drone {
     DroneStatus status; // 3bit
@@ -135,7 +135,7 @@ struct Drone {
     struct Flight flight; // 288bit
     struct Propeller propellers[4]; // 48bit
     struct Power power; // 11bit
-    struct Network network; // 68bit
+    struct Network network; // 36bit
     struct LandingGear landing_gear; // 2bit
     struct PressureSensor pressure_sensor; // 48bit
 };
