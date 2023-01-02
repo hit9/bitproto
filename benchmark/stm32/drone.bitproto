@@ -98,5 +98,5 @@ message Drone {
     PressureSensor pressure_sensor = 8;
     // 67 bytes => 100bytes
     // For optimiation mode, remove the '
-    byte[33]' bytes = 9;
+    byte[33] bytes = 9;
 }
