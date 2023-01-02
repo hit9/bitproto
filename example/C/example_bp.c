@@ -4,12 +4,12 @@
 #include "example_bp.h"
 
 void BpXXXProcessTimestamp(void *data, struct BpProcessorContext *ctx) {
-    struct BpAliasDescriptor descriptor = BpAliasDescriptor(BpInt(64, sizeof(int64_t)));
+    struct BpAliasDescriptor descriptor = BpAliasDescriptor(BpInt(32, sizeof(int32_t)));
     BpEndecodeAlias(&descriptor, ctx, data);
 }
 
 void BpXXXJsonFormatTimestamp(void *data, struct BpJsonFormatContext *ctx) {
-    struct BpAliasDescriptor descriptor = BpAliasDescriptor(BpInt(64, sizeof(int64_t)));
+    struct BpAliasDescriptor descriptor = BpAliasDescriptor(BpInt(32, sizeof(int32_t)));
     BpJsonFormatAlias(&descriptor, ctx, data);
 }
 
@@ -115,14 +115,14 @@ int JsonPower(struct Power *m, char *s) {
 
 void BpFieldDescriptorsInitNetwork(struct Network *m, struct BpMessageFieldDescriptor *fds) {
     fds[0] = BpMessageFieldDescriptor((void *)&(m->signal), BpUint(4, sizeof(uint8_t)), "signal");
-    fds[1] = BpMessageFieldDescriptor((void *)&(m->heartbeat_at), BpAlias(64, sizeof(Timestamp), BpXXXProcessTimestamp, BpXXXJsonFormatTimestamp), "heartbeat_at");
+    fds[1] = BpMessageFieldDescriptor((void *)&(m->heartbeat_at), BpAlias(32, sizeof(Timestamp), BpXXXProcessTimestamp, BpXXXJsonFormatTimestamp, BP_TYPE_INT), "heartbeat_at");
 }
 
 void BpXXXProcessNetwork(void *data, struct BpProcessorContext *ctx) {
     struct Network *m = (struct Network *)(data);
     struct BpMessageFieldDescriptor field_descriptors[2];
     BpFieldDescriptorsInitNetwork(m, field_descriptors);
-    struct BpMessageDescriptor descriptor = BpMessageDescriptor(false, 2, 68, field_descriptors);
+    struct BpMessageDescriptor descriptor = BpMessageDescriptor(false, 2, 36, field_descriptors);
     BpEndecodeMessage(&descriptor, ctx, data);
 }
 
@@ -130,7 +130,7 @@ void BpXXXJsonFormatNetwork(void *data, struct BpJsonFormatContext *ctx) {
     struct Network *m = (struct Network *)(data);
     struct BpMessageFieldDescriptor field_descriptors[2];
     BpFieldDescriptorsInitNetwork(m, field_descriptors);
-    struct BpMessageDescriptor descriptor = BpMessageDescriptor(false, 2, 68, field_descriptors);
+    struct BpMessageDescriptor descriptor = BpMessageDescriptor(false, 2, 36, field_descriptors);
     BpJsonFormatMessage(&descriptor, ctx, data);
 }
 
@@ -272,8 +272,8 @@ int JsonPose(struct Pose *m, char *s) {
 
 void BpFieldDescriptorsInitFlight(struct Flight *m, struct BpMessageFieldDescriptor *fds) {
     fds[0] = BpMessageFieldDescriptor((void *)&(m->pose), BpMessage(96, sizeof(struct Pose), BpXXXProcessPose, BpXXXJsonFormatPose), "pose");
-    fds[1] = BpMessageFieldDescriptor((void *)&(m->velocity), BpAlias(96, sizeof(TernaryInt32), BpXXXProcessTernaryInt32, BpXXXJsonFormatTernaryInt32), "velocity");
-    fds[2] = BpMessageFieldDescriptor((void *)&(m->acceleration), BpAlias(96, sizeof(TernaryInt32), BpXXXProcessTernaryInt32, BpXXXJsonFormatTernaryInt32), "acceleration");
+    fds[1] = BpMessageFieldDescriptor((void *)&(m->velocity), BpAlias(96, sizeof(TernaryInt32), BpXXXProcessTernaryInt32, BpXXXJsonFormatTernaryInt32, BP_TYPE_ARRAY), "velocity");
+    fds[2] = BpMessageFieldDescriptor((void *)&(m->acceleration), BpAlias(96, sizeof(TernaryInt32), BpXXXProcessTernaryInt32, BpXXXJsonFormatTernaryInt32, BP_TYPE_ARRAY), "acceleration");
 }
 
 void BpXXXProcessFlight(void *data, struct BpProcessorContext *ctx) {
@@ -374,7 +374,7 @@ void BpFieldDescriptorsInitDrone(struct Drone *m, struct BpMessageFieldDescripto
     fds[2] = BpMessageFieldDescriptor((void *)&(m->flight), BpMessage(288, sizeof(struct Flight), BpXXXProcessFlight, BpXXXJsonFormatFlight), "flight");
     fds[3] = BpMessageFieldDescriptor((void *)&(m->propellers), BpArray(48, 4 * sizeof(struct Propeller), BpXXXProcessArrayDrone4, BpXXXJsonFormatArrayDrone4), "propellers");
     fds[4] = BpMessageFieldDescriptor((void *)&(m->power), BpMessage(11, sizeof(struct Power), BpXXXProcessPower, BpXXXJsonFormatPower), "power");
-    fds[5] = BpMessageFieldDescriptor((void *)&(m->network), BpMessage(68, sizeof(struct Network), BpXXXProcessNetwork, BpXXXJsonFormatNetwork), "network");
+    fds[5] = BpMessageFieldDescriptor((void *)&(m->network), BpMessage(36, sizeof(struct Network), BpXXXProcessNetwork, BpXXXJsonFormatNetwork), "network");
     fds[6] = BpMessageFieldDescriptor((void *)&(m->landing_gear), BpMessage(2, sizeof(struct LandingGear), BpXXXProcessLandingGear, BpXXXJsonFormatLandingGear), "landing_gear");
     fds[7] = BpMessageFieldDescriptor((void *)&(m->pressure_sensor), BpMessage(48, sizeof(struct PressureSensor), BpXXXProcessPressureSensor, BpXXXJsonFormatPressureSensor), "pressure_sensor");
 }
@@ -383,7 +383,7 @@ void BpXXXProcessDrone(void *data, struct BpProcessorContext *ctx) {
     struct Drone *m = (struct Drone *)(data);
     struct BpMessageFieldDescriptor field_descriptors[8];
     BpFieldDescriptorsInitDrone(m, field_descriptors);
-    struct BpMessageDescriptor descriptor = BpMessageDescriptor(false, 8, 564, field_descriptors);
+    struct BpMessageDescriptor descriptor = BpMessageDescriptor(false, 8, 532, field_descriptors);
     BpEndecodeMessage(&descriptor, ctx, data);
 }
 
@@ -391,7 +391,7 @@ void BpXXXJsonFormatDrone(void *data, struct BpJsonFormatContext *ctx) {
     struct Drone *m = (struct Drone *)(data);
     struct BpMessageFieldDescriptor field_descriptors[8];
     BpFieldDescriptorsInitDrone(m, field_descriptors);
-    struct BpMessageDescriptor descriptor = BpMessageDescriptor(false, 8, 564, field_descriptors);
+    struct BpMessageDescriptor descriptor = BpMessageDescriptor(false, 8, 532, field_descriptors);
     BpJsonFormatMessage(&descriptor, ctx, data);
 }
 

@@ -14,10 +14,10 @@ from enum import IntEnum, unique
 from bitprotolib import bp
 
 
-Timestamp = int # 64bit
+Timestamp = int # 32bit
 
 def bp_processor_Timestamp() -> bp.Processor:
-    return bp.AliasProcessor(bp.Int(64))
+    return bp.AliasProcessor(bp.Int(32))
 
 def bp_default_factory_Timestamp() -> Timestamp:
     return 0
@@ -170,11 +170,11 @@ class Propeller(bp.MessageBase):
         # initialize handling of enum field 'status' as `enum.IntEnum`
         if not isinstance(getattr(Propeller, "status", False), property):
             self._enum_field_proxy__status = self.status
-            Propeller.status = property(Propeller._get_status, Propeller._set_status)
+            Propeller.status = property(Propeller._get_status, Propeller._set_status)  # type: ignore
         # initialize handling of enum field 'direction' as `enum.IntEnum`
         if not isinstance(getattr(Propeller, "direction", False), property):
             self._enum_field_proxy__direction = self.direction
-            Propeller.direction = property(Propeller._get_direction, Propeller._set_direction)
+            Propeller.direction = property(Propeller._get_direction, Propeller._set_direction)  # type: ignore
 
     @staticmethod
     def dict_factory(kv_pairs):
@@ -261,7 +261,7 @@ class Power(bp.MessageBase):
         # initialize handling of enum field 'status' as `enum.IntEnum`
         if not isinstance(getattr(Power, "status", False), property):
             self._enum_field_proxy__status = self.status
-            Power.status = property(Power._get_status, Power._set_status)
+            Power.status = property(Power._get_status, Power._set_status)  # type: ignore
 
     @staticmethod
     def dict_factory(kv_pairs):
@@ -329,12 +329,12 @@ class Power(bp.MessageBase):
 @dataclass
 class Network(bp.MessageBase):
     # Number of bytes to serialize class Network
-    BYTES_LENGTH: ClassVar[int] = 9
+    BYTES_LENGTH: ClassVar[int] = 5
 
     # Degree of signal, between 1~10.
     signal: int = 0 # 4bit
     # The timestamp of the last time received heartbeat packet.
-    heartbeat_at: Timestamp = field(default_factory=bp_default_factory_Timestamp) # 64bit
+    heartbeat_at: Timestamp = field(default_factory=bp_default_factory_Timestamp) # 32bit
 
     def __post_init__(self):
         pass
@@ -348,13 +348,13 @@ class Network(bp.MessageBase):
             bp.MessageFieldProcessor(1, bp.Uint(4)),
             bp.MessageFieldProcessor(2, bp_processor_Timestamp()),
         ]
-        return bp.MessageProcessor(False, 68, field_processors)
+        return bp.MessageProcessor(False, 36, field_processors)
 
     def bp_set_byte(self, di: bp.DataIndexer, lshift: int, b: bp.byte) -> None:
         if di.field_number == 1:
             self.signal |= (int(b) << lshift)
         if di.field_number == 2:
-            self.heartbeat_at |= bp.int64((int(b) << lshift))
+            self.heartbeat_at |= bp.int32((int(b) << lshift))
         return
 
     def bp_get_byte(self, di: bp.DataIndexer, rshift: int) -> bp.byte:
@@ -402,7 +402,7 @@ class LandingGear(bp.MessageBase):
         # initialize handling of enum field 'status' as `enum.IntEnum`
         if not isinstance(getattr(LandingGear, "status", False), property):
             self._enum_field_proxy__status = self.status
-            LandingGear.status = property(LandingGear._get_status, LandingGear._set_status)
+            LandingGear.status = property(LandingGear._get_status, LandingGear._set_status)  # type: ignore
 
     @staticmethod
     def dict_factory(kv_pairs):
@@ -723,7 +723,7 @@ class PressureSensor(bp.MessageBase):
 @dataclass
 class Drone(bp.MessageBase):
     # Number of bytes to serialize class Drone
-    BYTES_LENGTH: ClassVar[int] = 71
+    BYTES_LENGTH: ClassVar[int] = 67
 
     status: Union[int, DroneStatus] = DroneStatus.DRONE_STATUS_UNKNOWN
     # This field is a proxy to hold integer value of enum field 'status'
@@ -732,7 +732,7 @@ class Drone(bp.MessageBase):
     flight: Flight = field(default_factory=Flight) # 288bit
     propellers: List[Propeller] = field(default_factory=lambda: [Propeller() for _ in range(4)]) # 48bit
     power: Power = field(default_factory=Power) # 11bit
-    network: Network = field(default_factory=Network) # 68bit
+    network: Network = field(default_factory=Network) # 36bit
     landing_gear: LandingGear = field(default_factory=LandingGear) # 2bit
     pressure_sensor: PressureSensor = field(default_factory=PressureSensor) # 48bit
 
@@ -740,7 +740,7 @@ class Drone(bp.MessageBase):
         # initialize handling of enum field 'status' as `enum.IntEnum`
         if not isinstance(getattr(Drone, "status", False), property):
             self._enum_field_proxy__status = self.status
-            Drone.status = property(Drone._get_status, Drone._set_status)
+            Drone.status = property(Drone._get_status, Drone._set_status)  # type: ignore
 
     @staticmethod
     def dict_factory(kv_pairs):
@@ -765,7 +765,7 @@ class Drone(bp.MessageBase):
             bp.MessageFieldProcessor(7, LandingGear().bp_processor()),
             bp.MessageFieldProcessor(8, PressureSensor().bp_processor()),
         ]
-        return bp.MessageProcessor(False, 564, field_processors)
+        return bp.MessageProcessor(False, 532, field_processors)
 
     def bp_set_byte(self, di: bp.DataIndexer, lshift: int, b: bp.byte) -> None:
         if di.field_number == 1:

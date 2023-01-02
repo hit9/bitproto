@@ -13,4 +13,6 @@ message X {
 message Y {
     X x = 1;
     X[2] xs = 2;
+    int1 p = 3;
+    int2 q = 4;
 }

@@ -16,6 +16,9 @@ int main(void) {
     m.g = (struct Note){2, false, {7, 2, 3, 4, 5, 6, 7}};
     for (int i = 0; i < 7; i++)
         for (int j = 0; j < 7; j++) m.t[i][j] = (int32_t)(i + j + 129);
+    m.x[0] = -13;
+    m.x[1] = -89;
+    m.x[2] = 13;
     unsigned char s[BYTES_LENGTH_M] = {0};
     EncodeM(&m, s);
 
@@ -41,6 +44,9 @@ int main(void) {
     assert(m1.g.ok == m.g.ok);
     for (int i = 0; i < 7; i++)
         for (int j = 0; j < 7; j++) assert(m1.t[i][j] = m.t[i][j]);
+    assert(m1.x[0] == m.x[0]);
+    assert(m1.x[1] == m.x[1]);
+    assert(m1.x[2] == m.x[2]);
 
     return 0;
 }

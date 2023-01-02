@@ -1,5 +1,13 @@
 .. currentmodule:: bitproto
 
+Version 1.1.0
+-------------
+
+.. _version-1.1.0
+
+- Performance improvements for C bitprotolib, 40~60us improvement per call on stm32. PR #48.
+- Fix Python nested message ``__post_init___`` function code generation. PR #48, commit 73f4b01.
+
 Version 1.0.1
 -------------
 

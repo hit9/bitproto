@@ -13,7 +13,7 @@ Benchmark result
 
 * Microcontroller: `STM32F103ZE <https://www.st.com/en/microcontrolles-microprocessors/stm32f103ze.html>`_,
   Arm Cortex-M3 MCU, 72 MHz
-* bitproto file: `drone.bitproto <drone.bitproto>`_.
+* bitproto file: `drone.bitproto <drone.bitproto>`_,  with a `100bytes` length message.
 
 Standard Mode
 ^^^^^^^^^^^^^
@@ -30,16 +30,16 @@ the optimization mode flag ``-O``, that is to use `the bitproto c lib <../../lib
      - Decode cost per call
    * - No ``-O``
      - 10000
-     - 170μs
-     - 163μs
+     - 144μs
+     - 143μs
    * - ``gcc -O2``
      - 10000
-     - 135μs
-     - 131μs
+     - 140μs
+     - 143μs
    * - ``gcc -O3``
      - 10000
-     - 127μs
-     - 119μs
+     - 128μs
+     - 123μs
 
 Optimization Mode
 ^^^^^^^^^^^^^^^^^
@@ -56,9 +56,9 @@ the optimization mode flag ``-O``, that is not to use `the bitproto c lib <../..
      - Decode cost per call
    * - No ``-O``
      - 10000
-     - 9μs
-     - 9μs
+     - 15μs
+     - 15μs
    * - ``gcc -O2``
      - 10000
-     - 9μs
-     - 9μs
+     - 15μs
+     - 15μs

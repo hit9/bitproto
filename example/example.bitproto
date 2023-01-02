@@ -3,7 +3,7 @@
 // Proto drone describes the structure of the drone.
 proto drone;
 
-type Timestamp = int64;
+type Timestamp = int32;
 
 type TernaryInt32 = int32[3]
 

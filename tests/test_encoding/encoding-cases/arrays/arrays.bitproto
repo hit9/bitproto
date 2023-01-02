@@ -1,5 +1,7 @@
 proto arrays;
 
+type Int29 = int29
+
 type Bytes = byte[7]
 type Int32s = int32[7]
 type Int8s = int8[7]
@@ -7,6 +9,7 @@ type Uint3s = uint3[7]
 type Uint17s = uint17[7]
 type Row = int24[7];
 type Table = Row[7];
+type Int29s = Int29[4]
 
 message Note {
     uint3 number = 1
@@ -25,4 +28,5 @@ message M {
     Messages f = 6
     Note g = 7
     Table t = 8
+    Int29s x = 9;
 }

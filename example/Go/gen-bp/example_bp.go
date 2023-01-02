@@ -15,10 +15,10 @@ var formatInt = strconv.FormatInt
 var jsonMarshal = json.Marshal
 var _ = bp.Useless
 
-type Timestamp int64 // 64bit
+type Timestamp int32 // 32bit
 
 func (m Timestamp) BpProcessor() bp.Processor {
-	return bp.NewAliasProcessor(bp.NewInt(64))
+	return bp.NewAliasProcessor(bp.NewInt(32))
 }
 
 type TernaryInt32 [3]int32 // 96bit
@@ -323,13 +323,13 @@ type Network struct {
 	// Degree of signal, between 1~10.
 	Signal uint8 `json:"signal"` // 4bit
 	// The timestamp of the last time received heartbeat packet.
-	HeartbeatAt Timestamp `json:"heartbeat_at"` // 64bit
+	HeartbeatAt Timestamp `json:"heartbeat_at"` // 32bit
 }
 
 // Number of bytes to serialize struct Network
-const BYTES_LENGTH_NETWORK uint32 = 9
+const BYTES_LENGTH_NETWORK uint32 = 5
 
-func (m *Network) Size() uint32 { return 9 }
+func (m *Network) Size() uint32 { return 5 }
 
 // Returns string representation for struct Network.
 func (m *Network) String() string {
@@ -354,7 +354,7 @@ func (m *Network) BpProcessor() bp.Processor {
 		bp.NewMessageFieldProcessor(1, bp.NewUint(4)),
 		bp.NewMessageFieldProcessor(2, (Timestamp(0)).BpProcessor()),
 	}
-	return bp.NewMessageProcessor(false, 68, fieldDescriptors)
+	return bp.NewMessageProcessor(false, 36, fieldDescriptors)
 }
 
 func (m *Network) BpGetAccessor(di *bp.DataIndexer) bp.Accessor {
@@ -769,15 +769,15 @@ type Drone struct {
 	Flight Flight `json:"flight"` // 288bit
 	Propellers [4]Propeller `json:"propellers"` // 48bit
 	Power Power `json:"power"` // 11bit
-	Network Network `json:"network"` // 68bit
+	Network Network `json:"network"` // 36bit
 	LandingGear LandingGear `json:"landing_gear"` // 2bit
 	PressureSensor PressureSensor `json:"pressure_sensor"` // 48bit
 }
 
 // Number of bytes to serialize struct Drone
-const BYTES_LENGTH_DRONE uint32 = 71
+const BYTES_LENGTH_DRONE uint32 = 67
 
-func (m *Drone) Size() uint32 { return 71 }
+func (m *Drone) Size() uint32 { return 67 }
 
 // Returns string representation for struct Drone.
 func (m *Drone) String() string {
@@ -808,7 +808,7 @@ func (m *Drone) BpProcessor() bp.Processor {
 		bp.NewMessageFieldProcessor(7, (&LandingGear{}).BpProcessor()),
 		bp.NewMessageFieldProcessor(8, (&PressureSensor{}).BpProcessor()),
 	}
-	return bp.NewMessageProcessor(false, 564, fieldDescriptors)
+	return bp.NewMessageProcessor(false, 532, fieldDescriptors)
 }
 
 func (m *Drone) BpGetAccessor(di *bp.DataIndexer) bp.Accessor {

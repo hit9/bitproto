@@ -12,6 +12,8 @@ def main() -> None:
     y.x.c = 23009
     y.xs[0].a = 1
     y.xs[1].a = -2008
+    y.p = 0
+    y.q = -1
 
     s = y.encode()  # bytearray
 
@@ -28,6 +30,8 @@ def main() -> None:
     assert y1.x.c == y.x.c
     assert y1.xs[0].a == y.xs[0].a
     assert y1.xs[1].a == y.xs[1].a
+    assert y1.p == y.p
+    assert y1.q == y.q
 
 
 if __name__ == "__main__":
