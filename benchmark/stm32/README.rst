@@ -30,16 +30,16 @@ the optimization mode flag ``-O``, that is to use `the bitproto c lib <../../lib
      - Decode cost per call
    * - No ``-O``
      - 10000
-     - 170μs
-     - 163μs
+     - 117μs
+     - 118μs
    * - ``gcc -O2``
      - 10000
-     - 135μs
-     - 131μs
+     - 115μs
+     - 118μs
    * - ``gcc -O3``
      - 10000
-     - 127μs
-     - 119μs
+     - 103μs
+     - 98μs
 
 Optimization Mode
 ^^^^^^^^^^^^^^^^^
