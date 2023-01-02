@@ -146,7 +146,7 @@ void BpEndecodeArray(struct BpArrayDescriptor *descriptor,
         // batch-copying technique works, the bits are copying every 4 bytes
         // now. It's really a great optimization for arrays of complete integer
         // types one of byte/uint8/uint16/uint32/uint64/int8/int16/int32/int64.
-        // FIXME: Remaining problem: alias to these types?
+        // andd enums of these uints, and alias to these types.
 
         BpEndecodeBaseType(element_nbits * cap, ctx, data_ptr);
 
