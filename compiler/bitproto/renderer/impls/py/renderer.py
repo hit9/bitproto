@@ -382,16 +382,18 @@ class BlockMessagePostInitField(BlockBindMessageField[F]):
         self.push_comment(
             f"initialize handling of enum field '{self.message_field_name}' as `enum.IntEnum`"
         )
+        message_name = self.formatter.format_message_name(self.d.message)
         self.push(
-            f'if not isinstance(getattr({self.d.message.name}, "{self.message_field_name}", False), property):'
+            f'if not isinstance(getattr({message_name}, "{self.message_field_name}", False), property):'
         )
         self.push(
             f"    self.{_enum_field_proxy_prefix}{self.message_field_name} = self.{self.message_field_name}"
         )
         self.push(
-            f"    {self.d.message.name}.{self.message_field_name} = property("
-            f"{self.d.message.name}._get_{self.message_field_name}, "
-            f"{self.d.message.name}._set_{self.message_field_name})"
+            f"    {message_name}.{self.message_field_name} = property("
+            f"{message_name}._get_{self.message_field_name}, "
+            f"{message_name}._set_{self.message_field_name})"
+            "  # type: ignore"
         )
 
 
