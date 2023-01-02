@@ -39,7 +39,7 @@ the optimization mode flag ``-O``, that is to use `the bitproto lib <../../lib>`
      - No ``-O``
      - 1000000
      - 1.78μs
-     - 1.182μs
+     - 1.82μs
    * - Ubuntu 20.04
      - C
      - Standard
