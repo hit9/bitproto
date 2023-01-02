@@ -46,22 +46,24 @@ extern "C" {
     (struct BpJsonFormatContext) { 0, (s) }
 
 // BpType Constructors.
-#define BpBool() ((struct BpType){BP_TYPE_BOOL, 1, sizeof(bool), NULL, NULL})
+#define BpBool() ((struct BpType){BP_TYPE_BOOL, 1, sizeof(bool), NULL, NULL, 0})
 #define BpUint(nbits, size) \
-    ((struct BpType){BP_TYPE_UINT, (nbits), (size), NULL, NULL})
+    ((struct BpType){BP_TYPE_UINT, (nbits), (size), NULL, NULL, 0})
 #define BpInt(nbits, size) \
-    ((struct BpType){BP_TYPE_INT, (nbits), (size), NULL, NULL})
+    ((struct BpType){BP_TYPE_INT, (nbits), (size), NULL, NULL, 0})
 #define BpByte() \
-    ((struct BpType){BP_TYPE_BYTE, 8, sizeof(unsigned char), NULL, NULL})
+    ((struct BpType){BP_TYPE_BYTE, 8, sizeof(unsigned char), NULL, NULL, 0})
 #define BpMessage(nbits, size, processor, formatter)                \
     ((struct BpType){BP_TYPE_MESSAGE, (nbits), (size), (processor), \
-                     (formatter)})
+                     (formatter), 0})
 #define BpEnum(nbits, size) \
-    ((struct BpType){BP_TYPE_ENUM, (nbits), (size), NULL, NULL})
-#define BpArray(nbits, size, processor, formatter) \
-    ((struct BpType){BP_TYPE_ARRAY, (nbits), (size), (processor), (formatter)})
-#define BpAlias(nbits, size, processor, formatter) \
-    ((struct BpType){BP_TYPE_ALIAS, (nbits), (size), (processor), (formatter)})
+    ((struct BpType){BP_TYPE_ENUM, (nbits), (size), NULL, NULL, 0})
+#define BpArray(nbits, size, processor, formatter)                             \
+    ((struct BpType){BP_TYPE_ARRAY, (nbits), (size), (processor), (formatter), \
+                     0})
+#define BpAlias(nbits, size, processor, formatter, to_flag)                    \
+    ((struct BpType){BP_TYPE_ALIAS, (nbits), (size), (processor), (formatter), \
+                     (to_flag)})
 
 // Descriptors
 
@@ -123,6 +125,10 @@ struct BpType {
     // JsonFormatter function for this type.
     // Sets if this type is message, enum, alias or array, otherwise NULL.
     BpJsonFormatter json_formatter;
+
+    // The type flag behind if this type is an alias, a lookahead for
+    // performance purpose. For non-alias bp type it's zero.
+    int to_flag;
 };
 
 // BpAliasDescriptor describes an alias definition.

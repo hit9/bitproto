@@ -148,6 +148,26 @@ class CFormatter(Formatter):
             return self.format_bp_array(t, d)
         raise InternalError("format_bp_type got unexpected type")
 
+    def format_bp_type_flag(self, t: Type) -> str:
+        """Formats the BP_XXX flag name in C."""
+        if isinstance(t, Bool):
+            return "BP_TYPE_BOOL"
+        if isinstance(t, Int):
+            return "BP_TYPE_INT"
+        if isinstance(t, Uint):
+            return "BP_TYPE_UINT"
+        if isinstance(t, Byte):
+            return "BP_TYPE_BYTE"
+        if isinstance(t, Enum):
+            return "BP_TYPE_ENUM"
+        if isinstance(t, Alias):
+            return "BP_TYPE_ALIAS"
+        if isinstance(t, Message):
+            return "BP_TYPE_BP_TYPE_MESSAGE"
+        if isinstance(t, Array):
+            return "BP_TYPE_ARRAY"
+        raise InternalError("format_bp_type_flag got unexpected type")
+
     def format_bp_bool(self) -> str:
         return "BpBool()"
 
@@ -194,7 +214,8 @@ class CFormatter(Formatter):
         size = self.format_sizeof(alias_type)
         processor = self.format_bp_alias_processor_name(t)
         formatter = self.format_bp_alias_json_formatter_name(t)
-        return f"BpAlias({nbits}, {size}, {processor}, {formatter})"
+        to_flag = self.format_bp_type_flag(t.type)
+        return f"BpAlias({nbits}, {size}, {processor}, {formatter}, {to_flag})"
 
     def format_bp_enum_descriptor(self, t: Enum) -> str:
         bp_uint = self.format_bp_uint(t.type)
