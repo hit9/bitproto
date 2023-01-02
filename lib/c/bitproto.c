@@ -15,6 +15,18 @@ static inline int BpMinTriple(int a, int b, int c) {
     return (a < b) ? ((a < c) ? a : c) : ((b < c) ? b : c);
 }
 
+// BpIsNbitsStandard returns true if given nbits is one of 8/16/32/64.
+static inline bool BpIsNbitsStandard(int nbits) {
+    return nbits == 8 || nbits == 16 || nbits == 32 || nbits == 64;
+}
+
+// BpIsBaseNumberType returns true if given bp type flag is one of
+// byte/uint/enum/int. These types are all basic integer types in C.
+static inline bool BpIsBaseIntegerType(int flag) {
+    return flag == BP_TYPE_BYTE || flag == BP_TYPE_UINT ||
+           flag == BP_TYPE_ENUM || flag == BP_TYPE_INT;
+}
+
 // BpEndecodeMessage process given message at data with provided message
 // descriptor. It iterates all message fields to process.
 void BpEndecodeMessage(struct BpMessageDescriptor *descriptor,
@@ -115,30 +127,53 @@ void BpEndecodeArray(struct BpArrayDescriptor *descriptor,
 
     int element_nbits = descriptor->element_type.nbits;
     int element_size = descriptor->element_type.size;
+    int flag = descriptor->element_type.flag;
+    int cap = descriptor->cap;
 
     unsigned char *data_ptr = (unsigned char *)data;
 
-    // Process array elements.
-    for (int k = 0; k < descriptor->cap; k++) {
-        // Lookup the address of this element's data.
+    if (BpIsNbitsStandard(element_nbits) && BpIsBaseIntegerType(flag)) {
+        // Performance improvement for C arrays of integers (byte/uint/int):
+        // Since arrays in C are contiguous in memory layout, so we call
+        // BpCopyBufferBits only once instead of calling it one by one
+        // element, this makes huge performance improvement. The reason is that
+        // batch-copying technique works, the bits are copying every 4 bytes
+        // now. It's really a great optimization for arrays of complete integer
+        // types one of byte/uint8/uint16/uint32/uint64/int8/int16/int32/int64.
+        // FIXME: Remaining problem: alias to these types?
+        BpEndecodeBaseType(element_nbits * cap, ctx, data_ptr);
 
-        switch (descriptor->element_type.flag) {
-            case BP_TYPE_BOOL:
-            case BP_TYPE_UINT:
-            case BP_TYPE_BYTE:
-            case BP_TYPE_ENUM:
-                BpEndecodeBaseType(element_nbits, ctx, data_ptr);
-                break;
-            case BP_TYPE_INT:
-                BpEndecodeInt(element_size, element_nbits, ctx, data_ptr);
-                break;
-            case BP_TYPE_ALIAS:
-            case BP_TYPE_MESSAGE:
-                descriptor->element_type.processor(data_ptr, ctx);
-                break;
+        if (flag == BP_TYPE_INT) {
+            // We should handle the signed integer's sign after bits copying.
+            for (int k = 0; k < cap; k++) {
+                BpHandleIntSignAfterEndecode(element_size, element_nbits, ctx,
+                                             data_ptr);
+                data_ptr += element_size;
+            }
         }
 
-        data_ptr += element_size;
+    } else {
+        // Process array elements one by one.
+
+        for (int k = 0; k < cap; k++) {
+            switch (flag) {
+                case BP_TYPE_BOOL:
+                case BP_TYPE_UINT:
+                case BP_TYPE_BYTE:
+                case BP_TYPE_ENUM:
+                    BpEndecodeBaseType(element_nbits, ctx, data_ptr);
+                    break;
+                case BP_TYPE_INT:
+                    BpEndecodeInt(element_size, element_nbits, ctx, data_ptr);
+                    break;
+                case BP_TYPE_ALIAS:
+                case BP_TYPE_MESSAGE:
+                    descriptor->element_type.processor(data_ptr, ctx);
+                    break;
+            }
+
+            data_ptr += element_size;
+        }
     }
 
     // Skip redundant bits if decoding.
@@ -154,6 +189,9 @@ void BpEndecodeArray(struct BpArrayDescriptor *descriptor,
 // destination buffer dst. The argument n is the total number of bits to
 // copy. The argument si is the index to start coping on buffer src.
 // The argument di is the index to start coping on buffer dst.
+// Note that this function DOESN'T suppose current processing type is a base
+// type, that's to say, we can process n bits copying where n could be a large
+// number than 64.
 void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src, int di,
                       int si) {
     // n is the number of bits remaining to process.
@@ -238,6 +276,7 @@ void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src, int di,
 }
 
 // BpEndecodeBaseType process given base type at given data.
+// This function guarantees to work geven a nbits > 64 is passed in.
 void BpEndecodeBaseType(int nbits, struct BpProcessorContext *ctx, void *data) {
     if (ctx->is_encode) {
         BpCopyBufferBits(nbits, ctx->s, (unsigned char *)data, ctx->i, 0);
@@ -247,17 +286,14 @@ void BpEndecodeBaseType(int nbits, struct BpProcessorContext *ctx, void *data) {
     ctx->i += nbits;
 }
 
-// BpEndecodeInt process signed integer at given data.
-// The most left bit (Nth bit for int{N}) of a signed integer indicates the
-// sign. For example 00000101 is a negative integer for a int3, but a
-// positive integer for a int4. Where nbits is the number of bits for this
-// bitproto signed integer, for int{N}, its the N, the argument size is the
-// number of bytes in C language.
-void BpEndecodeInt(int size, int nbits, struct BpProcessorContext *ctx,
-                   void *data) {
-    // Copy bits without concern about sign bit.
-    BpEndecodeBaseType(nbits, ctx, data);
-
+// BpHandleIntSignAfterEndecode processes signed integer at given data after
+// this integer is endecode. The most left bit (Nth bit for int{N}) of a signed
+// integer indicates the sign. For example 00000101 is a negative integer for a
+// int3, but a positive integer for a int4. Where nbits is the number of bits
+// for this bitproto signed integer, for int{N}, its the N, the argument size is
+// the number of bytes in C language.
+void BpHandleIntSignAfterEndecode(int size, int nbits,
+                                  struct BpProcessorContext *ctx, void *data) {
     // Signed integer's sign bit processing is only about decoding.
     if (ctx->is_encode) return;
 
@@ -301,6 +337,15 @@ void BpEndecodeInt(int size, int nbits, struct BpProcessorContext *ctx,
             }
             break;
     }
+}
+
+// BpEndecodeInt process a single signed integer at given data.
+void BpEndecodeInt(int size, int nbits, struct BpProcessorContext *ctx,
+                   void *data) {
+    // Copy bits without concern about sign bit.
+    BpEndecodeBaseType(nbits, ctx, data);
+    // Handle the signed bit.
+    BpHandleIntSignAfterEndecode(size, nbits, ctx, data);
 }
 
 // BpEncodeArrayExtensibleAhead encode the array capacity as the ahead flag

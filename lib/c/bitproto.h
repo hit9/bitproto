@@ -172,6 +172,8 @@ struct BpMessageDescriptor {
 
 void BpCopyBufferBits(int nbits, unsigned char *dst, unsigned char *src,
                       int dst_bit_index, int src_bit_index);
+void BpHandleIntSignAfterEndecode(int size, int nbits,
+                                  struct BpProcessorContext *ctx, void *data);
 void BpEndecodeBaseType(int nbits, struct BpProcessorContext *ctx, void *data);
 void BpEndecodeInt(int nbits, int size, struct BpProcessorContext *ctx,
                    void *data);
