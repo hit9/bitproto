@@ -125,14 +125,20 @@ void BpEndecodeArray(struct BpArrayDescriptor *descriptor,
         }
     }
 
+    int cap = descriptor->cap;
     int element_nbits = descriptor->element_type.nbits;
     int element_size = descriptor->element_type.size;
-    int flag = descriptor->element_type.flag;
-    int cap = descriptor->cap;
+    struct BpType *element_type = &(descriptor->element_type);
+
+    int flag = element_type->flag;
+    // The type flag behind if the element_type is an alias.
+    // For not alias type, to_flag will be 0.
+    int to_flag = element_type->to_flag;
 
     unsigned char *data_ptr = (unsigned char *)data;
 
-    if (BpIsNbitsStandard(element_nbits) && BpIsBaseIntegerType(flag)) {
+    if (BpIsNbitsStandard(element_nbits) &&
+        (BpIsBaseIntegerType(flag) || BpIsBaseIntegerType(to_flag))) {
         // Performance improvement for C arrays of integers (byte/uint/int):
         // Since arrays in C are contiguous in memory layout, so we call
         // BpCopyBufferBits only once instead of calling it one by one
@@ -141,9 +147,10 @@ void BpEndecodeArray(struct BpArrayDescriptor *descriptor,
         // now. It's really a great optimization for arrays of complete integer
         // types one of byte/uint8/uint16/uint32/uint64/int8/int16/int32/int64.
         // FIXME: Remaining problem: alias to these types?
+
         BpEndecodeBaseType(element_nbits * cap, ctx, data_ptr);
 
-        if (flag == BP_TYPE_INT) {
+        if (flag == BP_TYPE_INT || to_flag == BP_TYPE_INT) {
             // We should handle the signed integer's sign after bits copying.
             for (int k = 0; k < cap; k++) {
                 BpHandleIntSignAfterEndecode(element_size, element_nbits, ctx,
