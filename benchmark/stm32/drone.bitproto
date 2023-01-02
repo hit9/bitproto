@@ -83,6 +83,10 @@ message Flight {
     TernaryInt32 acceleration = 3;
 }
 
+message PressureSensor {
+    int24[2] pressures = 1;
+}
+
 message Drone {
     DroneStatus status = 1;
     Position position = 2;
@@ -91,4 +95,8 @@ message Drone {
     Power power = 5;
     Network network = 6;
     LandingGear landing_gear = 7;
+    PressureSensor pressure_sensor = 8;
+    // 67 bytes => 100bytes
+    // For optimiation mode, remove the '
+    byte[33]' bytes = 9;
 }
