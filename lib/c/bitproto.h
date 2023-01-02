@@ -22,7 +22,7 @@
 extern "C" {
 #endif
 
-#define __BITPROTO_VERSION__ "1.0.1"
+#define __BITPROTO_VERSION__ "1.1.0"
 
 ////////////////////
 // Macros
