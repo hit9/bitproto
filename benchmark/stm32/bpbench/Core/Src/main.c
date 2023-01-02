@@ -21,6 +21,7 @@
 #include "main.h"
 
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 
 #include "drone_bp.h"
@@ -64,6 +65,10 @@ static void MX_USART1_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+void soft_assert(bool v) {
+    if (!v) simple_printf("assert failed !!!!!!!!!!!!!!!!!!!!\r\n");
+}
 
 // Printf to uart1.
 void simple_printf(const char *fmt, ...) {
@@ -132,6 +137,51 @@ void bench() {
     bench_decode(n, s);
 }
 
+void simple_test() {
+    struct Drone drone = {0};
+
+    drone.status = DRONE_STATUS_RISING;
+    drone.position.longitude = 2000;
+    drone.position.latitude = 2000;
+    drone.position.altitude = 1080;
+    drone.flight.acceleration[0] = -1001;
+    drone.power.is_charging = false;
+    drone.propellers[0].direction = ROTATING_DIRECTION_CLOCK_WISE;
+    drone.pressure_sensor.pressures[0] = -11;
+
+    unsigned char s[BYTES_LENGTH_DRONE] = {0};
+
+    EncodeDrone(&drone, s);
+
+    unsigned char s_expected[BYTES_LENGTH_DRONE] = {
+        0x82, 0x3E, 0x00, 0x00, 0x80, 0x3E, 0x00, 0x00, 0xC0, 0x21, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0xB8, 0xE0, 0xFF, 0xFF, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x50, 0xFF, 0xFF, 0x0F, 0x00, 0x00, 0x00};
+
+    for (int i = 0; i < BYTES_LENGTH_DRONE; i++)
+        soft_assert(s_expected[i] == s[i]);
+
+    struct Drone drone_new = {0};
+    DecodeDrone(&drone_new, s);
+
+    soft_assert(drone.status == drone_new.status);
+    soft_assert(drone.position.longitude == drone_new.position.longitude);
+    soft_assert(drone.position.latitude == drone_new.position.latitude);
+    soft_assert(drone.position.altitude == drone_new.position.altitude);
+    soft_assert(drone.flight.acceleration[0] ==
+                drone_new.flight.acceleration[0]);
+    soft_assert(drone.power.is_charging == drone_new.power.is_charging);
+    soft_assert(drone.propellers[0].direction ==
+                drone_new.propellers[0].direction);
+    soft_assert(drone.pressure_sensor.pressures[0] ==
+                drone_new.pressure_sensor.pressures[0]);
+
+    simple_printf("simple test finished\r\n");
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -172,6 +222,8 @@ int main(void) {
 
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
+    simple_test();
+
     while (1) {
         /* USER CODE END WHILE */
         HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_5);
