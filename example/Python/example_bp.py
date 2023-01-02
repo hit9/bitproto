@@ -170,11 +170,11 @@ class Propeller(bp.MessageBase):
         # initialize handling of enum field 'status' as `enum.IntEnum`
         if not isinstance(getattr(Propeller, "status", False), property):
             self._enum_field_proxy__status = self.status
-            Propeller.status = property(Propeller._get_status, Propeller._set_status)
+            Propeller.status = property(Propeller._get_status, Propeller._set_status)  # type: ignore
         # initialize handling of enum field 'direction' as `enum.IntEnum`
         if not isinstance(getattr(Propeller, "direction", False), property):
             self._enum_field_proxy__direction = self.direction
-            Propeller.direction = property(Propeller._get_direction, Propeller._set_direction)
+            Propeller.direction = property(Propeller._get_direction, Propeller._set_direction)  # type: ignore
 
     @staticmethod
     def dict_factory(kv_pairs):
@@ -261,7 +261,7 @@ class Power(bp.MessageBase):
         # initialize handling of enum field 'status' as `enum.IntEnum`
         if not isinstance(getattr(Power, "status", False), property):
             self._enum_field_proxy__status = self.status
-            Power.status = property(Power._get_status, Power._set_status)
+            Power.status = property(Power._get_status, Power._set_status)  # type: ignore
 
     @staticmethod
     def dict_factory(kv_pairs):
@@ -402,7 +402,7 @@ class LandingGear(bp.MessageBase):
         # initialize handling of enum field 'status' as `enum.IntEnum`
         if not isinstance(getattr(LandingGear, "status", False), property):
             self._enum_field_proxy__status = self.status
-            LandingGear.status = property(LandingGear._get_status, LandingGear._set_status)
+            LandingGear.status = property(LandingGear._get_status, LandingGear._set_status)  # type: ignore
 
     @staticmethod
     def dict_factory(kv_pairs):
@@ -740,7 +740,7 @@ class Drone(bp.MessageBase):
         # initialize handling of enum field 'status' as `enum.IntEnum`
         if not isinstance(getattr(Drone, "status", False), property):
             self._enum_field_proxy__status = self.status
-            Drone.status = property(Drone._get_status, Drone._set_status)
+            Drone.status = property(Drone._get_status, Drone._set_status)  # type: ignore
 
     @staticmethod
     def dict_factory(kv_pairs):
