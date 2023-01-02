@@ -18,6 +18,9 @@ def main() -> None:
     for i in range(7):
         for j in range(7):
             m.t[i][j] = i + j + 129
+    m.x[0] = -13
+    m.x[1] = -89
+    m.x[2] = 13
     m.g = bp.Note(2, False, [7, 2, 3, 4, 5, 6, 7])
     s = m.encode()
 
@@ -49,6 +52,9 @@ def main() -> None:
     for i in range(7):
         for j in range(7):
             assert m1.t[i][j] == m.t[i][j]
+    assert m1.x[0] == m.x[0]
+    assert m1.x[1] == m.x[1]
+    assert m1.x[2] == m.x[2]
 
 
 if __name__ == "__main__":

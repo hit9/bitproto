@@ -38,6 +38,9 @@ func main() {
 		}
 	}
 	m.G = bp.Note{uint8(2), false, bp.Uint3s{7, 2, 3, 4, 5, 6, 7}}
+	m.X[0] = -13
+	m.X[1] = -89
+	m.X[2] = 13
 
 	s := m.Encode()
 	for _, x := range s {
@@ -79,4 +82,7 @@ func main() {
 			assert(m1.T[i][j] == m.T[i][j])
 		}
 	}
+	assert(m1.X[0] == m.X[0])
+	assert(m1.X[1] == m.X[1])
+	assert(m1.X[2] == m.X[2])
 }
