@@ -12,12 +12,12 @@ def main() -> None:
     for i in range(7):
         m.d[i] = i
     for i in range(7):
-        m.e[i] = i + 118
+        m.e[i] = i + 11811
     for i in range(7):
         m.f[i] = bp.Note(i, False, [j for j in range(1, 8)])
     for i in range(7):
         for j in range(7):
-            m.t[i][j] = i + j + 129
+            m.t[i][j] = i + j + 1291291
     m.x[0] = -13
     m.x[1] = -89
     m.x[2] = 13
