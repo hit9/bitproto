@@ -225,6 +225,8 @@ void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src, int di,
             int d = 8 - si;
 
             if (n >= 32) {
+                // Copy the remaining bits if si != 0.
+                // This way, the next iteration will ge to di == 0 again.
                 ((uint32_t *)dst)[0] = ((uint32_t *)(src))[0] >> si;
                 if (si) dst[3] |= ((src[4] << d) & ~(0xff << d << si));
                 c = 32;
