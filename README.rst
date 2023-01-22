@@ -63,7 +63,7 @@ And the decoding example:
 
 .. sourcecode:: c
 
-    struct Data d = {};
+    struct Data d = {0};
     DecodeData(&d, s);
     // values of d's fields is now:
     // 7 7 31 15 2047 63
