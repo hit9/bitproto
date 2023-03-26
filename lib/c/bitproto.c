@@ -247,7 +247,9 @@ void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src, int di,
                 // little performance improvement.
                 c = BpMin(8 - si, n);
                 // Also, when di is 0, special case of next case.
-                dst[0] |= ((src[0] >> si) & ~(0xff << c));
+                unsigned char m = 0xff << c;
+                dst[0] &= m;
+                dst[0] |= ((src[0] >> si) & ~m);
             }
         } else {
             // When di != 0, we have to copy partial bits inside a
@@ -272,7 +274,9 @@ void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src, int di,
             // benchmark on stm32 seems performance is improved by 2us by adding
             // an if statement that skip the Zero byte.
             unsigned char ch = src[0];
-            if (ch) dst[0] |= ((ch >> si << di) & ~(0xff << di << c));
+            unsigned char m = 0xff << di << c;
+            dst[0] &= m | ~(1 << di);
+            if (ch) dst[0] |= (ch >> si << di) & ~m;
         }
 
         // Maintain in(de)crements.
