@@ -275,7 +275,7 @@ void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src, int di,
             // an if statement that skip the Zero byte.
             unsigned char ch = src[0];
             unsigned char m = 0xff << di << c;
-            dst[0] &= m | ~(1 << di);
+            dst[0] &= m | ~(0xff << di);
             if (ch) dst[0] |= (ch >> si << di) & ~m;
         }
 
