@@ -237,25 +237,16 @@ void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src, int di,
                 dst[0] = (src[0] >> si) & 0xff;
                 c = 8 - si;
             } else {
-                // When bits < 8 and di == 0
-                // Copy partial bits inside a byte.
-                // For the original statement:
-                // c = BpMinTriple(8 - di, 8 - si, n);
-                // since di is 0 and bits <8, then 8-di is 8
-                // and n <8 , the 8-di won't be the smallest, we
-                // just pick function BpMin over BpMinTriple for the little
-                // little performance improvement.
+                // A special case of the following general case,
+                // when di == 0.
                 c = BpMin(8 - si, n);
-                // Also, when di is 0, special case of next case.
                 unsigned char m = 0xff << c;
                 dst[0] &= m;
                 dst[0] |= ((src[0] >> si) & ~m);
             }
         } else {
-            // When di != 0, we have to copy partial bits inside a
-            // single byte.
-            // But, after some rounds of this case, di would goes to 0,
-            // for large sized types.
+            // General Case:
+            // Copy partial bits inside a single byte.
 
             // Number of bits to copy.
             // 8-di ensures the destination space is enough.
@@ -263,20 +254,13 @@ void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src, int di,
             // nbits ensures the total bits remaining enough.
             c = BpMinTriple(8 - di, 8 - si, n);
 
-            // Explaination:
-            // src >> si << di  Margins byte src with byte dst at position
-            // di. this also clears the right bits up to position si.
-            // ~(0xff << di << c) Gives a mask to clear higher not-need bits
-            // all to 0, e.g. 00001111 on di=4, c=4; Finally: dst |= src to
-            // copy bits.
-            // The ch is the first byte at pointer src. If this byte is Zero,
-            // then there's no need to copy anything, just count c. The
-            // benchmark on stm32 seems performance is improved by 2us by adding
-            // an if statement that skip the Zero byte.
-            unsigned char ch = src[0];
+            // Example to explain, for di=1, c=2
+            // m is: 11111000
             unsigned char m = 0xff << di << c;
+            // Clear the target bits to zeros with a mask:
             dst[0] &= m | ~(0xff << di);
-            if (ch) dst[0] |= (ch >> si << di) & ~m;
+            // Copy bits from src[0] to dst[0]:
+            dst[0] |= (src[0] >> si << di) & ~m;
         }
 
         // Maintain in(de)crements.
