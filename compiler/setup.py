@@ -19,7 +19,7 @@ Features
 ---------
 
 - Supports bit level data serialization.
-- Supports protocol extensiblity, for backward-compatibility.
+- Supports protocol extensiblity, for forward-compatibility.
 - Very easy to start
 
   - Protocol syntax is similar to the well-known protobuf.

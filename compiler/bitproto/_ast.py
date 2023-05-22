@@ -736,7 +736,7 @@ class Int(Integer):
 
 @dataclass
 class ExtensibleType(Type):
-    """ExtensibleType is the type able to extend its size for backward-compatiable
+    """ExtensibleType is the type able to extend its size for forward-compatiable
     concern. When setting the `extensible` parameter to True, a micro buffer that
     indicates the type size will be inserted at the head of encoded buffer.
     In bitproto, array, enum and message are extensible types.

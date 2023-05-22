@@ -8,14 +8,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: bitproto 0.4.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-01-02 22:16+0800\n"
+"POT-Creation-Date: 2023-05-22 21:23+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.11.0\n"
+"Generated-By: Babel 2.12.1\n"
 
 #: ../../performance.rst:4 bb38bc42f11b4de68c861ba21eb53e25
 msgid "Performance"
@@ -82,8 +82,9 @@ msgstr ""
 "我在一个 `stm32 开发板 <https://www.st.com/content/st_com/en/products"
 "/microcontrollers-microprocessors/stm32-32-bit-arm-cortex-mcus/stm32"
 "-mainstream-mcus/stm32f1-series/stm32f103/stm32f103ze.html>`_ (arm "
-"cortex-m3 72MHz cpu) 上, 对 ``100`` 字节大小的消息进行了压测测试， 一次编码调用或者解码调用占用 ``120~140 μs`` 左右的时间，并且可以通过 "
-":ref:`优化模式 <performance-optimization-mode>` 来降低到 ``15 μs`` 左右。"
+"cortex-m3 72MHz cpu) 上, 对 ``100`` 字节大小的消息进行了压测测试， 一次编码调用或者解码调用占用 "
+"``120~140 μs`` 左右的时间，并且可以通过 :ref:`优化模式 <performance-optimization-mode>` "
+"来降低到 ``15 μs`` 左右。"
 
 #: ../../performance.rst:34 cc212dc5e38441c8ac7fe153e792ebcd
 msgid ""
@@ -182,8 +183,8 @@ msgstr "性能敏感的场景，``100μs`` 和 ``10μs`` 完全不是一回事�
 #: ../../performance.rst:90 6e43e0071f2446cdb2e9b84f507785ea
 msgid ""
 "The firmwares of communication ends are always upgraded together, thus "
-"the backward-compatibility is not so important."
-msgstr "通信相关方的固件升级总是一起进行的，这样向后兼容性就不那么重要了。"
+"the forward-compatibility is not so important."
+msgstr "通信相关方的固件升级总是一起进行的，这样向前兼容性就不那么重要了。"
 
 #: ../../performance.rst:91 57d569b743564fdab21876c78629b899
 msgid "Firmware updates are not frequent, even only once for a long time."

@@ -45,7 +45,7 @@ Features
 ---------
 
 - Supports bit level data serialization,  **born for embedded development**.
-- Supports protocol :ref:`extensiblity <language-guide-extensibility>`, for backward-compatibility.
+- Supports protocol :ref:`extensiblity <language-guide-extensibility>`, for forward-compatibility.
 - Easy to start, syntax is similar to the well-known protobuf.
 - Supports languages: - :ref:`C <quickstart-c-guide>` (without dynamic memory allocation), :ref:`Go <quickstart-go-guide>`, - :ref:`Python <quickstart-python-guide>`.
 - Blazing fast encoding/decoding, :ref:`benchmark <performance-benchmark>`.
@@ -132,9 +132,7 @@ The differences between bitproto and protobuf are:
   think setting `aligned attribute to 1 <https://stackoverflow.com/a/11772340>`_
   on structs in C.
 
-* Protobuf works good on
-  `backward compatibility <https://developers.google.com/protocol-buffers/docs/overview#backwards_compatibility>`_.
-  For bitproto, this is the main shortcome of bitproto serialization until
+* Forward-compatibility is the main shortcome of bitproto serialization until
   :ref:`v0.4.0 <version-0.4.0>`, since this version, it supports message's
   :ref:`extensiblity <language-guide-extensibility>` by adding two bytes indicating
   the message size at head of the message's encoded buffer.  This breaks the

@@ -8,14 +8,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: bitproto 0.4.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-12-31 00:08+0800\n"
+"POT-Creation-Date: 2023-05-22 21:26+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.11.0\n"
+"Generated-By: Babel 2.12.1\n"
 
 #: ../../index.rst:2 bdade4b4967c435aba586a8934eea740
 msgid "The bit level data interchange format"
@@ -60,8 +60,8 @@ msgstr "支持比特级别的数据序列化, 为嵌入式开发而生"
 #: ../../index.rst:48 2ff118718b4a40be88167d8b2d2f126d
 msgid ""
 "Supports protocol :ref:`extensiblity <language-guide-extensibility>`, for"
-" backward-compatibility."
-msgstr "支持协议的 :ref:`扩展性 <language-guide-extensibility>`、向后兼容设计"
+" forward-compatibility."
+msgstr "支持协议的 :ref:`扩展性 <language-guide-extensibility>`、向前兼容设计"
 
 #: ../../index.rst:49 0de44305b7f64e5ea96263ca97b55b9a
 msgid "Easy to start, syntax is similar to the well-known protobuf."
@@ -72,7 +72,9 @@ msgid ""
 "Supports languages: - :ref:`C <quickstart-c-guide>` (without dynamic "
 "memory allocation), :ref:`Go <quickstart-go-guide>`, - :ref:`Python "
 "<quickstart-python-guide>`."
-msgstr "支持的语言: :ref:`C (无动态内存申请) <quickstart-c-guide>`, :ref:`Go <quickstart-go-guide>` 和 :ref:`Python <quickstart-python-guide>`."
+msgstr ""
+"支持的语言: :ref:`C (无动态内存申请) <quickstart-c-guide>`, :ref:`Go <quickstart-go-"
+"guide>` 和 :ref:`Python <quickstart-python-guide>`."
 
 #: ../../index.rst:51 7cf4617bb795450faafb37d3271c17c5
 msgid "Blazing fast encoding/decoding, :ref:`benchmark <performance-benchmark>`."
@@ -216,33 +218,29 @@ msgstr ""
 
 #: ../../index.rst:135 3e018375744b48ce8a5b0c61e2ab8460
 msgid ""
-"Protobuf works good on `backward compatibility "
-"<https://developers.google.com/protocol-"
-"buffers/docs/overview#backwards_compatibility>`_. For bitproto, this is "
-"the main shortcome of bitproto serialization until :ref:`v0.4.0 "
-"<version-0.4.0>`, since this version, it supports message's "
-":ref:`extensiblity <language-guide-extensibility>` by adding two bytes "
-"indicating the message size at head of the message's encoded buffer.  "
-"This breaks the traditional data layout design by encoding some minimal "
-"reflection size information in, so this is designed as an optional "
-"feature."
+"Forward-compatibility is the main shortcome of bitproto serialization "
+"until :ref:`v0.4.0 <version-0.4.0>`, since this version, it supports "
+"message's :ref:`extensiblity <language-guide-extensibility>` by adding "
+"two bytes indicating the message size at head of the message's encoded "
+"buffer.  This breaks the traditional data layout design by encoding some "
+"minimal reflection size information in, so this is designed as an "
+"optional feature."
 msgstr ""
-"Protobuf 对于 `向后兼容 <https://developers.google.com/protocol-"
-"buffers/docs/overview#backwards_compatibility>`_ 的特性支持的很好。对于 bitproto，直到 "
-":ref:`v0.4.0 <version-0.4.0>` 这都是其一个主要的缺点。自从这个版本之后，bitproto "
+"对于 bitproto，直到 "
+":ref:`v0.4.0 <version-0.4.0>` 之前，向前兼容都是其一个主要的缺点。自从这个版本之后，bitproto "
 "通过在编码后的字节流头部新增两个字节的方式实现了 :ref:`扩展性 <language-guide-extensibility>` "
 "的支持，这两个字节存储了相关消息的占用字节数的多少。这个设计打破了 bitproto "
 "传统的编码结构的设计，因为新增了一些对于编码大小的反射信息，因此这个功能被设计为可选的。"
 
-#: ../../index.rst:145 299f1275a54e46b494de3d92413a4e4b
+#: ../../index.rst:143 299f1275a54e46b494de3d92413a4e4b
 msgid "Shortcomes"
 msgstr "缺点"
 
-#: ../../index.rst:147 9bebbcfbdbe34230bbc816acbb02c511
+#: ../../index.rst:145 9bebbcfbdbe34230bbc816acbb02c511
 msgid "Known shortcomes of bitproto:"
 msgstr "已知的 bitproto 的缺点如下:"
 
-#: ../../index.rst:149 4a6419cd37ae4ad3be9b5ee0652112c4
+#: ../../index.rst:147 4a6419cd37ae4ad3be9b5ee0652112c4
 msgid ""
 "bitproto doesn't support varying sized types. For example, a ``unit37`` "
 "always occupies 37 bits even you assign it a small value like ``1``."
@@ -250,7 +248,7 @@ msgstr ""
 "bitproto 不支持变长数据类型。 举例来说，一个 ``uint37`` 类型的数据永远在编码后占用 37 个比特，即使你赋值它一个诸如 "
 "``1`` 这样很小的值。"
 
-#: ../../index.rst:152 8d2a5e4025d541ca939419923cce1100
+#: ../../index.rst:150 8d2a5e4025d541ca939419923cce1100
 msgid ""
 "Which means there will be lots of zero bytes if the meaningful data "
 "occupies little on this type.  For instance, there will be ``n-1`` bytes "
@@ -259,7 +257,7 @@ msgstr ""
 "这意味着，如果有意义的数据占用类型的占比较小的时候，编码后的数据中会有很多零字节。比如，当一个大小为 ``n`` "
 "个字节的类型只被使用了其中一个字节的时候，会有 ``n-1`` 个字节会是零字节。"
 
-#: ../../index.rst:156 b014a17d871142d68f138748e2e1d6dd
+#: ../../index.rst:154 b014a17d871142d68f138748e2e1d6dd
 msgid ""
 "Generally, we actually don't care much about this, since there are not so"
 " many bytes in communication with embedded devices. The protocol itself "
@@ -270,7 +268,7 @@ msgstr ""
 "一般来说，我们并不特别关心这个问题，因为在嵌入式设备上的通信量一般不会有多少字节。这里的协议自身一般要设计地紧凑一些。如果你真的比较关心这个问题，可以考虑使用"
 " `zlib <https://zlib.net/>`_ 类似的压缩机制，在消息编码后进行一次协议压缩。"
 
-#: ../../index.rst:161 687204ff4d4e4b1bb0ade357e24192cb
+#: ../../index.rst:159 687204ff4d4e4b1bb0ade357e24192cb
 msgid ""
 "bitproto can't provide :ref:`best encoding performance <performance-"
 "optimization-mode>` with :ref:`extensibility <language-guide-"
@@ -279,7 +277,7 @@ msgstr ""
 "bitproto 无法同时提供 :ref:`最佳的性能 <performance-optimization-mode>` 和 "
 ":ref:`扩展性能力 <language-guide-extensibility>`。"
 
-#: ../../index.rst:164 e4026a353d514c908bec9320a3799370
+#: ../../index.rst:162 e4026a353d514c908bec9320a3799370
 msgid ""
 "There's an :ref:`optimization mode <performance-optimization-mode>` "
 "designed in bitproto to generate plain encoding/decoding statements "
@@ -293,7 +291,7 @@ msgstr ""
 "中所有的类型都是定长的，因此我们可以在代码生成阶段就清楚地知道如何对其进行编解码。压测的结果表明，这个模式带来了巨大的性能提升，不过目前为止我还没有想到一个办法来支持"
 " bitproto 的扩展性功能和这个性能优化模式一起工作。"
 
-#: ../../index.rst:171 f6eed4ecd7f54ebb82d853f61b9a2132
+#: ../../index.rst:169 f6eed4ecd7f54ebb82d853f61b9a2132
 msgid "Content list"
 msgstr "内容列表"
 
