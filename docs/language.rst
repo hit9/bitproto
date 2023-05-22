@@ -437,11 +437,11 @@ Extensibility
 ^^^^^^^^^^^^^
 
 Bitproto knows exactly how many bits a message will occupy at compile time, because all types
-are fix-sized. This may make backwards-compatibility hard.
+are fix-sized. This may make `forward-compatibility <https://en.wikipedia.org/wiki/Forward_compatibility>`_ hard.
 
 It seems ok to add new fields to the end of a message in use, because the structures of
 existing fields are unchanged, the decoding end won't scan the encoded bytes of new fields,
-then "the backward-compatibility achieved":
+then "the forward-compatibility achieved":
 
 .. sourcecode:: bitproto
 

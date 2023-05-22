@@ -87,7 +87,7 @@ Optimization mode is designed for performance-sensitive scenarios, such as low p
 compute-intensive microcontrollers. I recommend to use the optimization mode when:
 
 * Performance-sensitive scenarios, where ``100μs`` means totally different with ``10μs``.
-* The firmwares of communication ends are always upgraded together, thus the backward-compatibility is not so important.
+* The firmwares of communication ends are always upgraded together, thus the forward-compatibility is not so important.
 * Firmware updates are not frequent, even only once for a long time.
 
 Specially, for the scenario that firmware-upgrading of communication ends have to be processed partially,

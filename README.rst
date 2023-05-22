@@ -76,7 +76,7 @@ Features
 ---------
 
 - Supports bit level data serialization, **born for embedded development**.
-- Supports protocol `extensiblity <https://bitproto.readthedocs.io/en/latest/language.html#extensibility>`_ , for backward-compatibility.
+- Supports protocol `extensiblity <https://bitproto.readthedocs.io/en/latest/language.html#extensibility>`_ , for forward-compatibility.
 - Easy to start, syntax is similar to the well-known protobuf.
 - Supports languages: `C <https://bitproto.readthedocs.io/en/latest/c-guide.html>`_ (without dynamic memory allocation),
   `Go <https://bitproto.readthedocs.io/en/latest/go-guide.html>`_, `Python <https://bitproto.readthedocs.io/en/latest/python-guide.html>`_ .
@@ -217,7 +217,7 @@ The differences between bitproto and protobuf are:
   on structs in C.
 
 * Protobuf works good on
-  `backward compatibility <https://developers.google.com/protocol-buffers/docs/overview#backwards_compatibility>`_.
+  `forward compatibility <https://developers.google.com/protocol-buffers/docs/overview#forward_compatibility>`_.
   For bitproto, this is the main shortcome of bitproto serialization until v0.4.0, since this version, it supports message's
   `extensiblity <https://bitproto.readthedocs.io/en/latest/language.html#extensibility>`_ by adding two bytes indicating
   the message size at head of the message's encoded buffer.  This breaks the

@@ -8,14 +8,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: bitproto 0.4.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-01-02 22:16+0800\n"
+"POT-Creation-Date: 2023-05-22 21:23+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.11.0\n"
+"Generated-By: Babel 2.12.1\n"
 
 #: ../../changelog.rst:2 eb5e577b5cca451f97c84e6697bf5395
 msgid "Changelog"
@@ -94,7 +94,7 @@ msgstr ""
 #: ../../../changes.rst:58 3c499990cd38434f932a3558376617c5
 msgid ""
 "Add support for ``message`` and ``enum`` extensiblity for protocol "
-"backward compatibility."
+"forward compatibility."
 msgstr ""
 
 #: ../../../changes.rst:59 ad10bcd6f05a4e5187b2d8ba2f3e5235
@@ -110,4 +110,3 @@ msgid ""
 "Refactor the bitproto serialization mechanism, using language-specific "
 "libraries instead of pure compiler-generated files."
 msgstr ""
-
