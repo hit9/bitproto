@@ -221,27 +221,44 @@ void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src, int di,
             // shifted src byte.
 
             // Number of bits to process during batch copy.
-            int bits = n + si;
+            int b = n + si;
+            int d = 8 - si;
 
-            if (bits >= 32) {
+            if (n >= 32) {
+                // Copy the remaining bits if si != 0.
+                // This way, the next iteration will ge to di == 0 again.
+                ((uint32_t *)dst)[0] = ((uint32_t *)(src))[0] >> si;
+                if (si) dst[3] |= ((src[4] << d) & ~(0xff << d << si));
+                c = 32;
+            } else if (b >= 32) {
                 // Copy as an uint32 integer.
                 // This way, performance faster x2 than bits copy approach.
                 ((uint32_t *)dst)[0] = ((uint32_t *)(src))[0] >> si;
                 c = 32 - si;
-            } else if (bits >= 16) {
+            } else if (n >= 16) {
+                ((uint16_t *)dst)[0] = ((uint16_t *)(src))[0] >> si;
+                if (si) dst[1] |= ((src[2] << d) & ~(0xff << d << si));
+
+                c = 16;
+            } else if (b >= 16) {
                 // Copy as an uint16 integer.
                 ((uint16_t *)dst)[0] = ((uint16_t *)(src))[0] >> si;
                 c = 16 - si;
-            } else if (bits >= 8) {
+            } else if (n >= 8) {
+                // Copy as an unsigned char.
+                dst[0] = (src[0] >> si) & 0xff;
+                if (si) dst[0] |= ((src[1] << d) & ~(0xff << d << si));
+                c = 8;
+            } else if (b >= 8) {
                 // Copy as an unsigned char.
                 dst[0] = (src[0] >> si) & 0xff;
                 c = 8 - si;
             } else {
-                // When bits < 8 and di == 0
+                // When b < 8 and di == 0
                 // Copy partial bits inside a byte.
                 // For the original statement:
                 // c = BpMinTriple(8 - di, 8 - si, n);
-                // since di is 0 and bits <8, then 8-di is 8
+                // since di is 0 and b <8, then 8-di is 8
                 // and n <8 , the 8-di won't be the smallest, we
                 // just pick function BpMin over BpMinTriple for the little
                 // little performance improvement.

@@ -10,12 +10,12 @@ int main(void) {
     for (int i = 0; i < 7; i++) m.b[i] = (int32_t)(i);
     for (int i = 0; i < 7; i++) m.c[i] = (int8_t)(i);
     for (int i = 0; i < 7; i++) m.d[i] = (uint8_t)(i & 7);
-    for (int i = 0; i < 7; i++) m.e[i] = (uint32_t)(i + 118);
+    for (int i = 0; i < 7; i++) m.e[i] = (uint32_t)(i + 11811);
     for (int i = 0; i < 7; i++)
         m.f[i] = (struct Note){i, false, {1, 2, 3, 4, 5, 6, 7}};
     m.g = (struct Note){2, false, {7, 2, 3, 4, 5, 6, 7}};
     for (int i = 0; i < 7; i++)
-        for (int j = 0; j < 7; j++) m.t[i][j] = (int32_t)(i + j + 129);
+        for (int j = 0; j < 7; j++) m.t[i][j] = (int32_t)(i + j + 1291291);
     m.x[0] = -13;
     m.x[1] = -89;
     m.x[2] = 13;

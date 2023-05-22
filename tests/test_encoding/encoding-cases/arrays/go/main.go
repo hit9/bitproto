@@ -27,14 +27,14 @@ func main() {
 		m.D[i] = uint8(i & 7)
 	}
 	for i := 0; i < 7; i++ {
-		m.E[i] = uint32(i + 118)
+		m.E[i] = uint32(i + 11811)
 	}
 	for i := 0; i < 7; i++ {
 		m.F[i] = bp.Note{uint8(i), false, bp.Uint3s{1, 2, 3, 4, 5, 6, 7}}
 	}
 	for i := 0; i < 7; i++ {
 		for j := 0; j < 7; j++ {
-			m.T[i][j] = int32((i + j) + 129)
+			m.T[i][j] = int32((i + j) + 1291291)
 		}
 	}
 	m.G = bp.Note{uint8(2), false, bp.Uint3s{7, 2, 3, 4, 5, 6, 7}}
