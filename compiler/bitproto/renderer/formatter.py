@@ -64,7 +64,6 @@ CaseStyleMapping = Dict[T[Definition], Union[str, Tuple[str, ...], CaseStyleConv
 
 @unique
 class CaseStyle(Enum_):
-
     KEEP = 0
     SNAKE = 1
     UPPER = 2

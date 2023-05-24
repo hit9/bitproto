@@ -206,7 +206,6 @@ def frozen(
         setattr(class_, "__delattr__", __delattr__)
 
         if post_init:
-
             init_func = getattr(class_, "__init__")
 
             def decorate_init(func):
