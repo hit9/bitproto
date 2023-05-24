@@ -1,0 +1,7 @@
+proto b;
+
+option go.package_path = "github.com/hit9/bitproto/tests/test_encoding/encoding-cases/issue-52/go/bp/b";
+
+enum X : uint1 {
+    OK = 0;
+}
