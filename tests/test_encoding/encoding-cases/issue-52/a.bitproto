@@ -1,0 +1,7 @@
+proto a
+
+import bb "b.bitproto"
+
+message A {
+    bb.X x = 1;
+}

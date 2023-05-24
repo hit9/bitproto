@@ -54,13 +54,6 @@ class BlockGeneralImports(Block):
         self.push(f'bp "{GO_LIB_IMPORT_PATH}"', indent=1)
         self.push(f")")
 
-        self.push_empty_line()
-
-        self.push_comment("Avoid possible golang import not used error")
-        self.push(f"var formatInt = strconv.FormatInt")
-        self.push(f"var jsonMarshal = json.Marshal")
-        self.push(f"var _ = bp.Useless")
-
 
 class BlockImportChildProto(BlockBindProto[F]):
     @override(Block)
@@ -79,6 +72,15 @@ class BlockImportChildProtoList(BlockComposition[F]):
     @override(BlockComposition)
     def separator(self) -> str:
         return "\n"
+
+
+class BlockAvoidGeneralImportsNotUsed(Block):
+    @override(Block)
+    def render(self) -> None:
+        self.push_comment("Avoid possible golang import not used error")
+        self.push(f"var formatInt = strconv.FormatInt")
+        self.push(f"var jsonMarshal = json.Marshal")
+        self.push(f"var _ = bp.Useless")
 
 
 class BlockAliasMethodBase(BlockBindAlias[F]):
@@ -750,6 +752,7 @@ class BlockList(BlockComposition[F]):
             BlockPackageName(self.bound),
             BlockGeneralImports(),
             BlockImportChildProtoList(),
+            BlockAvoidGeneralImportsNotUsed(),
             BlockBoundDefinitionList(),
         ]
 

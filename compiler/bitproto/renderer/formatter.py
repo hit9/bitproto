@@ -64,7 +64,6 @@ CaseStyleMapping = Dict[T[Definition], Union[str, Tuple[str, ...], CaseStyleConv
 
 @unique
 class CaseStyle(Enum_):
-
     KEEP = 0
     SNAKE = 1
     UPPER = 2
@@ -401,17 +400,23 @@ class Formatter:
         Joins a with a dot delimer if given definition is a definition imported.
         """
         definition_name = self.format_definition_name_inner_proto(d, class_)
-        protos = [scope for scope in d.scope_stack if isinstance(scope, Proto)]
 
-        if len(protos) <= 1:
+        parent = d.scope_stack[-1]
+
+        if not isinstance(parent, Proto):
+            # Member of Non-Proto scopes: message, enum etc.
             return definition_name
 
         if not self.support_import_as_member():
             return definition_name
 
-        proto = protos[-1]  # Last is the imported parent.
-        items = [self._get_definition_name(proto), definition_name]
-        return self.delimer_cross_proto().join(items)
+        if not parent.scope_stack:
+            # `parent` is the top proto.
+            return definition_name
+        # `parent` is imported in another proto.
+        return self.delimer_cross_proto().join(
+            [self._get_definition_name(parent), definition_name]
+        )
 
     @final
     def format_name_related_to_definition(

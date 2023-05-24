@@ -135,3 +135,13 @@ def test_encoding_signed() -> None:
 
 def test_encoding_complexx() -> None:
     _TestCase("complexx", support_optimization_mode=False).run()
+
+
+def test_encoding_issue52() -> None:
+    _TestCase(
+        "issue-52",
+        langs=["py", "c"],
+        compare_output=False,
+        compare_output_as_json=False,
+        support_optimization_mode=False,
+    )

@@ -80,7 +80,6 @@ class Linter:
         """
         warning_count: int = 0
         for definition_type in SUPPORTED_TYPES:
-
             items: List[Tuple[str, Definition]]
             if definition_type is Proto:  # proto is not a member of itself.
                 items = [(proto.name, proto)]
