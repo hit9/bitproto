@@ -5,8 +5,8 @@ Version 1.1.1
 
 .. _version-1.1.1
 
-- Fix bug: enum importting other bitproto's field name generation bug. #53 #52
-- Fix bug: import statements of bitproto importings should be placed ahead of other declarations. #53
+- Fix bug: enum importing other bitproto's field name generation bug. #53 #52
+- Fix bug: import statements of bitprotos should be placed ahead of other declarations. #53
 
 Version 1.1.0
 -------------
