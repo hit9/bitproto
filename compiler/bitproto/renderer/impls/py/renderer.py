@@ -1,6 +1,7 @@
 """
 Renderer for Python.
 """
+
 from abc import abstractmethod
 from typing import Any, List, Optional
 

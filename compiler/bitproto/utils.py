@@ -123,8 +123,7 @@ class cached_property:
         self.func = func
 
     @overload
-    def __get__(self, obj: None, cls: T[I]) -> "cached_property":
-        ...
+    def __get__(self, obj: None, cls: T[I]) -> "cached_property": ...
 
     @overload
     def __get__(self, obj: I, cls: T[I]) -> O:  # type: ignore
@@ -138,13 +137,11 @@ class cached_property:
 
 
 @overload
-def frozen(class_: C) -> C:
-    ...
+def frozen(class_: C) -> C: ...
 
 
 @overload
-def frozen(*, safe_hash: bool = True, post_init: bool = True) -> Callable[[C], C]:
-    ...
+def frozen(*, safe_hash: bool = True, post_init: bool = True) -> Callable[[C], C]: ...
 
 
 def frozen(

@@ -4,6 +4,7 @@ bitproto.renderer.formatter
 
 Formatter class base.
 """
+
 import os
 from abc import abstractmethod
 from enum import Enum as Enum_, unique
