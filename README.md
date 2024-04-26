@@ -239,7 +239,7 @@ Documentation:
 
 - Website: [https://bitproto.readthedocs.io](https://bitproto.readthedocs.io)
 - Documentation in Chinese: [https://bitproto.readthedocs.io/zh/latest](https://bitproto.readthedocs.io/zh/latest)
-- [Quick start tutorial](https://bitproto.readthedocs.io/en/latest/quickstart.htma)
+- [Quick start tutorial](https://bitproto.readthedocs.io/en/latest/quickstart.html)
 - [Grammar guide, in one page](https://bitproto.readthedocs.io/en/latest/language.html)
 
 Editor syntax highlighting plugins:
