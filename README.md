@@ -82,7 +82,7 @@ An example for a simple overview of the bitproto schema grammar:
 proto pen
 
 // Constant value
-const SIZE = 2 * 3;
+const PEN_ARRAY_SIZE = 2 * 3;
 
 // Bit level enum.
 enum Color : uint3 {
@@ -105,7 +105,7 @@ message Pen {
 
 message Box {
     // Fixed-size array
-    Pen[SIZE] pens = 1;
+    Pen[PEN_ARRAY_SIZE] pens = 1;
 }
 ```
 
@@ -121,7 +121,7 @@ We can have an overview of the generated code for the C language:
 
 ```c
 // Constant value
-#define SIZE 6
+#define PEN_ARRAY_SIZE 6
 
 // Bit level enum.
 typedef uint8_t Color; // 3bit
