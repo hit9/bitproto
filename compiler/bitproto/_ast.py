@@ -494,6 +494,7 @@ class Scope(Definition):
 @dataclass
 class BoundScope(Scope, BoundDefinition):
     "BoundScope is the scope has a bound, distinguishs from Proto."
+
     pass
 
 

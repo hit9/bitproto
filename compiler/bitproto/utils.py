@@ -132,8 +132,8 @@ class cached_property:
     def __get__(self, obj: Optional[I], cls: T[I]) -> Union["cached_property", O]:
         if obj is None:
             return self
-        value = obj.__dict__[self.func.__name__] = self.func(obj)
-        return value
+        value = obj.__dict__[self.func.__name__] = self.func(obj)  # type: ignore
+        return value  # type: ignore
 
 
 @overload
@@ -313,14 +313,14 @@ def override_docstring(string: str) -> Callable[[F], F]:
 
 @unique
 class Color(Enum):
-    BLACK: int = 0
-    RED: int = 1
-    GREEN: int = 2
-    YELLOW: int = 3
-    BLUE: int = 4
-    MAGENTA: int = 5
-    CYAN: int = 6
-    WHITE: int = 7
+    BLACK = 0
+    RED = 1
+    GREEN = 2
+    YELLOW = 3
+    BLUE = 4
+    MAGENTA = 5
+    CYAN = 6
+    WHITE = 7
 
 
 def colored(text: str, color: Color) -> str:
