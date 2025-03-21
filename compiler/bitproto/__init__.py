@@ -4,7 +4,7 @@ bitproto
 
 Bit level data interchange format.
 
-:copyright: (c) 2020~2023 by Chao Wang <hit9@icloud.com>.
+:copyright: (c) 2020~2025 by Chao Wang <hit9@icloud.com>.
 
 """
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2021~2023, hit9. https://github.com/hit9/bitproto
+// Copyright (c) 2021~2025, hit9. https://github.com/hit9/bitproto
 // Encoding library for bitproto in C language.
 
 #include "bitproto.h"
