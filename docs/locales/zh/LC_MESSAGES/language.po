@@ -539,7 +539,7 @@ msgid ""
 "message sizes, the bitproto compiler will report an error and refuse to "
 "compile if the declared message's size is larger than the configured "
 "value:"
-msgstr "距离来说，消息有一个选项叫做 ``max_bytes`` 来约束消息的大小，当我们设计的消息的大小超出这个选项配置的值时，编译器则会报错，拒绝编译："
+msgstr "具体来说，消息有一个选项叫做 ``max_bytes`` 来约束消息的大小，当我们设计的消息的大小超出这个选项配置的值时，编译器则会报错，拒绝编译："
 
 #: ../../language.rst:587 13518676f0524ac488a8268caa54504a
 msgid "Full table of options supported:"
