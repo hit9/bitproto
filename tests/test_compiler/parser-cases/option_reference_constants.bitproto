@@ -1,0 +1,18 @@
+proto option_reference_constants
+
+const MAX_MESSAGE_LENGTH = 128;
+const HEADER_LENGTH = 5;
+const MAX_PAYLOAD_LENGTH = MAX_MESSAGE_LENGTH - HEADER_LENGTH;
+
+message MyMessage {
+    option max_bytes = MAX_MESSAGE_LENGTH;
+    byte[MAX_PAYLOAD_LENGTH] payload = 3;
+}
+
+message MyPayload {
+    option max_bytes = MAX_PAYLOAD_LENGTH;
+}
+
+message MyOtherPayload {
+    option max_bytes = MAX_PAYLOAD_LENGTH;
+}

@@ -1,0 +1,17 @@
+proto option_reference_constants
+
+import base "shared_5.bitproto"
+
+
+message MyMessage {
+    option max_bytes = base.MAX_MESSAGE_LENGTH;
+    byte[base.MAX_PAYLOAD_LENGTH] payload = 3;
+}
+
+message MyPayload {
+    option max_bytes = base.MAX_PAYLOAD_LENGTH;
+}
+
+message MyOtherPayload {
+    option max_bytes = base.MAX_PAYLOAD_LENGTH;
+}

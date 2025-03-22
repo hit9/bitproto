@@ -71,6 +71,7 @@ r_option_value = """
 option_value : boolean_literal
              | integer_literal
              | string_literal
+             | constant_reference
 """
 
 r_alias = """

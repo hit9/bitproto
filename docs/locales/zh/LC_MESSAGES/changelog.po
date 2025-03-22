@@ -8,105 +8,130 @@ msgid ""
 msgstr ""
 "Project-Id-Version: bitproto 0.4.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-05-22 21:23+0800\n"
+"POT-Creation-Date: 2025-03-22 16:32+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.12.1\n"
+"Generated-By: Babel 2.17.0\n"
 
-#: ../../changelog.rst:2 eb5e577b5cca451f97c84e6697bf5395
+#: ../../changelog.rst:2 bd0c49799ad1472b9ebc5a93eae789ae
 msgid "Changelog"
 msgstr "版本历史"
 
-#: ../../../changes.rst:4 fc5a94d17a314c589b3622ad0c32e5a0
+#: ../../../changes.rst:4 4ca3aa397b074fb7a87296b215f52ecb
+msgid "Version 1.1.2"
+msgstr "Version 1.1.2"
+
+#: ../../../changes.rst:8 427ec549afc64dd3ba6e4efb7ba67165
+msgid "Feature: Allow using constants as option values. ISSUE #61, PR #63"
+msgstr ""
+
+#: ../../../changes.rst:11 4ca3aa397b074fb7a87296b215f52ecb
+msgid "Version 1.1.1"
+msgstr ""
+
+#: ../../../changes.rst:15 61227587c4e443038089921f7bf8584f
+msgid ""
+"Fix bug: enum importing other bitproto's field name generation bug. #53 "
+"#52"
+msgstr ""
+
+#: ../../../changes.rst:16 66206e28775a4993a98af4b796bd3097
+msgid ""
+"Fix bug: import statements of bitprotos should be placed ahead of other "
+"declarations. #53"
+msgstr ""
+
+#: ../../../changes.rst:19 9c595ec0cf7f4e21b9cab4878149574c
 msgid "Version 1.1.0"
 msgstr ""
 
-#: ../../../changes.rst:8 266428222faa4853ae12a6fe4a43b374
+#: ../../../changes.rst:23 668377b7aead4b6e9dfe5650f07f550d
 msgid ""
 "Performance improvements for C bitprotolib, 40~60us improvement per call "
 "on stm32. PR #48."
 msgstr ""
 
-#: ../../../changes.rst:9 3242e95c31e649849edab6676af21f4d
+#: ../../../changes.rst:24 351457b1434647ff926e98fe7fb00c5a
 msgid ""
 "Fix Python nested message ``__post_init___`` function code generation. PR"
 " #48, commit 73f4b01."
 msgstr ""
 
-#: ../../../changes.rst:12 fc5a94d17a314c589b3622ad0c32e5a0
+#: ../../../changes.rst:27 24745d925dd0496c8a1dd647e7b7225f
 msgid "Version 1.0.1"
 msgstr ""
 
-#: ../../../changes.rst:16 c7bc4aba599d47b78b5b95e56f41257d
+#: ../../../changes.rst:31 c9cede67a4354f85a113fe9802d7c3f1
 msgid "Add support for Python 3.11"
 msgstr ""
 
-#: ../../../changes.rst:19 fc5a94d17a314c589b3622ad0c32e5a0
+#: ../../../changes.rst:34 33d884cb4ef54a7e80d5c425391b372c
 msgid "Version 1.0.0"
 msgstr ""
 
-#: ../../../changes.rst:23 c894eb85f9834f1b837622fd859c7e98
+#: ../../../changes.rst:38 3592669cb8e847c49cea8a365c2c3a5f
 msgid "First fully release version"
 msgstr "第一次发布 1.0 版本"
 
-#: ../../../changes.rst:28 30bc2f453f9a4e4daec1f2b082a6ac91
+#: ../../../changes.rst:43 b3a828ec2f7a44a4b6401d53455fffc6
 msgid "Version 0.4.6"
 msgstr ""
 
-#: ../../../changes.rst:30 9e9740e4c92e4ed595194bd543ebe147
+#: ../../../changes.rst:45 4f633212411841cd8396ddd38a9f24cc
 msgid "Support signed integers with arbitrary bits, e.g. int24 PR#45."
 msgstr "支持任意比特数目的有符号整数类型 例如 int24, 见 PR#45"
 
-#: ../../../changes.rst:35 30bc2f453f9a4e4daec1f2b082a6ac91
+#: ../../../changes.rst:50 90f0ae1491a84c41a2b9c5dc0e66f845
 msgid "Version 0.4.5"
 msgstr ""
 
-#: ../../../changes.rst:37 3ba33408fbab4e6e8fa4bd1348e776a9
+#: ../../../changes.rst:52 5390534c2c094a6b881c30f62d565d17
 msgid ""
 "Use Python IntEnum for enum generation (respecting backward "
 "compatibility)  PR#41."
 msgstr ""
 
-#: ../../../changes.rst:42 dc7770b7fd674da18fa53f58fea0f06f
+#: ../../../changes.rst:57 3bfcca062ff44f87aea90bf7a6f339b1
 msgid "Version 0.4.4"
 msgstr ""
 
-#: ../../../changes.rst:44 ee1e046b6272442181a755b5b744d6ba
+#: ../../../changes.rst:59 c5a2117f96e4413da42ee13729394184
 msgid "Minor fix compiler setup.py path issue."
 msgstr ""
 
-#: ../../../changes.rst:49 2cd432670b154c19a01259f94cb33bc3
+#: ../../../changes.rst:64 86561ffe65894180a12c77dd57d8172f
 msgid "Version 0.4.2"
 msgstr ""
 
-#: ../../../changes.rst:51 a8406cdecd1d4dfc94ad9cebc4c927b5
+#: ../../../changes.rst:66 bc317a756c0f44999c0c22be675a7deb
 msgid "Allow using ``type`` as message field name, fixes issue #39."
 msgstr ""
 
-#: ../../../changes.rst:56 fc5a94d17a314c589b3622ad0c32e5a0
+#: ../../../changes.rst:71 a00793c65d2c427f9b81c1ccab8ad424
 msgid "Version 0.4.0"
 msgstr ""
 
-#: ../../../changes.rst:58 3c499990cd38434f932a3558376617c5
+#: ../../../changes.rst:73 b0917dbfc0524e74ba171e75741e97e2
 msgid ""
 "Add support for ``message`` and ``enum`` extensiblity for protocol "
 "forward compatibility."
 msgstr ""
 
-#: ../../../changes.rst:59 ad10bcd6f05a4e5187b2d8ba2f3e5235
+#: ../../../changes.rst:74 95abb35c9fcd4d449a32519fd31ac1aa
 msgid "Cut down the code size of generated language-specific files."
 msgstr ""
 
-#: ../../../changes.rst:60 a2e47a95cb5c4f44ac3a9d965d8d719c
+#: ../../../changes.rst:75 ccf790e19105464b9c222eb7d5916f8d
 msgid "Refactor the bitproto compiler."
 msgstr ""
 
-#: ../../../changes.rst:61 480040dd74284c97acfb4dcc47354779
+#: ../../../changes.rst:76 6f93b6bbf73748d4b801a715f0cba57b
 msgid ""
 "Refactor the bitproto serialization mechanism, using language-specific "
 "libraries instead of pure compiler-generated files."
 msgstr ""
+
