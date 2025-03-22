@@ -28,6 +28,7 @@ from bitproto._ast import (
     Proto,
     Scope,
     Type,
+    Reference,
 )
 from bitproto.errors import (
     AliasInEnumUnsupported,
@@ -466,6 +467,15 @@ class Parser:
         p[0] = d
         self.copy_p_tracking(p)
 
+        reference = Reference(
+            token=p[1],
+            lineno=p.lineno(1),
+            token_col_start=self._get_col(p, 1),
+            filepath=self.current_filepath(),
+            referenced_definition=d,
+        )
+        self.current_proto().references.append(reference)
+
     @override_docstring(r_type)
     def p_type(self, p: P) -> None:
         p[0] = p[1]
@@ -498,8 +508,18 @@ class Parser:
                 token=p[1],
                 lineno=p.lineno(1),
             )
+
         p[0] = d
         self.copy_p_tracking(p)
+
+        reference = Reference(
+            token=p[1],
+            lineno=p.lineno(1),
+            token_col_start=self._get_col(p, 1),
+            filepath=self.current_filepath(),
+            referenced_definition=d,
+        )
+        self.current_proto().references.append(reference)
 
     @override_docstring(r_optional_extensible_flag)
     def p_optional_extensible_flag(self, p: P) -> None:

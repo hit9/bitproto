@@ -7,3 +7,4 @@ recursive-exclude *.egg-info *
 recursive-exclude .git *
 recursive-exclude .mypy_cache *
 recursive-exclude __pycache__ *
+recursive-exclude .ruff_cache *

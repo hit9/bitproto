@@ -39,6 +39,7 @@ Abstraction syntax tree.
       |    |    |- Enum                 :Scope:Definition:Node
       |    |    |- Message              :Scope:Definition:Node
       |    |    |- Proto                :Scope:Definition:Node
+      |- Reference                      :Node
 """
 
 from collections import OrderedDict as dict_
@@ -138,6 +139,10 @@ class Node:
     # cheat mypy: override by @frozen
     __frozen__: ClassVar[bool] = False
 
+    @property
+    def token_col_end(self) -> int:
+        return self.token_col_start + len(self.token)
+
     def is_frozen(self) -> bool:
         return self.__frozen__
 
@@ -193,6 +198,18 @@ class Definition(Node):
     def __repr__(self) -> str:
         class_repr = repr(type(self))
         return f"<{class_repr} {self.name}>"
+
+
+@dataclass
+class Reference(Node):
+    """
+    Reference to a definition.
+    """
+
+    referenced_definition: Optional[Definition] = None
+
+    def __repr__(self) -> str:
+        return f"<{self.token}>"
 
 
 @dataclass
@@ -1039,6 +1056,8 @@ class Message(BoundScope, ScopeWithOptions, CompositeType, ExtensibleType):
 @dataclass
 class Proto(ScopeWithOptions):
     __option_descriptors__: ClassVar[OptionDescriptors] = PROTO_OPTTIONS
+
+    references: list[Reference] = dataclass_field(default_factory=list)
 
     def set_name(self, name: str) -> None:
         if self.is_frozen():
