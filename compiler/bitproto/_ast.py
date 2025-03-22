@@ -1057,7 +1057,7 @@ class Message(BoundScope, ScopeWithOptions, CompositeType, ExtensibleType):
 class Proto(ScopeWithOptions):
     __option_descriptors__: ClassVar[OptionDescriptors] = PROTO_OPTTIONS
 
-    references: list[Reference] = dataclass_field(default_factory=list)
+    references: List[Reference] = dataclass_field(default_factory=list)
 
     def set_name(self, name: str) -> None:
         if self.is_frozen():
