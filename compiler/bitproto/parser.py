@@ -189,12 +189,9 @@ class Parser:
             p[0] = []
 
     def copy_p_tracking(self, p: P, from_: int = 1, to: int = 0) -> None:
-        """Don't know why P's tracking info (lexpos and lineno) sometimes missing.
-        Particular in recursion grammar situation. We have to copy it manually.
-
-        Add this function in a p_xxx function when:
-            1. the p[0] is gona to be used in another parsing target.
-            2. and the tracking information is gona to be used there.
+        """
+        Ply's position tracking works only for lexing SYMBOLS (not for all grammer symbols) by default.
+        We either enable parse(tracking=True), or copy them on need manually.
         """
         p.set_lexpos(to, p.lexpos(from_))
         p.set_lineno(to, p.lineno(from_))
@@ -334,6 +331,7 @@ class Parser:
             filepath=self.current_filepath(),
             lineno=p.lineno(2),
             token=p[2],
+            token_col_start=self._get_col(p, 2),
         )
         self.current_scope().push_member(option)
 
@@ -357,6 +355,7 @@ class Parser:
             filepath=self.current_filepath(),
             lineno=lineno,
             token=token,
+            token_col_start=self._get_col(p, 2) if len(p) == 6 else self._get_col(p, 3),
             indent=self.current_indent(p),
             scope_stack=self.current_scope_stack(),
             comment_block=self.collect_comment_block(),
@@ -384,6 +383,7 @@ class Parser:
             _bound=self.current_proto(),
             filepath=self.current_filepath(),
             token=p[2],
+            token_col_start=self._get_col(p, 2),
             lineno=p.lineno(2),
         )
         self.current_scope().push_member(constant)
@@ -517,6 +517,7 @@ class Parser:
             cap=p[3],
             extensible=p[5],
             token="{0}[{1}]".format(p[1], p[3]),
+            token_col_start=self._get_col(p, 1),
             lineno=p.lineno(2),
             filepath=self.current_filepath(),
         )
@@ -552,6 +553,7 @@ class Parser:
             name=p[2],
             type=p[4],
             token=p[2],
+            token_col_start=self._get_col(p, 2),
             lineno=p.lineno(2),
             filepath=self.current_filepath(),
             indent=self.current_indent(p),
@@ -605,6 +607,7 @@ class Parser:
             name=name,
             value=value,
             token=p[1],
+            token_col_start=self._get_col(p, 1),
             lineno=p.lineno(1),
             indent=self.current_indent(p),
             filepath=self.current_filepath(),
@@ -626,6 +629,7 @@ class Parser:
             name=p[2],
             extensible=p[3],
             token=p[2],
+            token_col_start=self._get_col(p, 2),
             lineno=p.lineno(2),
             filepath=self.current_filepath(),
             indent=self.current_indent(p),
@@ -673,6 +677,7 @@ class Parser:
             type=type,
             number=field_number,
             token=p[2],
+            token_col_start=self._get_col(p, 2),
             lineno=p.lineno(2),
             filepath=self.current_filepath(),
             comment_block=self.collect_comment_block(),
@@ -685,6 +690,7 @@ class Parser:
     @override_docstring(r_message_field_name)
     def p_message_field_name(self, p: P) -> None:
         p[0] = p[1]
+        self.copy_p_tracking(p)  # from 1 to 0
 
     @override_docstring(r_boolean_literal)
     def p_boolean_literal(self, p: P) -> None:
@@ -700,7 +706,7 @@ class Parser:
 
     @override_docstring(r_dotted_identifier)
     def p_dotted_identifier(self, p: P) -> None:
-        self.copy_p_tracking(p)
+        self.copy_p_tracking(p)  # from 1 => 0
         if len(p) == 4:
             p[0] = ".".join([p[1], p[3]])
         elif len(p) == 2:
@@ -715,6 +721,13 @@ class Parser:
         if len(p) > 1:
             raise GrammarError(filepath=filepath, token=p.value(1), lineno=p.lineno(1))
         raise GrammarError()
+
+    def _get_col(self, p: P, k: int) -> int:
+        lexpos = p.lexpos(k)
+        # we dont use `last_newline_pos` here,
+        # because the recursive parsing may result a deeper `last_newline_pos`.
+        last_newline = p.lexer.lexdata.rfind("\n", 0, lexpos)
+        return lexpos - max(last_newline, 0)
 
 
 def parse(filepath: str, traditional_mode: bool = False) -> Proto:

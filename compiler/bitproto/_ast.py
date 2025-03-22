@@ -130,6 +130,9 @@ cache_if_frozen = conditional_cache(cache_if_frozen_condition)
 class Node:
     token: str = ""
     lineno: int = 0
+    # column start and end of this token in the line, starting from 0.
+    # to get the col end: col_start + len(token)
+    token_col_start: int = 0
     filepath: str = ""
 
     # cheat mypy: override by @frozen
