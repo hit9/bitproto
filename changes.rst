@@ -1,5 +1,12 @@
 .. currentmodule:: bitproto
 
+Version 1.1.2
+-------------
+
+.. _version-1.1.2
+
+- Feature: Allow using constants as option values. ISSUE #61, PR #63
+
 Version 1.1.1
 -------------
 

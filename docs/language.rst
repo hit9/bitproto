@@ -584,7 +584,7 @@ size is larger than the configured value:
        byte[4] field = 1  // Violated max_bytes constraint
    }
 
-Another example that references constants as option values:
+Another example that references constants as option values (supported since v1.1.2):
 
 .. sourcecode:: bitproto
 

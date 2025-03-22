@@ -1,0 +1,17 @@
+proto test
+
+import base "base.bitproto"
+
+message MyMessage {
+    option max_bytes = base.MAX_MESSAGE_LENGTH; // 128
+    //... // Header contents
+    byte[base.MAX_PAYLOAD_LENGTH] payload = 3;
+}
+
+message MyPayload {
+    option max_bytes = base.MAX_PAYLOAD_LENGTH; // 123
+}
+
+message MyOtherPayload {
+    option max_bytes = base.MAX_PAYLOAD_LENGTH; // 123
+}
