@@ -339,7 +339,7 @@ class Parser:
 
     @override_docstring(r_option_value)
     def p_option_value(self, p: P) -> None:
-        p[0] = p[1]
+        p[0] = p[1].unwrap() if isinstance(p[1], Constant) else p[1]
 
     @override_docstring(r_alias)
     def p_alias(self, p: P) -> None:
