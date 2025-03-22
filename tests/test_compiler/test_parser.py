@@ -1,5 +1,4 @@
 import os
-from typing import Union as Fixture
 
 import pytest
 from bitproto._ast import (
@@ -7,13 +6,11 @@ from bitproto._ast import (
     Array,
     Bool,
     BooleanConstant,
-    Constant,
     Enum,
     Int,
     IntegerConstant,
     Message,
     MessageField,
-    Option,
     Proto,
     StringConstant,
 )
@@ -528,3 +525,35 @@ def test_constants() -> None:
 
 def test_parse_signed_int() -> None:
     parse(bitproto_filepath("signed_int.bitproto"))
+
+
+def test_parse_option_value_reference_constants() -> None:
+    proto = parse(bitproto_filepath("option_reference_constants.bitproto"))
+
+    message_my_message = cast_or_raise(Message, proto.get_member("MyMessage"))
+    message_my_payload = cast_or_raise(Message, proto.get_member("MyPayload"))
+    message_other_payload = cast_or_raise(Message, proto.get_member("MyOtherPayload"))
+
+    assert message_my_message
+    assert message_my_payload
+    assert message_other_payload
+
+    assert message_my_message.get_option_or_raise("max_bytes").value == 128
+    assert message_my_payload.get_option_or_raise("max_bytes").value == 123
+    assert message_other_payload.get_option_or_raise("max_bytes").value == 123
+
+
+def test_parse_option_value_reference_imported_constants() -> None:
+    proto = parse(bitproto_filepath("option_reference_imported_constants.bitproto"))
+
+    message_my_message = cast_or_raise(Message, proto.get_member("MyMessage"))
+    message_my_payload = cast_or_raise(Message, proto.get_member("MyPayload"))
+    message_other_payload = cast_or_raise(Message, proto.get_member("MyOtherPayload"))
+
+    assert message_my_message
+    assert message_my_payload
+    assert message_other_payload
+
+    assert message_my_message.get_option_or_raise("max_bytes").value == 128
+    assert message_my_payload.get_option_or_raise("max_bytes").value == 123
+    assert message_other_payload.get_option_or_raise("max_bytes").value == 123
