@@ -571,7 +571,7 @@ We can define an option in global scope and message scopes, like this:
 
    option name = value
 
-The value of an option can be an integer, string or boolean, according to the option itself.
+The value of an option can be an integer, string, boolean or ``constant``, according to the option itself.
 
 For an example, there's an option named ``max_bytes`` to constraint message sizes, the
 bitproto compiler will report an error and refuse to compile if the declared message's
@@ -583,6 +583,19 @@ size is larger than the configured value:
        option max_bytes = 3
        byte[4] field = 1  // Violated max_bytes constraint
    }
+
+Another example that references constants as option values:
+
+.. sourcecode:: bitproto
+
+   const MAX_MESSAGE_LENGTH = 128
+   const HEADER_LENGTH = 5
+   const MAX_PAYLOAD_LENGTH = MAX_MESSAGE_LENGTH - HEADER_LENGTH
+
+   message SomeMessage {
+       option max_bytes = MAX_PAYLOAD_LENGTH
+   }
+
 
 Full table of options supported:
 
