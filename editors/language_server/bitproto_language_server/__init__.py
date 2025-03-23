@@ -6,6 +6,7 @@ Reference:
  - Docs: https://bitproto.readthedocs.io
 
 Requirements:
+  - Python >= 3.9
   - bitproto >= 1.2.0
   - pygls~=2.0.0 (a2)
 

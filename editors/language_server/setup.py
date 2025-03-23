@@ -12,6 +12,6 @@ setuptools.setup(
     entry_points={
         "console_scripts": ["bitproto-language-server=bitproto_language_server:main"]
     },
-    python_requires=">=3.7",
+    python_requires=">=3.9",
     install_requires=open("requirements.txt").readlines(),
 )
