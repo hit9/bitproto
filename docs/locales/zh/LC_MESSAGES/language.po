@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: bitproto 0.4.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-22 16:31+0800\n"
+"POT-Creation-Date: 2025-03-23 19:01+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -547,7 +547,6 @@ msgid ""
 msgstr "具体来说，消息有一个选项叫做 ``max_bytes`` 来约束消息的大小，当我们设计的消息的大小超出这个选项配置的值时，编译器则会报错，拒绝编译："
 
 #: ../../language.rst:587 9fd60b26e8a04d44b5f942e76e414c1a
-#, fuzzy
 msgid ""
 "Another example that references constants as option values (supported "
 "since v1.1.2):"
@@ -655,11 +654,26 @@ msgstr "bitproto 推荐的命名风格如下面的 bitproto 代码所示："
 msgid "Editor Integration"
 msgstr "编辑器集成"
 
-#: ../../language.rst:667 29a133e567d64af898911a6694ea61d1
-msgid "Vim"
-msgstr ""
+#: ../../language.rst:667 20974b52773448da887f8c0bfb0f3702
+msgid "Language Server"
+msgstr "LSP (Language Server)"
 
-#: ../../language.rst:668 e7c70cb78c134c7885797626e700c5c2
+#: ../../language.rst:669 8476ebe584a64d58bade8d72f8550c06
+msgid ""
+"A simple language server for bitproto: `bitproto-language-server github "
+"<https://github.com/hit9/bitproto/tree/master/editors/language_server>`_."
+msgstr "一个简单的 Bitproto Language Server: `bitproto-language-server github "
+"<https://github.com/hit9/bitproto/tree/master/editors/language_server>`_."
+
+#: ../../language.rst:671 3709803752ae4e6db3fcca134ce2dea4
+msgid "This language_server is tested on neovim and vscode."
+msgstr "这个language_server 在 neovim 和 vscode 上测试过."
+
+#: ../../language.rst:674 29a133e567d64af898911a6694ea61d1
+msgid "Vim"
+msgstr "Vim"
+
+#: ../../language.rst:675 e7c70cb78c134c7885797626e700c5c2
 msgid ""
 "A syntax plugin for `vim <https://www.vim.org/>`_ is available from "
 "`bitproto's github repository "
@@ -670,11 +684,11 @@ msgstr ""
 "<https://github.com/hit9/bitproto/tree/master/editors/vim>`_ 中包含一个 `vim "
 "编辑器 <https://www.vim.org/>`_ 的语法高亮插件。"
 
-#: ../../language.rst:673 a82d0224197d417a816b3bf9937286bf
+#: ../../language.rst:680 a82d0224197d417a816b3bf9937286bf
 msgid "PyCharm"
-msgstr ""
+msgstr "PyCharm"
 
-#: ../../language.rst:675 8476ebe584a64d58bade8d72f8550c06
+#: ../../language.rst:682 8476ebe584a64d58bade8d72f8550c06
 msgid ""
 "Syntax highlighting settings for PyCharm is available from `bitproto's "
 "github repository "
@@ -683,11 +697,11 @@ msgstr ""
 "bitproto 的 PyCharm 语法高亮插件: "
 "`<https://github.com/hit9/bitproto/tree/master/editors/pycharm>`_."
 
-#: ../../language.rst:679 96ffe37784974aa6a013c5d69c59717c
+#: ../../language.rst:686 96ffe37784974aa6a013c5d69c59717c
 msgid "VSCode"
-msgstr ""
+msgstr "VSCode"
 
-#: ../../language.rst:681 2906955a2d1f4a21a3afd7c55d965633
+#: ../../language.rst:688 2906955a2d1f4a21a3afd7c55d965633
 msgid ""
 "Install the extension from marketplace: `bitproto vscode extension "
 "<https://marketplace.visualstudio.com/items?itemName=hit9.bitproto>`_."
