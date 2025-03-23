@@ -17,3 +17,8 @@ For `vim-plug <https://github.com/junegunn/vim-plug>`_ users:
 .. sourcecode:: vim
 
    Plug 'hit9/bitproto', {'rtp': 'editors/vim'}
+
+Language Server For Neovim Users
+--------------------------------
+
+Checkout [../language_server](../language_server) please.
