@@ -39,6 +39,7 @@ Abstraction syntax tree.
       |    |    |- Enum                 :Scope:Definition:Node
       |    |    |- Message              :Scope:Definition:Node
       |    |    |- Proto                :Scope:Definition:Node
+      |- Reference                      :Node
 """
 
 from collections import OrderedDict as dict_
@@ -130,10 +131,17 @@ cache_if_frozen = conditional_cache(cache_if_frozen_condition)
 class Node:
     token: str = ""
     lineno: int = 0
+    # column start and end of this token in the line, starting from 0.
+    # to get the col end: col_start + len(token)
+    token_col_start: int = 0
     filepath: str = ""
 
     # cheat mypy: override by @frozen
     __frozen__: ClassVar[bool] = False
+
+    @property
+    def token_col_end(self) -> int:
+        return self.token_col_start + len(self.token)
 
     def is_frozen(self) -> bool:
         return self.__frozen__
@@ -190,6 +198,18 @@ class Definition(Node):
     def __repr__(self) -> str:
         class_repr = repr(type(self))
         return f"<{class_repr} {self.name}>"
+
+
+@dataclass
+class Reference(Node):
+    """
+    Reference to a definition.
+    """
+
+    referenced_definition: Optional[Definition] = None
+
+    def __repr__(self) -> str:
+        return f"<{self.token}>"
 
 
 @dataclass
@@ -367,6 +387,12 @@ class Scope(Definition):
     """
 
     members: "dict_[str, Definition]" = dataclass_field(default_factory=dict_)
+
+    # scope's start and end (normally, the '{' and '}' positions)
+    scope_start_lineno: int = 0
+    scope_start_col: int = 0
+    scope_end_lineno: int = 0
+    scope_end_col: int = 0
 
     def push_member(self, member: Definition, name: Optional[str] = None) -> None:
         """Push a definition `member`, and run hook functions around.
@@ -1036,6 +1062,8 @@ class Message(BoundScope, ScopeWithOptions, CompositeType, ExtensibleType):
 @dataclass
 class Proto(ScopeWithOptions):
     __option_descriptors__: ClassVar[OptionDescriptors] = PROTO_OPTTIONS
+
+    references: List[Reference] = dataclass_field(default_factory=list)
 
     def set_name(self, name: str) -> None:
         if self.is_frozen():

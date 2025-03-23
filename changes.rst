@@ -1,16 +1,24 @@
 .. currentmodule:: bitproto
 
+Version 1.2.0
+-------------
+
+.. _version-1.2.0:
+
+- Feature: Add a simple language-server, tested on neovim and vscode.
+- Editor:  Upgrade vscode extenions to support the ``bitproto-language-server``.
+
 Version 1.1.2
 -------------
 
-.. _version-1.1.2
+.. _version-1.1.2:
 
 - Feature: Allow using constants as option values. ISSUE #61, PR #63
 
 Version 1.1.1
 -------------
 
-.. _version-1.1.1
+.. _version-1.1.1:
 
 - Fix bug: enum importing other bitproto's field name generation bug. #53 #52
 - Fix bug: import statements of bitprotos should be placed ahead of other declarations. #53
@@ -18,7 +26,7 @@ Version 1.1.1
 Version 1.1.0
 -------------
 
-.. _version-1.1.0
+.. _version-1.1.0:
 
 - Performance improvements for C bitprotolib, 40~60us improvement per call on stm32. PR #48.
 - Fix Python nested message ``__post_init___`` function code generation. PR #48, commit 73f4b01.
@@ -26,7 +34,7 @@ Version 1.1.0
 Version 1.0.1
 -------------
 
-.. _version-1.0.1
+.. _version-1.0.1:
 
 - Add support for Python 3.11
 

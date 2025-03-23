@@ -26,6 +26,7 @@ from bitproto._ast import (
     MessageField,
     Option,
     Proto,
+    Reference,
     Scope,
     Type,
 )
@@ -189,12 +190,9 @@ class Parser:
             p[0] = []
 
     def copy_p_tracking(self, p: P, from_: int = 1, to: int = 0) -> None:
-        """Don't know why P's tracking info (lexpos and lineno) sometimes missing.
-        Particular in recursion grammar situation. We have to copy it manually.
-
-        Add this function in a p_xxx function when:
-            1. the p[0] is gona to be used in another parsing target.
-            2. and the tracking information is gona to be used there.
+        """
+        Ply's position tracking works only for lexing SYMBOLS (not for all grammer symbols) by default.
+        We either enable parse(tracking=True), or copy them on need manually.
         """
         p.set_lexpos(to, p.lexpos(from_))
         p.set_lineno(to, p.lineno(from_))
@@ -213,6 +211,8 @@ class Parser:
             filepath=self.current_filepath(),
             _bound=None,
             scope_stack=self.current_scope_stack(),
+            scope_start_lineno=1,
+            scope_start_col=1,
         )
         self.push_scope(proto)
 
@@ -220,6 +220,11 @@ class Parser:
     def p_close_global_scope(self, p: P) -> None:
         scope = self.pop_scope()
         proto = cast_or_raise(Proto, scope)
+
+        proto.scope_end_lineno = p.lexer.lexdata.count("\n")  # FIXME: slow?
+        lexpos = len(p.lexer.lexdata)
+        proto.scope_end_col = lexpos - p.lexer.lexdata.rfind("\n", 0, lexpos)
+
         if not proto.name:
             raise ProtoNameUndefined(filepath=self.current_filepath())
         proto.freeze()
@@ -334,6 +339,7 @@ class Parser:
             filepath=self.current_filepath(),
             lineno=p.lineno(2),
             token=p[2],
+            token_col_start=self._get_col(p, 2),
         )
         self.current_scope().push_member(option)
 
@@ -357,6 +363,7 @@ class Parser:
             filepath=self.current_filepath(),
             lineno=lineno,
             token=token,
+            token_col_start=self._get_col(p, 2) if len(p) == 6 else self._get_col(p, 3),
             indent=self.current_indent(p),
             scope_stack=self.current_scope_stack(),
             comment_block=self.collect_comment_block(),
@@ -384,6 +391,7 @@ class Parser:
             _bound=self.current_proto(),
             filepath=self.current_filepath(),
             token=p[2],
+            token_col_start=self._get_col(p, 2),
             lineno=p.lineno(2),
         )
         self.current_scope().push_member(constant)
@@ -466,6 +474,15 @@ class Parser:
         p[0] = d
         self.copy_p_tracking(p)
 
+        reference = Reference(
+            token=p[1],
+            lineno=p.lineno(1),
+            token_col_start=self._get_col(p, 1),
+            filepath=self.current_filepath(),
+            referenced_definition=d,
+        )
+        self.current_proto().references.append(reference)
+
     @override_docstring(r_type)
     def p_type(self, p: P) -> None:
         p[0] = p[1]
@@ -498,8 +515,18 @@ class Parser:
                 token=p[1],
                 lineno=p.lineno(1),
             )
+
         p[0] = d
         self.copy_p_tracking(p)
+
+        reference = Reference(
+            token=p[1],
+            lineno=p.lineno(1),
+            token_col_start=self._get_col(p, 1),
+            filepath=self.current_filepath(),
+            referenced_definition=d,
+        )
+        self.current_proto().references.append(reference)
 
     @override_docstring(r_optional_extensible_flag)
     def p_optional_extensible_flag(self, p: P) -> None:
@@ -517,6 +544,7 @@ class Parser:
             cap=p[3],
             extensible=p[5],
             token="{0}[{1}]".format(p[1], p[3]),
+            token_col_start=self._get_col(p, 1),
             lineno=p.lineno(2),
             filepath=self.current_filepath(),
         )
@@ -552,12 +580,15 @@ class Parser:
             name=p[2],
             type=p[4],
             token=p[2],
+            token_col_start=self._get_col(p, 2),
             lineno=p.lineno(2),
             filepath=self.current_filepath(),
             indent=self.current_indent(p),
             comment_block=self.collect_comment_block(),
             scope_stack=self.current_scope_stack(),
             _bound=self.current_proto(),
+            scope_start_lineno=p.lineno(5),  # '{'
+            scope_start_col=self._get_col(p, 5),  # '{'
         )
         self.push_scope(enum)
 
@@ -567,7 +598,10 @@ class Parser:
 
     @override_docstring(r_close_enum_scope)
     def p_close_enum_scope(self, p: P) -> None:
-        self.pop_scope().freeze()
+        enum = self.pop_scope()
+        enum.scope_end_lineno = p.lineno(1)
+        enum.scope_end_col = self._get_col(p, 1)
+        enum.freeze()
 
     @override_docstring(r_enum_items)
     def p_enum_items(self, p: P) -> None:
@@ -605,6 +639,7 @@ class Parser:
             name=name,
             value=value,
             token=p[1],
+            token_col_start=self._get_col(p, 1),
             lineno=p.lineno(1),
             indent=self.current_indent(p),
             filepath=self.current_filepath(),
@@ -626,18 +661,24 @@ class Parser:
             name=p[2],
             extensible=p[3],
             token=p[2],
+            token_col_start=self._get_col(p, 2),
             lineno=p.lineno(2),
             filepath=self.current_filepath(),
             indent=self.current_indent(p),
             comment_block=self.collect_comment_block(),
             scope_stack=self.current_scope_stack(),
             _bound=self.current_proto(),
+            scope_start_lineno=p.lineno(4),  # '{'
+            scope_start_col=self._get_col(p, 4),  # '{'
         )
         self.push_scope(message)
 
     @override_docstring(r_close_message_scope)
     def p_close_message_scope(self, p: P) -> None:
-        self.pop_scope().freeze()
+        message = self.pop_scope()
+        message.scope_end_lineno = p.lineno(1)  # '}'
+        message.scope_end_col = self._get_col(p, 1)  # '}'
+        message.freeze()
 
     @override_docstring(r_message_scope)
     def p_message_scope(self, p: P) -> None:
@@ -673,6 +714,7 @@ class Parser:
             type=type,
             number=field_number,
             token=p[2],
+            token_col_start=self._get_col(p, 2),
             lineno=p.lineno(2),
             filepath=self.current_filepath(),
             comment_block=self.collect_comment_block(),
@@ -685,6 +727,7 @@ class Parser:
     @override_docstring(r_message_field_name)
     def p_message_field_name(self, p: P) -> None:
         p[0] = p[1]
+        self.copy_p_tracking(p)  # from 1 to 0
 
     @override_docstring(r_boolean_literal)
     def p_boolean_literal(self, p: P) -> None:
@@ -700,7 +743,7 @@ class Parser:
 
     @override_docstring(r_dotted_identifier)
     def p_dotted_identifier(self, p: P) -> None:
-        self.copy_p_tracking(p)
+        self.copy_p_tracking(p)  # from 1 => 0
         if len(p) == 4:
             p[0] = ".".join([p[1], p[3]])
         elif len(p) == 2:
@@ -716,6 +759,13 @@ class Parser:
             raise GrammarError(filepath=filepath, token=p.value(1), lineno=p.lineno(1))
         raise GrammarError()
 
+    def _get_col(self, p: P, k: int) -> int:
+        lexpos = p.lexpos(k)
+        # we dont use `last_newline_pos` here,
+        # because the recursive parsing may result a deeper `last_newline_pos`.
+        last_newline = p.lexer.lexdata.rfind("\n", 0, lexpos)
+        return lexpos - max(last_newline, 0)
+
 
 def parse(filepath: str, traditional_mode: bool = False) -> Proto:
     """Parse a bitproto from given filepath.
@@ -726,3 +776,14 @@ def parse(filepath: str, traditional_mode: bool = False) -> Proto:
        extensible grammar is used in traditional mode.
     """
     return Parser(traditional_mode=traditional_mode).parse(filepath)
+
+
+def parse_string(
+    content: str, traditional_mode: bool = False, filepath: str = ""
+) -> Proto:
+    """
+    Parse a bitproto from string.
+    """
+    return Parser(traditional_mode=traditional_mode).parse_string(
+        content, filepath=filepath
+    )

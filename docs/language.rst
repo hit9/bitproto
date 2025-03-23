@@ -663,6 +663,13 @@ The bitproto naming guidelines are introduced in following code example:
 Editor Integration
 ^^^^^^^^^^^^^^^^^^
 
+Language Server
+""""""""""""""""
+
+A simple language server for bitproto: `bitproto-language-server github <https://github.com/hit9/bitproto/tree/master/editors/language_server>`_.
+
+This language_server is tested on neovim and vscode.
+
 Vim
 """
 A syntax plugin for `vim <https://www.vim.org/>`_ is available from

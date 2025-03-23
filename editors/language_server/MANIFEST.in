@@ -1,5 +1,6 @@
 include setup.py requirements.txt
-recursive-include bitproto *.py
+recursive-include Makefile
+recursive-include bitproto_language_server *.py
 recursive-exclude venv *
 recursive-exclude dist *
 recursive-exclude build *
