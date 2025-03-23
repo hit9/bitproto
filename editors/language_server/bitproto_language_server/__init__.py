@@ -697,7 +697,7 @@ def main():
         dest="version",
         action="version",
         help="show version",
-        version="1.2.0",
+        version="1.2.1",
     )
     args_parser.parse_args()
     server.start_io()
