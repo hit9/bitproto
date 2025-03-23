@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="bitproto-language-server",
-    version="1.0.0",
+    version="1.2.0",
     url="https://github.com/hit9/bitproto",
     author="Chao Wang",
     author_email="hit9@icloud.com",
