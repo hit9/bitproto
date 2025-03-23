@@ -6,12 +6,16 @@ bp:
 	bitproto go example.bitproto Go/gen-bp
 	bitproto go example.bitproto Go-optimization-mode/gen-bp -O -F "Drone"
 	bitproto py example.bitproto Python
+	bitproto c example.bitproto CPP
+	bitproto c example.bitproto CPP-optimization-mode -O -F "Drone"
 
 build: bp
 	cd C && make
 	cd Go && go build -o example
 	cd C-optimization-mode && make
 	cd Go-optimization-mode && go build -o example
+	cd CPP && make
+	cd CPP-optimization-mode && make
 
 run: build
 	make -C C
@@ -19,3 +23,5 @@ run: build
 	cd Python && python main.py
 	cd C-optimization-mode && ./example
 	cd Go-optimization-mode && ./example
+	cd CPP && ./example
+	cd CPP-optimization-mode && ./example

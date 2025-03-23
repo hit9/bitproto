@@ -13,3 +13,5 @@ dist
 spam
 .DS_Store
 compile_flags.txt
+test2
+*.o
