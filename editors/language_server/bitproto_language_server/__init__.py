@@ -14,10 +14,10 @@ Currently Supports:
   - Hover to show comments.
   - Completion for Enum/Message/Constant definitions.
   - Diagnostic (Simple)
-
+  - DocumentSymbol (tree)
+  - Find References
 
 Currently Un-Supported, but may in plan:
-  - Find References
   - Inlay Hint
   - Formatting
 
@@ -37,6 +37,7 @@ from bitproto.errors import ParserError
 from bitproto._ast import (
     Proto,
     Definition,
+    Node,
     Scope,
     Reference,
     Message,
@@ -89,7 +90,7 @@ def _pygls_to_bp_k(n: int) -> int:
     return n + 1
 
 
-def _bp_definition_to_pygls_location(d: Definition) -> types.Location:
+def _bp_node_to_pygls_location(d: Node) -> types.Location:
     """
     Converts given definition's location to pygls's location.
     """
@@ -417,7 +418,7 @@ def _goto_definition(
     d = ls.find_definition_by_position(doc.uri, lineno, col, word, current_line)
     if not d:
         return None
-    return _bp_definition_to_pygls_location(d)
+    return _bp_node_to_pygls_location(d)
 
 
 @server.feature(types.TEXT_DOCUMENT_DID_OPEN)
@@ -479,7 +480,58 @@ def goto_type_definition(
 
 @server.feature(types.TEXT_DOCUMENT_REFERENCES)
 def find_references(ls: BitprotoLanguageServer, params: types.ReferenceParams):
-    pass
+    doc = ls.workspace.get_text_document(params.text_document.uri)
+    if doc.uri not in ls.index:
+        return
+
+    # Firstly, find current definition.
+    current_line = doc.lines[params.position.line]
+    current_line = current_line.rstrip("\n")
+    lineno = _pygls_to_bp_k(params.position.line)
+    col = _pygls_to_bp_k(params.position.character)
+    word = doc.word_at_position(params.position)
+    d = ls.find_definition_by_position(doc.uri, lineno, col, word, current_line)
+    if not d:
+        return None
+
+    # current file path
+    current_file_path = doc.uri
+    if current_file_path.startswith("file://"):
+        current_file_path = current_file_path[7:]
+
+    results = []
+
+    # Then find its reference
+    for uri, proto_info in ls.index.items():
+        should_check_current_proto = False
+
+        if uri == doc.uri:  # Current proto
+            should_check_current_proto = True
+
+        for child_proto_path in proto_info.imported_proto_paths:
+            if os.path.samefile(child_proto_path, current_file_path):
+                # this proto may reference current_file.
+                should_check_current_proto = True
+                break
+
+        if not should_check_current_proto:
+            continue
+
+        for ref in proto_info.proto.references:
+            d1 = ref.referenced_definition
+            if d1 is d:
+                results.append(ref)
+            else:
+                if (
+                    d1.name == d.name
+                    and d1.filepath == d.filepath
+                    and d1.lineno == d.lineno
+                    and d1.token_col_start == d.token_col_start
+                ):
+                    results.append(ref)
+
+    # transform to location
+    return [_bp_node_to_pygls_location(ref) for ref in results]
 
 
 @server.feature(types.TEXT_DOCUMENT_HOVER)
@@ -621,7 +673,7 @@ def main():
         dest="version",
         action="version",
         help="show version",
-        version="1.0.0",
+        version="1.2.0",
     )
     args_parser.parse_args()
     server.start_io()
