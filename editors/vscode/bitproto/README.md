@@ -3,6 +3,14 @@ VSCode syntax highlighting for bitproto
 
 ![](bitproto-vscode-extension-snapshot.jpg)
 
+### Language Server Installation
+
+```
+pip install bitproto-language-server
+```
+
+Makesure its `path` at `Extensions > Bitproto Language Server > Server Path` is correct.
+
 ### Install from Marketplace
 
 https://marketplace.visualstudio.com/items?itemName=hit9.bitproto
