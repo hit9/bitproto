@@ -687,6 +687,11 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     args_parser.add_argument(
+        "--stdio",
+        action="store_true",
+        help="Use standard input and output for communication (LSP default)",
+    )
+    args_parser.add_argument(
         "-v",
         "--version",
         dest="version",
