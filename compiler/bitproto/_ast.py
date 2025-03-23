@@ -388,6 +388,12 @@ class Scope(Definition):
 
     members: "dict_[str, Definition]" = dataclass_field(default_factory=dict_)
 
+    # scope's start and end (normally, the '{' and '}' positions)
+    scope_start_lineno: int = 0
+    scope_start_col: int = 0
+    scope_end_lineno: int = 0
+    scope_end_col: int = 0
+
     def push_member(self, member: Definition, name: Optional[str] = None) -> None:
         """Push a definition `member`, and run hook functions around.
         Raises error if given member's name already taken by another member.

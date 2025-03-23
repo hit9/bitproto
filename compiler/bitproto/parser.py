@@ -26,9 +26,9 @@ from bitproto._ast import (
     MessageField,
     Option,
     Proto,
+    Reference,
     Scope,
     Type,
-    Reference,
 )
 from bitproto.errors import (
     AliasInEnumUnsupported,
@@ -211,6 +211,8 @@ class Parser:
             filepath=self.current_filepath(),
             _bound=None,
             scope_stack=self.current_scope_stack(),
+            scope_start_lineno=1,
+            scope_start_col=1,
         )
         self.push_scope(proto)
 
@@ -218,6 +220,11 @@ class Parser:
     def p_close_global_scope(self, p: P) -> None:
         scope = self.pop_scope()
         proto = cast_or_raise(Proto, scope)
+
+        proto.scope_end_lineno = p.lexer.lexdata.count("\n")  # FIXME: slow?
+        lexpos = len(p.lexer.lexdata)
+        proto.scope_end_col = lexpos - p.lexer.lexdata.rfind("\n", 0, lexpos)
+
         if not proto.name:
             raise ProtoNameUndefined(filepath=self.current_filepath())
         proto.freeze()
@@ -580,6 +587,8 @@ class Parser:
             comment_block=self.collect_comment_block(),
             scope_stack=self.current_scope_stack(),
             _bound=self.current_proto(),
+            scope_start_lineno=p.lineno(5),  # '{'
+            scope_start_col=self._get_col(p, 5),  # '{'
         )
         self.push_scope(enum)
 
@@ -589,7 +598,10 @@ class Parser:
 
     @override_docstring(r_close_enum_scope)
     def p_close_enum_scope(self, p: P) -> None:
-        self.pop_scope().freeze()
+        enum = self.pop_scope()
+        enum.scope_end_lineno = p.lineno(1)
+        enum.scope_end_col = self._get_col(p, 1)
+        enum.freeze()
 
     @override_docstring(r_enum_items)
     def p_enum_items(self, p: P) -> None:
@@ -656,12 +668,17 @@ class Parser:
             comment_block=self.collect_comment_block(),
             scope_stack=self.current_scope_stack(),
             _bound=self.current_proto(),
+            scope_start_lineno=p.lineno(4),  # '{'
+            scope_start_col=self._get_col(p, 4),  # '{'
         )
         self.push_scope(message)
 
     @override_docstring(r_close_message_scope)
     def p_close_message_scope(self, p: P) -> None:
-        self.pop_scope().freeze()
+        message = self.pop_scope()
+        message.scope_end_lineno = p.lineno(1)  # '}'
+        message.scope_end_col = self._get_col(p, 1)  # '}'
+        message.freeze()
 
     @override_docstring(r_message_scope)
     def p_message_scope(self, p: P) -> None:
@@ -759,3 +776,14 @@ def parse(filepath: str, traditional_mode: bool = False) -> Proto:
        extensible grammar is used in traditional mode.
     """
     return Parser(traditional_mode=traditional_mode).parse(filepath)
+
+
+def parse_string(
+    content: str, traditional_mode: bool = False, filepath: str = ""
+) -> Proto:
+    """
+    Parse a bitproto from string.
+    """
+    return Parser(traditional_mode=traditional_mode).parse_string(
+        content, filepath=filepath
+    )
