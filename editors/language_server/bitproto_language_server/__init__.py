@@ -37,6 +37,7 @@ from bitproto.errors import ParserError
 from bitproto._ast import (
     Proto,
     Definition,
+    Alias,
     Node,
     Scope,
     Reference,
@@ -234,7 +235,7 @@ class BitprotoLanguageServer(LanguageServer):
             reference_line_index[ref.lineno].append(ref)
 
         # Collects imported protos recursively.
-        imported_proto_paths: list[str] = []
+        imported_proto_paths: List[str] = []
 
         def __collect_child_proto_path(d: Definition):
             if isinstance(d, Proto):
@@ -449,7 +450,6 @@ def did_save(ls: BitprotoLanguageServer, params: types.DidOpenTextDocumentParams
         if doc_uri in refreshed_uris:
             continue
         for child_proto_path in proto_info.imported_proto_paths:
-            print(child_proto_path, filepath)
             if os.path.samefile(child_proto_path, filepath):
                 # refresh this proto
                 doc = ls.workspace.get_text_document(doc_uri)
@@ -569,6 +569,22 @@ def hover(ls: BitprotoLanguageServer, params: types.HoverParams):
     )
 
 
+def __determine_completion_kind(d: Node) -> types.CompletionItemKind:
+    if isinstance(d, Message):
+        return types.CompletionItemKind.Struct
+    elif isinstance(d, Enum):
+        return types.CompletionItemKind.Enum
+    elif isinstance(d, Constant):
+        return types.CompletionItemKind.Constant
+    elif isinstance(d, Proto):
+        return types.CompletionItemKind.Module
+    elif isinstance(d, EnumField):
+        return types.CompletionItemKind.EnumMember
+    elif isinstance(d, MessageField):
+        return types.CompletionItemKind.Field
+    return types.CompletionItemKind.Text
+
+
 @server.feature(
     types.TEXT_DOCUMENT_COMPLETION, types.CompletionOptions(trigger_characters=["."])
 )
@@ -604,9 +620,11 @@ def completions(ls: BitprotoLanguageServer, params: types.CompletionParams):
 
     scope = cast(Scope, d)
     items = [
-        types.CompletionItem(label=member_name)
+        types.CompletionItem(
+            label=member_name, kind=__determine_completion_kind(member)
+        )
         for member_name, member in scope.members.items()
-        if isinstance(member, (Proto, Message, Enum, Constant))
+        if isinstance(member, (Proto, Message, Enum, Constant, Alias))
     ]
     return types.CompletionList(is_incomplete=False, items=items)
 
