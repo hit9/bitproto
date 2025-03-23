@@ -1,20 +1,48 @@
 """
 A simple bitproto language server script (stdio based).
 
-Reference: https://github.com/hit9/bitproto
+Reference:
+ - Repo: https://github.com/hit9/bitproto
+ - Docs: https://bitproto.readthedocs.io
+
+Requirements:
+  - bitproto >= 1.2.0
+  - pygls~=2.0.0 (a2)
+
+Currently Supports:
+  - Goto Definition
+  - Hover to show comments.
+  - Completion for Enum/Message/Constant definitions.
+  - Diagnostic (Simple)
+
+
+Currently Un-Supported, but may in plan:
+  - Find References
+  - Inlay Hint
+  - Formatting
+
 """
 
+import os
 import logging
-import string
 import argparse
-from typing import Callable, Optional
+from typing import Callable, Optional, List, Dict, cast
 from collections import defaultdict
 from dataclasses import dataclass, field
 
 from pygls.lsp.server import LanguageServer
 from lsprotocol import types
-from bitproto.parser import parse
-from bitproto._ast import Proto, Definition, Scope, Reference
+from bitproto.parser import parse, parse_string
+from bitproto.errors import ParserError
+from bitproto._ast import (
+    Proto,
+    Definition,
+    Scope,
+    Reference,
+    Message,
+    Enum,
+    Constant,
+)
 from pygls.workspace import TextDocument
 
 
@@ -22,25 +50,45 @@ from pygls.workspace import TextDocument
 class ProtoInfo:
     proto: Proto
 
-    # lineno (starting from 0) => definitions on this line
-    definition_line_index: dict[int, list[Definition]] = field(
+    # Indexing lineno to definitions.
+    # lineno (starting from 1) => definitions on this line
+    definition_line_index: Dict[int, List[Definition]] = field(
         default_factory=lambda: defaultdict(list)
     )
 
-    reference_line_index: dict[int, list[Reference]] = field(
+    # Indexing lineno to references.
+    # lineno (starting from 1) => list of references
+    reference_line_index: Dict[int, List[Reference]] = field(
         default_factory=lambda: defaultdict(list)
     )
+
+    # The filepath this proto imported (recursively)
+    imported_proto_paths: List[str] = field(default_factory=list)
 
 
 def _bp_to_pygls_k(n: int) -> int:
+    """
+    bitproto's lineno and col are starting from 1.
+    while pygls's are starting from 0.
+    Converts given bitproto's lineno/col to pygls's.
+    """
     return n - 1 if n > 0 else 0
 
 
 def _pygls_to_bp_k(n: int) -> int:
+    """
+    bitproto's lineno and col are starting from 1.
+    while pygls's are starting from 0.
+    Converts given pygls's lineno/col to bitproto's.
+    """
     return n + 1
 
 
 def _bp_definition_to_pygls_location(d: Definition) -> types.Location:
+    """
+    Converts given definition's location to pygls's location.
+    """
+
     lineno = _bp_to_pygls_k(d.lineno)
     col_start = _bp_to_pygls_k(d.token_col_start)
     col_end = _bp_to_pygls_k(d.token_col_end)
@@ -53,10 +101,18 @@ def _bp_definition_to_pygls_location(d: Definition) -> types.Location:
 class BitprotoLanguageServer(LanguageServer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.index = {}  # uri => proto
+
+        # uri => proto
+        # where uri starts from "file://"
+        self.index = {}
+        self.diagnostics_versions = {}
 
     def _traverse_scope(self, scope: Scope, cb: Callable):
-        cb(scope)
+        """
+        Traverse the given scope and descendant scopes recursively.
+        Call given `cb` on all walked definitions.
+        """
+        cb(scope)  # pre order
         for member in scope.members.values():
             if isinstance(member, Scope):
                 self._traverse_scope(member, cb)
@@ -64,87 +120,272 @@ class BitprotoLanguageServer(LanguageServer):
                 cb(member)
 
     def _add_to_definition_line_index(
-        self, d: Definition, definition_line_index: dict[int, Definition]
+        self, d: Definition, definition_line_index: Dict[int, List[Definition]]
     ):
-        # pygls uses lineno starts from 0.
-        lineno = _bp_to_pygls_k(d.lineno)
-        definition_line_index[lineno].append(d)
+        """Add given definition `d` to given `definition_line_index` map."""
+        definition_line_index[d.lineno].append(d)
 
-    def parse(self, doc: TextDocument):
+    def _push_diagnostics(self, doc_uri: str, e: Optional[ParserError] = None):
+        """Push an error diagnostics or empty diagnostics list"""
+
+        self.diagnostics_versions.setdefault(doc_uri, 0)
+        self.diagnostics_versions[doc_uri] += 1
+
+        diagnostics = []
+
+        if e:
+            position = types.Position(_bp_to_pygls_k(e.lineno), 0)
+            diagnostics = [
+                types.Diagnostic(
+                    message=str(e),
+                    range=types.Range(start=position, end=position),
+                    source="bitproto",
+                )
+            ]
+        self.text_document_publish_diagnostics(
+            types.PublishDiagnosticsParams(
+                uri=doc_uri,
+                diagnostics=diagnostics,
+                version=self.diagnostics_versions.get(doc_uri, 0),
+            )
+        )
+
+    def parse(
+        self,
+        doc: TextDocument,
+        use_parse_string: bool = False,
+        file_source: str = "",
+        raise_on_parsing_error: bool = False,
+        enable_diagnostics: bool = True,
+    ):
+        """
+        Parse given document to bitproto.
+
+        :param doc: Current editing document.
+        :param use_parse_string:
+           Setting to `True` means to parse from given string `file_source` instead of
+           parsing from filepath `doc.uri`.
+        """
+
+        # Converts `file://` started uri to normalized filepath.
         uri = doc.uri
         if uri.startswith("file://"):
             uri = uri[7:]
 
-        proto = parse(uri)
+        # Parse proto.
+        proto: Optional[Proto] = None
+
+        try:
+            if use_parse_string and file_source:
+                proto = parse_string(file_source, filepath=uri)
+            else:
+                proto = parse(uri)
+
+            if enable_diagnostics:
+                self._push_diagnostics(doc.uri, None)
+        except Exception as e:
+            if raise_on_parsing_error:
+                raise e
+            else:
+                if enable_diagnostics and isinstance(e, ParserError):
+                    self._push_diagnostics(doc.uri, e)
+                return
 
         # Line Number => Definitions map.
-        definition_line_index: dict[int, list[Definition]] = defaultdict(list)
+        definition_line_index: Dict[int, List[Definition]] = defaultdict(list)
         self._traverse_scope(
             proto,
             lambda d: self._add_to_definition_line_index(d, definition_line_index),
         )
 
         # Line Number => References map.
-        reference_line_index: dict[int, list[Definition]] = defaultdict(list)
-
+        reference_line_index: Dict[int, List[Reference]] = defaultdict(list)
         for ref in proto.references:
-            lineno = _bp_to_pygls_k(ref.lineno)
-            reference_line_index[lineno].append(ref)
+            reference_line_index[ref.lineno].append(ref)
+
+        # Collects imported protos recursively.
+        imported_proto_paths: list[str] = []
+
+        def __collect_child_proto_path(d: Definition):
+            if isinstance(d, Proto):
+                imported_proto_paths.append(d.filepath)
+
+        self._traverse_scope(proto, __collect_child_proto_path)
 
         # Url => ProtoInfo
         self.index[doc.uri] = ProtoInfo(
             proto=proto,
             definition_line_index=definition_line_index,
             reference_line_index=reference_line_index,
+            imported_proto_paths=imported_proto_paths,
         )
 
-    def find_definition_by_position(
-        self, doc_uri: str, lineno: int, col: int, word: str
-    ) -> Optional[Definition]:
+    def _build_scope_stack_by_position_helper(
+        self, scope: Scope, lineno: int, col: int, scope_stack: List[Scope]
+    ) -> None:
+        """
+        Collects `scope_stack` starting from current `scope` recursively.
+        """
+        if (
+            (scope.scope_start_lineno, scope.scope_start_col)
+            <= (lineno, col)
+            <= (scope.scope_end_lineno, scope.scope_end_col)
+        ):
+            # this location is inside this scope
+            scope_stack.append(scope)
+
+            # Lets dfs down to the child scopes.
+            for member in scope.members.values():
+                if isinstance(member, Scope) and not isinstance(member, Proto):
+                    # We don't care the imported proto.
+                    self._build_scope_stack_by_position_helper(
+                        member, lineno, col, scope_stack
+                    )
+
+    def find_scope_stack_by_position(
+        self, doc_uri: str, lineno: int, col: int
+    ) -> Optional[List[Scope]]:
+        """
+        Find current position (lineno, col)'s scope_stack.
+        Returns None if given doc_uri is unknown.
+        """
         if doc_uri not in self.index:
             return None
 
-        # pygls uses col starting from 0
-        col = _pygls_to_bp_k(col)
+        proto_info = self.index[doc_uri]
+
+        scope_stack: List[Scope] = []
+
+        self._build_scope_stack_by_position_helper(
+            proto_info.proto, lineno, col, scope_stack
+        )
+
+        return scope_stack
+
+    def find_members_by_scope_stack(
+        self, scope_stack: List[Scope], dotted_identifier: str
+    ) -> Optional[Definition]:
+        """Find names in given scope_stack.
+        This works very similar to the parser's internal method `_lookup_referenced_member`.
+        """
+        names = dotted_identifier.split(".")
+        for scope in scope_stack[::-1]:
+            d = scope.get_member(*names)
+            if d is not None:
+                return d
+        return None
+
+    def find_definition_by_position(
+        self, doc_uri: str, lineno: int, col: int, word: str, current_line: str
+    ) -> Optional[Definition]:
+        """
+        Find a bitproto definition in given document at location (lineno, col).
+
+        :param doc_uri: The doc's "file://" uri to handle, we use it to find which proto to search.
+        :param lineno, col, word: the word with its location (lineno, col).
+        """
+
+        if doc_uri not in self.index:
+            return None
 
         proto_info = self.index[doc_uri]
 
-        # Find references at first.
+        # Find current scope.
+        scope_stack = self.find_scope_stack_by_position(doc_uri, lineno, col)
+
+        dotted_identifier = _util_find_dotted_identifier_backward(
+            current_line, col + len(word)
+        )
+        if dotted_identifier.endswith("."):
+            dotted_identifier = dotted_identifier[:-1]  # remove the "."
+
+        # Find existing references at first.
         references = proto_info.reference_line_index.get(lineno, [])
         for ref in references:
-            if ref.referenced_definition is not None:
-                if col >= ref.token_col_start and col <= ref.token_col_end:
-                    ref_token_words = ref.token.split(".")
-                    if word == ref.token or ref_token_words[-1] == word:
-                        # exactly this reference
-                        return ref.referenced_definition
+            if ref.referenced_definition is None:
+                # Only checks the references that positions match
+                continue
 
-                    # have to guess which scope parent?
-                    for i, w in enumerate(ref_token_words[:-1]):
-                        if word == w:
-                            try:
-                                # why i+1: the current proto it self may be the root scope
-                                return ref.referenced_definition.scope_stack[i + 1]
-                            except:
-                                pass
+            if col >= ref.token_col_start and col <= ref.token_col_end:
+                ref_token_words = ref.token.split(".")
+                if word == ref.token or ref_token_words[-1] == word:
+                    # exactly this reference
+                    return ref.referenced_definition
+
+                # Maybe the word is part of a dotted_identifier.
+                # e.g. `A.B.C`
+                if dotted_identifier and scope_stack:
+                    # find the referenced definition
+                    d = self.find_members_by_scope_stack(scope_stack, dotted_identifier)
+                    if d:
+                        return d
+
+                # The final approach maybe not accurate,we have to guess by matching word and name.
+                for i, token_word in enumerate(ref_token_words[:-1]):
+                    if word == token_word:
+                        try:
+                            # why i+1: the current proto it self may be the root scope
+                            return ref.referenced_definition.scope_stack[i + 1]
+                        except Exception:
+                            pass
+
+        # Maybe the current dotted_identifier is still not parsable
+        if scope_stack and dotted_identifier:
+            d = self.find_members_by_scope_stack(scope_stack, dotted_identifier)
+            if d:
+                return d
 
         # Find the definition itself.
         definitions = proto_info.definition_line_index.get(lineno, [])
-        for d in definitions:
-            if col >= d.token_col_start and col <= d.token_col_end:
-                if word in d.token:
-                    return d
+        for d1 in definitions:
+            if col >= d1.token_col_start and col <= d1.token_col_end:
+                if word in d1.token:
+                    return d1
         return None
 
 
 server = BitprotoLanguageServer("bitproto-language-server", "v1")
 
 
+def is_valid_identifier_char(char: str):
+    return char in "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_."
+
+
+def _util_find_dotted_identifier_backward(current_line: str, col: int):
+    """Find the `dotted_identifier` around current col.
+    Where `col` starting from `1`.
+    e.g.
+        '    base.BaseMessage'
+                     ^
+        => 'base.Base'
+    """
+    # Search backward for the first non [A-Za-z0-9_\.] character
+    # (e.g. whitespaces, `=`, newlines etc)
+    stack = []
+    k = min(col - 1, len(current_line) - 1)
+    while k >= 0:
+        if not is_valid_identifier_char(current_line[k]):
+            break
+        stack.append(current_line[k])
+        k -= 1
+    stack.reverse()
+    return "".join(stack)
+
+
 def _goto_definition(
     ls: BitprotoLanguageServer, doc: TextDocument, position: types.Position
 ) -> Optional[types.Location]:
+    """
+    Helper function handles all `GotoXXX` features.
+    In bitproto, there's no `Declaration`, `TypeDefinition` concepts,
+    so we map all `GotoXXX` features to `GotoDefinition`.
+    """
     word = doc.word_at_position(position)
-    d = ls.find_definition_by_position(doc.uri, position.line, position.character, word)
+    current_line = doc.lines[position.line]
+    current_line = current_line.rstrip("\n")
+    lineno = _pygls_to_bp_k(position.line)
+    col = _pygls_to_bp_k(position.character)
+    d = ls.find_definition_by_position(doc.uri, lineno, col, word, current_line)
     if not d:
         return None
     return _bp_definition_to_pygls_location(d)
@@ -152,16 +393,39 @@ def _goto_definition(
 
 @server.feature(types.TEXT_DOCUMENT_DID_OPEN)
 def did_open(ls: BitprotoLanguageServer, params: types.DidOpenTextDocumentParams):
-    """Parse each document when it is opened"""
+    """On document open."""
     doc = ls.workspace.get_text_document(params.text_document.uri)
     ls.parse(doc)
 
 
 @server.feature(types.TEXT_DOCUMENT_DID_CHANGE)
 def did_change(ls: BitprotoLanguageServer, params: types.DidOpenTextDocumentParams):
-    """Parse each document when it is changed"""
+    """On document changed (buffer changes)."""
+    doc = ls.workspace.get_text_document(params.text_document.uri)
+
+    ls.parse(doc, use_parse_string=True, file_source=doc.source)
+
+
+@server.feature(types.TEXT_DOCUMENT_DID_SAVE)
+def did_save(ls: BitprotoLanguageServer, params: types.DidOpenTextDocumentParams):
+    """On document saved to disk."""
     doc = ls.workspace.get_text_document(params.text_document.uri)
     ls.parse(doc)
+
+    # We have to refresh all ancestor bitprotos that may include the current one.
+    filepath = doc.uri[7:] if doc.uri.startswith("file://") else doc.uri
+    refreshed_uris = set()
+    for doc_uri, proto_info in ls.index.items():
+        if doc_uri in refreshed_uris:
+            continue
+        for child_proto_path in proto_info.imported_proto_paths:
+            print(child_proto_path, filepath)
+            if os.path.samefile(child_proto_path, filepath):
+                # refresh this proto
+                doc = ls.workspace.get_text_document(doc_uri)
+                ls.parse(doc, enable_diagnostics=False)
+                refreshed_uris.add(doc_uri)
+                break
 
 
 @server.feature(types.TEXT_DOCUMENT_DEFINITION)
@@ -191,17 +455,35 @@ def find_references(ls: BitprotoLanguageServer, params: types.ReferenceParams):
 
 @server.feature(types.TEXT_DOCUMENT_HOVER)
 def hover(ls: BitprotoLanguageServer, params: types.HoverParams):
+    """
+    Hover to show the definition's comment block.
+    """
+
     doc = ls.workspace.get_text_document(params.text_document.uri)
     word = doc.word_at_position(params.position)
-    d = ls.find_definition_by_position(
-        doc.uri, params.position.line, params.position.character, word
-    )
+    current_line = doc.lines[params.position.line]
+    current_line = current_line.rstrip("\n")
+    lineno = _pygls_to_bp_k(params.position.line)
+    col = _pygls_to_bp_k(params.position.character)
+    d = ls.find_definition_by_position(doc.uri, lineno, col, word, current_line)
     if not d:
         return None
+
+    contents = [c.content() for c in d.comment_block]
+
+    if isinstance(d, Constant):
+        contents.append("\n\n---\n\n Value: {0}".format(d.value))
+        return types.Hover(
+            contents=types.MarkupContent(
+                kind=types.MarkupKind.Markdown,
+                value="\n\n".join(contents),
+            )
+        )
+
     return types.Hover(
         contents=types.MarkupContent(
             kind=types.MarkupKind.PlainText,
-            value="\n\n".join([c.content() for c in d.comment_block]),
+            value="\n\n".join(contents),
         )
     )
 
@@ -211,20 +493,41 @@ def hover(ls: BitprotoLanguageServer, params: types.HoverParams):
 )
 def completions(ls: BitprotoLanguageServer, params: types.CompletionParams):
     items = []
+
     doc = server.workspace.get_text_document(params.text_document.uri)
-    current_line = doc.lines[params.position.line].strip()
-    # TODO how to get the dotted_identifier here?
-    dotted_identifier = ""
-    proto_info = ls.index.get(doc.uri, None)
-    if word and proto_info:
-        proto = proto_info.proto
-        # TODO:
-        # When `identifier` contains dots: lookup from its bitproto.
-        # Otherwise, lookup from the scope stack reversively (in current proto).
-        items = [
-            types.CompletionItem(label="world"),
-            types.CompletionItem(label="friend"),
-        ]
+    current_line = doc.lines[params.position.line]
+    current_line = current_line.rstrip("\n")
+
+    lineno = _pygls_to_bp_k(params.position.line)
+    col = _pygls_to_bp_k(params.position.character)
+
+    dotted_identifier = _util_find_dotted_identifier_backward(current_line, col)
+    if dotted_identifier.endswith("."):
+        # trim the last dot
+        dotted_identifier = dotted_identifier[:-1]
+
+    logging.info(f"===> dotted_identifier => {dotted_identifier}")
+
+    scope_stack = ls.find_scope_stack_by_position(doc.uri, lineno, col)
+    if not scope_stack:
+        return None
+
+    logging.info(f"===> scope_stack => {scope_stack}")
+
+    d = ls.find_members_by_scope_stack(scope_stack, dotted_identifier)
+    logging.info(f"===> d => {d}")
+    if not d:
+        return None
+
+    if not isinstance(d, Scope):
+        return None
+
+    scope = cast(Scope, d)
+    items = [
+        types.CompletionItem(label=member_name)
+        for member_name, member in scope.members.items()
+        if isinstance(member, (Proto, Message, Enum, Constant))
+    ]
     return types.CompletionList(is_incomplete=False, items=items)
 
 
