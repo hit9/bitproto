@@ -2,7 +2,7 @@
     "name": "bitproto",
     "displayName": "bitproto",
     "description": "Syntax support for bitproto",
-    "version": "1.0.0",
+    "version": "1.2.0",
     "repository": {
         "type": "git",
         "url": "https://github.com/hit9/bitproto.git"
@@ -10,11 +10,23 @@
     "publisher": "hit9",
     "icon": "bitproto-logo.png",
     "engines": {
-        "vscode": "^1.51.0"
+        "vscode": "^1.80.0"
     },
     "categories": [
         "Programming Languages"
     ],
+    "activationEvents": [
+        "onLanguage:bitproto"
+    ],
+    "main": "./src/extension.js",
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "pretest": "npm run compile && npm run lint",
+        "package": "vsce package",
+        "publish": "vsce publish"
+    },
     "contributes": {
         "languages": [{
             "id": "bitproto",
@@ -26,6 +38,31 @@
             "language": "bitproto",
             "scopeName": "source.bitproto",
             "path": "./syntaxes/bitproto.tmLanguage.json"
-        }]
+        }],
+        "configuration": {
+            "title": "Bitproto Language Server",
+            "properties": {
+                "bitprotoLanguageServer.serverPath": {
+                    "type": "string",
+                    "default": "bitproto-language-server",
+                    "description": "Path to the Bitproto Language Server executable."
+                }
+            }
+        }
+    },
+
+    "devDependencies": {
+        "@types/vscode": "^1.80.0",
+        "@types/glob": "^8.1.0",
+        "@types/mocha": "^10.0.1",
+        "@types/node": "16.x",
+        "@vscode/test-electron": "^2.3.2",
+        "eslint": "^8.45.0",
+        "glob": "^8.1.0",
+        "mocha": "^10.2.0",
+        "typescript": "^5.1.6"
+    },
+    "dependencies": {
+        "vscode-languageclient": "^8.1.0"
     }
 }

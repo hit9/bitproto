@@ -1,6 +1,8 @@
 VSCode syntax highlighting for bitproto
 ========================================
 
+![](bitproto-vscode-extension-snapshot.jpg)
+
 ### Install from Marketplace
 
 https://marketplace.visualstudio.com/items?itemName=hit9.bitproto
@@ -20,9 +22,9 @@ $ cd path/to/bitproto/editors/vscode/bitproto
 $ vsce package
 ```
 
-This will generates `bitproto-1.0.0.vsix` in current directory.
+This will generates `bitproto-1.2.0.vsix` in current directory.
 
 Start VSCode editor:
 
 * `View` -> `Extensions` -> `···` -> `Install from VSIX...`
-* Then browse the `bitproto-1.0.0.vsix`.
+* Then browse the `bitproto-1.2.0.vsix`.
