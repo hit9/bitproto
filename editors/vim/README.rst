@@ -21,4 +21,4 @@ For `vim-plug <https://github.com/junegunn/vim-plug>`_ users:
 Language Server For Neovim Users
 --------------------------------
 
-Checkout [../language_server](../language_server) please.
+Checkout `../language_server <../language_server>` please.
