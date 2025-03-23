@@ -47,7 +47,7 @@ class _TestCase:
         """
         sub_cmd = self.cmd_run_fmt.format(lang=lang)
         cmd = f"make -s  --no-print-directory {sub_cmd}"
-        if lang == "c" and self.cc_optimization_arg != "":
+        if lang in {"c", "cpp"} and self.cc_optimization_arg != "":
             cmd += " CC_OPTIMIZATION_ARG=" + self.cc_optimization_arg
         if self.optimization_mode_arg:
             cmd += " OPTIMIZATION_MODE_ARGS=" + self.optimization_mode_arg
@@ -92,7 +92,7 @@ class _TestCase:
 
 
 def test_encoding_drone() -> None:
-    _TestCase("drone").run()
+    _TestCase("drone", langs=["c", "cpp", "go", "py"]).run()
 
 
 def test_encoding_drone_json() -> None:

@@ -9,8 +9,10 @@ BP_LIB_DIR=../../../../../lib/c
 BP_LIC_C_PATH=$(BP_LIB_DIR)/bitproto.c
 
 C_SOURCE_FILE=main.c
-C_SOURCE_FILE_LIST=$(C_SOURCE_FILE) $(BP_C_FILENAME) $(BP_LIC_C_PATH) 
+C_SOURCE_FILE_LIST=$(C_SOURCE_FILE) $(BP_C_FILENAME) $(BP_LIC_C_PATH)
 C_BIN=$(BIN)
+
+CPP_BIN=$(BIN)
 
 GO_BIN=$(BIN)
 
@@ -29,6 +31,9 @@ bp-go:
 bp-py:
 	@bitproto py $(BP_FILENAME) py/
 
+bp-cpp:
+	@bitproto c $(BP_FILENAME) cpp/ $(OPTIMIZATION_MODE_ARGS)
+
 build-c: bp-c
 	@cd c && $(CC) $(C_SOURCE_FILE_LIST) -I. -I$(BP_LIB_DIR) -o $(C_BIN) $(CC_OPTIMIZATION_ARG)
 
@@ -36,6 +41,9 @@ build-go: bp-go
 	@cd go && go build -o $(GO_BIN)
 
 build-py: bp-py
+
+build-cpp: bp-cpp
+	@cd cpp && make
 
 run-c: build-c
 	@cd c && ./$(C_BIN)
@@ -46,7 +54,10 @@ run-go: build-go
 run-py: build-py
 	@cd py && python $(PY_SOURCE_FILE)
 
-clean:
-	@rm -fr c/$(C_BIN) go/$(GO_BIN) go/vendor */*_bp.* */**/*_bp.* py/__pycache__
+run-cpp: build-cpp
+	@cd cpp && ./$(CPP_BIN)
 
-run: run-c run-go run-py
+clean:
+	@rm -fr c/$(C_BIN) go/$(GO_BIN) go/vendor */*_bp.* */**/*_bp.* py/__pycache__ cpp/$(CPP_BIN) cpp/*.o
+
+run: run-c run-go run-py run-cpp
