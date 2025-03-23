@@ -42,6 +42,11 @@ from bitproto._ast import (
     Message,
     Enum,
     Constant,
+    IntegerConstant,
+    StringConstant,
+    BooleanConstant,
+    MessageField,
+    EnumField,
 )
 from pygls.workspace import TextDocument
 
@@ -96,6 +101,30 @@ def _bp_definition_to_pygls_location(d: Definition) -> types.Location:
     end = types.Position(lineno, col_end)
     uri = "file://" + d.filepath
     return types.Location(uri=uri, range=types.Range(start=start, end=end))
+
+
+def _bp_definition_to_pygls_range(d: Definition) -> types.Range:
+    if isinstance(d, Scope):
+        return types.Range(
+            start=types.Position(
+                line=_bp_to_pygls_k(d.scope_start_lineno),
+                character=_bp_to_pygls_k(d.scope_start_col),
+            ),
+            end=types.Position(
+                line=_bp_to_pygls_k(d.scope_end_lineno),
+                character=_bp_to_pygls_k(d.scope_end_col),
+            ),
+        )
+    return types.Range(
+        start=types.Position(
+            line=_bp_to_pygls_k(d.lineno),
+            character=_bp_to_pygls_k(d.token_col_start),
+        ),
+        end=types.Position(
+            line=_bp_to_pygls_k(d.lineno),
+            character=_bp_to_pygls_k(d.token_col_end),
+        ),
+    )
 
 
 class BitprotoLanguageServer(LanguageServer):
@@ -495,6 +524,10 @@ def completions(ls: BitprotoLanguageServer, params: types.CompletionParams):
     items = []
 
     doc = server.workspace.get_text_document(params.text_document.uri)
+
+    if doc.uri not in ls.index:
+        return
+
     current_line = doc.lines[params.position.line]
     current_line = current_line.rstrip("\n")
 
@@ -506,16 +539,11 @@ def completions(ls: BitprotoLanguageServer, params: types.CompletionParams):
         # trim the last dot
         dotted_identifier = dotted_identifier[:-1]
 
-    logging.info(f"===> dotted_identifier => {dotted_identifier}")
-
     scope_stack = ls.find_scope_stack_by_position(doc.uri, lineno, col)
     if not scope_stack:
         return None
 
-    logging.info(f"===> scope_stack => {scope_stack}")
-
     d = ls.find_members_by_scope_stack(scope_stack, dotted_identifier)
-    logging.info(f"===> d => {d}")
     if not d:
         return None
 
@@ -529,6 +557,55 @@ def completions(ls: BitprotoLanguageServer, params: types.CompletionParams):
         if isinstance(member, (Proto, Message, Enum, Constant))
     ]
     return types.CompletionList(is_incomplete=False, items=items)
+
+
+def __determine_symbol_kind(d: Definition) -> types.SymbolKind:
+    if isinstance(d, Message):
+        return types.SymbolKind.Struct
+    elif isinstance(d, Enum):
+        return types.SymbolKind.Enum
+    elif isinstance(d, Constant):
+        if isinstance(d, IntegerConstant):
+            return types.SymbolKind.Number
+        if isinstance(d, StringConstant):
+            return types.SymbolKind.String
+        if isinstance(d, BooleanConstant):
+            return types.SymbolKind.Boolean
+        return types.SymbolKind.Constant
+    elif isinstance(d, Proto):
+        return types.SymbolKind.Module
+    elif isinstance(d, EnumField):
+        return types.SymbolKind.EnumMember
+    elif isinstance(d, MessageField):
+        return types.SymbolKind.Field
+    return types.SymbolKind.Object
+
+
+def _dfs_symbol_collect(definition: Definition) -> types.DocumentSymbol:
+    children: List[types.DocumentSymbol] = []
+
+    if isinstance(definition, Scope):
+        scope = cast(Scope, definition)
+        for member in scope.members.values():
+            children.append(_dfs_symbol_collect(member))
+
+    range_ = _bp_definition_to_pygls_range(definition)
+    return types.DocumentSymbol(
+        name=definition.name,
+        kind=__determine_symbol_kind(definition),
+        range=range_,
+        children=children,
+        selection_range=range_,
+    )
+
+
+@server.feature(types.TEXT_DOCUMENT_DOCUMENT_SYMBOL)
+def document_symbol(ls: BitprotoLanguageServer, params: types.DocumentSymbolParams):
+    doc = server.workspace.get_text_document(params.text_document.uri)
+    if doc.uri not in ls.index:
+        return
+    proto_info = ls.index[doc.uri]
+    return [_dfs_symbol_collect(proto_info.proto)]
 
 
 def main():
