@@ -11,7 +11,9 @@ from enum import Enum as Enum_, unique
 from typing import (
     Callable,
     Dict,
+    Iterator,
     List,
+    Mapping,
     Optional,
     Tuple,
     Type as T,
@@ -59,8 +61,33 @@ from bitproto.utils import (
 
 CaseStyleConverter = Callable[[str], str]
 
-# Dict[DefinitionType => One or tuple of CaseStyle name OR CaseStyleConverter]
-CaseStyleMapping = Dict[T[Definition], Union[str, Tuple[str, ...], CaseStyleConverter]]
+
+class CaseStyleMapping(Mapping):
+    """Maps DefinitionType's to one or tuple of CaseStyle-name OR CaseStyleConverter, while accounting for inheritance.
+
+    >>> CaseStyleMapping({Base: "upper"}).get(Derived, "keep") == "upper"
+    """
+
+    def __init__(
+        self,
+        entries: Dict[T[Definition], Union[str, Tuple[str, ...], CaseStyleConverter]],
+    ):
+        self._dict = entries
+
+    def __getitem__(
+        self, key: T[Definition]
+    ) -> Union[str, Tuple[str, ...], CaseStyleConverter]:
+        for t in key.mro():
+            value = self._dict.get(t, None)
+            if value is not None:
+                return value
+        raise KeyError()  # @IgnoreException
+
+    def __iter__(self) -> Iterator[T[Definition]]:
+        return self._dict.__iter__()
+
+    def __len__(self) -> int:
+        return len(self._dict)
 
 
 @unique
