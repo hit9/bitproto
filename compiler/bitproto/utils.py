@@ -343,16 +343,19 @@ def pascal_case(word: str) -> str:
 
     >>> pascal_case("someWord")
     "SomeWord"
+
+    >>> pascal_case("my_prefix_someWord")
+    "MyPrefixSomeWord"
     """
     items: List[str] = []
     parts = word.split("_")
-    contains_underscore = len(parts) > 1
+
     for part in parts:
         if part:
-            if contains_underscore:
-                items.append(part.title())
-            else:
-                first_char, remain_part = part[0], part[1:]
+            first_char, remain_part = part[0], part[1:]
+            if remain_part and remain_part.isupper():  # UPPERCASE
+                items.append(first_char.upper() + remain_part.lower())
+            else:  # flatcase or camelCase or PascalCase
                 items.append(first_char.upper() + remain_part)
     return "".join(items)
 
