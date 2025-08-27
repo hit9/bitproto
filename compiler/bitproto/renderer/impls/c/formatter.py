@@ -34,13 +34,15 @@ class CFormatter(Formatter):
 
     @override(Formatter)
     def case_style_mapping(self) -> CaseStyleMapping:
-        return {
-            Constant: "upper",
-            Alias: "pascal",
-            Enum: "pascal",
-            EnumField: ("snake", "upper"),
-            Message: "pascal",
-        }
+        return CaseStyleMapping(
+            {
+                Constant: "upper",
+                Alias: "pascal",
+                Enum: "pascal",
+                EnumField: ("snake", "upper"),
+                Message: "pascal",
+            }
+        )
 
     @override(Formatter)
     def indent_character(self) -> str:
