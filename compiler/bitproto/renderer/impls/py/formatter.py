@@ -28,10 +28,12 @@ class PyFormatter(Formatter):
 
     @override(Formatter)
     def case_style_mapping(self) -> CaseStyleMapping:
-        return {
-            Constant: "upper",
-            EnumField: ("snake", "upper"),
-        }
+        return CaseStyleMapping(
+            {
+                Constant: "upper",
+                EnumField: ("snake", "upper"),
+            }
+        )
 
     @override(Formatter)
     def indent_character(self) -> str:

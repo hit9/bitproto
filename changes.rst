@@ -5,7 +5,10 @@ Version 1.2.1 (Pending)
 
 .. _version-1.2.1:
 
+Warning: May break some existing projects's generated names:
+
 - Bugfix: `pascal_case` formatter. ISSUE #68, PR #69.
+- Bugfix: Fixed naming style of generated code such as IntegerConstant (style lookup supports inheritance). ISSUE #70 PR #70
 
 
 Version 1.2.0
