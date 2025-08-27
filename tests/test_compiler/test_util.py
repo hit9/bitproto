@@ -122,6 +122,10 @@ def test_pascal_case() -> None:
     assert pascal_case("PASCAL_CASE") == "PascalCase"
     assert pascal_case("pascal_Case") == "PascalCase"
     assert pascal_case("PascalCase") == "PascalCase"
+    # issue#68
+    # https://github.com/hit9/bitproto/issues/68#issuecomment-3219647987
+    assert pascal_case("my_prefix_someWord") == "MyPrefixSomeWord"
+    assert pascal_case("my_prefix_MyMessageType") == "MyPrefixMyMessageType"
 
 
 def test_snake_case() -> None:
