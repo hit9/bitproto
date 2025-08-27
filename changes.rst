@@ -1,5 +1,13 @@
 .. currentmodule:: bitproto
 
+Version 1.2.1 (Pending)
+-----------------------
+
+.. _version-1.2.1:
+
+- Bugfix: `pascal_case` formatter. ISSUE #68, PR #69.
+
+
 Version 1.2.0
 -------------
 
