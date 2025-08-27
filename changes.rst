@@ -1,7 +1,7 @@
 .. currentmodule:: bitproto
 
-Version 1.2.1 (Pending)
------------------------
+Version 1.2.1
+-------------
 
 .. _version-1.2.1:
 
