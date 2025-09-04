@@ -1,3 +1,4 @@
+import itertools
 import os
 import re
 import sys
@@ -360,14 +361,8 @@ def pascal_case(word: str) -> str:
     return "".join(items)
 
 
-_snake_case_regex_head = r"[A-Z0-9]"
-_snake_case_regex_tail = r"[^A-Z0-9]"
-_snake_case_regex_capital_match = re.compile(
-    rf"({_snake_case_regex_head}+{_snake_case_regex_tail}*)"
-)
-_snake_case_regex_m_capital_match = re.compile(
-    rf"^({_snake_case_regex_head}{{1,}})({_snake_case_regex_head}+{_snake_case_regex_tail}+)$"
-)
+# Uppercase preceded by a lowercase marks the start of a new camelCase word
+_snake_case_regex_camel_match = re.compile(r"(?<=[a-z])([A-Z]+[a-z0-9]*)")
 
 
 def snake_case(word: str) -> str:
@@ -376,23 +371,12 @@ def snake_case(word: str) -> str:
     >>> snake_case("someWord")
     "some_word"
     """
-    underscore = "_"
-    no_underscore_words = word.split(underscore)
-    no_underscore_cases: List[str] = []
+    snake_case_split: List[str] = word.split("_")
 
-    for w in no_underscore_words:
-        cases = filter(None, _snake_case_regex_capital_match.split(w))
-        for case in cases:
-            subcases = filter(None, _snake_case_regex_m_capital_match.split(case))
-            if subcases:
-                for subcase in subcases:
-                    no_underscore_cases.append(subcase)
-            else:
-                no_underscore_cases.append(case)
-
-    snake_word = ""
-    for case in no_underscore_cases:
-        if not case.isdigit():
-            snake_word += underscore
-        snake_word += case
-    return snake_word.strip(underscore).lower()
+    camel_case_split: List[str] = list(
+        itertools.chain.from_iterable(
+            filter(None, _snake_case_regex_camel_match.split(w))
+            for w in snake_case_split
+        )
+    )
+    return "_".join(camel_case_split).lower()
