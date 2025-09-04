@@ -133,6 +133,7 @@ def test_snake_case() -> None:
     assert snake_case("SnakeCase") == "snake_case"
     assert snake_case("snakeCase") == "snake_case"
     assert snake_case("SNAKE_CASE") == "snake_case"
+    assert snake_case("SNAKE_42_CASE") == "snake_42_case"
 
 
 def test_cast_or_raise() -> None:
