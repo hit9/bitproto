@@ -407,6 +407,7 @@ class BlockIncludeOpMode(Block[F]):
     def render(self) -> None:
         header_filename = self.formatter.format_out_filename(self.bound, extension=".h")
         self.push(f'#include "{header_filename}"')
+        self.push('#include <string.h>')
 
 
 class BlockMessageEncoderOpMode(BlockMessageEncoderBase):
@@ -424,6 +425,7 @@ class BlockMessageDecoderOpMode(BlockMessageDecoderBase):
     @override(Block)
     def render(self) -> None:
         self.push(f"{self.function_signature} {{")
+        self.push("memset(m, 0, sizeof(*m));", indent=4)
         l = self.formatter.format_op_mode_decode_message(self.d)
         for line in l:
             self.push(line, indent=4)

@@ -140,6 +140,46 @@ struct Drone {
     struct PressureSensor pressure_sensor; // 48bit
 };
 
+// Encode struct Propeller to given buffer s.
+int EncodePropeller(struct Propeller *m, unsigned char *s);
+// Decode struct Propeller from given buffer s.
+int DecodePropeller(struct Propeller *m, unsigned char *s);
+
+// Encode struct Power to given buffer s.
+int EncodePower(struct Power *m, unsigned char *s);
+// Decode struct Power from given buffer s.
+int DecodePower(struct Power *m, unsigned char *s);
+
+// Encode struct Network to given buffer s.
+int EncodeNetwork(struct Network *m, unsigned char *s);
+// Decode struct Network from given buffer s.
+int DecodeNetwork(struct Network *m, unsigned char *s);
+
+// Encode struct LandingGear to given buffer s.
+int EncodeLandingGear(struct LandingGear *m, unsigned char *s);
+// Decode struct LandingGear from given buffer s.
+int DecodeLandingGear(struct LandingGear *m, unsigned char *s);
+
+// Encode struct Position to given buffer s.
+int EncodePosition(struct Position *m, unsigned char *s);
+// Decode struct Position from given buffer s.
+int DecodePosition(struct Position *m, unsigned char *s);
+
+// Encode struct Pose to given buffer s.
+int EncodePose(struct Pose *m, unsigned char *s);
+// Decode struct Pose from given buffer s.
+int DecodePose(struct Pose *m, unsigned char *s);
+
+// Encode struct Flight to given buffer s.
+int EncodeFlight(struct Flight *m, unsigned char *s);
+// Decode struct Flight from given buffer s.
+int DecodeFlight(struct Flight *m, unsigned char *s);
+
+// Encode struct PressureSensor to given buffer s.
+int EncodePressureSensor(struct PressureSensor *m, unsigned char *s);
+// Decode struct PressureSensor from given buffer s.
+int DecodePressureSensor(struct PressureSensor *m, unsigned char *s);
+
 // Encode struct Drone to given buffer s.
 int EncodeDrone(struct Drone *m, unsigned char *s);
 // Decode struct Drone from given buffer s.

@@ -315,6 +315,26 @@ class CFormatter(Formatter):
     def format_op_mode_endecoder_message_var(self) -> str:
         return "(*m)"
 
+    def _format_unsigned_chain_type(self, t: Type) -> str:
+        """Returns the unsigned C integer type for the field type t.
+        Used to generate endian-neutral bit-shift code instead of byte-pointer
+        indexing, which assumes little-endian host byte order.
+        """
+        if isinstance(t, Alias):
+            return self._format_unsigned_chain_type(t.type)
+        if isinstance(t, Enum):
+            return self._format_unsigned_chain_type(t.type)
+        if isinstance(t, Bool):
+            return "uint8_t"
+        if isinstance(t, Byte):
+            return "unsigned char"
+        if isinstance(t, Uint):
+            return self.format_uint_type(t)
+        if isinstance(t, Int):
+            n = self.get_nbits_of_integer(t)
+            return f"uint{n}_t"
+        return "unsigned"
+
     @override(Formatter)
     def format_op_mode_encoder_item(
         self, chain: str, t: Type, si: int, fi: int, shift: int, mask: int, r: int
@@ -322,12 +342,18 @@ class CFormatter(Formatter):
         """Implements format_op_mode_encoder_item for C.
         Generated C statement like:
 
-            s[0] = (((unsigned char *)&((*m).color))[0] >> 3) & 7;
+            s[0] = ((uint8_t)((*m).color) >> 3) & 7;
 
+        Uses explicit bit shifts instead of byte-pointer indexing so the output
+        is correct on both little-endian and big-endian hosts.  fi*8 scales the
+        byte index into a bit offset; the per-byte shift is then folded in so
+        a single right- or left-shift covers both.
         """
         assign = "=" if r == 0 else "|="
-        shift_s = self.format_op_mode_smart_shift(shift)
-        return f"s[{si}] {assign} (((unsigned char *)&({chain}))[{fi}] {shift_s}) & {mask};"
+        unsigned_type = self._format_unsigned_chain_type(t)
+        total_shift = fi * 8 + shift
+        total_shift_s = self.format_op_mode_smart_shift(total_shift)
+        return f"s[{si}] {assign} (({unsigned_type})({chain}){total_shift_s}) & {mask};"
 
     @override(Formatter)
     def format_op_mode_decoder_item(
@@ -336,12 +362,21 @@ class CFormatter(Formatter):
         """Implements format_op_mode_decoder_item for C.
         Generated C statement like:
 
-            ((unsigned char *)&((*m).color))[0] = (s[0] << 3) & 7;
+            (*m).color |= (uint8_t)(((unsigned)(s[0]) << 3) & 7);
 
+        Always uses |= (never =) so each byte contributes its bits without
+        clobbering already-written bytes.  The generated Decode function starts
+        with memset(m, 0, sizeof(*m)) to guarantee a zero baseline.
+        fi*8 positions the extracted bits at the correct byte of the field.
         """
-        assign = "=" if r == 0 else "|="
+        chain_type = self.format_type(t)
         shift_s = self.format_op_mode_smart_shift(shift)
-        return f"((unsigned char *)&({chain}))[{fi}] {assign} (s[{si}] {shift_s}) & {mask};"
+        fi_shift = fi * 8
+        byte_val = f"(((unsigned)(s[{si}]){shift_s}) & {mask})"
+        if fi_shift > 0:
+            unsigned_type = self._format_unsigned_chain_type(t)
+            return f"{chain} |= ({chain_type})(({unsigned_type}){byte_val} << {fi_shift});"
+        return f"{chain} |= ({chain_type}){byte_val};"
 
     @override(Formatter)
     def post_format_op_mode_endecode_single_type(
