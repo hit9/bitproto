@@ -375,7 +375,9 @@ class CFormatter(Formatter):
         byte_val = f"(((unsigned)(s[{si}]){shift_s}) & {mask})"
         if fi_shift > 0:
             unsigned_type = self._format_unsigned_chain_type(t)
-            return f"{chain} |= ({chain_type})(({unsigned_type}){byte_val} << {fi_shift});"
+            return (
+                f"{chain} |= ({chain_type})(({unsigned_type}){byte_val} << {fi_shift});"
+            )
         return f"{chain} |= ({chain_type}){byte_val};"
 
     @override(Formatter)
