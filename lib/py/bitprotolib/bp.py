@@ -192,7 +192,7 @@ class MessageBase(Accessor):
     def to_dict(self) -> Dict[str, Any]:
         """Converts this message to a dict."""
         return asdict(
-            self, dict_factory=getattr(self, "dict_factory", dict)  # type:ignore
+            self, dict_factory=getattr(self, "dict_factory", dict)  # type: ignore
         )
 
     def to_json(
