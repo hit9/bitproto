@@ -99,6 +99,7 @@ jobs:
               "PYTHONPATH=/work/compiler exec /tmp/bitproto-venv/bin/python -m bitproto._main \"\$@\"" \
               >/usr/local/bin/bitproto
             chmod +x /usr/local/bin/bitproto
+            export GOFLAGS=-buildvcs=false
             PYTHONPATH=/work/compiler:/work/lib/py python -c "import sys; assert sys.byteorder == \"big\", sys.byteorder"
             PYTHONPATH=/work/compiler:/work/lib/py pytest tests/test_encoding -v -s -x
             PYTHONPATH=/work/compiler:/work/lib/py BP_TEST_CC_OPTIMIZATION=-O2 pytest tests/test_encoding -v -s -x
