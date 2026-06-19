@@ -8,10 +8,11 @@ This document answers some of the often asked questions about bitproto.
 Does bitproto depend on endianness ?
 ''''''''''''''''''''''''''''''''''''
 
-Yes, bitproto is not endianness independent, it currently supports only little-endian systems.
-Endianness is always an issue for data serialization. But most of cpu processors, (including x86,
-armv7, armv8 and most arm cortex-m mcus) are little-endian, or little-endian as default.
-There's no plan for now to support big-endian systems or endianness independent serialization.
+Yes, bitproto's wire format is little-endian on every platform. The C library
+(standard mode) and the C optimization-mode generated code now both produce
+correct output on big-endian hosts. Python and Go are endian-neutral and were
+always unaffected.
+See :ref:`endianness` for details.
 
 What's the advantage of this over a bit field ?
 ''''''''''''''''''''''''''''''''''''''''''''''''

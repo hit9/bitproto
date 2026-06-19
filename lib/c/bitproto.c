@@ -328,7 +328,7 @@ void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src, int di,
 
 // BpEndecodeBaseType process given base type at given data.
 // This function guarantees to work geven a nbits > 64 is passed in (the
-// batch-array case, little-endian only; on big-endian arrays are processed
+// batch-array path used on little-endian only; on big-endian arrays are processed
 // element by element so nbits here is always a single base type's <= 64 bits).
 void BpEndecodeBaseType(int nbits, struct BpProcessorContext *ctx, void *data) {
 #ifdef BP_BIG_ENDIAN
