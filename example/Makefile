@@ -25,3 +25,13 @@ run: build
 	cd Go-optimization-mode && ./example
 	cd CPP && ./example
 	cd CPP-optimization-mode && ./example
+
+clean:
+	cd C && $(MAKE) clean
+	cd C-optimization-mode && $(MAKE) clean
+	cd CPP && $(MAKE) clean
+	cd CPP-optimization-mode && $(MAKE) clean
+	rm -f Go/example Go-optimization-mode/example
+	rm -f ../lib/c/*.o
+
+.PHONY: bp build run clean
