@@ -64,5 +64,8 @@
     },
     "dependencies": {
         "vscode-languageclient": "^8.1.0"
+    },
+    "overrides": {
+        "serialize-javascript": "^7.0.6"
     }
 }
