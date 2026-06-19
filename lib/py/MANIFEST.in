@@ -1,4 +1,5 @@
-include setup.py bitprotolib/py.typed
+include bitprotolib/py.typed
+exclude .gitignore
 recursive-include bitprotolib *.py
 recursive-exclude venv *
 recursive-exclude dist *

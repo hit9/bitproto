@@ -28,29 +28,34 @@ msgstr "Version 1.1.2"
 
 #: ../../../changes.rst:8 67b139acd1c14750b76eb78d59628835
 msgid ""
-"Feature: Big-endian host support. bitproto's wire format is little-endian"
-" on every platform; the C library (standard mode) and the C optimization-"
-"mode generated code now also produce correct output when compiled for a "
-"big-endian host. Python and Go were already endian-neutral and "
-"unaffected."
+"Feature: Big-endian host support. bitproto's wire format is little-endian on"
+" every platform; the C library (standard mode) and the C optimization-mode "
+"generated code now also produce correct output when compiled for a big-"
+"endian host. Python and Go were already endian-neutral and unaffected."
 msgstr ""
+"新特性：支持大端序主机。bitproto 的编码格式在所有平台上都是小端序；现在 C 运行库（标准模式）以及 C "
+"优化模式生成的代码在为大端序主机编译时也能产生正确的输出。Python 和 Go 本来就与字节序无关，不受影响。"
 
 #: ../../../changes.rst:12 9eff75eba59548dda5b36bd7771b0973
 msgid ""
-"Feature: New compiler option ``--endian`` (``both`` | ``little`` | "
-"``big``) controlling the host byte order targeted by optimization-mode "
-"C/C++ code. The default ``both`` emits both code paths guarded by "
-"``#ifdef BP_BIG_ENDIAN`` and auto-detects the host (overridable by "
-"defining ``BP_BIG_ENDIAN``); ``little`` keeps only the original, smaller "
-"and faster byte-pointer code (no big-endian support); ``big`` emits only "
-"the portable path."
+"Feature: New compiler option ``--endian`` (``both`` | ``little`` | ``big``) "
+"controlling the host byte order targeted by optimization-mode C/C++ code. "
+"The default ``both`` emits both code paths guarded by ``#ifdef "
+"BP_BIG_ENDIAN`` and auto-detects the host (overridable by defining "
+"``BP_BIG_ENDIAN``); ``little`` keeps only the original, smaller and faster "
+"byte-pointer code (no big-endian support); ``big`` emits only the portable "
+"path."
 msgstr ""
+"新特性：新增编译器选项 ``--endian``（``both`` | ``little`` | ``big``），用于控制优化模式 C/C++ "
+"代码所针对的宿主机字节序。默认的 ``both`` 会生成两份代码路径，以 ``#ifdef BP_BIG_ENDIAN`` "
+"区分并自动检测主机（可通过定义 ``BP_BIG_ENDIAN`` 覆盖）；``little`` "
+"只保留原有的、更小更快的字节指针代码（不支持大端序）；``big`` 只生成可移植的那份路径。"
 
 #: ../../../changes.rst:18 abc52528f16c4b7c81153ab7c2240866
 msgid ""
 "The little-endian generated code is unchanged from previous releases, so "
 "there is no performance regression on the common little-endian target."
-msgstr ""
+msgstr "小端序下生成的代码与之前的版本完全相同，因此在常见的小端序目标上没有任何性能回退。"
 
 #: ../../../changes.rst:22 22529ec400cf407abacf99ac626d435b
 #, fuzzy
@@ -77,8 +82,8 @@ msgstr ""
 
 #: ../../../changes.rst:38 5ecfae5bd6fb4920b9c61479c9b71be6
 msgid ""
-"Bugfix: Fixed naming style of generated code such as IntegerConstant "
-"(style lookup supports inheritance). ISSUE #70 PR #70"
+"Bugfix: Fixed naming style of generated code such as IntegerConstant (style "
+"lookup supports inheritance). ISSUE #70 PR #70"
 msgstr ""
 
 #: ../../../changes.rst:42 600da5f679ad4b60907b5a12d9dc661a
@@ -110,8 +115,7 @@ msgstr ""
 
 #: ../../../changes.rst:61 12f263a55eda445a9b3c92bf86a4c3de
 msgid ""
-"Fix bug: enum importing other bitproto's field name generation bug. #53 "
-"#52"
+"Fix bug: enum importing other bitproto's field name generation bug. #53 #52"
 msgstr ""
 
 #: ../../../changes.rst:62 52d66b4337644fd18beae488ad3255e2
@@ -126,14 +130,14 @@ msgstr ""
 
 #: ../../../changes.rst:69 c46626dc5a5d4c2ba9a836831a7821ae
 msgid ""
-"Performance improvements for C bitprotolib, 40~60us improvement per call "
-"on stm32. PR #48."
+"Performance improvements for C bitprotolib, 40~60us improvement per call on "
+"stm32. PR #48."
 msgstr ""
 
 #: ../../../changes.rst:70 4ddf229304cb447085af86c7cb1500d0
 msgid ""
-"Fix Python nested message ``__post_init___`` function code generation. PR"
-" #48, commit 73f4b01."
+"Fix Python nested message ``__post_init___`` function code generation. PR "
+"#48, commit 73f4b01."
 msgstr ""
 
 #: ../../../changes.rst:73 3f89d51d88b843489a296cead4dfea86
@@ -166,8 +170,8 @@ msgstr ""
 
 #: ../../../changes.rst:98 dc88283855f843a495bab4f3c9ad415d
 msgid ""
-"Use Python IntEnum for enum generation (respecting backward "
-"compatibility)  PR#41."
+"Use Python IntEnum for enum generation (respecting backward compatibility)  "
+"PR#41."
 msgstr ""
 
 #: ../../../changes.rst:103 ebed9fb7d14142d591662da7185c23d2
@@ -192,8 +196,8 @@ msgstr ""
 
 #: ../../../changes.rst:119 eb895e1c963342f489630f6dc2fd642b
 msgid ""
-"Add support for ``message`` and ``enum`` extensiblity for protocol "
-"forward compatibility."
+"Add support for ``message`` and ``enum`` extensiblity for protocol forward "
+"compatibility."
 msgstr ""
 
 #: ../../../changes.rst:120 a557134b8d8148a9ae61364d595e6d61
@@ -209,4 +213,3 @@ msgid ""
 "Refactor the bitproto serialization mechanism, using language-specific "
 "libraries instead of pure compiler-generated files."
 msgstr ""
-

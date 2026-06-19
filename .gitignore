@@ -13,5 +13,15 @@ dist
 spam
 .DS_Store
 compile_flags.txt
+pip-wheel-metadata
+bitproto.spec
+*.zip
 test2
 *.o
+
+# Local environment / sensitive files
+.env*
+
+# Tooling and lockfiles
+.code-symbol-index/
+uv.lock

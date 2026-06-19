@@ -16,54 +16,54 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-22.04]
-        python: [3.7, 3.8, "3.11", "3.13"]
-        go: ["1.25", "1.16"]
+        os: [ubuntu-24.04]
+        python: ["3.11", "3.12", "3.13", "3.14"]
+        go: ["1.25"]
 
-    runs-on: ${{ matrix.os  }}
+    runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python }}
 
-    - uses: actions/checkout@v2
     - name: Set up Golang ${{ matrix.go }}
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v5
       with:
         go-version: ${{ matrix.go }}
 
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+
     - name: Install bitproto compiler
       run: |
-        pip install -e ./compiler
+        uv pip install --system -e ./compiler
 
     - name: Install bitproto python lib
       run: |
-        pip install -e ./lib/py
+        uv pip install --system -e ./lib/py
 
     - name: Install dev requirements
       run: |
-        pip install -r compiler/requirements_dev.txt
-        pip install -r lib/py/requirements_dev.txt
+        uv pip install --system -r compiler/requirements_dev.txt
+        uv pip install --system -r lib/py/requirements_dev.txt
       if: "matrix.python == '3.11'"
 
     - name: Install tests requirements
       run: |
-        pip install -r tests/requirements_tests.txt
+        uv pip install --system -r tests/requirements_tests.txt
 
-    - name: Install clang-format 11.0
+    - name: Install clang-format
       run: |
-        wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-        sudo apt-add-repository 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-11 main'
-        sudo apt update
-        sudo apt-get install clang-format-11 -y
+        sudo apt-get update
+        sudo apt-get install -y clang-format
       if: "matrix.python == '3.11'"
 
     - name: Run lints
       run: |
-        make lint CLANG_FORMAT=clang-format-11
+        make lint
       if: "matrix.python == '3.11'"
 
     - name: Run tests
