@@ -9,6 +9,6 @@ run: build
 	./example
 
 clean:
-	rm example_bp.h example_bp.c example
+	rm -f example_bp.h example_bp.c example
 
 .PHONY: build run clean

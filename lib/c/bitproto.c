@@ -3,6 +3,16 @@
 
 #include "bitproto.h"
 
+// Big-endian host detection. bitproto's wire format is little-endian (the i-th
+// byte on the wire holds the i-th least-significant bits of a field). On a
+// big-endian host the in-memory byte order of an integer is reversed relative
+// to the wire, so the byte-copy fast paths below need an endian-neutral
+// fallback. Users may force this by predefining BP_BIG_ENDIAN.
+#if !defined(BP_BIG_ENDIAN) && defined(__BYTE_ORDER__) && \
+    (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+#define BP_BIG_ENDIAN 1
+#endif
+
 ///////////////////
 // Implementations
 ///////////////////
@@ -10,10 +20,26 @@
 // BpMin returns the smaller one int.
 static inline int BpMin(int a, int b) { return (a < b) ? a : b; }
 
+#ifdef BP_BIG_ENDIAN
+// BpBaseTypeStorageSize returns the number of bytes a base integer type
+// occupies in C memory for a given nbits. Mirrors the compiler's
+// get_nbits_of_integer rounding: 8->1, 16->2, 32->4, 64->8.
+static inline int BpBaseTypeStorageSize(int nbits) {
+    if (nbits <= 8) return 1;
+    if (nbits <= 16) return 2;
+    if (nbits <= 32) return 4;
+    return 8;
+}
+#endif
+
 // BpMinTriple returns the smaller one of given three integers.
 static inline int BpMinTriple(int a, int b, int c) {
     return (a < b) ? ((a < c) ? a : c) : ((b < c) ? b : c);
 }
+
+#ifndef BP_BIG_ENDIAN
+// These helpers only gate the little-endian array batch-copy fast path, which
+// is disabled on big-endian hosts (see BpEndecodeArray).
 
 // BpIsNbitsStandard returns true if given nbits is one of 8/16/32/64.
 static inline bool BpIsNbitsStandard(int nbits) {
@@ -26,6 +52,7 @@ static inline bool BpIsBaseIntegerType(int flag) {
     return flag == BP_TYPE_BYTE || flag == BP_TYPE_UINT ||
            flag == BP_TYPE_ENUM || flag == BP_TYPE_INT;
 }
+#endif
 
 // BpEndecodeMessage process given message at data with provided message
 // descriptor. It iterates all message fields to process.
@@ -137,8 +164,18 @@ void BpEndecodeArray(struct BpArrayDescriptor *descriptor,
 
     unsigned char *data_ptr = (unsigned char *)data;
 
-    if (BpIsNbitsStandard(element_nbits) &&
-        (BpIsBaseIntegerType(flag) || BpIsBaseIntegerType(to_flag))) {
+    if (
+#ifndef BP_BIG_ENDIAN
+        BpIsNbitsStandard(element_nbits) &&
+        (BpIsBaseIntegerType(flag) || BpIsBaseIntegerType(to_flag))
+#else
+        // On big-endian the contiguous-memory batch copy below is invalid:
+        // each element's bytes must be reversed individually, so fall through
+        // to the per-element loop (each element is staged endian-neutrally in
+        // BpEndecodeBaseType).
+        0
+#endif
+    ) {
         // Performance improvement for C arrays of integers (byte/uint/int):
         // Since arrays in C are contiguous in memory layout, so we call
         // BpCopyBufferBits only once instead of calling it one by one
@@ -223,6 +260,11 @@ void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src, int di,
             // Number of bits to process during batch copy.
             int bits = n + si;
 
+#ifndef BP_BIG_ENDIAN
+            // These fast paths load multiple bytes through a native-endian
+            // integer cast, which only matches the little-endian wire order on
+            // a little-endian host. On big-endian we skip them and fall back to
+            // the endian-neutral single-byte path below.
             if (bits >= 32) {
                 // Copy as an uint32 integer.
                 // This way, performance faster x2 than bits copy approach.
@@ -232,7 +274,9 @@ void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src, int di,
                 // Copy as an uint16 integer.
                 ((uint16_t *)dst)[0] = ((uint16_t *)(src))[0] >> si;
                 c = 16 - si;
-            } else if (bits >= 8) {
+            } else
+#endif
+            if (bits >= 8) {
                 // Copy as an unsigned char.
                 dst[0] = (src[0] >> si) & 0xff;
                 c = 8 - si;
@@ -283,14 +327,35 @@ void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src, int di,
 }
 
 // BpEndecodeBaseType process given base type at given data.
-// This function guarantees to work geven a nbits > 64 is passed in.
+// This function guarantees to work geven a nbits > 64 is passed in (the
+// batch-array path used on little-endian only; on big-endian arrays are processed
+// element by element so nbits here is always a single base type's <= 64 bits).
 void BpEndecodeBaseType(int nbits, struct BpProcessorContext *ctx, void *data) {
+#ifdef BP_BIG_ENDIAN
+    // Stage the field through a little-endian byte view so the wire stays
+    // little-endian regardless of host byte order. A single base integer is at
+    // most 64 bits, so 8 bytes of staging is always enough.
+    int size = BpBaseTypeStorageSize(nbits);
+    unsigned char le[8] = {0};
+    unsigned char *p = (unsigned char *)data;
+    if (ctx->is_encode) {
+        // Native big-endian bytes -> little-endian staging buffer.
+        for (int k = 0; k < size; k++) le[k] = p[size - 1 - k];
+        BpCopyBufferBits(nbits, ctx->s, le, ctx->i, 0);
+    } else {
+        BpCopyBufferBits(nbits, le, ctx->s, 0, ctx->i);
+        // Little-endian staging buffer -> native big-endian bytes.
+        for (int k = 0; k < size; k++) p[size - 1 - k] = le[k];
+    }
+    ctx->i += nbits;
+#else
     if (ctx->is_encode) {
         BpCopyBufferBits(nbits, ctx->s, (unsigned char *)data, ctx->i, 0);
     } else {
         BpCopyBufferBits(nbits, (unsigned char *)data, ctx->s, 0, ctx->i);
     }
     ctx->i += nbits;
+#endif
 }
 
 // BpHandleIntSignAfterEndecode processes signed integer at given data after

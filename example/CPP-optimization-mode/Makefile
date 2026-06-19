@@ -19,6 +19,6 @@ run: build
 	./example
 
 clean:
-	rm example_bp.h example_bp.c example *.o || true
+	rm -f example_bp.h example_bp.c example *.o $(BITPROTO_LIB_PATH)/*.o
 
 .PHONY: build run clean

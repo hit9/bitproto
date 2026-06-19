@@ -43,7 +43,7 @@ int main(void) {
     assert(m1.g.number == m.g.number);
     assert(m1.g.ok == m.g.ok);
     for (int i = 0; i < 7; i++)
-        for (int j = 0; j < 7; j++) assert(m1.t[i][j] = m.t[i][j]);
+        for (int j = 0; j < 7; j++) assert(m1.t[i][j] == m.t[i][j]);
     assert(m1.x[0] == m.x[0]);
     assert(m1.x[1] == m.x[1]);
     assert(m1.x[2] == m.x[2]);

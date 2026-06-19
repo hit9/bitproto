@@ -85,6 +85,21 @@ def build_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     args_parser.add_argument(
+        "--endian",
+        dest="endian",
+        type=str,
+        choices=["both", "little", "big"],
+        default="both",
+        help=(
+            "host byte order to target for optimization-mode C/C++ code. "
+            "'both' (default) emits both paths guarded by #ifdef BP_BIG_ENDIAN "
+            "and auto-detects the host; 'little' emits only the fast "
+            "little-endian path (smaller output, no big-endian support); "
+            "'big' emits only the portable big-endian path. "
+            "Only affects optimization mode."
+        ),
+    )
+    args_parser.add_argument(
         "-v",
         "--version",
         dest="version",
@@ -115,6 +130,7 @@ def run_bitproto() -> None:
         check=args.check,
         enable_optimize=args.enable_optimize,
         filter_messages=filter_messages,
+        endian=args.endian,
     )
 
 
@@ -126,6 +142,7 @@ def main(
     check: bool = False,
     enable_optimize: bool = False,
     filter_messages: Optional[List[str]] = None,
+    endian: str = "both",
 ) -> None:
     # Parse
     try:
@@ -161,6 +178,7 @@ def main(
             outdir=outdir,
             optimization_mode=enable_optimize,
             optimization_mode_filter_messages=filter_messages,
+            optimization_mode_endian=endian,
         )
     except RendererError as error:
         fatal(error.colored())

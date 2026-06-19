@@ -77,6 +77,12 @@ For an instance in C, the generated code in optimization mode looks like this:
 See the generated code example above, there's no loops, no if-else, all statements are plain bit operations.
 In this way, bitproto's optimization mode gives us a maximum performance improvement on encoding/decoding.
 
+.. note::
+
+   The byte-pointer code shown above is the little-endian path. By default the
+   compiler also emits an equivalent big-endian path behind ``#ifdef BP_BIG_ENDIAN``,
+   see :ref:`endianness`.
+
 It's fine of course to use optimization mode on one end and non-optimization mode (the standard mode) on another end
 in message communication. The optimization mode only changes the way how to execute the encoder and decoder,
 without changing the format of the message encoding.
@@ -122,3 +128,12 @@ in communication. This option can also be used with multiple message names:
    $ bitproto example.bitproto -O -F "PacketA,PacketB"
 
 Finally to note that, the ``-F`` option can be only used together with option ``-O``.
+
+Host Byte Order (Endianness)
+''''''''''''''''''''''''''''
+
+The optimization-mode C code generates plain bit-copy statements that access
+integer fields through their in-memory bytes, so by default bitproto emits both
+a little-endian and a big-endian code path (guarded by ``#ifdef BP_BIG_ENDIAN``).
+The little-endian path is unchanged from earlier releases. See :ref:`endianness`
+for details and the ``--endian`` option.

@@ -1,0 +1,163 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2021, Chao Wang
+# This file is distributed under the same license as the bitproto package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: bitproto 0.4.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-19 01:28-0700\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh\n"
+"Language-Team: zh <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../endianness.rst:6 0b040be315ce42209b21a9e8b15b6036
+msgid "Endianness"
+msgstr ""
+
+#: ../../endianness.rst:8 ccaaaf10bdfa4f648bcb9d02270e5878
+msgid ""
+"bitproto's wire format is **little-endian on every platform**: the lowest"
+" byte index on the wire holds the least-significant bits of a field. This"
+" is a fixed property of the encoding, independent of the machine that "
+"runs the encoder or decoder — two peers with different byte orders always"
+" interoperate."
+msgstr ""
+
+#: ../../endianness.rst:16 102ab05c4eb54687b25d8137490bbd8d
+msgid "Language support"
+msgstr ""
+
+#: ../../endianness.rst:18 4949128459f0422bb13dae054d386f55
+msgid ""
+"Whether the *host* CPU is big-endian only ever mattered for C, because "
+"only C reads an integer field's raw memory bytes. Python and Go operate "
+"on integer *values* with shifts and masks, which is byte-order "
+"independent by construction."
+msgstr ""
+
+#: ../../endianness.rst:26 199c9c0766e04113b484d2840ecfba51
+msgid "Target"
+msgstr ""
+
+#: ../../endianness.rst:27 688b7dde52824f65b24529a68090d35f
+msgid "How bits are moved"
+msgstr ""
+
+#: ../../endianness.rst:28 f2ba25db7dbe4c54bc6e9cb8564a02a5
+msgid "Big-endian host"
+msgstr ""
+
+#: ../../endianness.rst:29 7185def3bcd24250bb7adcf4c8c05176
+msgid "Python"
+msgstr ""
+
+#: ../../endianness.rst:30 0e787b8470584e63ab81d90da3c15128
+msgid "value math on Python ints"
+msgstr ""
+
+#: ../../endianness.rst:31 ../../endianness.rst:34
+#: 41384d1bc15f45ada45248e4fdd697d3 d28241f219114b51b5d2002609b864d0
+msgid "always correct"
+msgstr ""
+
+#: ../../endianness.rst:32 69d0a06ec23d462f9e142333c75d80d1
+msgid "Go"
+msgstr ""
+
+#: ../../endianness.rst:33 cb9b9a23775744cc89f3f5ab9c07b6dc
+msgid "value shifts on typed fields"
+msgstr ""
+
+#: ../../endianness.rst:35 a4d294b5cc7f44cb8263527b2e7fb893
+msgid "C (standard mode)"
+msgstr ""
+
+#: ../../endianness.rst:36 4fd18130c01a4c6f827652c3904fc3ec
+msgid "``lib/c`` runtime"
+msgstr ""
+
+#: ../../endianness.rst:37 ../../endianness.rst:40
+#: d7b60cd145a54177ac0e4d328767a09b e982e973ea5740e7887c8c0b6e4121ed
+msgid "correct"
+msgstr ""
+
+#: ../../endianness.rst:38 76b701d8127a4e508b5cb4004301b984
+msgid "C (optimization mode)"
+msgstr ""
+
+#: ../../endianness.rst:39 ab408111deb7443b927252ec5053ffe0
+msgid "generated bit-copy statements"
+msgstr ""
+
+#: ../../endianness.rst:42 267c254a223341d890878a779748f20d
+msgid ""
+"So nothing special is required for Go or Python. The remainder of this "
+"page is about C."
+msgstr ""
+
+#: ../../endianness.rst:48 0fda01f52aba404ca7e7841635e1b526
+msgid "C standard mode"
+msgstr ""
+
+#: ../../endianness.rst:50 b789baff2f8842d7b046e63d83fe28fc
+msgid ""
+"The C library (``lib/c/bitproto.c``) detects a big-endian host "
+"automatically via ``__BYTE_ORDER__`` and selects an endian-neutral code "
+"path. You may also force it by defining ``BP_BIG_ENDIAN`` when compiling "
+"the library, for toolchains that do not define ``__BYTE_ORDER__``:"
+msgstr ""
+
+#: ../../endianness.rst:59 dfe5ca7c24b74b21a037d8a627cb31f4
+msgid ""
+"On a little-endian host the library is byte-for-byte unchanged, so there "
+"is no performance impact on the common target."
+msgstr ""
+
+#: ../../endianness.rst:65 e88b8e2df1064aa88e0681f1e15a5577
+msgid "C optimization mode"
+msgstr ""
+
+#: ../../endianness.rst:67 668c05ce7e5b4cd299438125249d1301
+msgid ""
+":ref:`Optimization mode <performance-optimization-mode>` generates plain "
+"bit-copy statements that read and write integer fields through their in-"
+"memory bytes. To stay correct on both little-endian and big-endian hosts,"
+" by default bitproto emits two equivalent code paths guarded by a "
+"preprocessor macro:"
+msgstr ""
+
+#: ../../endianness.rst:80 c3e4f7e8383b4362af0360e008b10f49
+msgid ""
+"A big-endian host is auto-detected via ``__BYTE_ORDER__``; you may also "
+"force the big-endian path by defining ``BP_BIG_ENDIAN`` when compiling "
+"the generated code. The little-endian path is identical to earlier "
+"bitproto releases, so there is no performance change on little-endian "
+"targets — only the generated source is a little larger."
+msgstr ""
+
+#: ../../endianness.rst:89 8d62efc6537d4a4f9cb8e5f7d54d1f6d
+msgid "The ``--endian`` option"
+msgstr ""
+
+#: ../../endianness.rst:91 e84c122aadef45e887a7e8d2f84f37b7
+msgid ""
+"If you know your target's byte order you can drop the unused path and "
+"shrink the generated source with the ``--endian`` option (optimization "
+"mode only):"
+msgstr ""
+
+#: ../../endianness.rst:105 dbc23d079cd24ab0ac8cb9144b9fe748
+msgid ""
+"``--endian`` only affects optimization-mode C/C++ code. It has no effect "
+"on the wire format, and none on Go or Python."
+msgstr ""
+

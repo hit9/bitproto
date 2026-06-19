@@ -407,28 +407,92 @@ class BlockIncludeOpMode(Block[F]):
     def render(self) -> None:
         header_filename = self.formatter.format_out_filename(self.bound, extension=".h")
         self.push(f'#include "{header_filename}"')
+        endian = self._get_ctx_or_raise().optimization_mode_endian
+        if endian == "both":
+            # Auto-detect a big-endian host so the default just works without
+            # the user defining BP_BIG_ENDIAN; still overridable via -D.
+            self.push("#if !defined(BP_BIG_ENDIAN) && defined(__BYTE_ORDER__) && \\")
+            self.push("    (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)")
+            self.push("#define BP_BIG_ENDIAN 1")
+            self.push("#endif")
+            # <string.h> is only needed for memset in the big-endian path.
+            self.push("#ifdef BP_BIG_ENDIAN")
+            self.push("#include <string.h>")
+            self.push("#endif")
+        elif endian == "big":
+            self.push("#include <string.h>")
 
 
 class BlockMessageEncoderOpMode(BlockMessageEncoderBase):
     @override(Block)
     def render(self) -> None:
+        endian = self._get_ctx_or_raise().optimization_mode_endian
         self.push(f"{self.function_signature} {{")
-        l = self.formatter.format_op_mode_encode_message(self.d)
-        for line in l:
-            self.push(line, indent=4)
+        self._push_body(endian)
         self.push("return 0;", indent=4)
         self.push("}")
+
+    def _push_body(self, endian: str) -> None:
+        def le() -> None:
+            for line in self.formatter.format_op_mode_message_endian(
+                self.d, is_encode=True, big_endian=False
+            ):
+                self.push(line, indent=4)
+
+        def be() -> None:
+            for line in self.formatter.format_op_mode_message_endian(
+                self.d, is_encode=True, big_endian=True
+            ):
+                self.push(line, indent=4)
+
+        if endian == "little":
+            le()
+        elif endian == "big":
+            be()
+        else:  # both: fast little-endian path, portable big-endian behind #else.
+            self.push("#ifndef BP_BIG_ENDIAN")
+            le()
+            self.push("#else")
+            be()
+            self.push("#endif")
 
 
 class BlockMessageDecoderOpMode(BlockMessageDecoderBase):
     @override(Block)
     def render(self) -> None:
+        endian = self._get_ctx_or_raise().optimization_mode_endian
         self.push(f"{self.function_signature} {{")
-        l = self.formatter.format_op_mode_decode_message(self.d)
-        for line in l:
-            self.push(line, indent=4)
+        self._push_body(endian)
         self.push("return 0;", indent=4)
         self.push("}")
+
+    def _push_body(self, endian: str) -> None:
+        # The little-endian path uses = on the first byte write, so it needs no
+        # zeroing.  The big-endian path always uses |=, so it must start from a
+        # zeroed message (memset).
+        def le() -> None:
+            for line in self.formatter.format_op_mode_message_endian(
+                self.d, is_encode=False, big_endian=False
+            ):
+                self.push(line, indent=4)
+
+        def be() -> None:
+            self.push("memset(m, 0, sizeof(*m));", indent=4)
+            for line in self.formatter.format_op_mode_message_endian(
+                self.d, is_encode=False, big_endian=True
+            ):
+                self.push(line, indent=4)
+
+        if endian == "little":
+            le()
+        elif endian == "big":
+            be()
+        else:  # both
+            self.push("#ifndef BP_BIG_ENDIAN")
+            le()
+            self.push("#else")
+            be()
+            self.push("#endif")
 
 
 class BlockMessageFunctionsOpMode(BlockBindMessage[F], BlockComposition[F]):

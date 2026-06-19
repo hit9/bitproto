@@ -1,5 +1,23 @@
 .. currentmodule:: bitproto
 
+Version 1.3.0
+-------------
+
+.. _version-1.3.0:
+
+- Feature: Big-endian host support. bitproto's wire format is little-endian on
+  every platform; the C library (standard mode) and the C optimization-mode
+  generated code now also produce correct output when compiled for a big-endian
+  host. Python and Go were already endian-neutral and unaffected.
+- Feature: New compiler option ``--endian`` (``both`` | ``little`` | ``big``)
+  controlling the host byte order targeted by optimization-mode C/C++ code.
+  The default ``both`` emits both code paths guarded by ``#ifdef BP_BIG_ENDIAN``
+  and auto-detects the host (overridable by defining ``BP_BIG_ENDIAN``);
+  ``little`` keeps only the original, smaller and faster byte-pointer code (no
+  big-endian support); ``big`` emits only the portable path.
+- The little-endian generated code is unchanged from previous releases, so there
+  is no performance regression on the common little-endian target.
+
 Version 1.2.2
 -------------
 

@@ -31,15 +31,13 @@ msgstr "bitproto 是否和大小端有关？"
 
 #: ../../faq.rst:11 696fa0eba0ac4b64b351f8260ec95798
 msgid ""
-"Yes, bitproto is not endianness independent, it currently supports only "
-"little-endian systems. Endianness is always an issue for data "
-"serialization. But most of cpu processors, (including x86, armv7, armv8 "
-"and most arm cortex-m mcus) are little-endian, or little-endian as "
-"default. There's no plan for now to support big-endian systems or "
-"endianness independent serialization."
-msgstr "是的，bitproto 是大小端相关的，目前它只支持小端系统。"
-"在数据序列化方面，大小端一直是一个问题。但是对于大部分的 CPU 处理器 (包括 x86, armv7, armv8 和大多数的 arm cortex-m mcu） "
-"都是小端的，或者默认设置为小端的。目前还没有计划来支持大端系统，也没有计划做大小端无关的序列化支持。"
+"Yes, bitproto's wire format is little-endian on every platform. The C library "
+"(standard mode) and the C optimization-mode generated code now both produce "
+"correct output on big-endian hosts. Python and Go are endian-neutral and were "
+"always unaffected. See :ref:`endianness` for details."
+msgstr ""
+"是的，bitproto 的编码格式在所有平台上都是小端的。C 库（标准模式）和 C 优化模式生成的代码现在都支持大端主机。"
+"Python 和 Go 是大小端无关的，一直不受影响。详见 :ref:`endianness`。
 
 #: ../../faq.rst:17 41b0f1c69ab7427ca3aa6dc6fc386d32
 msgid "What's the advantage of this over a bit field ?"

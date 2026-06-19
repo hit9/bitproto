@@ -8,128 +8,203 @@ msgid ""
 msgstr ""
 "Project-Id-Version: bitproto 0.4.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-22 16:32+0800\n"
+"POT-Creation-Date: 2026-06-19 01:28-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.17.0\n"
+"Generated-By: Babel 2.18.0\n"
 
-#: ../../changelog.rst:2 bd0c49799ad1472b9ebc5a93eae789ae
+#: ../../changelog.rst:2 76d5d3603c404178ae5b7c007ad11007
 msgid "Changelog"
 msgstr "版本历史"
 
-#: ../../../changes.rst:4 4ca3aa397b074fb7a87296b215f52ecb
+#: ../../../changes.rst:4 21ceda6cb0ef42a98dcbc98ccfb9241d
+#, fuzzy
+msgid "Version 1.3.0"
+msgstr "Version 1.1.2"
+
+#: ../../../changes.rst:8 67b139acd1c14750b76eb78d59628835
+msgid ""
+"Feature: Big-endian host support. bitproto's wire format is little-endian"
+" on every platform; the C library (standard mode) and the C optimization-"
+"mode generated code now also produce correct output when compiled for a "
+"big-endian host. Python and Go were already endian-neutral and "
+"unaffected."
+msgstr ""
+
+#: ../../../changes.rst:12 9eff75eba59548dda5b36bd7771b0973
+msgid ""
+"Feature: New compiler option ``--endian`` (``both`` | ``little`` | "
+"``big``) controlling the host byte order targeted by optimization-mode "
+"C/C++ code. The default ``both`` emits both code paths guarded by "
+"``#ifdef BP_BIG_ENDIAN`` and auto-detects the host (overridable by "
+"defining ``BP_BIG_ENDIAN``); ``little`` keeps only the original, smaller "
+"and faster byte-pointer code (no big-endian support); ``big`` emits only "
+"the portable path."
+msgstr ""
+
+#: ../../../changes.rst:18 abc52528f16c4b7c81153ab7c2240866
+msgid ""
+"The little-endian generated code is unchanged from previous releases, so "
+"there is no performance regression on the common little-endian target."
+msgstr ""
+
+#: ../../../changes.rst:22 22529ec400cf407abacf99ac626d435b
+#, fuzzy
+msgid "Version 1.2.2"
+msgstr "Version 1.1.2"
+
+#: ../../../changes.rst:26 ../../../changes.rst:35
+#: 95eba896850f414e89ebb84b70d40c3c e25d49c311624576abd66476d2d553d6
+msgid "Warning: May break some existing projects's generated names:"
+msgstr ""
+
+#: ../../../changes.rst:28 fe2017ebb9f447f8bddfeaeb8e987c0a
+msgid "Improve `snake_case` function. #74, #75"
+msgstr ""
+
+#: ../../../changes.rst:31 ba8f42bbecf644b29baad003f4b766df
+#, fuzzy
+msgid "Version 1.2.1"
+msgstr "Version 1.1.2"
+
+#: ../../../changes.rst:37 b0189e46434948b8b61eed17372426b6
+msgid "Bugfix: `pascal_case` formatter. ISSUE #68, PR #69."
+msgstr ""
+
+#: ../../../changes.rst:38 5ecfae5bd6fb4920b9c61479c9b71be6
+msgid ""
+"Bugfix: Fixed naming style of generated code such as IntegerConstant "
+"(style lookup supports inheritance). ISSUE #70 PR #70"
+msgstr ""
+
+#: ../../../changes.rst:42 600da5f679ad4b60907b5a12d9dc661a
+#, fuzzy
+msgid "Version 1.2.0"
+msgstr "Version 1.1.2"
+
+#: ../../../changes.rst:46 80ff49dbfa30413fa75ceaf145ec6a3b
+msgid "Feature: Add a simple language-server, tested on neovim and vscode."
+msgstr ""
+
+#: ../../../changes.rst:47 c16cae5e4b5a413f890924aae18b10f1
+msgid ""
+"Editor:  Upgrade vscode extenions to support the ``bitproto-language-"
+"server``."
+msgstr ""
+
+#: ../../../changes.rst:50 d760bd22453742f9a43c8144660042af
 msgid "Version 1.1.2"
 msgstr "Version 1.1.2"
 
-#: ../../../changes.rst:8 427ec549afc64dd3ba6e4efb7ba67165
+#: ../../../changes.rst:54 26ac073c24044181a22c1d41b56d25df
 msgid "Feature: Allow using constants as option values. ISSUE #61, PR #63"
 msgstr ""
 
-#: ../../../changes.rst:11 4ca3aa397b074fb7a87296b215f52ecb
+#: ../../../changes.rst:57 b0046c32c229421392f8d3c2badbb7d7
 msgid "Version 1.1.1"
 msgstr ""
 
-#: ../../../changes.rst:15 61227587c4e443038089921f7bf8584f
+#: ../../../changes.rst:61 12f263a55eda445a9b3c92bf86a4c3de
 msgid ""
 "Fix bug: enum importing other bitproto's field name generation bug. #53 "
 "#52"
 msgstr ""
 
-#: ../../../changes.rst:16 66206e28775a4993a98af4b796bd3097
+#: ../../../changes.rst:62 52d66b4337644fd18beae488ad3255e2
 msgid ""
 "Fix bug: import statements of bitprotos should be placed ahead of other "
 "declarations. #53"
 msgstr ""
 
-#: ../../../changes.rst:19 9c595ec0cf7f4e21b9cab4878149574c
+#: ../../../changes.rst:65 22cb18322ba44cbca1d0d06797f7b798
 msgid "Version 1.1.0"
 msgstr ""
 
-#: ../../../changes.rst:23 668377b7aead4b6e9dfe5650f07f550d
+#: ../../../changes.rst:69 c46626dc5a5d4c2ba9a836831a7821ae
 msgid ""
 "Performance improvements for C bitprotolib, 40~60us improvement per call "
 "on stm32. PR #48."
 msgstr ""
 
-#: ../../../changes.rst:24 351457b1434647ff926e98fe7fb00c5a
+#: ../../../changes.rst:70 4ddf229304cb447085af86c7cb1500d0
 msgid ""
 "Fix Python nested message ``__post_init___`` function code generation. PR"
 " #48, commit 73f4b01."
 msgstr ""
 
-#: ../../../changes.rst:27 24745d925dd0496c8a1dd647e7b7225f
+#: ../../../changes.rst:73 3f89d51d88b843489a296cead4dfea86
 msgid "Version 1.0.1"
 msgstr ""
 
-#: ../../../changes.rst:31 c9cede67a4354f85a113fe9802d7c3f1
+#: ../../../changes.rst:77 dc8ee87e18ef422f9906a8d85f1e93df
 msgid "Add support for Python 3.11"
 msgstr ""
 
-#: ../../../changes.rst:34 33d884cb4ef54a7e80d5c425391b372c
+#: ../../../changes.rst:80 256f5b5a0e7e41299e71e29f5be6aa8b
 msgid "Version 1.0.0"
 msgstr ""
 
-#: ../../../changes.rst:38 3592669cb8e847c49cea8a365c2c3a5f
+#: ../../../changes.rst:84 1b006c1612a549fb8b1c2054fea6294d
 msgid "First fully release version"
 msgstr "第一次发布 1.0 版本"
 
-#: ../../../changes.rst:43 b3a828ec2f7a44a4b6401d53455fffc6
+#: ../../../changes.rst:89 123c8b04025f4014a2a6ea3601292901
 msgid "Version 0.4.6"
 msgstr ""
 
-#: ../../../changes.rst:45 4f633212411841cd8396ddd38a9f24cc
+#: ../../../changes.rst:91 32d4097cc1bb42a284d013b0d6bf0f2c
 msgid "Support signed integers with arbitrary bits, e.g. int24 PR#45."
 msgstr "支持任意比特数目的有符号整数类型 例如 int24, 见 PR#45"
 
-#: ../../../changes.rst:50 90f0ae1491a84c41a2b9c5dc0e66f845
+#: ../../../changes.rst:96 cd1d51ee9e3c4b708cd9a9fd31ffd497
 msgid "Version 0.4.5"
 msgstr ""
 
-#: ../../../changes.rst:52 5390534c2c094a6b881c30f62d565d17
+#: ../../../changes.rst:98 dc88283855f843a495bab4f3c9ad415d
 msgid ""
 "Use Python IntEnum for enum generation (respecting backward "
 "compatibility)  PR#41."
 msgstr ""
 
-#: ../../../changes.rst:57 3bfcca062ff44f87aea90bf7a6f339b1
+#: ../../../changes.rst:103 ebed9fb7d14142d591662da7185c23d2
 msgid "Version 0.4.4"
 msgstr ""
 
-#: ../../../changes.rst:59 c5a2117f96e4413da42ee13729394184
+#: ../../../changes.rst:105 f3413287976c47e2b9de95e528c6a72e
 msgid "Minor fix compiler setup.py path issue."
 msgstr ""
 
-#: ../../../changes.rst:64 86561ffe65894180a12c77dd57d8172f
+#: ../../../changes.rst:110 3746a5e757ac41b582f2d6d9f91f5379
 msgid "Version 0.4.2"
 msgstr ""
 
-#: ../../../changes.rst:66 bc317a756c0f44999c0c22be675a7deb
+#: ../../../changes.rst:112 2cc45826f9304b42b0e5899dfdb17f23
 msgid "Allow using ``type`` as message field name, fixes issue #39."
 msgstr ""
 
-#: ../../../changes.rst:71 a00793c65d2c427f9b81c1ccab8ad424
+#: ../../../changes.rst:117 26969591f7454f34be89e5998982923a
 msgid "Version 0.4.0"
 msgstr ""
 
-#: ../../../changes.rst:73 b0917dbfc0524e74ba171e75741e97e2
+#: ../../../changes.rst:119 eb895e1c963342f489630f6dc2fd642b
 msgid ""
 "Add support for ``message`` and ``enum`` extensiblity for protocol "
 "forward compatibility."
 msgstr ""
 
-#: ../../../changes.rst:74 95abb35c9fcd4d449a32519fd31ac1aa
+#: ../../../changes.rst:120 a557134b8d8148a9ae61364d595e6d61
 msgid "Cut down the code size of generated language-specific files."
 msgstr ""
 
-#: ../../../changes.rst:75 ccf790e19105464b9c222eb7d5916f8d
+#: ../../../changes.rst:121 bc8f1b17164e4cd58c6b434cb68f6099
 msgid "Refactor the bitproto compiler."
 msgstr ""
 
-#: ../../../changes.rst:76 6f93b6bbf73748d4b801a715f0cba57b
+#: ../../../changes.rst:122 147604be81434646a2a96ffdfc87e87f
 msgid ""
 "Refactor the bitproto serialization mechanism, using language-specific "
 "libraries instead of pure compiler-generated files."
