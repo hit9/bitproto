@@ -69,3 +69,38 @@ jobs:
     - name: Run tests
       run: |
         make test --no-print-directory -s
+
+  big-endian:
+
+    runs-on: ubuntu-24.04
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v4
+      with:
+        platforms: s390x
+
+    - name: Run endian tests on s390x
+      run: |
+        docker run --rm --platform linux/s390x \
+          -v "${{ github.workspace }}:/work" \
+          -w /work \
+          python:3.13-bookworm \
+          bash -euxo pipefail -c '
+            apt-get update
+            apt-get install -y --no-install-recommends gcc make
+            python -m pip install -r compiler/requirements.txt -r tests/requirements_tests.txt
+            ln -sf /usr/local/bin/python /usr/local/bin/python3
+            printf "%s\n" \
+              "#!/usr/bin/env sh" \
+              "PYTHONPATH=/work/compiler exec python -m bitproto._main \"\$@\"" \
+              >/usr/local/bin/bitproto
+            chmod +x /usr/local/bin/bitproto
+            PYTHONPATH=compiler:lib/py python - <<'"'"'PY'"'"'
+            import sys
+            assert sys.byteorder == "big", sys.byteorder
+            PY
+            PYTHONPATH=compiler:lib/py python -m pytest tests/test_encoding/test_endian.py -v
+          '
