@@ -411,8 +411,11 @@ class BlockIncludeOpMode(Block[F]):
         if endian == "both":
             # Auto-detect a big-endian host so the default just works without
             # the user defining BP_BIG_ENDIAN; still overridable via -D.
-            self.push("#if !defined(BP_BIG_ENDIAN) && defined(__BYTE_ORDER__) && \\")
-            self.push("    (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)")
+            # __BYTE_ORDER__ / __ORDER_BIG_ENDIAN__ covers GCC/Clang.
+            # __BIG_ENDIAN__ covers TI ARM CGT (--be32) and some other toolchains.
+            self.push("#if !defined(BP_BIG_ENDIAN) && (\\")
+            self.push("    (defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)) || \\")
+            self.push("    defined(__BIG_ENDIAN__))")
             self.push("#define BP_BIG_ENDIAN 1")
             self.push("#endif")
             # <string.h> is only needed for memset in the big-endian path.
