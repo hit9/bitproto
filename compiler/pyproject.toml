@@ -1,3 +1,49 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "bitproto"
+dynamic = ["version", "description"]
+authors = [
+    {name = "Chao Wang", email = "hit9@icloud.com"},
+]
+urls = {Homepage = "https://github.com/hit9/bitproto"}
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
+]
+requires-python = ">=3.7"
+dependencies = [
+    "ply>=3.11",
+    "typing-extensions>=3.6.0",
+]
+
+[project.scripts]
+bitproto = "bitproto._main:run_bitproto"
+
+[project.license]
+text = "BSD-3-Clause"
+
+[tool.hatch.version]
+path = "bitproto/__init__.py"
+
+[tool.hatch.metadata]
+description = { path = "bitproto/__init__.py", variable = "__description__" }
+
 [tool.isort]
 profile = "black"
 combine_as_imports = true

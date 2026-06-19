@@ -16,32 +16,34 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-22.04, macos-latest]
+        os: [ubuntu-24.04, macos-latest]
         python: ["3.11"]
-        go: ["1.19"]
+        go: ["1.25"]
 
-    runs-on: ${{ matrix.os  }}
+    runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python }}
 
-    - uses: actions/checkout@v2
     - name: Set up Golang ${{ matrix.go }}
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v5
       with:
         go-version: ${{ matrix.go }}
 
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+
     - name: Install bitproto compiler
       run: |
-        pip install -e ./compiler
+        uv pip install --system -e ./compiler
 
     - name: Install bitproto python lib
       run: |
-        pip install -e ./lib/py
+        uv pip install --system -e ./lib/py
 
     - name: Run benchmark
       run: |

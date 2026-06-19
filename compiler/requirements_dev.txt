@@ -2,5 +2,3 @@ black>=22.0
 isort>=5.7.0
 mypy>=0.790
 mypy-extensions>=0.4.3
-pyinstaller>=4.2
-twine>=3.4.2
