@@ -92,15 +92,11 @@ jobs:
             apt-get update
             apt-get install -y --no-install-recommends gcc make
             python -m pip install -r compiler/requirements.txt -r tests/requirements_tests.txt
-            ln -sf /usr/local/bin/python /usr/local/bin/python3
             printf "%s\n" \
               "#!/usr/bin/env sh" \
               "PYTHONPATH=/work/compiler exec python -m bitproto._main \"\$@\"" \
               >/usr/local/bin/bitproto
             chmod +x /usr/local/bin/bitproto
-            PYTHONPATH=compiler:lib/py python - <<'"'"'PY'"'"'
-            import sys
-            assert sys.byteorder == "big", sys.byteorder
-            PY
+            PYTHONPATH=compiler:lib/py python -c "import sys; assert sys.byteorder == \"big\", sys.byteorder"
             PYTHONPATH=compiler:lib/py python -m pytest tests/test_encoding/test_endian.py -v
           '
