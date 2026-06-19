@@ -77,6 +77,12 @@ For an instance in C, the generated code in optimization mode looks like this:
 See the generated code example above, there's no loops, no if-else, all statements are plain bit operations.
 In this way, bitproto's optimization mode gives us a maximum performance improvement on encoding/decoding.
 
+.. note::
+
+   The byte-pointer code shown above is the little-endian path. By default the
+   compiler also emits an equivalent big-endian path behind ``#ifdef BP_BIG_ENDIAN``,
+   see :ref:`performance-optimization-mode-endianness` below.
+
 It's fine of course to use optimization mode on one end and non-optimization mode (the standard mode) on another end
 in message communication. The optimization mode only changes the way how to execute the encoder and decoder,
 without changing the format of the message encoding.
@@ -122,3 +128,48 @@ in communication. This option can also be used with multiple message names:
    $ bitproto example.bitproto -O -F "PacketA,PacketB"
 
 Finally to note that, the ``-F`` option can be only used together with option ``-O``.
+
+.. _performance-optimization-mode-endianness:
+
+Host Byte Order (Endianness)
+''''''''''''''''''''''''''''
+
+bitproto's wire format is little-endian on every platform: the lowest byte index
+holds the least-significant bits of a field. The encoding produced by Python, Go
+and the C standard-mode library is the same regardless of the host's byte order.
+
+The C optimization mode, however, generates plain bit-copy statements that read
+and write integer fields through their in-memory bytes. To stay correct on both
+little-endian and big-endian hosts, by default bitproto emits two equivalent code
+paths guarded by a preprocessor macro:
+
+.. sourcecode:: c
+
+   #ifndef BP_BIG_ENDIAN
+       // fast byte-pointer path (little-endian hosts)
+   #else
+       // portable bit-shift path (big-endian hosts)
+   #endif
+
+A big-endian host is auto-detected via ``__BYTE_ORDER__``; you may also force the
+big-endian path by defining ``BP_BIG_ENDIAN`` when compiling the generated code.
+The little-endian path is byte-for-byte identical to earlier releases, so there
+is no performance change on little-endian targets — only the generated source is
+a little larger.
+
+If you know your target's byte order you can drop the unused path with the
+``--endian`` option:
+
+.. sourcecode:: bash
+
+   # default: both paths, auto-detected
+   $ bitproto c example.bitproto -O
+
+   # only the fast little-endian path (smaller output, no big-endian support)
+   $ bitproto c example.bitproto -O --endian=little
+
+   # only the portable big-endian path
+   $ bitproto c example.bitproto -O --endian=big
+
+The ``--endian`` option only affects optimization-mode C/C++ code; it has no
+effect on the wire format, nor on Go and Python which are endian-neutral already.
