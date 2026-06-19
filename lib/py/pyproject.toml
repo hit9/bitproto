@@ -34,9 +34,6 @@ profile = "black"
 combine_as_imports = true
 
 [tool.hatch.build.targets.sdist]
-only-include = [
-    "bitprotolib/",
-    "pyproject.toml",
-    "MANIFEST.in",
-    "Makefile",
-]
+exclude = [".gitignore"]
+[tool.hatch.build.targets.wheel]
+exclude = [".gitignore"]

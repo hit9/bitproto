@@ -33,13 +33,10 @@ dependencies = [
 ]
 
 [tool.hatch.build.targets.sdist]
-only-include = [
-    "bitproto/",
-    "pyproject.toml",
-    "requirements.txt",
-    "MANIFEST.in",
-    "Makefile",
-]
+exclude = [".gitignore"]
+
+[tool.hatch.build.targets.wheel]
+exclude = [".gitignore"]
 
 [project.scripts]
 bitproto = "bitproto._main:run_bitproto"
