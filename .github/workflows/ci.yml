@@ -101,7 +101,7 @@ jobs:
             chmod +x /usr/local/bin/bitproto
             export GOFLAGS=-buildvcs=false
             PYTHONPATH=/work/compiler:/work/lib/py python -c "import sys; assert sys.byteorder == \"big\", sys.byteorder"
-            PYTHONPATH=/work/compiler:/work/lib/py pytest tests/test_encoding -v -s -x
-            PYTHONPATH=/work/compiler:/work/lib/py BP_TEST_CC_OPTIMIZATION=-O2 pytest tests/test_encoding -v -s -x
-            PYTHONPATH=/work/compiler:/work/lib/py BP_TEST_OPTIMIZATION_ARG=-O pytest tests/test_encoding -v -s -x
+            PYTHONPATH=/work/compiler:/work/lib/py BP_TEST_LANGS=c pytest tests/test_encoding -v -s -x
+            PYTHONPATH=/work/compiler:/work/lib/py BP_TEST_LANGS=c BP_TEST_CC_OPTIMIZATION=-O2 pytest tests/test_encoding -v -s -x
+            PYTHONPATH=/work/compiler:/work/lib/py BP_TEST_LANGS=c BP_TEST_OPTIMIZATION_ARG=-O pytest tests/test_encoding -v -s -x
           '

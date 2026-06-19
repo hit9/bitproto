@@ -33,6 +33,10 @@ class _TestCase:
     def __post_init__(self) -> None:
         if not self.langs:
             self.langs = ["c", "go", "py"]
+        langs = os.environ.get("BP_TEST_LANGS", "")
+        if langs:
+            requested_langs = langs.split(",")
+            self.langs = [lang for lang in self.langs if lang in requested_langs]
         self.cc_optimization_arg = os.environ.get("BP_TEST_CC_OPTIMIZATION", "")
         self.optimization_mode_arg = os.environ.get("BP_TEST_OPTIMIZATION_ARG", "")
 
@@ -71,6 +75,8 @@ class _TestCase:
         """Run this case, returns the"""
 
         if self.optimization_mode_arg and not self.support_optimization_mode:
+            return
+        if not self.langs:
             return
 
         current_cwd = os.getcwd()
