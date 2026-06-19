@@ -8,5 +8,5 @@ Bit level data interchange format.
 
 """
 
-__version__ = "1.3.0"
+__version__ = "1.3.1"
 __description__ = "bit level data interchange format."
