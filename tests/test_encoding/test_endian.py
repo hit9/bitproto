@@ -138,6 +138,116 @@ int main(void) {
 """
 
 
+# Self-contained test of BpEndecodeArray on big-endian: feeds memory laid out
+# as big-endian through the array processor and verifies each element's bytes
+# are reversed independently (no batch-copy on big-endian).
+_RUNTIME_BE_ARRAY_TEST_C = r"""
+#include <assert.h>
+#include <string.h>
+#include "bitproto.h"
+
+int main(void) {
+    unsigned char s[16] = {0};
+    struct BpProcessorContext ctx;
+
+    /* Two uint32 elements in big-endian memory.
+     *   data[0..3] = 0x12 0x34 0x56 0x78  (BE uint32 = 0x12345678)
+     *   data[4..7] = 0x9A 0xBC 0xDE 0xF0  (BE uint32 = 0x9ABCDEF0)
+     */
+    unsigned char data[] = {0x12,0x34,0x56,0x78, 0x9A,0xBC,0xDE,0xF0};
+    /* Expected wire: each element reversed independently.
+     *   want[0..3] = 0x78 0x56 0x34 0x12
+     *   want[4..7] = 0xF0 0xDE 0xBC 0x9A
+     */
+    unsigned char want[] = {0x78,0x56,0x34,0x12, 0xF0,0xDE,0xBC,0x9A};
+
+    struct BpType element_type = {BP_TYPE_UINT, 32, 4, NULL, NULL, 0};
+    struct BpArrayDescriptor desc = BpArrayDescriptor(false, 2, element_type);
+
+    /* Encode: BE memory -> LE wire */
+    memset(s, 0, 16);
+    ctx = BpProcessorContext(true, s);
+    BpEndecodeArray(&desc, &ctx, data);
+    assert(ctx.i == 64);
+    assert(memcmp(s, want, 8) == 0);
+
+    /* Decode: LE wire -> BE memory */
+    unsigned char decoded[8] = {0};
+    ctx = BpProcessorContext(false, want);
+    BpEndecodeArray(&desc, &ctx, decoded);
+    assert(ctx.i == 64);
+    assert(memcmp(decoded, data, 8) == 0);
+
+    return 0;
+}
+"""
+
+
+# Self-contained test for edge cases of BpEndecodeBaseType on big-endian:
+# different bit widths (uint8, uint64) and non-zero ctx->i offset (simulating
+# consecutive fields, which exercises BpCopyBufferBits with shifted positions).
+_RUNTIME_BE_EDGE_CASES_C = r"""
+#include <assert.h>
+#include <string.h>
+#include "bitproto.h"
+
+static void enc(int nbits, unsigned char *data, unsigned char *want, int n) {
+    unsigned char s[16] = {0};
+    struct BpProcessorContext ctx = BpProcessorContext(true, s);
+    BpEndecodeBaseType(nbits, &ctx, data);
+    assert(memcmp(s, want, n) == 0);
+}
+
+static void dec(int nbits, unsigned char *wire, unsigned char *want, int n) {
+    unsigned char data[16] = {0};
+    struct BpProcessorContext ctx = BpProcessorContext(false, wire);
+    BpEndecodeBaseType(nbits, &ctx, data);
+    assert(memcmp(data, want, n) == 0);
+}
+
+int main(void) {
+    /* uint8: single byte, trivial — no reversal needed */
+    enc(8, (unsigned char[]){0xAB}, (unsigned char[]){0xAB}, 1);
+    dec(8, (unsigned char[]){0xAB}, (unsigned char[]){0xAB}, 1);
+
+    /* uint64: full 8-byte reversal */
+    enc(64, (unsigned char[]){0x01,0x23,0x45,0x67,0x89,0xAB,0xCD,0xEF},
+            (unsigned char[]){0xEF,0xCD,0xAB,0x89,0x67,0x45,0x23,0x01}, 8);
+    dec(64, (unsigned char[]){0xEF,0xCD,0xAB,0x89,0x67,0x45,0x23,0x01},
+            (unsigned char[]){0x01,0x23,0x45,0x67,0x89,0xAB,0xCD,0xEF}, 8);
+
+    /* Two consecutive uint16 fields: tests BpCopyBufferBits with non-zero
+     * ctx->i offset (simulating multi-field messages).
+     *   Field 1 at byte 0: BE {0x12,0x34} <-> LE wire {0x34,0x12}
+     *   Field 2 at byte 2: BE {0xAB,0xCD} <-> LE wire {0xCD,0xAB}
+     */
+    {
+        unsigned char s[4] = {0};
+        struct BpProcessorContext ctx = BpProcessorContext(true, s);
+        BpEndecodeBaseType(16, &ctx, (unsigned char[]){0x12,0x34});
+        assert(ctx.i == 16);
+        BpEndecodeBaseType(16, &ctx, (unsigned char[]){0xAB,0xCD});
+        assert(ctx.i == 32);
+        unsigned char want[] = {0x34,0x12,0xCD,0xAB};
+        assert(memcmp(s, want, 4) == 0);
+    }
+    {
+        unsigned char data[4] = {0};
+        struct BpProcessorContext ctx = BpProcessorContext(false,
+            ((unsigned char[]){0x34,0x12,0xCD,0xAB}));
+        BpEndecodeBaseType(16, &ctx, data);
+        assert(ctx.i == 16);
+        BpEndecodeBaseType(16, &ctx, data + 2);
+        assert(ctx.i == 32);
+        unsigned char want[] = {0x12,0x34,0xAB,0xCD};
+        assert(memcmp(data, want, 4) == 0);
+    }
+
+    return 0;
+}
+"""
+
+
 @requires_tools
 def test_runtime_big_endian_layout(tmp_path) -> None:
     """The non-optimization runtime big-endian path maps big-endian field memory
@@ -146,6 +256,55 @@ def test_runtime_big_endian_layout(tmp_path) -> None:
     src = tmp_path / "be_runtime_test.c"
     src.write_text(_RUNTIME_BE_TEST_C)
     binpath = tmp_path / "be_runtime_test"
+    subprocess.check_call(
+        [
+            "gcc",
+            "-DBP_BIG_ENDIAN",
+            "-I",
+            LIB_C_DIR,
+            str(src),
+            os.path.join(LIB_C_DIR, "bitproto.c"),
+            "-o",
+            str(binpath),
+        ]
+    )
+    subprocess.check_call([str(binpath)])
+    subprocess.check_call([str(binpath)])
+
+
+@requires_tools
+def test_runtime_big_endian_array(tmp_path) -> None:
+    """BpEndecodeArray on big-endian processes elements independently (no
+    batch copy). Two uint32 elements in big-endian memory are encoded to
+    little-endian wire bytes and decoded back correctly.
+    """
+    src = tmp_path / "be_array_test.c"
+    src.write_text(_RUNTIME_BE_ARRAY_TEST_C)
+    binpath = tmp_path / "be_array_test"
+    subprocess.check_call(
+        [
+            "gcc",
+            "-DBP_BIG_ENDIAN",
+            "-I",
+            LIB_C_DIR,
+            str(src),
+            os.path.join(LIB_C_DIR, "bitproto.c"),
+            "-o",
+            str(binpath),
+        ]
+    )
+    subprocess.check_call([str(binpath)])
+
+
+@requires_tools
+def test_runtime_big_endian_edge_cases(tmp_path) -> None:
+    """Big-endian BpEndecodeBaseType edge cases: uint8 (trivial), uint64
+    (full 8-byte reversal), and two consecutive uint16 fields (exercising
+    BpCopyBufferBits with non-zero ctx->i offset).
+    """
+    src = tmp_path / "be_edge_cases.c"
+    src.write_text(_RUNTIME_BE_EDGE_CASES_C)
+    binpath = tmp_path / "be_edge_cases"
     subprocess.check_call(
         [
             "gcc",
