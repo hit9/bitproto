@@ -76,7 +76,7 @@ bitproto file doesn't meet the :ref:`style-guide`, to disable the linter:
 
 In :ref:`optimization mode <performance-optimization-mode>` (``-O``), the ``--endian`` option
 controls the host byte order targeted by the generated C/C++ code, one of ``both`` (default),
-``little`` or ``big``. See :ref:`performance-optimization-mode-endianness`.
+``little`` or ``big``. See :ref:`endianness`.
 
 .. sourcecode:: bash
 
