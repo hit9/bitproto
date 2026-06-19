@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 import subprocess
@@ -24,6 +25,7 @@ class _TestCase:
     # Whether to compare output of command run.
     compare_output: bool = True
     compare_output_as_json: bool = False
+    golden_sha256: str = ""
 
     cc_optimization_arg: str = ""
 
@@ -71,6 +73,14 @@ class _TestCase:
             else:
                 assert json.loads(out.strip()) == json.loads(outputs[0].strip())
 
+    def compare_golden_output(self, outputs: List[bytes]) -> None:
+        """Compares encoded output bytes against a golden digest."""
+        if not self.golden_sha256:
+            return
+        for out in outputs:
+            digest = hashlib.sha256(out.strip()).hexdigest()
+            assert digest == self.golden_sha256
+
     def run(self) -> None:
         """Run this case, returns the"""
 
@@ -91,6 +101,7 @@ class _TestCase:
 
             if self.compare_output:
                 self.compare_outputs(outputs)
+            self.compare_golden_output(outputs)
 
         finally:
             self.execute_cmd_clean()
@@ -124,11 +135,17 @@ def test_encoding_nested() -> None:
 
 
 def test_encoding_arrays() -> None:
-    _TestCase("arrays").run()
+    _TestCase(
+        "arrays",
+        golden_sha256="97d5cf1251363d5de7af2c3586ae6581d12fc73e8608c87594e47c20a919aba5",
+    ).run()
 
 
 def test_encoding_scatter() -> None:
-    _TestCase("scatter").run()
+    _TestCase(
+        "scatter",
+        golden_sha256="ab428ea4324fb51fe2bf0e486b477e7f1880967520a8a07588755ed983f88496",
+    ).run()
 
 
 def test_encoding_enums() -> None:
@@ -136,11 +153,18 @@ def test_encoding_enums() -> None:
 
 
 def test_encoding_signed() -> None:
-    _TestCase("signed").run()
+    _TestCase(
+        "signed",
+        golden_sha256="420d13682d2bec113d32b4504f29e01023b28c6391d275afd0eb16dfd7662e6a",
+    ).run()
 
 
 def test_encoding_complexx() -> None:
-    _TestCase("complexx", support_optimization_mode=False).run()
+    _TestCase(
+        "complexx",
+        support_optimization_mode=False,
+        golden_sha256="4e43481907688740db930c1b034cd746e7a72c6865e9076cfe080d48c1c6f1c2",
+    ).run()
 
 
 def test_encoding_issue52() -> None:
