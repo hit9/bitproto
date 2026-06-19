@@ -1,5 +1,14 @@
 .. currentmodule:: bitproto
 
+Version 1.3.2
+-------------
+
+.. _version-1.3.2:
+
+- Bugfix: Fix sign extension for arbitrary-width signed integers such as
+  ``int62`` in the standard-mode C runtime. This avoids undefined shifts and
+  fixes decoding these fields on big-endian hosts.
+
 Version 1.3.1
 -------------
 
@@ -13,9 +22,6 @@ Version 1.3.1
   the standard-mode C library. Previously these big-endian targets fell through
   to the little-endian path and produced incorrect results for multi-byte
   fields. PR #84.
-- Bugfix: Fix sign extension for arbitrary-width signed integers such as
-  ``int62`` in the standard-mode C runtime. This avoids undefined shifts and
-  fixes decoding these fields on big-endian hosts.
 - Packaging: Show the project README as the long description on the PyPI project
   page for the ``bitproto`` package.
 
