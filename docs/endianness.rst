@@ -47,10 +47,11 @@ about C.
 C standard mode
 ---------------
 
-The C library (``lib/c/bitproto.c``) detects a big-endian host automatically via
-``__BYTE_ORDER__`` and selects an endian-neutral code path. You may also force it
-by defining ``BP_BIG_ENDIAN`` when compiling the library, for toolchains that do
-not define ``__BYTE_ORDER__``:
+The C library (``lib/c/bitproto.c``) detects a big-endian host automatically
+(via ``__BYTE_ORDER__`` for GCC/Clang, ``__BIG_ENDIAN__`` for the TI ARM CGT
+compiler, and ``__LITTLE_ENDIAN__ == 0`` for IAR) and selects an endian-neutral
+code path. You may also force it by defining ``BP_BIG_ENDIAN`` when compiling
+the library, for toolchains that expose none of these macros:
 
 .. sourcecode:: bash
 
@@ -77,8 +78,10 @@ emits two equivalent code paths guarded by a preprocessor macro:
        // portable bit-shift path (big-endian hosts)
    #endif
 
-A big-endian host is auto-detected via ``__BYTE_ORDER__``; you may also force the
-big-endian path by defining ``BP_BIG_ENDIAN`` when compiling the generated code.
+A big-endian host is auto-detected (via ``__BYTE_ORDER__`` for GCC/Clang,
+``__BIG_ENDIAN__`` for the TI ARM CGT compiler, and ``__LITTLE_ENDIAN__ == 0``
+for IAR); you may also force the big-endian path by defining ``BP_BIG_ENDIAN``
+when compiling the generated code.
 The little-endian path is identical to earlier bitproto releases, so there is no
 performance change on little-endian targets — only the generated source is a
 little larger.

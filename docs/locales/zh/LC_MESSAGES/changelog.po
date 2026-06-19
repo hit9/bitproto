@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: bitproto 0.4.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-19 01:28-0700\n"
+"POT-Creation-Date: 2026-06-19 06:16-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,16 +17,38 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: ../../changelog.rst:2 76d5d3603c404178ae5b7c007ad11007
+#: ../../changelog.rst:2 cd8c857bf57e4272af61da204650e3d8
 msgid "Changelog"
 msgstr "版本历史"
 
-#: ../../../changes.rst:4 21ceda6cb0ef42a98dcbc98ccfb9241d
-#, fuzzy
-msgid "Version 1.3.0"
-msgstr "Version 1.1.2"
+#: ../../../changes.rst:4 46489425970d43d0a350ee1f11c1b635
+msgid "Version 1.3.1"
+msgstr "Version 1.3.1"
 
-#: ../../../changes.rst:8 67b139acd1c14750b76eb78d59628835
+#: ../../../changes.rst:8 3f93ccdf7ae840e5bb2142eb56985f65
+msgid ""
+"Bugfix: Broaden ``BP_BIG_ENDIAN`` auto-detection beyond GCC/Clang's "
+"``__BYTE_ORDER__`` to also cover the TI ARM CGT (``__BIG_ENDIAN__``, e.g. "
+"``--be32`` on the TMS570) and IAR (``__LITTLE_ENDIAN__ == 0``) compilers, in"
+" both the optimization-mode generated code and the standard-mode C library. "
+"Previously these big-endian targets fell through to the little-endian path "
+"and produced incorrect results for multi-byte fields. PR #84."
+msgstr ""
+"修复：将 ``BP_BIG_ENDIAN`` 的自动检测从 GCC/Clang 的 ``__BYTE_ORDER__`` 扩展到同时覆盖 TI ARM "
+"CGT（``__BIG_ENDIAN__``，例如 TMS570 的 ``--be32``）和 IAR（``__LITTLE_ENDIAN__ == "
+"0``）编译器，优化模式生成的代码和标准模式 C 运行库均已覆盖。此前这些大端序目标会退化到小端序路径，导致多字节字段编解码结果错误。PR #84。"
+
+#: ../../../changes.rst:14 122facc12bdc458b988f2a35b596b187
+msgid ""
+"Packaging: Show the project README as the long description on the PyPI "
+"project page for the ``bitproto`` package."
+msgstr "打包：在 ``bitproto`` 包的 PyPI 项目页面上以 README 作为长描述展示。"
+
+#: ../../../changes.rst:18 c7b8df781e2e46d4b88e2f8b4fca025f
+msgid "Version 1.3.0"
+msgstr "Version 1.3.0"
+
+#: ../../../changes.rst:22 3a40146dd1d54c6aac3aeef4a33b8502
 msgid ""
 "Feature: Big-endian host support. bitproto's wire format is little-endian on"
 " every platform; the C library (standard mode) and the C optimization-mode "
@@ -36,7 +58,7 @@ msgstr ""
 "新特性：支持大端序主机。bitproto 的编码格式在所有平台上都是小端序；现在 C 运行库（标准模式）以及 C "
 "优化模式生成的代码在为大端序主机编译时也能产生正确的输出。Python 和 Go 本来就与字节序无关，不受影响。"
 
-#: ../../../changes.rst:12 9eff75eba59548dda5b36bd7771b0973
+#: ../../../changes.rst:26 8e67f040e0cc4ab081366f8e235235f5
 msgid ""
 "Feature: New compiler option ``--endian`` (``both`` | ``little`` | ``big``) "
 "controlling the host byte order targeted by optimization-mode C/C++ code. "
@@ -51,165 +73,174 @@ msgstr ""
 "区分并自动检测主机（可通过定义 ``BP_BIG_ENDIAN`` 覆盖）；``little`` "
 "只保留原有的、更小更快的字节指针代码（不支持大端序）；``big`` 只生成可移植的那份路径。"
 
-#: ../../../changes.rst:18 abc52528f16c4b7c81153ab7c2240866
+#: ../../../changes.rst:32 d4ffa215a28c423785e31ebe89b9e488
 msgid ""
 "The little-endian generated code is unchanged from previous releases, so "
 "there is no performance regression on the common little-endian target."
 msgstr "小端序下生成的代码与之前的版本完全相同，因此在常见的小端序目标上没有任何性能回退。"
 
-#: ../../../changes.rst:22 22529ec400cf407abacf99ac626d435b
+#: ../../../changes.rst:36 6ddbbbf6da50462a83c270387c8eda50
 #, fuzzy
 msgid "Version 1.2.2"
 msgstr "Version 1.1.2"
 
-#: ../../../changes.rst:26 ../../../changes.rst:35
-#: 95eba896850f414e89ebb84b70d40c3c e25d49c311624576abd66476d2d553d6
+#: ../../../changes.rst:40 ../../../changes.rst:49
+#: 3512db0d5ec34780a1e398ecad71d500 82cf5379274c437299ae1542f4d0f54e
 msgid "Warning: May break some existing projects's generated names:"
 msgstr ""
 
-#: ../../../changes.rst:28 fe2017ebb9f447f8bddfeaeb8e987c0a
+#: ../../../changes.rst:42 789b55dc62af47d19e748c7a8c8ce939
 msgid "Improve `snake_case` function. #74, #75"
 msgstr ""
 
-#: ../../../changes.rst:31 ba8f42bbecf644b29baad003f4b766df
+#: ../../../changes.rst:45 7df8a2bb11024bdea47c49cdb92876de
 #, fuzzy
 msgid "Version 1.2.1"
 msgstr "Version 1.1.2"
 
-#: ../../../changes.rst:37 b0189e46434948b8b61eed17372426b6
+#: ../../../changes.rst:51 68673a5e52694713b8e25dcc5d5f0c8f
 msgid "Bugfix: `pascal_case` formatter. ISSUE #68, PR #69."
 msgstr ""
 
-#: ../../../changes.rst:38 5ecfae5bd6fb4920b9c61479c9b71be6
+#: ../../../changes.rst:52 70fccc4f50d6491eac97106714a8c06f
 msgid ""
 "Bugfix: Fixed naming style of generated code such as IntegerConstant (style "
 "lookup supports inheritance). ISSUE #70 PR #70"
 msgstr ""
 
-#: ../../../changes.rst:42 600da5f679ad4b60907b5a12d9dc661a
+#: ../../../changes.rst:56 058d39fcf7d04536837d905972e1cdd0
 #, fuzzy
 msgid "Version 1.2.0"
 msgstr "Version 1.1.2"
 
-#: ../../../changes.rst:46 80ff49dbfa30413fa75ceaf145ec6a3b
+#: ../../../changes.rst:60 879df25dcc7a4adbb6a131a669028eb7
 msgid "Feature: Add a simple language-server, tested on neovim and vscode."
 msgstr ""
 
-#: ../../../changes.rst:47 c16cae5e4b5a413f890924aae18b10f1
+#: ../../../changes.rst:61 27036d8837c7444299443c7eb36b1350
 msgid ""
 "Editor:  Upgrade vscode extenions to support the ``bitproto-language-"
 "server``."
 msgstr ""
 
-#: ../../../changes.rst:50 d760bd22453742f9a43c8144660042af
+#: ../../../changes.rst:64 22430b5dd93646ca98b0bcefa63d559a
 msgid "Version 1.1.2"
 msgstr "Version 1.1.2"
 
-#: ../../../changes.rst:54 26ac073c24044181a22c1d41b56d25df
+#: ../../../changes.rst:68 4c6aaa50d6f64d988da201a842d018e4
 msgid "Feature: Allow using constants as option values. ISSUE #61, PR #63"
 msgstr ""
 
-#: ../../../changes.rst:57 b0046c32c229421392f8d3c2badbb7d7
+#: ../../../changes.rst:71 626d2ac5783b402fb60b7f7becf79c23
 msgid "Version 1.1.1"
 msgstr ""
 
-#: ../../../changes.rst:61 12f263a55eda445a9b3c92bf86a4c3de
+#: ../../../changes.rst:75 94ae9ab794da4a6cb48bd87c672eb5d7
 msgid ""
 "Fix bug: enum importing other bitproto's field name generation bug. #53 #52"
 msgstr ""
 
-#: ../../../changes.rst:62 52d66b4337644fd18beae488ad3255e2
+#: ../../../changes.rst:76 f7d4ba6610dd46a1961237a2454515f3
 msgid ""
 "Fix bug: import statements of bitprotos should be placed ahead of other "
 "declarations. #53"
 msgstr ""
 
-#: ../../../changes.rst:65 22cb18322ba44cbca1d0d06797f7b798
+#: ../../../changes.rst:79 89aa0dedc2d6470c97e1d8bd230b6966
 msgid "Version 1.1.0"
 msgstr ""
 
-#: ../../../changes.rst:69 c46626dc5a5d4c2ba9a836831a7821ae
+#: ../../../changes.rst:83 80d82251a84b4d319e9f65c36a26e176
 msgid ""
 "Performance improvements for C bitprotolib, 40~60us improvement per call on "
 "stm32. PR #48."
 msgstr ""
 
-#: ../../../changes.rst:70 4ddf229304cb447085af86c7cb1500d0
+#: ../../../changes.rst:84 d4da75bd735347548b198c1aca4a2344
 msgid ""
 "Fix Python nested message ``__post_init___`` function code generation. PR "
 "#48, commit 73f4b01."
 msgstr ""
 
-#: ../../../changes.rst:73 3f89d51d88b843489a296cead4dfea86
+#: ../../../changes.rst:87 d0e0754fcb174c5495a88d2835042b6e
 msgid "Version 1.0.1"
 msgstr ""
 
-#: ../../../changes.rst:77 dc8ee87e18ef422f9906a8d85f1e93df
+#: ../../../changes.rst:91 275856414146490ca6b9cbd67e4092e7
 msgid "Add support for Python 3.11"
 msgstr ""
 
-#: ../../../changes.rst:80 256f5b5a0e7e41299e71e29f5be6aa8b
+#: ../../../changes.rst:94 032a234a56034236b4e826efb705ad78
 msgid "Version 1.0.0"
 msgstr ""
 
-#: ../../../changes.rst:84 1b006c1612a549fb8b1c2054fea6294d
+#: ../../../changes.rst:98 71516cf0b39541c1bf44e63f751b6b30
 msgid "First fully release version"
 msgstr "第一次发布 1.0 版本"
 
-#: ../../../changes.rst:89 123c8b04025f4014a2a6ea3601292901
+#: ../../../changes.rst:103 9d5b1413fd8b4e858ed3ec16896b67d6
 msgid "Version 0.4.6"
 msgstr ""
 
-#: ../../../changes.rst:91 32d4097cc1bb42a284d013b0d6bf0f2c
+#: ../../../changes.rst:105 d788f267914f42dc985449400b3afea4
 msgid "Support signed integers with arbitrary bits, e.g. int24 PR#45."
 msgstr "支持任意比特数目的有符号整数类型 例如 int24, 见 PR#45"
 
-#: ../../../changes.rst:96 cd1d51ee9e3c4b708cd9a9fd31ffd497
+#: ../../../changes.rst:110 939038b304f4446abcb4ab546454dcdc
 msgid "Version 0.4.5"
 msgstr ""
 
-#: ../../../changes.rst:98 dc88283855f843a495bab4f3c9ad415d
+#: ../../../changes.rst:112 9489bdeb03ca4e7bb8abaa5d6e6a9c21
 msgid ""
 "Use Python IntEnum for enum generation (respecting backward compatibility)  "
 "PR#41."
 msgstr ""
 
-#: ../../../changes.rst:103 ebed9fb7d14142d591662da7185c23d2
+#: ../../../changes.rst:117 181db1787bcb41c09aafdb29f74e20bd
 msgid "Version 0.4.4"
 msgstr ""
 
-#: ../../../changes.rst:105 f3413287976c47e2b9de95e528c6a72e
+#: ../../../changes.rst:119 6017dcf0a12d4c1f9b0537b111c88b9f
 msgid "Minor fix compiler setup.py path issue."
 msgstr ""
 
-#: ../../../changes.rst:110 3746a5e757ac41b582f2d6d9f91f5379
+#: ../../../changes.rst:124 f0e39859572c41968d2a399697a70a6c
 msgid "Version 0.4.2"
 msgstr ""
 
-#: ../../../changes.rst:112 2cc45826f9304b42b0e5899dfdb17f23
+#: ../../../changes.rst:126 960bf3e0d9f14de59adf6fe07c4a06f8
 msgid "Allow using ``type`` as message field name, fixes issue #39."
 msgstr ""
 
-#: ../../../changes.rst:117 26969591f7454f34be89e5998982923a
+#: ../../../changes.rst:131 43df1fb36dfd4e4bb23a3743724e1e68
 msgid "Version 0.4.0"
 msgstr ""
 
-#: ../../../changes.rst:119 eb895e1c963342f489630f6dc2fd642b
+#: ../../../changes.rst:133 8b20158f4cf1497a80c3c502b38bc56c
 msgid ""
 "Add support for ``message`` and ``enum`` extensiblity for protocol forward "
 "compatibility."
 msgstr ""
 
-#: ../../../changes.rst:120 a557134b8d8148a9ae61364d595e6d61
+#: ../../../changes.rst:134 bb329536263f4cb8b0210925946554fe
 msgid "Cut down the code size of generated language-specific files."
 msgstr ""
 
-#: ../../../changes.rst:121 bc8f1b17164e4cd58c6b434cb68f6099
+#: ../../../changes.rst:135 b527f338e5274618b465f2dc9bf1b414
 msgid "Refactor the bitproto compiler."
 msgstr ""
 
-#: ../../../changes.rst:122 147604be81434646a2a96ffdfc87e87f
+#: ../../../changes.rst:136 a6a89b7d729a439bb25705c3dadbfc0a
 msgid ""
 "Refactor the bitproto serialization mechanism, using language-specific "
 "libraries instead of pure compiler-generated files."
 msgstr ""
+
+#~ msgid ""
+#~ "Bugfix: Extend ``BP_BIG_ENDIAN`` auto-detection to recognise "
+#~ "``__BIG_ENDIAN__`` in addition to ``__BYTE_ORDER__``, covering the TI ARM "
+#~ "CGT compiler (``--be32`` on big-endian targets such as the TMS570). This "
+#~ "applies to both the optimization-mode generated code and the standard-mode C"
+#~ " library; previously these targets fell through to the little-endian path "
+#~ "and produced incorrect results for multi-byte fields. PR #84."
+#~ msgstr ""

@@ -5,12 +5,12 @@ Version 1.3.1
 
 .. _version-1.3.1:
 
-- Bugfix: Extend ``BP_BIG_ENDIAN`` auto-detection to recognise ``__BIG_ENDIAN__``
-  in addition to ``__BYTE_ORDER__``, covering the TI ARM CGT compiler (``--be32``
-  on big-endian targets such as the TMS570). This applies to both the
-  optimization-mode generated code and the standard-mode C library; previously
-  these targets fell through to the little-endian path and produced incorrect
-  results for multi-byte fields. PR #84.
+- Bugfix: Broaden ``BP_BIG_ENDIAN`` auto-detection beyond GCC/Clang's
+  ``__BYTE_ORDER__`` to also cover the TI ARM CGT (``__BIG_ENDIAN__``, e.g.
+  ``--be32`` on the TMS570) and IAR (``__LITTLE_ENDIAN__ == 0``) compilers, in
+  both the optimization-mode generated code and the standard-mode C library.
+  Previously these big-endian targets fell through to the little-endian path and
+  produced incorrect results for multi-byte fields. PR #84.
 - Packaging: Show the project README as the long description on the PyPI project
   page for the ``bitproto`` package.
 
