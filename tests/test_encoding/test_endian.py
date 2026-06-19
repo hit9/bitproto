@@ -333,6 +333,25 @@ int main(void) {
 """
 
 
+def _compile_sign_extension_test(tmp_path, *cc_args: str):
+    src = tmp_path / "sign_extension_test.c"
+    src.write_text(_RUNTIME_SIGN_EXTENSION_TEST_C)
+    binpath = tmp_path / "sign_extension_test"
+    subprocess.check_call(
+        [
+            "gcc",
+            *cc_args,
+            "-I",
+            LIB_C_DIR,
+            str(src),
+            os.path.join(LIB_C_DIR, "bitproto.c"),
+            "-o",
+            str(binpath),
+        ]
+    )
+    return binpath
+
+
 @requires_tools
 def test_runtime_big_endian_layout(tmp_path) -> None:
     """The non-optimization runtime big-endian path maps big-endian field memory
@@ -360,20 +379,21 @@ def test_runtime_big_endian_layout(tmp_path) -> None:
 @requires_tools
 def test_runtime_sign_extension(tmp_path) -> None:
     """Sign extension for arbitrary-width signed integers avoids shift UB."""
-    src = tmp_path / "sign_extension_test.c"
-    src.write_text(_RUNTIME_SIGN_EXTENSION_TEST_C)
-    binpath = tmp_path / "sign_extension_test"
-    subprocess.check_call(
-        [
-            "gcc",
-            "-I",
-            LIB_C_DIR,
-            str(src),
-            os.path.join(LIB_C_DIR, "bitproto.c"),
-            "-o",
-            str(binpath),
-        ]
-    )
+    binpath = _compile_sign_extension_test(tmp_path)
+    subprocess.check_call([str(binpath)])
+
+
+@requires_tools
+def test_runtime_sign_extension_ubsan(tmp_path) -> None:
+    """Little-endian sign extension must not rely on undefined shifts."""
+    try:
+        binpath = _compile_sign_extension_test(
+            tmp_path,
+            "-fsanitize=undefined",
+            "-fno-sanitize-recover=undefined",
+        )
+    except subprocess.CalledProcessError as exc:
+        pytest.skip(f"gcc does not support UBSan for this target: {exc}")
     subprocess.check_call([str(binpath)])
 
 
