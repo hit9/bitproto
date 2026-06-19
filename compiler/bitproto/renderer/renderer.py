@@ -31,12 +31,14 @@ class Renderer(Generic[F]):
         outdir: Optional[str] = None,
         optimization_mode: bool = False,
         optimization_mode_filter_messages: Optional[List[str]] = None,
+        optimization_mode_endian: str = "both",
     ) -> None:
         self.proto = proto
         self.outdir = outdir or self.get_outdir_default(proto)
         self.optimization_mode = optimization_mode
         self.check_proto_for_optimization_mode()
         self.optimization_mode_filter_messages = optimization_mode_filter_messages
+        self.optimization_mode_endian = optimization_mode_endian
 
         self.out_filename = self.get_out_filename()
         self.out_filepath = os.path.join(self.outdir, self.out_filename)
@@ -66,6 +68,7 @@ class Renderer(Generic[F]):
             formatter=formatter,
             bound=self.proto,
             optimization_mode_filter_messages=self.optimization_mode_filter_messages,
+            optimization_mode_endian=self.optimization_mode_endian,
         )
         block._render_with_ctx(ctx)
         return block._collect()

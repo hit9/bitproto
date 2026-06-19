@@ -18,6 +18,7 @@ def render(
     outdir: Optional[str] = None,
     optimization_mode: bool = False,
     optimization_mode_filter_messages: Optional[List[str]] = None,
+    optimization_mode_endian: str = "both",
 ) -> List[str]:
     """Render given `proto` to directory `outdir`.
     Returns the filepath list generated.
@@ -33,6 +34,7 @@ def render(
             outdir=outdir,
             optimization_mode=optimization_mode,
             optimization_mode_filter_messages=optimization_mode_filter_messages,
+            optimization_mode_endian=optimization_mode_endian,
         )
         outs.append(renderer.render())
     return outs

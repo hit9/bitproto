@@ -59,6 +59,9 @@ class BlockRenderContext(Generic[F]):
     formatter: F
     bound: Proto
     optimization_mode_filter_messages: Optional[List[str]] = None
+    # One of "both" / "little" / "big": which host-endianness path(s) the
+    # optimization-mode C/C++ codegen should emit. See bitproto._main.
+    optimization_mode_endian: str = "both"
 
 
 class Block(Generic[F]):
