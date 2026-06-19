@@ -20,5 +20,6 @@ build-pip-package: clean-pip-package
 
 upload-pip-package: build-pip-package
 	uv publish
-6s3sr|
-publish: upload-pip-package
+
+publish:
+	upload-pip-package
