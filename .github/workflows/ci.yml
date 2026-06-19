@@ -97,6 +97,6 @@ jobs:
               "PYTHONPATH=/work/compiler exec python -m bitproto._main \"\$@\"" \
               >/usr/local/bin/bitproto
             chmod +x /usr/local/bin/bitproto
-            PYTHONPATH=compiler:lib/py python -c "import sys; assert sys.byteorder == \"big\", sys.byteorder"
-            PYTHONPATH=compiler:lib/py python -m pytest tests/test_encoding/test_endian.py -v
+            PYTHONPATH=/work/compiler:/work/lib/py python -c "import sys; assert sys.byteorder == \"big\", sys.byteorder"
+            PYTHONPATH=/work/compiler:/work/lib/py python -m pytest tests/test_encoding/test_endian.py -v
           '
