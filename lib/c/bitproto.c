@@ -13,12 +13,11 @@
 // Clang. __big_endian__ covers legacy TI ARM CGT (armcl). __BIG_ENDIAN__
 // covers some other toolchains.
 // __LITTLE_ENDIAN__ == 0 covers IAR (which always defines it).
-#if !defined(BP_BIG_ENDIAN) && (                                             \
-    (defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)) || \
-    defined(__ARM_BIG_ENDIAN) ||                                             \
-    defined(__big_endian__) ||                                               \
-    defined(__BIG_ENDIAN__) ||                                               \
-    (defined(__LITTLE_ENDIAN__) && (__LITTLE_ENDIAN__ == 0)))
+#if !defined(BP_BIG_ENDIAN) &&                                                \
+    ((defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)) || \
+     defined(__ARM_BIG_ENDIAN) || defined(__big_endian__) ||                  \
+     defined(__BIG_ENDIAN__) ||                                               \
+     (defined(__LITTLE_ENDIAN__) && (__LITTLE_ENDIAN__ == 0)))
 #define BP_BIG_ENDIAN 1
 #endif
 
@@ -268,6 +267,7 @@ void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src, int di,
 
             // Number of bits to process during batch copy.
             int bits = n + si;
+            bool copied = false;
 
 #ifndef BP_BIG_ENDIAN
             // These fast paths load multiple bytes through a native-endian
@@ -279,28 +279,33 @@ void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src, int di,
                 // This way, performance faster x2 than bits copy approach.
                 ((uint32_t *)dst)[0] = ((uint32_t *)(src))[0] >> si;
                 c = 32 - si;
+                copied = true;
             } else if (bits >= 16) {
                 // Copy as an uint16 integer.
                 ((uint16_t *)dst)[0] = ((uint16_t *)(src))[0] >> si;
                 c = 16 - si;
-            } else
+                copied = true;
+            }
 #endif
-            if (bits >= 8) {
-                // Copy as an unsigned char.
-                dst[0] = (src[0] >> si) & 0xff;
-                c = 8 - si;
-            } else {
-                // When bits < 8 and di == 0
-                // Copy partial bits inside a byte.
-                // For the original statement:
-                // c = BpMinTriple(8 - di, 8 - si, n);
-                // since di is 0 and bits <8, then 8-di is 8
-                // and n <8 , the 8-di won't be the smallest, we
-                // just pick function BpMin over BpMinTriple for the little
-                // little performance improvement.
-                c = BpMin(8 - si, n);
-                // Also, when di is 0, special case of next case.
-                dst[0] |= ((src[0] >> si) & ~(0xff << c));
+
+            if (!copied) {
+                if (bits >= 8) {
+                    // Copy as an unsigned char.
+                    dst[0] = (src[0] >> si) & 0xff;
+                    c = 8 - si;
+                } else {
+                    // When bits < 8 and di == 0
+                    // Copy partial bits inside a byte.
+                    // For the original statement:
+                    // c = BpMinTriple(8 - di, 8 - si, n);
+                    // since di is 0 and bits <8, then 8-di is 8
+                    // and n <8 , the 8-di won't be the smallest, we
+                    // just pick function BpMin over BpMinTriple for the little
+                    // little performance improvement.
+                    c = BpMin(8 - si, n);
+                    // Also, when di is 0, special case of next case.
+                    dst[0] |= ((src[0] >> si) & ~(0xff << c));
+                }
             }
         } else {
             // When di != 0, we have to copy partial bits inside a
@@ -320,10 +325,10 @@ void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src, int di,
             // ~(0xff << di << c) Gives a mask to clear higher not-need bits
             // all to 0, e.g. 00001111 on di=4, c=4; Finally: dst |= src to
             // copy bits.
-            // The ch is the first byte at pointer src. If this byte is Zero,
-            // then there's no need to copy anything, just count c. The
-            // benchmark on stm32 seems performance is improved by 2us by adding
-            // an if statement that skip the Zero byte.
+            // The ch is the first byte at pointer src. If this byte is
+            // Zero, then there's no need to copy anything, just count c.
+            // The benchmark on stm32 seems performance is improved by 2us
+            // by adding an if statement that skip the Zero byte.
             unsigned char ch = src[0];
             if (ch) dst[0] |= ((ch >> si << di) & ~(0xff << di << c));
         }
@@ -337,13 +342,14 @@ void BpCopyBufferBits(int n, unsigned char *dst, unsigned char *src, int di,
 
 // BpEndecodeBaseType process given base type at given data.
 // This function guarantees to work geven a nbits > 64 is passed in (the
-// batch-array path used on little-endian only; on big-endian arrays are processed
-// element by element so nbits here is always a single base type's <= 64 bits).
+// batch-array path used on little-endian only; on big-endian arrays are
+// processed element by element so nbits here is always a single base type's
+// <= 64 bits).
 void BpEndecodeBaseType(int nbits, struct BpProcessorContext *ctx, void *data) {
 #ifdef BP_BIG_ENDIAN
     // Stage the field through a little-endian byte view so the wire stays
-    // little-endian regardless of host byte order. A single base integer is at
-    // most 64 bits, so 8 bytes of staging is always enough.
+    // little-endian regardless of host byte order. A single base integer is
+    // at most 64 bits, so 8 bytes of staging is always enough.
     int size = BpBaseTypeStorageSize(nbits);
     unsigned char le[8] = {0};
     unsigned char *p = (unsigned char *)data;
@@ -368,11 +374,11 @@ void BpEndecodeBaseType(int nbits, struct BpProcessorContext *ctx, void *data) {
 }
 
 // BpHandleIntSignAfterEndecode processes signed integer at given data after
-// this integer is endecode. The most left bit (Nth bit for int{N}) of a signed
-// integer indicates the sign. For example 00000101 is a negative integer for a
-// int3, but a positive integer for a int4. Where nbits is the number of bits
-// for this bitproto signed integer, for int{N}, its the N, the argument size is
-// the number of bytes in C language.
+// this integer is endecode. The most left bit (Nth bit for int{N}) of a
+// signed integer indicates the sign. For example 00000101 is a negative
+// integer for a int3, but a positive integer for a int4. Where nbits is the
+// number of bits for this bitproto signed integer, for int{N}, its the N,
+// the argument size is the number of bytes in C language.
 void BpHandleIntSignAfterEndecode(int size, int nbits,
                                   struct BpProcessorContext *ctx, void *data) {
     // Signed integer's sign bit processing is only about decoding.
@@ -387,34 +393,33 @@ void BpHandleIntSignAfterEndecode(int size, int nbits,
 
     switch (n) {
         // Suppose pointer data points to a int24 value V:
-        // 1. Check its sign: (V >> (24-1)) & 1
+        // 1. Check its sign: V & (1 << (24-1))
         // 2. If V is negative:
         //    Make a mask that keeps right 24bits be 0, left 8bits be 1:
-        //    mask = ~(1 << 24 - 1)
+        //    mask = ~((1 << 24) - 1)
         //    Recover the original integer is: V | mask.
         //
-        // Why not use V << 8 >> 8 solution here? This depends on arithmetic
-        // shifting. Which propagates the sign bit on the left vacant bits
-        // when doing a right shift. But C standard points that this
-        // behavior is implementation-defined.
+        // Use unsigned integers to avoid implementation-defined right
+        // shifts on negative signed values, and to avoid undefined behavior
+        // such as shifting a plain int by 32 or more bits for int62.
         case 8:  // int8_t
-            if (((*(int8_t *)data) >> (nbits - 1)) & 1) {
-                *(int8_t *)data |= ~((1 << nbits) - 1);
+            if ((*(uint8_t *)data) & ((uint8_t)1 << (nbits - 1))) {
+                *(uint8_t *)data |= (uint8_t)(~(((uint8_t)1 << nbits) - 1));
             }
             break;
         case 16:  // int16_t
-            if (((*(int16_t *)data) >> (nbits - 1)) & 1) {
-                *(int16_t *)data |= ~((1 << nbits) - 1);
+            if ((*(uint16_t *)data) & ((uint16_t)1 << (nbits - 1))) {
+                *(uint16_t *)data |= (uint16_t)(~(((uint16_t)1 << nbits) - 1));
             }
             break;
         case 32:  // int32_t
-            if (((*(int32_t *)data) >> (nbits - 1)) & 1) {
-                *(int32_t *)data |= ~((1 << nbits) - 1);
+            if ((*(uint32_t *)data) & ((uint32_t)1 << (nbits - 1))) {
+                *(uint32_t *)data |= (uint32_t)(~(((uint32_t)1 << nbits) - 1));
             }
             break;
         case 64:  // int64_t
-            if (((*(int64_t *)data) >> (nbits - 1)) & 1) {
-                *(int64_t *)data |= ~((1 << nbits) - 1);
+            if ((*(uint64_t *)data) & ((uint64_t)1 << (nbits - 1))) {
+                *(uint64_t *)data |= (uint64_t)(~(((uint64_t)1 << nbits) - 1));
             }
             break;
     }
