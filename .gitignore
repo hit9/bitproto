@@ -13,5 +13,8 @@ dist
 spam
 .DS_Store
 compile_flags.txt
+pip-wheel-metadata
+bitproto.spec
+*.zip
 test2
 *.o
