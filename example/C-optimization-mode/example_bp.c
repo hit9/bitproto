@@ -3,6 +3,8 @@
 #include "example_bp.h"
 #if !defined(BP_BIG_ENDIAN) && (\
     (defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)) || \
+    defined(__ARM_BIG_ENDIAN) || \
+    defined(__big_endian__) || \
     defined(__BIG_ENDIAN__) || \
     (defined(__LITTLE_ENDIAN__) && (__LITTLE_ENDIAN__ == 0)))
 #define BP_BIG_ENDIAN 1
