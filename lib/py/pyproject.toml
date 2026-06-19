@@ -1,6 +1,6 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "bitprotolib"
@@ -10,12 +10,12 @@ authors = [
     {name = "Chao Wang", email = "hit9@icloud.com"},
 ]
 urls = {Homepage = "https://github.com/hit9/bitproto"}
+license = "BSD-3-Clause"
 requires-python = ">=3.7"
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
     "Environment :: Console",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: BSD License",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3.7",
@@ -33,7 +33,3 @@ classifiers = [
 profile = "black"
 combine_as_imports = true
 
-[tool.hatch.build.targets.sdist]
-exclude = [".gitignore"]
-[tool.hatch.build.targets.wheel]
-exclude = [".gitignore"]
