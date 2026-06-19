@@ -32,3 +32,11 @@ classifiers = [
 [tool.isort]
 profile = "black"
 combine_as_imports = true
+
+[tool.hatch.build.targets.sdist]
+only-include = [
+    "bitprotolib/",
+    "pyproject.toml",
+    "MANIFEST.in",
+    "Makefile",
+]
