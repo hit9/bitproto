@@ -82,21 +82,26 @@ jobs:
       with:
         platforms: s390x
 
-    - name: Run endian tests on s390x
+    - name: Run encoding tests on s390x
       run: |
         docker run --rm --platform linux/s390x \
           -v "${{ github.workspace }}:/work" \
           -w /work \
-          python:3.13-bookworm \
+          golang:1.25-bookworm \
           bash -euxo pipefail -c '
             apt-get update
-            apt-get install -y --no-install-recommends gcc make
+            apt-get install -y --no-install-recommends gcc make python3 python3-venv
+            python3 -m venv /tmp/bitproto-venv
+            . /tmp/bitproto-venv/bin/activate
             python -m pip install -r compiler/requirements.txt -r tests/requirements_tests.txt
             printf "%s\n" \
               "#!/usr/bin/env sh" \
-              "PYTHONPATH=/work/compiler exec python -m bitproto._main \"\$@\"" \
+              "PYTHONPATH=/work/compiler exec /tmp/bitproto-venv/bin/python -m bitproto._main \"\$@\"" \
               >/usr/local/bin/bitproto
             chmod +x /usr/local/bin/bitproto
+            export GOFLAGS=-buildvcs=false
             PYTHONPATH=/work/compiler:/work/lib/py python -c "import sys; assert sys.byteorder == \"big\", sys.byteorder"
-            PYTHONPATH=/work/compiler:/work/lib/py python -m pytest tests/test_encoding/test_endian.py -v
+            PYTHONPATH=/work/compiler:/work/lib/py BP_TEST_LANGS=c pytest tests/test_encoding -v -s -x
+            PYTHONPATH=/work/compiler:/work/lib/py BP_TEST_LANGS=c BP_TEST_CC_OPTIMIZATION=-O2 pytest tests/test_encoding -v -s -x
+            PYTHONPATH=/work/compiler:/work/lib/py BP_TEST_LANGS=c BP_TEST_OPTIMIZATION_ARG=-O pytest tests/test_encoding -v -s -x
           '

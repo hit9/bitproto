@@ -1,5 +1,14 @@
 .. currentmodule:: bitproto
 
+Version 1.3.2
+-------------
+
+.. _version-1.3.2:
+
+- Bugfix: Fix sign extension for arbitrary-width signed integers such as
+  ``int62`` in the standard-mode C runtime. This avoids undefined shifts and
+  fixes decoding these fields on big-endian hosts.
+
 Version 1.3.1
 -------------
 
