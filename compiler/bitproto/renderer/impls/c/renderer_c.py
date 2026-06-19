@@ -407,16 +407,28 @@ class BlockIncludeOpMode(Block[F]):
     def render(self) -> None:
         header_filename = self.formatter.format_out_filename(self.bound, extension=".h")
         self.push(f'#include "{header_filename}"')
+        # <string.h> is only needed for memset in the big-endian decode path.
+        self.push("#ifdef BP_BIG_ENDIAN")
         self.push("#include <string.h>")
+        self.push("#endif")
 
 
 class BlockMessageEncoderOpMode(BlockMessageEncoderBase):
     @override(Block)
     def render(self) -> None:
         self.push(f"{self.function_signature} {{")
-        l = self.formatter.format_op_mode_encode_message(self.d)
-        for line in l:
+        # Little-endian (fast) path; big-endian (portable) path behind #else.
+        self.push("#ifndef BP_BIG_ENDIAN")
+        for line in self.formatter.format_op_mode_message_endian(
+            self.d, is_encode=True, big_endian=False
+        ):
             self.push(line, indent=4)
+        self.push("#else")
+        for line in self.formatter.format_op_mode_message_endian(
+            self.d, is_encode=True, big_endian=True
+        ):
+            self.push(line, indent=4)
+        self.push("#endif")
         self.push("return 0;", indent=4)
         self.push("}")
 
@@ -425,10 +437,21 @@ class BlockMessageDecoderOpMode(BlockMessageDecoderBase):
     @override(Block)
     def render(self) -> None:
         self.push(f"{self.function_signature} {{")
-        self.push("memset(m, 0, sizeof(*m));", indent=4)
-        l = self.formatter.format_op_mode_decode_message(self.d)
-        for line in l:
+        # Little-endian (fast) path uses = on first byte write, so it needs no
+        # zeroing.  The big-endian (portable) path always uses |=, so it must
+        # start from a zeroed message.
+        self.push("#ifndef BP_BIG_ENDIAN")
+        for line in self.formatter.format_op_mode_message_endian(
+            self.d, is_encode=False, big_endian=False
+        ):
             self.push(line, indent=4)
+        self.push("#else")
+        self.push("memset(m, 0, sizeof(*m));", indent=4)
+        for line in self.formatter.format_op_mode_message_endian(
+            self.d, is_encode=False, big_endian=True
+        ):
+            self.push(line, indent=4)
+        self.push("#endif")
         self.push("return 0;", indent=4)
         self.push("}")
 
