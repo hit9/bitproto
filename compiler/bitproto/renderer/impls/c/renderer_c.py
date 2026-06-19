@@ -412,12 +412,18 @@ class BlockIncludeOpMode(Block[F]):
             # Auto-detect a big-endian host so the default just works without
             # the user defining BP_BIG_ENDIAN; still overridable via -D.
             # __BYTE_ORDER__ / __ORDER_BIG_ENDIAN__ covers GCC/Clang.
-            # __BIG_ENDIAN__ covers TI ARM CGT (--be32) and some other toolchains.
+            # __ARM_BIG_ENDIAN covers ACLE-compatible Arm toolchains, including
+            # TI Arm Clang. __big_endian__ covers legacy TI ARM CGT (armcl).
+            # __BIG_ENDIAN__ covers some other toolchains.
+            # __LITTLE_ENDIAN__ == 0 covers IAR (which always defines it).
             self.push("#if !defined(BP_BIG_ENDIAN) && (\\")
             self.push(
                 "    (defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)) || \\"
             )
-            self.push("    defined(__BIG_ENDIAN__))")
+            self.push("    defined(__ARM_BIG_ENDIAN) || \\")
+            self.push("    defined(__big_endian__) || \\")
+            self.push("    defined(__BIG_ENDIAN__) || \\")
+            self.push("    (defined(__LITTLE_ENDIAN__) && (__LITTLE_ENDIAN__ == 0)))")
             self.push("#define BP_BIG_ENDIAN 1")
             self.push("#endif")
             # <string.h> is only needed for memset in the big-endian path.

@@ -4,8 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bitproto"
-version = "1.3.0"
+version = "1.3.1"
 description = "bit level data interchange format."
+readme = "README.md"
 authors = [
     {name = "Chao Wang", email = "hit9@icloud.com"},
 ]

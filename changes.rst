@@ -1,5 +1,21 @@
 .. currentmodule:: bitproto
 
+Version 1.3.1
+-------------
+
+.. _version-1.3.1:
+
+- Bugfix: Broaden ``BP_BIG_ENDIAN`` auto-detection beyond GCC/Clang's
+  ``__BYTE_ORDER__`` to also cover ACLE-compatible Arm toolchains such as TI
+  Arm Clang (``__ARM_BIG_ENDIAN``), legacy TI ARM CGT (``__big_endian__``),
+  other toolchains that define ``__BIG_ENDIAN__``, and IAR
+  (``__LITTLE_ENDIAN__ == 0``), in both the optimization-mode generated code and
+  the standard-mode C library. Previously these big-endian targets fell through
+  to the little-endian path and produced incorrect results for multi-byte
+  fields. PR #84.
+- Packaging: Show the project README as the long description on the PyPI project
+  page for the ``bitproto`` package.
+
 Version 1.3.0
 -------------
 

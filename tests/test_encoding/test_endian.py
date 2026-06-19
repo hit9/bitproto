@@ -23,12 +23,15 @@ standard for CI but is intentionally out of scope here.
 import os
 import shutil
 import subprocess
+import sys
 
 import pytest
 
 HERE = os.path.dirname(__file__)
 CASES_DIR = os.path.join(HERE, "encoding-cases")
 LIB_C_DIR = os.path.abspath(os.path.join(HERE, "..", "..", "lib", "c"))
+ROOT_DIR = os.path.abspath(os.path.join(HERE, "..", ".."))
+EXAMPLE_PROTO = os.path.join(ROOT_DIR, "example", "example.bitproto")
 
 # Optimization-mode cases that emit encoded wire bytes to stdout (the "consts"
 # case supports optimization mode but prints nothing, so it is excluded here).
@@ -44,6 +47,10 @@ _HAVE_TOOLS = all(shutil.which(t) for t in ("make", "bitproto", "gcc"))
 requires_tools = pytest.mark.skipif(
     not _HAVE_TOOLS, reason="needs make, bitproto and gcc on PATH"
 )
+
+
+def _gcc_compile(source, output, *args: str) -> None:
+    subprocess.check_call(["gcc", "-c", *args, str(source), "-o", str(output)])
 
 
 def _make(case: str, target: str, **env_extra: str) -> bytes:
@@ -62,6 +69,51 @@ def _clean(case: str) -> None:
         shell=True,
         cwd=os.path.join(CASES_DIR, case),
     )
+
+
+_BIG_ENDIAN_MACRO_CASES = [
+    ("gcc-clang-byte-order", ["-D__BYTE_ORDER__=__ORDER_BIG_ENDIAN__"]),
+    ("acle-arm", ["-D__ARM_BIG_ENDIAN"]),
+    ("ti-arm-cgt", ["-D__big_endian__"]),
+    ("generic", ["-D__BIG_ENDIAN__"]),
+    ("iar-arm", ["-U__LITTLE_ENDIAN__", "-D__LITTLE_ENDIAN__=0"]),
+]
+
+
+@requires_tools
+@pytest.mark.parametrize(("name", "macro_args"), _BIG_ENDIAN_MACRO_CASES)
+def test_runtime_big_endian_macro_detection(name, macro_args, tmp_path) -> None:
+    """Runtime C library recognizes common compiler big-endian macros."""
+    src = tmp_path / f"{name}.c"
+    src.write_text(f"""
+#include "{os.path.join(LIB_C_DIR, "bitproto.c")}"
+#ifndef BP_BIG_ENDIAN
+#error "BP_BIG_ENDIAN not detected"
+#endif
+""")
+    _gcc_compile(src, tmp_path / f"{name}.o", *macro_args)
+
+
+@requires_tools
+@pytest.mark.parametrize(("name", "macro_args"), _BIG_ENDIAN_MACRO_CASES)
+def test_optimization_mode_big_endian_macro_detection(
+    name, macro_args, tmp_path
+) -> None:
+    """Generated optimization-mode C recognizes common big-endian macros."""
+    outdir = tmp_path / "generated"
+    outdir.mkdir()
+    subprocess.check_call(
+        [sys.executable, "-m", "bitproto._main", "c", EXAMPLE_PROTO, str(outdir), "-O"]
+    )
+
+    src = tmp_path / f"{name}.c"
+    src.write_text(f"""
+#include "{outdir / "example_bp.c"}"
+#ifndef BP_BIG_ENDIAN
+#error "BP_BIG_ENDIAN not detected"
+#endif
+""")
+    _gcc_compile(src, tmp_path / f"{name}.o", "-I", str(outdir), *macro_args)
 
 
 @requires_tools

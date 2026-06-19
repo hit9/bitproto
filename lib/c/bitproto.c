@@ -8,8 +8,17 @@
 // big-endian host the in-memory byte order of an integer is reversed relative
 // to the wire, so the byte-copy fast paths below need an endian-neutral
 // fallback. Users may force this by predefining BP_BIG_ENDIAN.
-#if !defined(BP_BIG_ENDIAN) && defined(__BYTE_ORDER__) && \
-    (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+// __BYTE_ORDER__ / __ORDER_BIG_ENDIAN__ covers GCC/Clang.
+// __ARM_BIG_ENDIAN covers ACLE-compatible Arm toolchains, including TI Arm
+// Clang. __big_endian__ covers legacy TI ARM CGT (armcl). __BIG_ENDIAN__
+// covers some other toolchains.
+// __LITTLE_ENDIAN__ == 0 covers IAR (which always defines it).
+#if !defined(BP_BIG_ENDIAN) && (                                             \
+    (defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)) || \
+    defined(__ARM_BIG_ENDIAN) ||                                             \
+    defined(__big_endian__) ||                                               \
+    defined(__BIG_ENDIAN__) ||                                               \
+    (defined(__LITTLE_ENDIAN__) && (__LITTLE_ENDIAN__ == 0)))
 #define BP_BIG_ENDIAN 1
 #endif
 

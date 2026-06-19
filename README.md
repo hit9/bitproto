@@ -31,7 +31,7 @@ of 4 bytes after encoding.
 
 This image shows the layout of data fields in the encoded bytes buffer:
 
-![](docs/_static/images/data-encoding-sample.png)
+![](https://raw.githubusercontent.com/hit9/bitproto/master/docs/_static/images/data-encoding-sample.png)
 
 ## Code Example
 

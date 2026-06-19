@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: bitproto 0.4.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-19 01:28-0700\n"
+"POT-Creation-Date: 2026-06-19 06:16-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: zh <LL@li.org>\n"
@@ -19,11 +19,11 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: ../../endianness.rst:6 0b040be315ce42209b21a9e8b15b6036
+#: ../../endianness.rst:6 7136afd20fcd4d0d8a12974726896c23
 msgid "Endianness"
 msgstr "字节序"
 
-#: ../../endianness.rst:8 ccaaaf10bdfa4f648bcb9d02270e5878
+#: ../../endianness.rst:8 3d025bff8d20496f9f1edf9edfe0a6cf
 msgid ""
 "bitproto's wire format is **little-endian on every platform**: the lowest "
 "byte index on the wire holds the least-significant bits of a field. This is "
@@ -35,11 +35,11 @@ msgstr ""
 "endian)**：编码后字节序列中索引最低的字节存放字段的最低有效位。这是编码格式的固定属性，与运行编码器或解码器的机器无关 —— "
 "字节序不同的两端始终可以互通。"
 
-#: ../../endianness.rst:16 102ab05c4eb54687b25d8137490bbd8d
+#: ../../endianness.rst:16 fc01d7e1b6e44805ac7db4130c27ef38
 msgid "Language support"
 msgstr "各语言的支持情况"
 
-#: ../../endianness.rst:18 4949128459f0422bb13dae054d386f55
+#: ../../endianness.rst:18 831aa8811cc8413fb0b22b4d415a411a
 msgid ""
 "Whether the *host* CPU is big-endian only ever mattered for C, because only "
 "C reads an integer field's raw memory bytes. Python and Go operate on "
@@ -49,92 +49,93 @@ msgstr ""
 "*宿主机* CPU 是否为大端序只对 C 有影响，因为只有 C 会直接读取整数字段的原始内存字节。Python 和 Go 是对整数的 *值* "
 "做移位和掩码运算，这种方式天然与字节序无关。"
 
-#: ../../endianness.rst:26 199c9c0766e04113b484d2840ecfba51
+#: ../../endianness.rst:26 012d2a84bcb642269599edfa18cfb020
 msgid "Target"
 msgstr "目标语言"
 
-#: ../../endianness.rst:27 688b7dde52824f65b24529a68090d35f
+#: ../../endianness.rst:27 747bb89a0bbd473da1aa3196fc6d7c46
 msgid "How bits are moved"
 msgstr "比特如何搬运"
 
-#: ../../endianness.rst:28 f2ba25db7dbe4c54bc6e9cb8564a02a5
+#: ../../endianness.rst:28 29244b384e6c456798294482296844be
 msgid "Big-endian host"
 msgstr "大端序主机"
 
-#: ../../endianness.rst:29 7185def3bcd24250bb7adcf4c8c05176
+#: ../../endianness.rst:29 5c4b505f2ec84d03baabd9eb286d51b7
 msgid "Python"
 msgstr "Python"
 
-#: ../../endianness.rst:30 0e787b8470584e63ab81d90da3c15128
+#: ../../endianness.rst:30 fea60dc320d54de89d55e32ca39772f0
 msgid "value math on Python ints"
 msgstr "对 Python 整数做数值运算"
 
 #: ../../endianness.rst:31 ../../endianness.rst:34
-#: 41384d1bc15f45ada45248e4fdd697d3 d28241f219114b51b5d2002609b864d0
+#: 2bca643b475f47aeb485da537a563ae7 c14f9f62e9fc4e15964025fb7a2818e8
 msgid "always correct"
 msgstr "始终正确"
 
-#: ../../endianness.rst:32 69d0a06ec23d462f9e142333c75d80d1
+#: ../../endianness.rst:32 b7ae0ca3406f4e6587879b78edf45d7b
 msgid "Go"
 msgstr "Go"
 
-#: ../../endianness.rst:33 cb9b9a23775744cc89f3f5ab9c07b6dc
+#: ../../endianness.rst:33 14524635720b4d1ca4872ee28c2174c0
 msgid "value shifts on typed fields"
 msgstr "对定型字段做数值移位"
 
-#: ../../endianness.rst:35 a4d294b5cc7f44cb8263527b2e7fb893
+#: ../../endianness.rst:35 14db03952cd84c24955e7a887a149ff8
 msgid "C (standard mode)"
 msgstr "C（标准模式）"
 
-#: ../../endianness.rst:36 4fd18130c01a4c6f827652c3904fc3ec
+#: ../../endianness.rst:36 d948cf287b9b4417950a0abdc2f43d50
 msgid "``lib/c`` runtime"
 msgstr "``lib/c`` 运行库"
 
 #: ../../endianness.rst:37 ../../endianness.rst:40
-#: d7b60cd145a54177ac0e4d328767a09b e982e973ea5740e7887c8c0b6e4121ed
+#: 1077b478251340129799f4a18e8a9d94 dba0c7e5fc144f03b389f5e00b51d0d6
 msgid "correct"
 msgstr "正确"
 
-#: ../../endianness.rst:38 76b701d8127a4e508b5cb4004301b984
+#: ../../endianness.rst:38 c23c81fcf4d74108bca273369cc04135
 msgid "C (optimization mode)"
 msgstr "C（优化模式）"
 
-#: ../../endianness.rst:39 ab408111deb7443b927252ec5053ffe0
+#: ../../endianness.rst:39 f5b13f6e5d6c47f0a780536fc836b026
 msgid "generated bit-copy statements"
 msgstr "生成的比特拷贝语句"
 
-#: ../../endianness.rst:42 267c254a223341d890878a779748f20d
+#: ../../endianness.rst:42 93349714a55d4e37b2960c8294f345c0
 msgid ""
 "So nothing special is required for Go or Python. The remainder of this page "
 "is about C."
 msgstr "因此 Go 和 Python 不需要做任何特殊处理。本页接下来的内容都是关于 C 的。"
 
-#: ../../endianness.rst:48 0fda01f52aba404ca7e7841635e1b526
+#: ../../endianness.rst:48 57c84752f5024fdb86d4a844b71778a8
 msgid "C standard mode"
 msgstr "C 标准模式"
 
-#: ../../endianness.rst:50 b789baff2f8842d7b046e63d83fe28fc
+#: ../../endianness.rst:50 cca64a9a0f8b4b019a9a2904e3eea409
 msgid ""
 "The C library (``lib/c/bitproto.c``) detects a big-endian host automatically"
-" via ``__BYTE_ORDER__`` and selects an endian-neutral code path. You may "
-"also force it by defining ``BP_BIG_ENDIAN`` when compiling the library, for "
-"toolchains that do not define ``__BYTE_ORDER__``:"
+" (via ``__BYTE_ORDER__`` for GCC/Clang, ``__BIG_ENDIAN__`` for the TI ARM "
+"CGT compiler, and ``__LITTLE_ENDIAN__ == 0`` for IAR) and selects an endian-"
+"neutral code path. You may also force it by defining ``BP_BIG_ENDIAN`` when "
+"compiling the library, for toolchains that expose none of these macros:"
 msgstr ""
-"C 运行库 (``lib/c/bitproto.c``) 会通过 ``__BYTE_ORDER__`` "
-"自动检测大端序主机，并选择与字节序无关的代码路径。对于不定义 ``__BYTE_ORDER__`` 的工具链，你也可以在编译运行库时定义 "
-"``BP_BIG_ENDIAN`` 来强制启用："
+"C 运行库 (``lib/c/bitproto.c``) 会自动检测大端序主机（GCC/Clang 用 ``__BYTE_ORDER__``，TI "
+"ARM CGT 编译器用 ``__BIG_ENDIAN__``，IAR 用 ``__LITTLE_ENDIAN__ == "
+"0``），并选择与字节序无关的代码路径。对于这些宏都不提供的工具链，你也可以在编译运行库时定义 ``BP_BIG_ENDIAN`` 来强制启用："
 
-#: ../../endianness.rst:59 dfe5ca7c24b74b21a037d8a627cb31f4
+#: ../../endianness.rst:60 3aa2242253ac49afaf1f9d186fbb7dd0
 msgid ""
 "On a little-endian host the library is byte-for-byte unchanged, so there is "
 "no performance impact on the common target."
 msgstr "在小端序主机上，运行库逐字节保持不变，因此对常见的目标平台没有任何性能影响。"
 
-#: ../../endianness.rst:65 e88b8e2df1064aa88e0681f1e15a5577
+#: ../../endianness.rst:66 949c000ec51643ff81ec09786de2909d
 msgid "C optimization mode"
 msgstr "C 优化模式"
 
-#: ../../endianness.rst:67 668c05ce7e5b4cd299438125249d1301
+#: ../../endianness.rst:68 0486098661a9470898754b4510b961d6
 msgid ""
 ":ref:`Optimization mode <performance-optimization-mode>` generates plain "
 "bit-copy statements that read and write integer fields through their in-"
@@ -146,28 +147,31 @@ msgstr ""
 "会生成直接的比特拷贝语句，通过整数字段的内存字节来读写它们。为了在小端序和大端序主机上都保持正确，bitproto "
 "默认会生成两份等价的代码路径，并用一个预处理宏来区分："
 
-#: ../../endianness.rst:80 c3e4f7e8383b4362af0360e008b10f49
+#: ../../endianness.rst:81 83de8141deaa4763b641eed9af2b9e0f
 msgid ""
-"A big-endian host is auto-detected via ``__BYTE_ORDER__``; you may also "
-"force the big-endian path by defining ``BP_BIG_ENDIAN`` when compiling the "
-"generated code. The little-endian path is identical to earlier bitproto "
-"releases, so there is no performance change on little-endian targets — only "
-"the generated source is a little larger."
+"A big-endian host is auto-detected (via ``__BYTE_ORDER__`` for GCC/Clang, "
+"``__BIG_ENDIAN__`` for the TI ARM CGT compiler, and ``__LITTLE_ENDIAN__ == "
+"0`` for IAR); you may also force the big-endian path by defining "
+"``BP_BIG_ENDIAN`` when compiling the generated code. The little-endian path "
+"is identical to earlier bitproto releases, so there is no performance change"
+" on little-endian targets — only the generated source is a little larger."
 msgstr ""
-"大端序主机会通过 ``__BYTE_ORDER__`` 自动检测；你也可以在编译生成的代码时定义 ``BP_BIG_ENDIAN`` "
-"来强制使用大端序路径。小端序路径与早期版本的 bitproto 完全一致，因此在小端序目标上没有任何性能变化 —— 只是生成的源码会略大一点。"
+"大端序主机会被自动检测（GCC/Clang 用 ``__BYTE_ORDER__``，TI ARM CGT 编译器用 "
+"``__BIG_ENDIAN__``，IAR 用 ``__LITTLE_ENDIAN__ == 0``）；你也可以在编译生成的代码时定义 "
+"``BP_BIG_ENDIAN`` 来强制使用大端序路径。小端序路径与早期版本的 bitproto 完全一致，因此在小端序目标上没有任何性能变化 —— "
+"只是生成的源码会略大一点。"
 
-#: ../../endianness.rst:89 8d62efc6537d4a4f9cb8e5f7d54d1f6d
+#: ../../endianness.rst:92 0529072cd7fc4d6da9f6e67c6db2611d
 msgid "The ``--endian`` option"
 msgstr "``--endian`` 选项"
 
-#: ../../endianness.rst:91 e84c122aadef45e887a7e8d2f84f37b7
+#: ../../endianness.rst:94 d778bd1ba0b44dda9e155248ead64239
 msgid ""
 "If you know your target's byte order you can drop the unused path and shrink"
 " the generated source with the ``--endian`` option (optimization mode only):"
 msgstr "如果你已经知道目标平台的字节序，可以用 ``--endian`` 选项去掉用不到的那份代码路径，从而缩小生成的源码（仅在优化模式下有效）："
 
-#: ../../endianness.rst:105 dbc23d079cd24ab0ac8cb9144b9fe748
+#: ../../endianness.rst:108 3eb9c538794d4a34ae65ef5727f6b5e6
 msgid ""
 "``--endian`` only affects optimization-mode C/C++ code. It has no effect on "
 "the wire format, and none on Go or Python."
